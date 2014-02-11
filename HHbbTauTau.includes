@@ -1,0 +1,8 @@
+src
+$$(CMSSW_RELEASE_BASE)/src
+$$(GCC_INCLUDE_PATH)
+$$(GCC_INCLUDE_PATH)/x86_64-unknown-linux-gnu
+$$(BOOST_INCLUDE_PATH)
+$$(ROOT_INCLUDE_PATH)
+$$(HEPMC_INCLUDE_PATH)
+/usr/include
