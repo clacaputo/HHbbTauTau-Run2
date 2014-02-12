@@ -9,8 +9,8 @@
 #include <vector>
 using namespace std;
 
-#define ExtractTree_cxx
-#include "../include/ExtractTree.h"
+#define EventTree_cxx
+#include "../include/EventTree.h"
 #include "../include/AnalyzerData.h"
 #include "../include/Particles.h"
 #include "TH2.h"
@@ -18,7 +18,7 @@ using namespace std;
 #include <TCanvas.h>
 #include <boost/shared_ptr.hpp>
 
-void ExtractTree::Loop(){} //just declared
+void EventTree::Loop(){} //just declared
 
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
@@ -38,7 +38,7 @@ public:
     {
         TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
         TTree* inputTree = dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree"));
-        eventTree = boost::shared_ptr<ExtractTree>(new ExtractTree(inputTree));
+        eventTree = boost::shared_ptr<EventTree>(new EventTree(inputTree));
         anaData.getOutputFile().cd();
         std::cout << "starting analyzer" << std::endl;
     }
@@ -77,7 +77,7 @@ private:
 
 
 private:
-    boost::shared_ptr<ExtractTree> eventTree;
+    boost::shared_ptr<EventTree> eventTree;
     SignalAnalyzerData anaData;
     Long64_t maxNumberOfEvents;
 };

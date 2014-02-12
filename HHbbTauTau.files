@@ -1,6 +1,6 @@
 Analysis/source/VHAnalyzer_WH_New.C
 Analysis/source/VHAnalyzer_WH_New.h
 Analysis/include/AnalyzerData.h
-Analysis/include/ExtractTree.h
+Analysis/include/EventTree.h
 Analysis/source/HHbbTauTau_analyzer.C
 Analysis/include/Particles.h
