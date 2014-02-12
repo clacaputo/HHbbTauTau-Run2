@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Feb 11 16:32:13 2014 by ROOT version 5.32/00
+// Wed Feb 12 10:20:09 2014 by ROOT version 5.32/00
 // from TTree vhtree/VH Analysis Tree
-// found on file: test_53x.root
+// found on file: ../../../signal_HHbbTauTau.root
 //////////////////////////////////////////////////////////
 
-#ifndef SimpleVHAnalyser_h
-#define SimpleVHAnalyser_h
+#ifndef ExtractTree_h
+#define ExtractTree_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -16,11 +16,13 @@
 #include <TClonesArray.h>
 #include <TObject.h>
 #include <vector>
+#include <vector>
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 const Int_t kMaxEvent = 1;
 const Int_t kMaxVertex = 29;
 const Int_t kMaxElectron = 4;
+const Int_t kMaxGenParticle = 1652;
 const Int_t kMaxJet = 100;
 const Int_t kMaxMET = 1;
 const Int_t kMaxcorrMET = 1;
@@ -28,7 +30,7 @@ const Int_t kMaxmvaMET = 1;
 const Int_t kMaxMuon = 4;
 const Int_t kMaxTau = 100;
 
-class SimpleVHAnalyser {
+class ExtractTree {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
@@ -168,6 +170,29 @@ public :
    Int_t           Electron_selbit[kMaxElectron];   //[Electron_]
    Int_t           Electron_fidFlag[kMaxElectron];   //[Electron_]
    Int_t           nElectron;
+   Int_t           GenParticle_;
+   UInt_t          GenParticle_fUniqueID[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_fBits[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_eta[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_phi[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_p[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_px[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_py[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_pz[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_pt[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_energy[kMaxGenParticle];   //[GenParticle_]
+   Int_t           GenParticle_pdgId[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_vx[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_vy[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_vz[kMaxGenParticle];   //[GenParticle_]
+   Int_t           GenParticle_status[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_charge[kMaxGenParticle];   //[GenParticle_]
+   Int_t           GenParticle_numDaught[kMaxGenParticle];   //[GenParticle_]
+   Int_t           GenParticle_numMother[kMaxGenParticle];   //[GenParticle_]
+   Int_t           GenParticle_motherIndex[kMaxGenParticle];   //[GenParticle_]
+   vector<int>     GenParticle_motherIndices[kMaxGenParticle];
+   vector<int>     GenParticle_daughtIndices[kMaxGenParticle];
+   Int_t           nGenParticle;
    Int_t           Jet_;
    UInt_t          Jet_fUniqueID[kMaxJet];   //[Jet_]
    UInt_t          Jet_fBits[kMaxJet];   //[Jet_]
@@ -451,6 +476,11 @@ public :
    Int_t           Tau_NumChHad[kMaxTau];   //[Tau_]
    Int_t           Tau_selbit[kMaxTau];   //[Tau_]
    Int_t           nTau;
+   vector<int>     *l1physbits;
+   vector<int>     *l1techbits;
+   vector<string>  *hltpaths;
+   vector<int>     *hltresults;
+   vector<int>     *hltprescales;
 
    // List of branches
    TBranch        *b_Event_;   //!
@@ -587,6 +617,29 @@ public :
    TBranch        *b_Electron_selbit;   //!
    TBranch        *b_Electron_fidFlag;   //!
    TBranch        *b_fnElectron;   //!
+   TBranch        *b_GenParticle_;   //!
+   TBranch        *b_GenParticle_fUniqueID;   //!
+   TBranch        *b_GenParticle_fBits;   //!
+   TBranch        *b_GenParticle_eta;   //!
+   TBranch        *b_GenParticle_phi;   //!
+   TBranch        *b_GenParticle_p;   //!
+   TBranch        *b_GenParticle_px;   //!
+   TBranch        *b_GenParticle_py;   //!
+   TBranch        *b_GenParticle_pz;   //!
+   TBranch        *b_GenParticle_pt;   //!
+   TBranch        *b_GenParticle_energy;   //!
+   TBranch        *b_GenParticle_pdgId;   //!
+   TBranch        *b_GenParticle_vx;   //!
+   TBranch        *b_GenParticle_vy;   //!
+   TBranch        *b_GenParticle_vz;   //!
+   TBranch        *b_GenParticle_status;   //!
+   TBranch        *b_GenParticle_charge;   //!
+   TBranch        *b_GenParticle_numDaught;   //!
+   TBranch        *b_GenParticle_numMother;   //!
+   TBranch        *b_GenParticle_motherIndex;   //!
+   TBranch        *b_GenParticle_motherIndices;   //!
+   TBranch        *b_GenParticle_daughtIndices;   //!
+   TBranch        *b_fnGenParticle;   //!
    TBranch        *b_Jet_;   //!
    TBranch        *b_Jet_fUniqueID;   //!
    TBranch        *b_Jet_fBits;   //!
@@ -870,9 +923,14 @@ public :
    TBranch        *b_Tau_NumChHad;   //!
    TBranch        *b_Tau_selbit;   //!
    TBranch        *b_fnTau;   //!
+   TBranch        *b_l1physbits;   //!
+   TBranch        *b_l1techbits;   //!
+   TBranch        *b_hltpaths;   //!
+   TBranch        *b_hltresults;   //!
+   TBranch        *b_hltprescales;   //!
 
-   SimpleVHAnalyser(TTree *tree=0);
-   virtual ~SimpleVHAnalyser();
+   ExtractTree(TTree *tree=0);
+   virtual ~ExtractTree();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -884,36 +942,36 @@ public :
 
 #endif
 
-#ifdef SimpleVHAnalyser_cxx
-SimpleVHAnalyser::SimpleVHAnalyser(TTree *tree) : fChain(0) 
+#ifdef ExtractTree_cxx
+ExtractTree::ExtractTree(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("test_53x.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../../../signal_HHbbTauTau.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("test_53x.root");
+         f = new TFile("../../../signal_HHbbTauTau.root");
       }
-      TDirectory * dir = (TDirectory*)f->Get("test_53x.root:/treeCreator");
+      TDirectory * dir = (TDirectory*)f->Get("../../../signal_HHbbTauTau.root:/treeCreator");
       dir->GetObject("vhtree",tree);
 
    }
    Init(tree);
 }
 
-SimpleVHAnalyser::~SimpleVHAnalyser()
+ExtractTree::~ExtractTree()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t SimpleVHAnalyser::GetEntry(Long64_t entry)
+Int_t ExtractTree::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t SimpleVHAnalyser::LoadTree(Long64_t entry)
+Long64_t ExtractTree::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -926,7 +984,7 @@ Long64_t SimpleVHAnalyser::LoadTree(Long64_t entry)
    return centry;
 }
 
-void SimpleVHAnalyser::Init(TTree *tree)
+void ExtractTree::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -940,6 +998,11 @@ void SimpleVHAnalyser::Init(TTree *tree)
    nPU = 0;
    bunchCrossing = 0;
    trueNInt = 0;
+   l1physbits = 0;
+   l1techbits = 0;
+   hltpaths = 0;
+   hltresults = 0;
+   hltprescales = 0;
    // Set branch addresses and branch pointers
    if (!tree) return;
    fChain = tree;
@@ -1080,6 +1143,29 @@ void SimpleVHAnalyser::Init(TTree *tree)
    fChain->SetBranchAddress("Electron.selbit", Electron_selbit, &b_Electron_selbit);
    fChain->SetBranchAddress("Electron.fidFlag", Electron_fidFlag, &b_Electron_fidFlag);
    fChain->SetBranchAddress("nElectron", &nElectron, &b_fnElectron);
+   fChain->SetBranchAddress("GenParticle", &GenParticle_, &b_GenParticle_);
+   fChain->SetBranchAddress("GenParticle.fUniqueID", GenParticle_fUniqueID, &b_GenParticle_fUniqueID);
+   fChain->SetBranchAddress("GenParticle.fBits", GenParticle_fBits, &b_GenParticle_fBits);
+   fChain->SetBranchAddress("GenParticle.eta", GenParticle_eta, &b_GenParticle_eta);
+   fChain->SetBranchAddress("GenParticle.phi", GenParticle_phi, &b_GenParticle_phi);
+   fChain->SetBranchAddress("GenParticle.p", GenParticle_p, &b_GenParticle_p);
+   fChain->SetBranchAddress("GenParticle.px", GenParticle_px, &b_GenParticle_px);
+   fChain->SetBranchAddress("GenParticle.py", GenParticle_py, &b_GenParticle_py);
+   fChain->SetBranchAddress("GenParticle.pz", GenParticle_pz, &b_GenParticle_pz);
+   fChain->SetBranchAddress("GenParticle.pt", GenParticle_pt, &b_GenParticle_pt);
+   fChain->SetBranchAddress("GenParticle.energy", GenParticle_energy, &b_GenParticle_energy);
+   fChain->SetBranchAddress("GenParticle.pdgId", GenParticle_pdgId, &b_GenParticle_pdgId);
+   fChain->SetBranchAddress("GenParticle.vx", GenParticle_vx, &b_GenParticle_vx);
+   fChain->SetBranchAddress("GenParticle.vy", GenParticle_vy, &b_GenParticle_vy);
+   fChain->SetBranchAddress("GenParticle.vz", GenParticle_vz, &b_GenParticle_vz);
+   fChain->SetBranchAddress("GenParticle.status", GenParticle_status, &b_GenParticle_status);
+   fChain->SetBranchAddress("GenParticle.charge", GenParticle_charge, &b_GenParticle_charge);
+   fChain->SetBranchAddress("GenParticle.numDaught", GenParticle_numDaught, &b_GenParticle_numDaught);
+   fChain->SetBranchAddress("GenParticle.numMother", GenParticle_numMother, &b_GenParticle_numMother);
+   fChain->SetBranchAddress("GenParticle.motherIndex", GenParticle_motherIndex, &b_GenParticle_motherIndex);
+   fChain->SetBranchAddress("GenParticle.motherIndices", GenParticle_motherIndices, &b_GenParticle_motherIndices);
+   fChain->SetBranchAddress("GenParticle.daughtIndices", GenParticle_daughtIndices, &b_GenParticle_daughtIndices);
+   fChain->SetBranchAddress("nGenParticle", &nGenParticle, &b_fnGenParticle);
    fChain->SetBranchAddress("Jet", &Jet_, &b_Jet_);
    fChain->SetBranchAddress("Jet.fUniqueID", Jet_fUniqueID, &b_Jet_fUniqueID);
    fChain->SetBranchAddress("Jet.fBits", Jet_fBits, &b_Jet_fBits);
@@ -1363,10 +1449,15 @@ void SimpleVHAnalyser::Init(TTree *tree)
    fChain->SetBranchAddress("Tau.NumChHad", Tau_NumChHad, &b_Tau_NumChHad);
    fChain->SetBranchAddress("Tau.selbit", Tau_selbit, &b_Tau_selbit);
    fChain->SetBranchAddress("nTau", &nTau, &b_fnTau);
+   fChain->SetBranchAddress("l1physbits", &l1physbits, &b_l1physbits);
+   fChain->SetBranchAddress("l1techbits", &l1techbits, &b_l1techbits);
+   fChain->SetBranchAddress("hltpaths", &hltpaths, &b_hltpaths);
+   fChain->SetBranchAddress("hltresults", &hltresults, &b_hltresults);
+   fChain->SetBranchAddress("hltprescales", &hltprescales, &b_hltprescales);
    Notify();
 }
 
-Bool_t SimpleVHAnalyser::Notify()
+Bool_t ExtractTree::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -1377,18 +1468,18 @@ Bool_t SimpleVHAnalyser::Notify()
    return kTRUE;
 }
 
-void SimpleVHAnalyser::Show(Long64_t entry)
+void ExtractTree::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t SimpleVHAnalyser::Cut(Long64_t entry)
+Int_t ExtractTree::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef SimpleVHAnalyser_cxx
+#endif // #ifdef ExtractTree_cxx
