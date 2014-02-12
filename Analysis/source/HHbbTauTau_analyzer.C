@@ -34,10 +34,11 @@ class HHbbTauTau_analyzer
 public:
     HHbbTauTau_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0)
-        : inputFile(new TFile(inputFileName.c_str(),"READ")),
-          eventTree(new ExtractTree(dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree")))),
-          anaData(outputFileName), maxNumberOfEvents(_maxNumberOfEvents)
-    {      
+        : anaData(outputFileName), maxNumberOfEvents(_maxNumberOfEvents)
+    {
+        TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
+        TTree* inputTree = dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree"));
+        eventTree = boost::shared_ptr<ExtractTree>(new ExtractTree(inputTree));
         anaData.getOutputFile().cd();
         std::cout << "starting analyzer" << std::endl;
     }
@@ -48,15 +49,12 @@ public:
 
         const Long64_t nentries = maxNumberOfEvents ? std::min(eventTree->fChain->GetEntriesFast(),maxNumberOfEvents)
                                                     : eventTree->fChain->GetEntriesFast();
-        //cout << "nentries " << nentries << endl;
         for (Long64_t jentry=0; jentry<nentries;jentry++) {
            const Long64_t ientry = eventTree->LoadTree(jentry);
-           //cout << "ientry " << ientry << endl;
            if (ientry < 0)
                throw std::runtime_error("cannot read entry");
            eventTree->fChain->GetEntry(jentry);
            ProcessEvent();
-
         }
     }
 
@@ -64,7 +62,6 @@ private:
 
     void ProcessEvent()
     {
-        //cout << "nTaus = " << eventTree->nTau << endl;
         for (Int_t n = 0; n < eventTree->nTau; ++n){
             anaData.Pt_tau().Fill(eventTree->Tau_pt[n]);
         }
@@ -80,10 +77,8 @@ private:
 
 
 private:
-    TFile* inputFile;
     boost::shared_ptr<ExtractTree> eventTree;
     SignalAnalyzerData anaData;
     Long64_t maxNumberOfEvents;
-
 };
 
