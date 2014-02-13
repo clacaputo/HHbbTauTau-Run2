@@ -6,17 +6,15 @@
  * \date 2014-02-12 created
  */
 
-#include <vector>
+#include <boost/shared_ptr.hpp>
+
+#include "../include/AnalyzerData.h"
+#include "../include/Particles.h"
+
 using namespace std;
 
 #define EventTree_cxx
 #include "../include/EventTree.h"
-#include "../include/AnalyzerData.h"
-#include "../include/Particles.h"
-#include "TH2.h"
-#include <TStyle.h>
-#include <TCanvas.h>
-#include <boost/shared_ptr.hpp>
 
 void EventTree::Loop(){} //just declared
 
@@ -50,8 +48,7 @@ public:
         const Long64_t nentries = maxNumberOfEvents ? std::min(eventTree->fChain->GetEntriesFast(),maxNumberOfEvents)
                                                     : eventTree->fChain->GetEntriesFast();
         for (Long64_t jentry=0; jentry<nentries;jentry++) {
-           const Long64_t ientry = eventTree->LoadTree(jentry);
-           if (ientry < 0)
+           if (eventTree->LoadTree(jentry) < 0)
                throw std::runtime_error("cannot read entry");
            eventTree->fChain->GetEntry(jentry);
            ProcessEvent();
@@ -75,10 +72,8 @@ private:
         anaData.N_realtau().Fill(tau_counter);
     }
 
-
 private:
     boost::shared_ptr<EventTree> eventTree;
     SignalAnalyzerData anaData;
     Long64_t maxNumberOfEvents;
 };
-

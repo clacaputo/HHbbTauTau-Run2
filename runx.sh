@@ -27,9 +27,10 @@ if (( n > 1 )) ; then
 	done
 fi
 
-CODE_OUT="$SCRIPT_RUN_PATH/${NAME}.cpp"
-EXE_NAME="$SCRIPT_RUN_PATH/$NAME"
-rm -f $EXE_NAME
+SUFFIX=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+CODE_OUT="$SCRIPT_RUN_PATH/${NAME}_${SUFFIX}.cpp"
+EXE_NAME="$SCRIPT_RUN_PATH/${NAME}_${SUFFIX}"
+rm -f "$EXE_NAME"
 
 printf \
 "#include \"${SOURCE}\"
@@ -54,4 +55,9 @@ g++ \
 	`root-config --libs` \
 	-o $EXE_NAME $CODE_OUT
 
-$EXE_NAME
+RESULT=$?
+if [[ $RESULT -eq 0 ]] ; then
+	$EXE_NAME
+	rm -f "$EXE_NAME"
+fi
+rm -f "$CODE_OUT"
