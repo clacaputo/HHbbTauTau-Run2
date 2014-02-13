@@ -6,18 +6,26 @@
  * \date 2014-02-12 created
  */
 
+#include <vector>
 #include <boost/shared_ptr.hpp>
+
+#include <TROOT.h>
+#include <TChain.h>
+#include <TFile.h>
+#include <TClonesArray.h>
+#include <TObject.h>
+
+namespace ntuple {
+    using namespace std;
+
+    #define EventTree_cxx
+    #include "../include/EventTree.h"
+
+    void EventTree::Loop(){} //just declared
+}
 
 #include "../include/AnalyzerData.h"
 #include "../include/Particles.h"
-
-using namespace std;
-
-#define EventTree_cxx
-#include "../include/EventTree.h"
-
-void EventTree::Loop(){} //just declared
-
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
@@ -36,7 +44,7 @@ public:
     {
         TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
         TTree* inputTree = dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree"));
-        eventTree = boost::shared_ptr<EventTree>(new EventTree(inputTree));
+        eventTree = boost::shared_ptr<ntuple::EventTree>(new ntuple::EventTree(inputTree));
         anaData.getOutputFile().cd();
         std::cout << "starting analyzer" << std::endl;
     }
@@ -73,7 +81,7 @@ private:
     }
 
 private:
-    boost::shared_ptr<EventTree> eventTree;
+    boost::shared_ptr<ntuple::EventTree> eventTree;
     SignalAnalyzerData anaData;
     Long64_t maxNumberOfEvents;
 };
