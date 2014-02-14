@@ -27,7 +27,7 @@ namespace ntuple {
 #include "../include/AnalyzerData.h"
 #include "../include/Particles.h"
 #include "../include/Htautau_Summer13.h"
-#include "../include/Cuts.h"
+#include "../include/CutTools.h"
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
@@ -36,7 +36,7 @@ public:
     TH1D_ENTRY(Pt_tau, 100, 0, 100)
     TH1D_ENTRY(N_realtau, 100, 0, 100)
     TH1D_ENTRY_FIX(MuonSelection, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(MuonCounter, 1, 15, -0.5)
+    TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
 };
 
 using ntuple::EventTree;
@@ -44,30 +44,27 @@ using ntuple::EventTree;
 class HHbbTauTau_analyzer
 {
 public:
-
-    typedef std::vector<Int_t> IndexVector;
-
     HHbbTauTau_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0)
         : anaData(outputFileName), maxNumberOfEvents(_maxNumberOfEvents)
     {
         TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
         TTree* inputTree = dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree"));
-        eventTree = new EventTree(inputTree);
+        event = new EventTree(inputTree);
         anaData.getOutputFile().cd();
         std::cout << "starting analyzer" << std::endl;
     }
 
     void Run()
     {
-        if (eventTree->fChain == nullptr) return;
+        if (event->fChain == nullptr) return;
 
-        const Long64_t nentries = maxNumberOfEvents ? std::min(eventTree->fChain->GetEntriesFast(),maxNumberOfEvents)
-                                                    : eventTree->fChain->GetEntriesFast();
+        const Long64_t nentries = maxNumberOfEvents ? std::min(event->fChain->GetEntriesFast(),maxNumberOfEvents)
+                                                    : event->fChain->GetEntriesFast();
         for (Long64_t jentry=0; jentry<nentries;jentry++) {
-           if (eventTree->LoadTree(jentry) < 0)
+           if (event->LoadTree(jentry) < 0)
                throw std::runtime_error("cannot read entry");
-           eventTree->fChain->GetEntry(jentry);
+           event->fChain->GetEntry(jentry);
            ProcessEvent();
         }
     }
@@ -85,45 +82,44 @@ private:
 
     IndexVector CollectMuons()
     {
-        using namespace cuts::muonID;
-        IndexVector selected;
-        anaData.MuonCounter().Reset();
-        for (Int_t n = 0; n < eventTree->nMuon; ++n){
-            try {
-                    int param_id = -1;
-                    const auto apply_cut = [&](bool expected, const std::string& label) {
-                        cuts::apply_cut(expected, anaData.MuonCounter(), ++param_id, anaData.MuonSelection(), label);
-                    };
-
-                    apply_cut(true, "total");
-                    apply_cut(eventTree->Muon_pt[n] > pt, "pt");
-                    apply_cut(std::abs(eventTree->Muon_eta[n]) < eta, "eta");
-                    apply_cut(!isTrackerMuon || eventTree->Muon_isTrackerMuon[n], "tracker");
-                    apply_cut(!isGlobalMuonPromptTight || eventTree->Muon_isGlobalMuonPromptTight[n], "tight");
-                    apply_cut(!isPFMuon || eventTree->Muon_isPFMuon[n], "PF");
-                    apply_cut(eventTree->Muon_nChambers[n] > nChambers, "chamers");
-                    apply_cut(eventTree->Muon_nMatchedStations[n] > nMatched_Stations, "stations");
-                    apply_cut(eventTree->Muon_trackerLayersWithMeasurement[n] > trackerLayersWithMeasurement, "layers");
-                    apply_cut(eventTree->Muon_pixHits[n] > pixHits, "pix_hits");
-                    apply_cut(eventTree->Muon_globalChi2[n] < globalChiSquare, "chi2");
-                    apply_cut(std::abs(eventTree->Muon_dB[n]) < dB, "dB");
-                    apply_cut(eventTree->Muon_pfRelIso[n] < pFRelIso, "pFRelIso");
-                    selected.push_back(n);
-            } catch(cuts::cut_failed&) {}
-        }
-
-        cuts::fill_selection_histogram(anaData.MuonSelection(), anaData.MuonCounter());
+        const auto muonSelector = [&](unsigned id) -> bool
+            { return IsMuon(id); };
 
         const auto muonPtComparitor = [&](unsigned a, unsigned b) -> bool
-            { return eventTree->Muon_pt[a] >  eventTree->Muon_pt[b]; };
+            { return event->Muon_pt[a] >  event->Muon_pt[b]; };
 
-        std::sort(selected.begin(), selected.end(), muonPtComparitor);
+        return cuts::collect_objects(anaData.Counter(), anaData.MuonSelection(), event->nMuon,
+                                     muonSelector, muonPtComparitor);
+    }
 
-        return selected;
+    bool IsMuon(Int_t id)
+    {
+        using namespace cuts::muonID;
+        int param_id = -1;
+        const auto apply_cut = [&](bool expected, const std::string& label)
+            { cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.MuonSelection(), label); };
+
+        try {
+            apply_cut(true, "total");
+            apply_cut(event->Muon_pt[id] > pt, "pt");
+            apply_cut(std::abs(event->Muon_eta[id]) < eta, "eta");
+            apply_cut(!isTrackerMuon || event->Muon_isTrackerMuon[id], "tracker");
+            apply_cut(!isGlobalMuonPromptTight || event->Muon_isGlobalMuonPromptTight[id], "tight");
+            apply_cut(!isPFMuon || event->Muon_isPFMuon[id], "PF");
+            apply_cut(event->Muon_nChambers[id] > nChambers, "chamers");
+            apply_cut(event->Muon_nMatchedStations[id] > nMatched_Stations, "stations");
+            apply_cut(event->Muon_trackerLayersWithMeasurement[id] > trackerLayersWithMeasurement, "layers");
+            apply_cut(event->Muon_pixHits[id] > pixHits, "pix_hits");
+            apply_cut(event->Muon_globalChi2[id] < globalChiSquare, "chi2");
+            apply_cut(std::abs(event->Muon_dB[id]) < dB, "dB");
+            apply_cut(event->Muon_pfRelIso[id] < pFRelIso, "pFRelIso");
+            return true;
+        } catch(cuts::cut_failed&) {}
+        return false;
     }
 
 private:
-    EventTree* eventTree;
+    EventTree* event;
     SignalAnalyzerData anaData;
     Long64_t maxNumberOfEvents;
 };

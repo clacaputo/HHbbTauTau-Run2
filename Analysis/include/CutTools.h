@@ -1,5 +1,5 @@
 /*!
- * \file Cuts.h
+ * \file CutTools.h
  * \brief Common tools and definitions to apply cuts.
  * \author Konstantin Androsov (INFN Pisa, Siena University)
  * \author Maria Teresa Grippo (INFN Pisa, Siena University)
@@ -12,8 +12,12 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #include <TH1D.h>
+#include <Rtypes.h>
+
+typedef std::vector<Int_t> IndexVector;
 
 namespace cuts {
 
@@ -53,12 +57,28 @@ void apply_cut(bool expected_condition, TH1D& counter_histogram, int param_id, T
 
 void fill_selection_histogram(TH1D& selection_histogram, const TH1D& counter_histogram)
 {
-    if(selection_histogram.GetNbinsX() != counter_histogram.GetNbinsX())
-        throw std::runtime_error("Selection and counter histograms have different number of bins.");
-    for(Int_t n = 1; n <= counter_histogram.GetNbinsX(); ++n) {
+    if(selection_histogram.GetNbinsX() > counter_histogram.GetNbinsX())
+        throw std::runtime_error("Selection histogram has more number of bins then counter histogram.");
+    for(Int_t n = 1; n <= selection_histogram.GetNbinsX(); ++n) {
         if(counter_histogram.GetBinContent(n) > 0.5)
             selection_histogram.AddBinContent(n);
     }
 }
+
+template<typename Selector, typename Comparitor>
+IndexVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, Int_t n_objects,
+                           const Selector& selector, const Comparitor& comparitor)
+{
+    IndexVector selected;
+    counter_histogram.Reset();
+    for (Int_t n = 0; n < n_objects; ++n)
+        if(selector(n)) selected.push_back(n);
+
+    fill_selection_histogram(selection_histogram, counter_histogram);
+    std::sort(selected.begin(), selected.end(), comparitor);
+
+    return selected;
+}
+
 
 } // namespace cuts
