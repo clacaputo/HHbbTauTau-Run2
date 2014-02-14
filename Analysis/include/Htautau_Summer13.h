@@ -1,5 +1,5 @@
 /*!
- * \file Htautau_Summer13 Htautau_Summer13.h
+ * \file Htautau_Summer13.h
  * \brief Higgs in tautau recommended baseline selection cuts for Summer13
  *        see https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
  * \author Konstantin Androsov (INFN Pisa, Siena University)
