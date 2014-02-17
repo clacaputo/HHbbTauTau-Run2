@@ -16,10 +16,10 @@ namespace cuts
     namespace tauID{
         const double pt = 20;
         const double eta = 2.3;
-        const int decayModeFinding = 1;
-        const int byLooseIsolationDeltaBetaCorr = 1;
-        const int againstMuonTight = 1;
-        const int againstElectronLoose = 1;
+        const double decayModeFinding = 0.5;
+        const double byLooseIsolationDeltaBetaCorr = 0.5;
+        const double againstMuonTight = 0.5;
+        const double againstElectronLoose = 0.5;
     }
 
     namespace muonID{
@@ -47,7 +47,6 @@ namespace cuts
         const int hasMatchedConv = 1;
         const double dB = 0.045;
         const double ref_pt = 20;
-        const unsigned nCategories = 3;
         const double scEta_min[2] = {0.8, 1.479};
         const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
     }
