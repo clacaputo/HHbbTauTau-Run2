@@ -28,6 +28,7 @@ namespace ntuple {
 #include "../include/Particles.h"
 #include "../include/Htautau_Summer13.h"
 #include "../include/CutTools.h"
+#include "../include/GenParticle.h"
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
@@ -73,6 +74,8 @@ private:
 
     void ProcessEvent()
     {
+        const analysis::GenEvent genEvent(*event);
+        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
         const IndexVector muons = CollectMuons();
         for (unsigned n = 0; n < muons.size(); ++n){
 //            std::cout << "Muon pt = " << eventTree->Muon_pt[muons.at(n)] << std::endl;
@@ -100,7 +103,7 @@ private:
             { cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.MuonSelection(), label); };
 
         try {
-            apply_cut(true, "total");
+            apply_cut(true, ">0 mu cand");
             apply_cut(event->Muon_pt[id] > pt, "pt");
             apply_cut(std::abs(event->Muon_eta[id]) < eta, "eta");
             apply_cut(!isTrackerMuon || event->Muon_isTrackerMuon[id], "tracker");
