@@ -18,6 +18,8 @@
 #include <Rtypes.h>
 
 typedef std::vector<Int_t> IndexVector;
+typedef std::pair<Int_t, Int_t> IndexPair;
+typedef std::vector<IndexPair> IndexPairVector;
 
 namespace cuts {
 

@@ -95,6 +95,8 @@ private:
         cut(muons.size(), "muon");
         const IndexVector taus = CollectTaus();
         cut(taus.size(), "tau");
+        const IndexPairVector mu_tau_pairs = FindCompatibleLeptonCombinations(muons, taus);
+        cut(mu_tau_pairs.size(), "mu_tau");
         const IndexVector electrons = CollectElectrons();
         cut(!electrons.size(), "no_electron");
         const IndexVector b_jets = CollectBJets();
@@ -211,6 +213,22 @@ private:
         cut(event->Jet_pt[id] > pt, "pt");
         cut(std::abs(event->Jet_eta[id]) < eta, "eta");
         cut(event->Jet_combinedSecondaryVertexBTag[id] > CSV, "CSV");
+    }
+
+    IndexPairVector FindCompatibleLeptonCombinations(const IndexVector& muons, const IndexVector& taus)
+    {
+        IndexPairVector result;
+        for(auto mu_id : muons) {
+            TVector3 mu_direction;
+            mu_direction.SetPtEtaPhi(event->Muon_pt[mu_id], event->Muon_eta[mu_id], event->Muon_phi[mu_id]);
+            for(auto tau_id : taus) {
+                TVector3 tau_direction;
+                tau_direction.SetPtEtaPhi(event->Tau_pt[tau_id], event->Tau_eta[tau_id], event->Tau_phi[tau_id]);
+                if(tau_direction.DeltaR(mu_direction) > cuts::DeltaR_signalLeptons)
+                    result.push_back(IndexPair(mu_id, tau_id));
+            }
+        }
+        return result;
     }
 
 private:
