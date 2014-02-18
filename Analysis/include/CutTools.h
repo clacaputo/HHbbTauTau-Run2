@@ -71,8 +71,12 @@ IndexVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, 
 {
     IndexVector selected;
     counter_histogram.Reset();
-    for (Int_t n = 0; n < n_objects; ++n)
-        if(selector(n)) selected.push_back(n);
+    for (Int_t n = 0; n < n_objects; ++n) {
+        try {
+            selector(n);
+            selected.push_back(n);
+        } catch(cuts::cut_failed&) {}
+    }
 
     fill_selection_histogram(selection_histogram, counter_histogram);
     std::sort(selected.begin(), selected.end(), comparitor);
