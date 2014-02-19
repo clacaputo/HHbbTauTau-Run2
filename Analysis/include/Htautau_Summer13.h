@@ -17,7 +17,7 @@ namespace cuts
         const double pt = 20;
         const double eta = 2.3;
         const double decayModeFinding = 0.5;
-        const double byLooseIsolationDeltaBetaCorr = 0.5;
+        const double LooseCombinedIsolationDeltaBetaCorr3Hits = 0.5;
         const double againstMuonTight = 0.5;
         const double againstElectronLoose = 0.5;
     }

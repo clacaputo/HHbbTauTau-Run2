@@ -83,8 +83,8 @@ private:
 
     void ProcessEvent()
     {
-//        const analysis::GenEvent genEvent(*event);
-//        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
+        const analysis::GenEvent genEvent(*event);
+        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
 
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
@@ -156,7 +156,7 @@ private:
         cut(event->Tau_pt[id] > pt, "pt");
         cut(std::abs(event->Tau_eta[id]) < eta, "eta");
         cut(event->Tau_decayModeFinding[id] > decayModeFinding, "decay_mode");
-//         cut(event->Tau_byLooseIsolationDeltaBetaCorr[id] > byLooseIsolationDeltaBetaCorr, "loose_beta");
+        cut(event->Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits[id] > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         cut(event->Tau_againstMuonTight[id] > againstMuonTight, "vs_mu_tight");
         cut(event->Tau_againstElectronLoose[id] > againstElectronLoose, "vs_e_loose");
     }
