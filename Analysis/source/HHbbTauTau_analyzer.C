@@ -40,11 +40,19 @@ public:
     TH1D_ENTRY_FIX(MuonSelection, 1, 15, -0.5)
     TH1D_ENTRY_FIX(TauSelection, 1, 15, -0.5)
     TH1D_ENTRY_FIX(ElectronSelection, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(BJetSelection, 1, 15, -0.5)
+    TH1D_MAP_ENTRY_FIX(BJetSelection, 1, 15, -0.5)
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
 };
 
 using ntuple::EventTree;
+
+namespace cuts {
+namespace HHbbTauTau {
+
+const unsigned N_bjet_Loose = 2;
+const unsigned N_bjet_Medium = 1;
+}
+}
 
 class HHbbTauTau_analyzer
 {
@@ -99,8 +107,10 @@ private:
         cut(mu_tau_pairs.size(), "mu_tau");
         const IndexVector electrons = CollectElectrons();
         cut(!electrons.size(), "no_electron");
-        const IndexVector b_jets = CollectBJets();
-        cut(b_jets.size() == 2, "2_b_jets");
+        const IndexVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
+        cut(b_jets_loose.size() >= cuts::HHbbTauTau::N_bjet_Loose, "b_jet_loose");
+        const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
+        cut(b_jets_medium.size() >= cuts::HHbbTauTau::N_bjet_Medium, "b_jet_medium");
     }
 
     IndexVector CollectMuons()
@@ -192,27 +202,29 @@ private:
         cut(event->Electron_mvaPOGNonTrig[id] > MVApogNonTrig[pt_index][eta_index], "mva");
     }
 
-    IndexVector CollectBJets()
+    IndexVector CollectBJets(double csv, const std::string& selection_label)
     {
-        const auto selector = [&](unsigned id) { SelectBJet(id); };
+        const auto selector = [&](unsigned id) { SelectBJet(id, csv, selection_label); };
 
         const auto comparitor = [&](unsigned a, unsigned b) -> bool
             { return event->Jet_pt[a] >  event->Jet_pt[b]; };
 
-        return cuts::collect_objects(anaData.Counter(), anaData.BJetSelection(), event->nJet, selector, comparitor);
+        return cuts::collect_objects(anaData.Counter(), anaData.BJetSelection(selection_label),
+                                     event->nJet, selector, comparitor);
     }
 
-    void SelectBJet(Int_t id)
+    void SelectBJet(Int_t id, double csv, const std::string& selection_label)
     {
         using namespace cuts::btag;
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
-            { cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.BJetSelection(), label); };
+            { cuts::apply_cut(expected, anaData.Counter(), ++param_id,
+                              anaData.BJetSelection(selection_label), label); };
 
         cut(true, ">0 b-jet cand");
         cut(event->Jet_pt[id] > pt, "pt");
         cut(std::abs(event->Jet_eta[id]) < eta, "eta");
-        cut(event->Jet_combinedSecondaryVertexBTag[id] > CSV, "CSV");
+        cut(event->Jet_combinedSecondaryVertexBTag[id] > csv, "CSV");
     }
 
     IndexPairVector FindCompatibleLeptonCombinations(const IndexVector& muons, const IndexVector& taus)
