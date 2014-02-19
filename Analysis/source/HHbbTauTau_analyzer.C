@@ -91,12 +91,15 @@ private:
 
     void ProcessEvent()
     {
-        const analysis::GenEvent genEvent(*event);
-        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
+//        const analysis::GenEvent genEvent(*event);
+//        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
 
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
             { cuts::apply_cut(expected, anaData.EventSelection(), ++param_id, anaData.EventSelection(), label); };
+
+        const auto try_cut = [&](bool expected, const std::string& label)
+            { try { cut(expected, label); } catch(cuts::cut_failed&) {} };
 
         cut(true, "total");
         const IndexVector muons = CollectMuons();
@@ -108,9 +111,13 @@ private:
         const IndexVector electrons = CollectElectrons();
         cut(!electrons.size(), "no_electron");
         const IndexVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
-        cut(b_jets_loose.size() >= cuts::HHbbTauTau::N_bjet_Loose, "b_jet_loose");
         const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
-        cut(b_jets_medium.size() >= cuts::HHbbTauTau::N_bjet_Medium, "b_jet_medium");
+        try_cut(b_jets_loose.size() == 2, "2b_loose");
+        try_cut(b_jets_loose.size() == 2 && b_jets_medium.size() == 1, "1b_loose+1b_medium");
+        try_cut(b_jets_medium.size() == 2, "2b_medium");
+        try_cut(b_jets_loose.size() >= 2, ">=2b_loose");
+        try_cut(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
+        try_cut(b_jets_medium.size() >= 2, ">=2b_medium");
     }
 
     IndexVector CollectMuons()
@@ -166,7 +173,8 @@ private:
         cut(event->Tau_pt[id] > pt, "pt");
         cut(std::abs(event->Tau_eta[id]) < eta, "eta");
         cut(event->Tau_decayModeFinding[id] > decayModeFinding, "decay_mode");
-        cut(event->Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits[id] > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(event->Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits[id] > LooseCombinedIsolationDeltaBetaCorr3Hits,
+            "looseIso3Hits");
         cut(event->Tau_againstMuonTight[id] > againstMuonTight, "vs_mu_tight");
         cut(event->Tau_againstElectronLoose[id] > againstElectronLoose, "vs_e_loose");
     }
