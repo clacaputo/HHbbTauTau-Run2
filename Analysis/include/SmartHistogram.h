@@ -125,15 +125,23 @@ private:
 
     virtual void Adjust()
     {
+        static const size_t defaultNumberOfBins = 100;
         if(!lowLimitIsFixed)
             limits.first = minMax.first;
         if(!highLimitIsFixed)
             limits.second = minMax.second;
 
-        if(useBinSize)
-            numberOfBins = static_cast<size_t>((limits.second - limits.first) / binSize);
-        else
-            binSize = (limits.second - limits.first) / numberOfBins;
+        const double interval = limits.second - limits.first;
+        if(useBinSize) {
+            if(!binSizeIsFixed)
+                binSize = interval / defaultNumberOfBins;
+            numberOfBins = static_cast<size_t>(interval / binSize);
+        }
+        else {
+            if(!numberOfBinsIsFixed)
+                numberOfBins = defaultNumberOfBins;
+            binSize = interval / numberOfBins;
+        }
     }
 
     virtual RootHistogram* CreateRootHistogram() const
