@@ -23,24 +23,6 @@
         return Get< type >(#name); } \
     /**/
 
-#define VECTOR_DATA_ENTRY(type, name, n_elem, ...) \
-    type&  name(unsigned i) { \
-        if(!Contains(#name)){ \
-            TList* list = new TList(); \
-            for (unsigned k= 0; k < n_elem; ++k) {\
-                TObject* object = new type(__VA_ARGS__);\
-                std::ostringstream ss;\
-                ss << #name << "_" << k;\
-                TObject* clone = object->Clone(ss.str().c_str());\
-                delete object;\
-                list->Add(clone);\
-            }\
-            data[#name] = list;\
-        }\
-    return *(type*)(Get< TList >(#name).At(i)); \
-    } \
-    /**/
-
 #define MAP_DATA_ENTRY(type, name, ...) \
     template<typename Key> \
     type& name(const Key& key) { \
@@ -59,10 +41,6 @@
 
 #define TH1D_ENTRY(name, nbinsx, xlow, xup) DATA_ENTRY(TH1D, name, #name, #name, nbinsx, xlow, xup)
 #define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
-#define TH1D_VECTOR_ENTRY(name,n_elem, nbinsx, xlow, xup) VECTOR_DATA_ENTRY(TH1D,name,n_elem, #name, #name, \
-        nbinsx, xlow, xup)
-#define TH1D_VECTOR_ENTRY_FIX(name,n_elem, binsizex, nbinsx, xlow) TH1D_VECTOR_ENTRY(name,n_elem, nbinsx, xlow,\
-        (xlow+binsizex*nbinsx))
 #define TH1D_MAP_ENTRY(name, nbinsx, xlow, xup) MAP_DATA_ENTRY(TH1D,name, #name, #name, nbinsx, xlow, xup)
 #define TH1D_MAP_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_MAP_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
 
@@ -70,10 +48,6 @@
         nbinsy, ylow, yup)
 #define TH2D_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
     TH2D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
-#define TH2D_VECTOR_ENTRY(name, n_elem, nbinsx, xlow, xup, nbinsy, ylow, yup) \
-    VECTOR_DATA_ENTRY(TH2D, name,n_elem, #name, #name, nbinsx, xlow, xup, nbinsy, ylow, yup)
-#define TH2D_VECTOR_ENTRY_FIX(name,n_elem, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
-    TH2D_VECTOR_ENTRY(name,n_elem, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
 #define TH2D_MAP_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
     MAP_DATA_ENTRY(TH2D, name, #name, #name, nbinsx, xlow, xup, nbinsy, ylow, yup)
 #define TH2D_MAP_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \

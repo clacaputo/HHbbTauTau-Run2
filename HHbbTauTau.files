@@ -7,3 +7,4 @@ Analysis/include/Particles.h
 Analysis/include/Htautau_Summer13.h
 Analysis/include/CutTools.h
 Analysis/include/GenParticle.h
+Analysis/include/SmartHistogram.h
