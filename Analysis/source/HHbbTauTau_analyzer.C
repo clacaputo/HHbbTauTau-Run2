@@ -67,6 +67,12 @@ const unsigned N_bjet_Medium = 1;
     cuts::fill_histogram( event->name[id], \
     _anaData.getSmart< std::remove_reference< decltype(event->name[id]) >::type >(#name) )
 
+
+#define XX(name, suffix) \
+    cuts::fill_histogram( event->name[id], \
+    _anaData.getSmart< std::remove_reference< decltype(event->name[id]) >::type >(#name, suffix) )
+
+
 class HHbbTauTau_analyzer
 {
 public:
@@ -259,9 +265,9 @@ private:
                               anaData.BJetSelection(selection_label), label); };
 
         cut(true, ">0 b-jet cand");
-        cut(X(Jet_pt) > pt, "pt");
-        cut(std::abs( X(Jet_eta) ) < eta, "eta");
-        cut(X(Jet_combinedSecondaryVertexBTag) > csv, "CSV");
+        cut(XX(Jet_pt, selection_label) > pt, "pt");
+        cut(std::abs( XX(Jet_eta, selection_label) ) < eta, "eta");
+        cut(XX(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
     }
 
     IndexPairVector FindCompatibleLeptonCombinations(const IndexVector& muons, const IndexVector& taus)
