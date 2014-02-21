@@ -17,6 +17,8 @@
 #include <TH1D.h>
 #include <Rtypes.h>
 
+#include "SmartHistogram.h"
+
 typedef std::vector<Int_t> IndexVector;
 typedef std::pair<Int_t, Int_t> IndexPair;
 typedef std::vector<IndexPair> IndexPairVector;
@@ -86,5 +88,11 @@ IndexVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, 
     return selected;
 }
 
+template<typename ValueType, typename Histogram>
+ValueType fill_histogram(ValueType value, Histogram& histogram)
+{
+    histogram.Fill(value);
+    return value;
+}
 
 } // namespace cuts

@@ -14,7 +14,8 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include <TList.h>
+
+#include "SmartHistogram.h"
 
 #define DATA_ENTRY(type, name, ...) \
     type&  name() { \
@@ -58,7 +59,9 @@ namespace root_ext {
 class AnalyzerData {
 protected:
     typedef std::map<std::string, TObject*> DataMap;
+    typedef std::map< std::string, AbstractHistogram* > SmartDataMap;
     DataMap data;
+    SmartDataMap smartData;
 
     bool Contains(const std::string& name) const
     {
@@ -95,6 +98,10 @@ public:
             iter->second->Write();
             delete iter->second;
         }
+        for(const auto& iter : smartData) {
+            iter.second->WriteRootHistogram();
+            delete iter.second;
+        }
         if(ownOutputFile)
             delete outputFile;
     }
@@ -107,6 +114,19 @@ public:
         if(directoryName.size())
             outputFile->cd(directoryName.c_str());
     }
+
+    template<typename ValueType>
+    SmartHistogram<ValueType, TH1D>& getSmart(const std::string& name)
+    {
+        if(!smartData.count(name)) {
+            AbstractHistogram* h = HistogramFactory<ValueType>::Make();
+            h->setName(name);
+            smartData[name] = h;
+        }
+
+        return *static_cast< SmartHistogram<ValueType, TH1D>* >(smartData[name]);
+    }
+
 private:
     TFile* outputFile;
     bool ownOutputFile;

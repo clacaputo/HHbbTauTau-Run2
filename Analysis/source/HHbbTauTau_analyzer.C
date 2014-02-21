@@ -7,6 +7,7 @@
  */
 
 #include <vector>
+#include <type_traits>
 #include <boost/shared_ptr.hpp>
 
 #include <TROOT.h>
@@ -54,12 +55,18 @@ const unsigned N_bjet_Medium = 1;
 }
 }
 
+#define X(name) \
+    cuts::fill_histogram( event->name[id], \
+    _anaData.getSmart< std::remove_reference< decltype(event->name[id]) >::type >(#name) )
+
 class HHbbTauTau_analyzer
 {
 public:
     HHbbTauTau_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0)
-        : anaData(outputFileName), maxNumberOfEvents(_maxNumberOfEvents)
+        : anaData(outputFileName), anaDataBeforeCut(anaData.getOutputFile(), "before_cut"),
+          anaDataAfterCut(anaData.getOutputFile(), "after_cut"),
+          maxNumberOfEvents(_maxNumberOfEvents)
     {
         TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
         if(inputFile->IsZombie())
@@ -122,117 +129,129 @@ private:
 
     IndexVector CollectMuons()
     {
-        const auto selector = [&](unsigned id) { SelectMuon(id); };
+        const auto selector = [&](unsigned id) { SelectMuon(id, true, anaDataBeforeCut); };
 
         const auto comparitor = [&](unsigned a, unsigned b) -> bool
             { return event->Muon_pt[a] >  event->Muon_pt[b]; };
 
-        return cuts::collect_objects(anaData.Counter(), anaData.MuonSelection(), event->nMuon, selector, comparitor);
+        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.MuonSelection(), event->nMuon, selector,
+                                                    comparitor);
+        for(Int_t id : selected) SelectMuon(id, false, anaDataAfterCut);
+        return selected;
     }
 
-    void SelectMuon(Int_t id)
+    void SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::muonID;
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
-            { cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.MuonSelection(), label); };
+            { if(apply_cut) cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.MuonSelection(), label); };
 
         cut(true, ">0 mu cand");
-        cut(event->Muon_pt[id] > pt, "pt");
-        cut(std::abs(event->Muon_eta[id]) < eta, "eta");
-        cut(!isTrackerMuon || event->Muon_isTrackerMuon[id], "tracker");
-        cut(!isGlobalMuonPromptTight || event->Muon_isGlobalMuonPromptTight[id], "tight");
-        cut(!isPFMuon || event->Muon_isPFMuon[id], "PF");
-        cut(event->Muon_nChambers[id] > nChambers, "chamers");
-        cut(event->Muon_nMatchedStations[id] > nMatched_Stations, "stations");
-        cut(event->Muon_trackerLayersWithMeasurement[id] > trackerLayersWithMeasurement, "layers");
-        cut(event->Muon_pixHits[id] > pixHits, "pix_hits");
-        cut(event->Muon_globalChi2[id] < globalChiSquare, "chi2");
-        cut(std::abs(event->Muon_dB[id]) < dB, "dB");
-        cut(event->Muon_pfRelIso[id] < pFRelIso, "pFRelIso");
+        cut(X(Muon_pt) > pt, "pt");
+        cut(std::abs( X(Muon_eta) ) < eta, "eta");
+        cut(!isTrackerMuon || X(Muon_isTrackerMuon), "tracker");
+        cut(!isGlobalMuonPromptTight || X(Muon_isGlobalMuonPromptTight), "tight");
+        cut(!isPFMuon || X(Muon_isPFMuon), "PF");
+        cut(X(Muon_nChambers) > nChambers, "chamers");
+        cut(X(Muon_nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(Muon_trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+        cut(X(Muon_pixHits) > pixHits, "pix_hits");
+        cut(X(Muon_globalChi2) < globalChiSquare, "chi2");
+        cut(std::abs( X(Muon_dB) ) < dB, "dB");
+        cut(X(Muon_pfRelIso) < pFRelIso, "pFRelIso");
     }
 
     IndexVector CollectTaus()
     {
-        const auto selector = [&](unsigned id) { SelectTau(id); };
+        const auto selector = [&](unsigned id) { SelectTau(id, true, anaDataBeforeCut); };
 
         const auto comparitor = [&](unsigned a, unsigned b) -> bool
             { return event->Tau_pt[a] >  event->Tau_pt[b]; };
 
-        return cuts::collect_objects(anaData.Counter(), anaData.TauSelection(), event->nTau, selector, comparitor);
+        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.TauSelection(), event->nTau, selector,
+                                                    comparitor);
+        for(Int_t id : selected) SelectTau(id, false, anaDataAfterCut);
+        return selected;
     }
 
-    void SelectTau(Int_t id)
+    void SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::tauID;
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
-            { cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.TauSelection(), label); };
+            { if(apply_cut) cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.TauSelection(), label); };
 
         cut(true, ">0 tau cand");
-        cut(event->Tau_pt[id] > pt, "pt");
-        cut(std::abs(event->Tau_eta[id]) < eta, "eta");
-        cut(event->Tau_decayModeFinding[id] > decayModeFinding, "decay_mode");
-        cut(event->Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits[id] > LooseCombinedIsolationDeltaBetaCorr3Hits,
-            "looseIso3Hits");
-        cut(event->Tau_againstMuonTight[id] > againstMuonTight, "vs_mu_tight");
-        cut(event->Tau_againstElectronLoose[id] > againstElectronLoose, "vs_e_loose");
+        cut(X(Tau_pt) > pt, "pt");
+        cut(std::abs( X(Tau_eta) ) < eta, "eta");
+        cut(X(Tau_decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(X(Tau_againstMuonTight) > againstMuonTight, "vs_mu_tight");
+        cut(X(Tau_againstElectronLoose) > againstElectronLoose, "vs_e_loose");
     }
 
     IndexVector CollectElectrons()
     {
-        const auto selector = [&](unsigned id) { SelectElectron(id); };
+        const auto selector = [&](unsigned id) { SelectElectron(id, true, anaDataBeforeCut); };
 
         const auto comparitor = [&](unsigned a, unsigned b) -> bool
             { return event->Electron_pt[a] >  event->Electron_pt[b]; };
 
-        return cuts::collect_objects(anaData.Counter(), anaData.ElectronSelection(),
+        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.ElectronSelection(),
                                      event->nElectron, selector, comparitor);
+        for(Int_t id : selected) SelectElectron(id, false, anaDataAfterCut);
+        return selected;
+
     }
 
-    void SelectElectron(Int_t id)
+    void SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::electronID;
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
-            { cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.ElectronSelection(), label); };
+            { if(apply_cut)
+                cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.ElectronSelection(), label); };
 
         cut(true, ">0 ele cand");
-        cut(event->Electron_pt[id] > pt, "pt");
-        const double eta = std::abs(event->Electron_eta[id]);
+        cut(X(Electron_pt) > pt, "pt");
+        const double eta = std::abs( X(Electron_eta) );
         cut(eta < eta_high && (eta < eta_CrackVeto_low || eta > eta_CrackVeto_high), "eta");
         // cut dz_pv
-        cut(event->Electron_missingHits[id] < missingHits, "mis_hits");
-        cut(event->Electron_hasMatchedConv[id] < hasMatchedConv, "has_conv");
-        cut(event->Electron_dB[id] < dB, "dB");
+        cut(X(Electron_missingHits) < missingHits, "mis_hits");
+        cut(X(Electron_hasMatchedConv) < hasMatchedConv, "has_conv");
+        cut(X(Electron_dB) < dB, "dB");
         const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(event->Electron_mvaPOGNonTrig[id] > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(Electron_mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
     }
 
     IndexVector CollectBJets(double csv, const std::string& selection_label)
     {
-        const auto selector = [&](unsigned id) { SelectBJet(id, csv, selection_label); };
+        const auto selector = [&](unsigned id) { SelectBJet(id, csv, selection_label, true, anaDataBeforeCut); };
 
         const auto comparitor = [&](unsigned a, unsigned b) -> bool
             { return event->Jet_pt[a] >  event->Jet_pt[b]; };
 
-        return cuts::collect_objects(anaData.Counter(), anaData.BJetSelection(selection_label),
+        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.BJetSelection(selection_label),
                                      event->nJet, selector, comparitor);
+        for(Int_t id : selected) SelectBJet(id, csv, selection_label, false, anaDataAfterCut);
+        return selected;
     }
 
-    void SelectBJet(Int_t id, double csv, const std::string& selection_label)
+    void SelectBJet(Int_t id, double csv, const std::string& selection_label, bool apply_cut,
+                    root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::btag;
         int param_id = -1;
         const auto cut = [&](bool expected, const std::string& label)
-            { cuts::apply_cut(expected, anaData.Counter(), ++param_id,
+            { if(apply_cut) cuts::apply_cut(expected, anaData.Counter(), ++param_id,
                               anaData.BJetSelection(selection_label), label); };
 
         cut(true, ">0 b-jet cand");
-        cut(event->Jet_pt[id] > pt, "pt");
-        cut(std::abs(event->Jet_eta[id]) < eta, "eta");
-        cut(event->Jet_combinedSecondaryVertexBTag[id] > csv, "CSV");
+        cut(X(Jet_pt) > pt, "pt");
+        cut(std::abs( X(Jet_eta) ) < eta, "eta");
+        cut(X(Jet_combinedSecondaryVertexBTag) > csv, "CSV");
     }
 
     IndexPairVector FindCompatibleLeptonCombinations(const IndexVector& muons, const IndexVector& taus)
@@ -254,5 +273,6 @@ private:
 private:
     EventTree* event;
     SignalAnalyzerData anaData;
+    root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut;
     Long64_t maxNumberOfEvents;
 };

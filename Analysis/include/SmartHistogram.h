@@ -17,10 +17,23 @@
 
 namespace root_ext {
 
-template<typename ValueType, typename RootHistogram>
-class BaseSmartHistogram {
+class AbstractHistogram {
 public:
-    typedef std::deque<ValueType>::const_iterator const_iterator;
+    virtual ~AbstractHistogram() {}
+
+    virtual void WriteRootHistogram() = 0;
+
+    const std::string& Name() const { return name; }
+    void setName(const std::string& _name) { name = _name; }
+
+private:
+    std::string name;
+};
+
+template<typename ValueType, typename RootHistogram>
+class BaseSmartHistogram : public AbstractHistogram {
+public:
+    typedef typename std::deque<ValueType>::const_iterator const_iterator;
 
     BaseSmartHistogram()
         : limits(std::numeric_limits<ValueType>::max(), std::numeric_limits<ValueType>::lowest()),
@@ -29,8 +42,6 @@ public:
           binSizeIsFixed(false), useBinSize(false)
     {}
 
-    const std::string& Name() const { return name; }
-    void setName(const std::string& _name) { name = _name; }
     const std::deque<ValueType>& Data() const { return data; }
     const size_t size() const { return data.size(); }
     const_iterator begin() const { return data.begin(); }
@@ -75,7 +86,7 @@ public:
         lowLimitIsFixed = highLimitIsFixed = numberOfBinsIsFixed = binSizeIsFixed = useBinSize = false;
     }
 
-    void Fill(int value)
+    void Fill(const ValueType& value)
     {
         data.push_back(value);
         minMax.first = std::min(minMax.first, value);
@@ -104,11 +115,17 @@ public:
         return rootHistogram;
     }
 
+    virtual void WriteRootHistogram()
+    {
+        RootHistogram* h = ProduceRootHistogram();
+        h->Write();
+        delete h;
+    }
+
 private:
     virtual RootHistogram* CreateRootHistogram() const = 0;
 
 protected:
-    std::string name;
     std::deque<ValueType> data;
     std::pair<ValueType, ValueType> limits, minMax;
     size_t numberOfBins;
@@ -144,10 +161,133 @@ private:
         }
     }
 
-    virtual RootHistogram* CreateRootHistogram() const
+    virtual TH1D* CreateRootHistogram() const
     {
-        return new TH1D(Name().c_str(), Name().c_str(), NumberOfBins(), LowLimit(), HighLimit());
+        return new TH1D(Name().c_str(), Name().c_str(), NumberOfBins() + 1, LowLimit(), HighLimit() + binSize);
     }
+};
+
+template<>
+class SmartHistogram<float, TH1D> : public BaseSmartHistogram<float, TH1D> {
+private:
+
+    virtual void Adjust()
+    {
+        static const size_t defaultNumberOfBins = 100;
+        if(!lowLimitIsFixed)
+            limits.first = minMax.first;
+        if(!highLimitIsFixed)
+            limits.second = minMax.second;
+
+        const float interval = limits.second - limits.first;
+        if(useBinSize) {
+            if(!binSizeIsFixed)
+                binSize = interval / defaultNumberOfBins;
+            numberOfBins = static_cast<size_t>(interval / binSize);
+        }
+        else {
+            if(!numberOfBinsIsFixed)
+                numberOfBins = defaultNumberOfBins;
+            binSize = interval / numberOfBins;
+        }
+    }
+
+    virtual TH1D* CreateRootHistogram() const
+    {
+        return new TH1D(Name().c_str(), Name().c_str(), NumberOfBins() + 1, LowLimit(), HighLimit() + binSize);
+    }
+};
+
+template<>
+class SmartHistogram<int, TH1D> : public BaseSmartHistogram<int, TH1D> {
+private:
+
+    virtual void Adjust()
+    {
+        static const size_t defaultBinSize = 1;
+        if(!lowLimitIsFixed)
+            limits.first = minMax.first;
+        if(!highLimitIsFixed)
+            limits.second = minMax.second;
+
+        const size_t interval = limits.second >= limits.first ?
+                    static_cast<size_t>(limits.second - limits.first) + 1 : 1;
+        if(useBinSize) {
+            if(!binSizeIsFixed)
+                binSize = defaultBinSize;
+            numberOfBins = interval / binSize;
+        }
+        else {
+            if(!numberOfBinsIsFixed)
+                numberOfBins = interval;
+            binSize = interval / numberOfBins;
+        }
+    }
+
+    virtual TH1D* CreateRootHistogram() const
+    {
+        return new TH1D(Name().c_str(), Name().c_str(), NumberOfBins(), LowLimit() - 0.5, HighLimit() + 0.5);
+    }
+};
+
+template<>
+class SmartHistogram<bool, TH1D> : public BaseSmartHistogram<bool, TH1D> {
+private:
+
+    virtual void Adjust()
+    {
+        static const size_t defaultBinSize = 1;
+        if(!lowLimitIsFixed)
+            limits.first = minMax.first;
+        if(!highLimitIsFixed)
+            limits.second = minMax.second;
+
+        const size_t interval = limits.second >= limits.first ?
+                    static_cast<size_t>(limits.second - limits.first) + 1 : 1;
+        if(useBinSize) {
+            if(!binSizeIsFixed)
+                binSize = defaultBinSize;
+            numberOfBins = interval / binSize;
+        }
+        else {
+            if(!numberOfBinsIsFixed)
+                numberOfBins = interval;
+            binSize = interval / numberOfBins;
+        }
+    }
+
+    virtual TH1D* CreateRootHistogram() const
+    {
+        return new TH1D(Name().c_str(), Name().c_str(), NumberOfBins(), LowLimit() - 0.5, HighLimit() + 0.5);
+    }
+};
+
+
+template<typename ValueType>
+struct HistogramFactory { };
+
+template<>
+struct HistogramFactory<double>
+{
+    static SmartHistogram<double, TH1D>* Make() { return new SmartHistogram<double, TH1D>(); }
+};
+
+template<>
+struct HistogramFactory<float>
+{
+    static SmartHistogram<float, TH1D>* Make() { return new SmartHistogram<float, TH1D>(); }
+};
+
+template<>
+struct HistogramFactory<int>
+{
+    static SmartHistogram<int, TH1D>* Make() { return new SmartHistogram<int, TH1D>(); }
+};
+
+template<>
+struct HistogramFactory<bool>
+{
+    static SmartHistogram<bool, TH1D>* Make() { return new SmartHistogram<bool, TH1D>(); }
 };
 
 } // namespace root_ext
