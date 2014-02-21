@@ -127,6 +127,13 @@ public:
         return *static_cast< SmartHistogram<ValueType, TH1D>* >(smartData[name]);
     }
 
+    template<typename ValueType>
+    SmartHistogram<ValueType, TH1D>& getSmart(const std::string& name, const std::string& suffix)
+    {
+        const std::string full_name = name + "_" + suffix;
+        return getSmart<ValueType>(full_name);
+    }
+
 private:
     TFile* outputFile;
     bool ownOutputFile;
