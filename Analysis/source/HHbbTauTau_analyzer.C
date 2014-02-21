@@ -37,11 +37,19 @@ public:
     TH1D_ENTRY(Pt_muon, 100, 0, 100)
     TH1D_ENTRY(Pt_tau, 100, 0, 100)
     TH1D_ENTRY(N_realtau, 100, 0, 100)
+
     TH1D_ENTRY_FIX(EventSelection, 1, 15, -0.5)
     TH1D_ENTRY_FIX(MuonSelection, 1, 15, -0.5)
     TH1D_ENTRY_FIX(TauSelection, 1, 15, -0.5)
     TH1D_ENTRY_FIX(ElectronSelection, 1, 15, -0.5)
     TH1D_MAP_ENTRY_FIX(BJetSelection, 1, 15, -0.5)
+
+    TH1D_ENTRY_FIX(EventSelection_relative, 1, 15, -0.5)
+    TH1D_ENTRY_FIX(MuonSelection_relative, 1, 15, -0.5)
+    TH1D_ENTRY_FIX(TauSelection_relative, 1, 15, -0.5)
+    TH1D_ENTRY_FIX(ElectronSelection_relative, 1, 15, -0.5)
+    TH1D_MAP_ENTRY_FIX(BJetSelection_relative, 1, 15, -0.5)
+
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
 };
 
@@ -92,6 +100,8 @@ public:
                 ProcessEvent();
             } catch(cuts::cut_failed&) {}
         }
+
+        FillRelativeSelectionHistograms();
     }
 
 private:
@@ -120,7 +130,7 @@ private:
         const IndexVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
         const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
         try_cut(b_jets_loose.size() == 2, "2b_loose");
-        try_cut(b_jets_loose.size() == 2 && b_jets_medium.size() == 1, "1b_loose+1b_medium");
+        try_cut(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
         try_cut(b_jets_medium.size() == 2, "2b_medium");
         try_cut(b_jets_loose.size() >= 2, ">=2b_loose");
         try_cut(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
@@ -268,6 +278,16 @@ private:
             }
         }
         return result;
+    }
+
+    void FillRelativeSelectionHistograms()
+    {
+        cuts::fill_relative_selection_histogram(anaData.EventSelection(), anaData.EventSelection_relative(), 5);
+        cuts::fill_relative_selection_histogram(anaData.MuonSelection(), anaData.MuonSelection_relative());
+        cuts::fill_relative_selection_histogram(anaData.TauSelection(), anaData.TauSelection_relative());
+        cuts::fill_relative_selection_histogram(anaData.ElectronSelection(), anaData.ElectronSelection_relative());
+        cuts::fill_relative_selection_histogram(anaData.BJetSelection("loose"), anaData.BJetSelection_relative("loose"));
+        cuts::fill_relative_selection_histogram(anaData.BJetSelection("medium"), anaData.BJetSelection_relative("medium"));
     }
 
 private:

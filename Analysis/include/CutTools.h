@@ -95,4 +95,20 @@ ValueType fill_histogram(ValueType value, Histogram& histogram)
     return value;
 }
 
+void fill_relative_selection_histogram(const TH1D& selection_histogram, TH1D& relative_selection_histogram,
+                                       Int_t fixedBin = std::numeric_limits<Int_t>::max())
+{
+    if(selection_histogram.GetNbinsX() > relative_selection_histogram.GetNbinsX())
+        throw std::runtime_error("Selection histogram has more number of bins then relative selection histogram.");
+    for(Int_t n = 1; n <= selection_histogram.GetNbinsX(); ++n) {
+        const char* label = selection_histogram.GetXaxis()->GetBinLabel(n);
+        relative_selection_histogram.GetXaxis()->SetBinLabel(n, label);
+        if(selection_histogram.GetBinContent(n) < 0.5)
+            break;
+        const Int_t refBin = n == 1 ? 1 : ( n > fixedBin ? fixedBin : n - 1 );
+        const Double_t ratio = selection_histogram.GetBinContent(n) / selection_histogram.GetBinContent(refBin);
+        relative_selection_histogram.SetBinContent(n, ratio);
+    }
+}
+
 } // namespace cuts
