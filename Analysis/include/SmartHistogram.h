@@ -264,30 +264,8 @@ private:
 
 
 template<typename ValueType>
-struct HistogramFactory { };
-
-template<>
-struct HistogramFactory<double>
-{
-    static SmartHistogram<double, TH1D>* Make() { return new SmartHistogram<double, TH1D>(); }
-};
-
-template<>
-struct HistogramFactory<float>
-{
-    static SmartHistogram<float, TH1D>* Make() { return new SmartHistogram<float, TH1D>(); }
-};
-
-template<>
-struct HistogramFactory<int>
-{
-    static SmartHistogram<int, TH1D>* Make() { return new SmartHistogram<int, TH1D>(); }
-};
-
-template<>
-struct HistogramFactory<bool>
-{
-    static SmartHistogram<bool, TH1D>* Make() { return new SmartHistogram<bool, TH1D>(); }
+struct HistogramFactory {
+    static SmartHistogram<ValueType, TH1D>* Make() { return new SmartHistogram<ValueType, TH1D>(); }
 };
 
 } // namespace root_ext
