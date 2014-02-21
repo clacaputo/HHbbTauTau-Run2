@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Wed Feb 12 10:20:09 2014 by ROOT version 5.32/00
+// Fri Feb 21 14:20:54 2014 by ROOT version 5.32/00
 // from TTree vhtree/VH Analysis Tree
-// found on file: ../../../signal_HHbbTauTau.root
+// found on file: /data/mc/analysis/Tree_RadionM500.root
 //////////////////////////////////////////////////////////
 
 #ifndef EventTree_h
@@ -20,15 +20,15 @@
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 const Int_t kMaxEvent = 1;
-const Int_t kMaxVertex = 29;
-const Int_t kMaxElectron = 4;
-const Int_t kMaxGenParticle = 1652;
+const Int_t kMaxVertex = 100;
+const Int_t kMaxElectron = 20;
+const Int_t kMaxGenParticle = 2000;
 const Int_t kMaxJet = 100;
 const Int_t kMaxMET = 1;
 const Int_t kMaxcorrMET = 1;
 const Int_t kMaxmvaMET = 1;
-const Int_t kMaxMuon = 4;
-const Int_t kMaxTau = 100;
+const Int_t kMaxMuon = 20;
+const Int_t kMaxTau = 300;
 
 class EventTree {
 public :
@@ -173,6 +173,7 @@ public :
    Int_t           GenParticle_;
    UInt_t          GenParticle_fUniqueID[kMaxGenParticle];   //[GenParticle_]
    UInt_t          GenParticle_fBits[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_index[kMaxGenParticle];   //[GenParticle_]
    Double_t        GenParticle_eta[kMaxGenParticle];   //[GenParticle_]
    Double_t        GenParticle_phi[kMaxGenParticle];   //[GenParticle_]
    Double_t        GenParticle_p[kMaxGenParticle];   //[GenParticle_]
@@ -185,13 +186,12 @@ public :
    Double_t        GenParticle_vx[kMaxGenParticle];   //[GenParticle_]
    Double_t        GenParticle_vy[kMaxGenParticle];   //[GenParticle_]
    Double_t        GenParticle_vz[kMaxGenParticle];   //[GenParticle_]
-   Int_t           GenParticle_status[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_status[kMaxGenParticle];   //[GenParticle_]
    Double_t        GenParticle_charge[kMaxGenParticle];   //[GenParticle_]
-   Int_t           GenParticle_numDaught[kMaxGenParticle];   //[GenParticle_]
-   Int_t           GenParticle_numMother[kMaxGenParticle];   //[GenParticle_]
-   Int_t           GenParticle_motherIndex[kMaxGenParticle];   //[GenParticle_]
-   vector<int>     GenParticle_motherIndices[kMaxGenParticle];
-   vector<int>     GenParticle_daughtIndices[kMaxGenParticle];
+   UInt_t          GenParticle_numDaught[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_numMother[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_motherIndex_1[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_motherIndex_2[kMaxGenParticle];   //[GenParticle_]
    Int_t           nGenParticle;
    Int_t           Jet_;
    UInt_t          Jet_fUniqueID[kMaxJet];   //[Jet_]
@@ -620,6 +620,7 @@ public :
    TBranch        *b_GenParticle_;   //!
    TBranch        *b_GenParticle_fUniqueID;   //!
    TBranch        *b_GenParticle_fBits;   //!
+   TBranch        *b_GenParticle_index;   //!
    TBranch        *b_GenParticle_eta;   //!
    TBranch        *b_GenParticle_phi;   //!
    TBranch        *b_GenParticle_p;   //!
@@ -636,9 +637,8 @@ public :
    TBranch        *b_GenParticle_charge;   //!
    TBranch        *b_GenParticle_numDaught;   //!
    TBranch        *b_GenParticle_numMother;   //!
-   TBranch        *b_GenParticle_motherIndex;   //!
-   TBranch        *b_GenParticle_motherIndices;   //!
-   TBranch        *b_GenParticle_daughtIndices;   //!
+   TBranch        *b_GenParticle_motherIndex_1;   //!
+   TBranch        *b_GenParticle_motherIndex_2;   //!
    TBranch        *b_fnGenParticle;   //!
    TBranch        *b_Jet_;   //!
    TBranch        *b_Jet_fUniqueID;   //!
@@ -943,16 +943,16 @@ public :
 #endif
 
 #ifdef EventTree_cxx
-EventTree::EventTree(TTree *tree) : fChain(0)
+EventTree::EventTree(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../../../signal_HHbbTauTau.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/data/mc/analysis/Tree_RadionM500.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("../../../signal_HHbbTauTau.root");
+         f = new TFile("/data/mc/analysis/Tree_RadionM500.root");
       }
-      TDirectory * dir = (TDirectory*)f->Get("../../../signal_HHbbTauTau.root:/treeCreator");
+      TDirectory * dir = (TDirectory*)f->Get("/data/mc/analysis/Tree_RadionM500.root:/treeCreator");
       dir->GetObject("vhtree",tree);
 
    }
@@ -1146,6 +1146,7 @@ void EventTree::Init(TTree *tree)
    fChain->SetBranchAddress("GenParticle", &GenParticle_, &b_GenParticle_);
    fChain->SetBranchAddress("GenParticle.fUniqueID", GenParticle_fUniqueID, &b_GenParticle_fUniqueID);
    fChain->SetBranchAddress("GenParticle.fBits", GenParticle_fBits, &b_GenParticle_fBits);
+   fChain->SetBranchAddress("GenParticle.index", GenParticle_index, &b_GenParticle_index);
    fChain->SetBranchAddress("GenParticle.eta", GenParticle_eta, &b_GenParticle_eta);
    fChain->SetBranchAddress("GenParticle.phi", GenParticle_phi, &b_GenParticle_phi);
    fChain->SetBranchAddress("GenParticle.p", GenParticle_p, &b_GenParticle_p);
@@ -1162,9 +1163,8 @@ void EventTree::Init(TTree *tree)
    fChain->SetBranchAddress("GenParticle.charge", GenParticle_charge, &b_GenParticle_charge);
    fChain->SetBranchAddress("GenParticle.numDaught", GenParticle_numDaught, &b_GenParticle_numDaught);
    fChain->SetBranchAddress("GenParticle.numMother", GenParticle_numMother, &b_GenParticle_numMother);
-   fChain->SetBranchAddress("GenParticle.motherIndex", GenParticle_motherIndex, &b_GenParticle_motherIndex);
-   fChain->SetBranchAddress("GenParticle.motherIndices", GenParticle_motherIndices, &b_GenParticle_motherIndices);
-   fChain->SetBranchAddress("GenParticle.daughtIndices", GenParticle_daughtIndices, &b_GenParticle_daughtIndices);
+   fChain->SetBranchAddress("GenParticle.motherIndex_1", GenParticle_motherIndex_1, &b_GenParticle_motherIndex_1);
+   fChain->SetBranchAddress("GenParticle.motherIndex_2", GenParticle_motherIndex_2, &b_GenParticle_motherIndex_2);
    fChain->SetBranchAddress("nGenParticle", &nGenParticle, &b_fnGenParticle);
    fChain->SetBranchAddress("Jet", &Jet_, &b_Jet_);
    fChain->SetBranchAddress("Jet.fUniqueID", Jet_fUniqueID, &b_Jet_fUniqueID);
