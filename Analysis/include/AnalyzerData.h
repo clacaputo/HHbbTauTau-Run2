@@ -17,63 +17,42 @@
 
 #include "SmartHistogram.h"
 
-#define DATA_ENTRY(type, name, ...) \
-    type&  name() { \
-        if(!Contains(#name)) \
-            data[#name] = new type(__VA_ARGS__); \
-        return Get< type >(#name); } \
-    /**/
-
-#define MAP_DATA_ENTRY(type, name, ...) \
+#define ENTRY_1D(type, name, ...) \
     template<typename Key> \
-    type& name(const Key& key) { \
-        std::ostringstream ss; \
-        ss << #name << "_" << key; \
-        const std::string& full_name = ss.str(); \
-        if(!Contains(full_name)) { \
-            type* object = new type(__VA_ARGS__); \
-            TObject* clone = object->Clone(full_name.c_str()); \
-            delete object; \
-            data[full_name] = clone; \
-        } \
-        return Get< type >(full_name); \
+    root_ext::SmartHistogram< type >& name(const Key& key) { \
+        std::ostringstream ss_key; \
+        ss_key << key; \
+        type* t = nullptr; \
+        return Get(t, #name, ss_key.str(), ##__VA_ARGS__); \
+    } \
+    root_ext::SmartHistogram< type >& name() { \
+        return name<std::string>(""); \
     } \
     /**/
 
-#define TH1D_ENTRY(name, nbinsx, xlow, xup) DATA_ENTRY(TH1D, name, #name, #name, nbinsx, xlow, xup)
-#define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
-#define TH1D_MAP_ENTRY(name, nbinsx, xlow, xup) MAP_DATA_ENTRY(TH1D,name, #name, #name, nbinsx, xlow, xup)
-#define TH1D_MAP_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_MAP_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
+#define ENTRY_2D(type, name, ...) \
+    template<typename Key> \
+    root_ext::SmartHistogram< std::pair<type, type> >& name(const Key& key) { \
+        std::ostringstream ss_key; \
+        ss_key << key; \
+        std::pair<type, type>* t = nullptr; \
+        return Get(t, #name, ss_key.str(), ##__VA_ARGS__); \
+    } \
+    root_ext::SmartHistogram< std::pair<type, type> >& name() { \
+        return name<std::string>(""); \
+    } \
+    /**/
 
-#define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) DATA_ENTRY(TH2D, name, #name, #name, nbinsx, xlow, xup,\
-        nbinsy, ylow, yup)
+#define TH1D_ENTRY(name, nbinsx, xlow, xup) ENTRY_1D(TH1D, name, nbinsx, xlow, xup)
+#define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
+
+#define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
+    ENTRY_1D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
 #define TH2D_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
     TH2D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
-#define TH2D_MAP_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
-    MAP_DATA_ENTRY(TH2D, name, #name, #name, nbinsx, xlow, xup, nbinsy, ylow, yup)
-#define TH2D_MAP_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
-    TH2D_MAP_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
-
 
 namespace root_ext {
 class AnalyzerData {
-protected:
-    typedef std::map<std::string, TObject*> DataMap;
-    typedef std::map< std::string, AbstractHistogram* > SmartDataMap;
-    DataMap data;
-    SmartDataMap smartData;
-
-    bool Contains(const std::string& name) const
-    {
-        return data.find(name) != data.end();
-    }
-
-    template<typename T>
-    T& Get(const std::string& name)
-    {
-        return *static_cast<T*>(data[name]);
-    }
-
 public:
     AnalyzerData() : outputFile(nullptr), ownOutputFile(false) {}
     AnalyzerData(const std::string& outputFileName)
@@ -94,11 +73,7 @@ public:
     virtual ~AnalyzerData()
     {
         cd();
-        for(DataMap::iterator iter = data.begin(); iter != data.end(); ++iter) {
-            iter->second->Write();
-            delete iter->second;
-        }
-        for(const auto& iter : smartData) {
+        for(const auto& iter : data) {
             iter.second->WriteRootHistogram();
             delete iter.second;
         }
@@ -115,26 +90,51 @@ public:
             outputFile->cd(directoryName.c_str());
     }
 
-    template<typename ValueType>
-    SmartHistogram<ValueType, TH1D>& getSmart(const std::string& name)
+    bool Contains(const std::string& name) const
     {
-        if(!smartData.count(name)) {
-            AbstractHistogram* h = HistogramFactory<ValueType>::Make();
-            h->setName(name);
-            smartData[name] = h;
-        }
+        return data.find(name) != data.end();
+    }
 
-        return *static_cast< SmartHistogram<ValueType, TH1D>* >(smartData[name]);
+    void Erase(const std::string& name)
+    {
+        auto iter = data.find(name);
+        if(iter != data.end()) {
+            delete iter->second;
+            data.erase(iter);
+        }
+    }
+
+    template<typename ValueType, typename ...Args>
+    SmartHistogram<ValueType>& Get(ValueType*, const std::string& name, const std::string& suffix, Args... args)
+    {
+        std::string full_name =  name;
+        if(suffix.size())
+            full_name += "_" + suffix;
+        if(!data.count(full_name)) {
+            AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
+            data[full_name] = h;
+        }
+        return *static_cast< SmartHistogram<ValueType>* >(data[full_name]);
     }
 
     template<typename ValueType>
-    SmartHistogram<ValueType, TH1D>& getSmart(const std::string& name, const std::string& suffix)
+    SmartHistogram<ValueType>& Get(const std::string& name)
     {
-        const std::string full_name = name + "_" + suffix;
-        return getSmart<ValueType>(full_name);
+        ValueType *t = nullptr;
+        return Get(t, name, "");
+    }
+
+    template<typename ValueType>
+    SmartHistogram<ValueType>& Get(const std::string& name, const std::string& suffix)
+    {
+        ValueType *t = nullptr;
+        return Get(t, name, suffix);
     }
 
 private:
+    typedef std::map< std::string, AbstractHistogram* > DataMap;
+    DataMap data;
+
     TFile* outputFile;
     bool ownOutputFile;
     std::string directoryName;

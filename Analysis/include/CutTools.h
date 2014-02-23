@@ -111,4 +111,34 @@ void fill_relative_selection_histogram(const TH1D& selection_histogram, TH1D& re
     }
 }
 
+class Cutter {
+public:
+    Cutter(TH1D& _counter_histogram, TH1D& _selection_histogram, bool _enabled = true)
+        : enabled(_enabled), param_id(-1), counter_histogram(&_counter_histogram),
+          selection_histogram(&_selection_histogram) {}
+
+    bool Enabled() const { return enabled; }
+    int CurrentParamId() const { return param_id; }
+
+    void operator()(bool expected, const std::string& label)
+    {
+        if(enabled)
+            apply_cut(expected, *counter_histogram, ++param_id, *selection_histogram, label);
+    }
+
+    bool test(bool expected, const std::string& label)
+    {
+        try {
+            (*this)(expected, label);
+            return true;
+        } catch(cut_failed&) {}
+        return false;
+    }
+
+private:
+    bool enabled;
+    int param_id;
+    TH1D *counter_histogram, *selection_histogram;
+};
+
 } // namespace cuts

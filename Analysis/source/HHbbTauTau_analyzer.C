@@ -31,24 +31,21 @@ namespace ntuple {
 #include "../include/CutTools.h"
 #include "../include/GenParticle.h"
 
+#define SELECTION_ENTRY(name, n_bins) \
+    TH1D_ENTRY_FIX(name, 1, n_bins, -0.5) \
+    TH1D_ENTRY_FIX(name##_relative, 1, n_bins, -0.5) \
+    /**/
+
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
     SignalAnalyzerData(const std::string& outputFileName) : AnalyzerData(outputFileName) {}
-    TH1D_ENTRY(Pt_muon, 100, 0, 100)
-    TH1D_ENTRY(Pt_tau, 100, 0, 100)
-    TH1D_ENTRY(N_realtau, 100, 0, 100)
+    ~SignalAnalyzerData() { Erase("Counter"); }
 
-    TH1D_ENTRY_FIX(EventSelection, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(MuonSelection, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(TauSelection, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(ElectronSelection, 1, 15, -0.5)
-    TH1D_MAP_ENTRY_FIX(BJetSelection, 1, 15, -0.5)
-
-    TH1D_ENTRY_FIX(EventSelection_relative, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(MuonSelection_relative, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(TauSelection_relative, 1, 15, -0.5)
-    TH1D_ENTRY_FIX(ElectronSelection_relative, 1, 15, -0.5)
-    TH1D_MAP_ENTRY_FIX(BJetSelection_relative, 1, 15, -0.5)
+    SELECTION_ENTRY(EventSelection, 15)
+    SELECTION_ENTRY(MuonSelection, 15)
+    SELECTION_ENTRY(TauSelection, 15)
+    SELECTION_ENTRY(ElectronSelection, 15)
+    SELECTION_ENTRY(BJetSelection, 15)
 
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
 };
@@ -65,12 +62,12 @@ const unsigned N_bjet_Medium = 1;
 
 #define X(name) \
     cuts::fill_histogram( event->name[id], \
-    _anaData.getSmart< std::remove_reference< decltype(event->name[id]) >::type >(#name) )
+    _anaData.Get< std::remove_reference< decltype(event->name[id]) >::type >(#name) )
 
 
 #define XX(name, suffix) \
     cuts::fill_histogram( event->name[id], \
-    _anaData.getSmart< std::remove_reference< decltype(event->name[id]) >::type >(#name, suffix) )
+    _anaData.Get< std::remove_reference< decltype(event->name[id]) >::type >(#name, suffix) )
 
 
 class HHbbTauTau_analyzer
@@ -117,12 +114,7 @@ private:
 //        const analysis::GenEvent genEvent(*event);
 //        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
 
-        int param_id = -1;
-        const auto cut = [&](bool expected, const std::string& label)
-            { cuts::apply_cut(expected, anaData.EventSelection(), ++param_id, anaData.EventSelection(), label); };
-
-        const auto try_cut = [&](bool expected, const std::string& label)
-            { try { cut(expected, label); } catch(cuts::cut_failed&) {} };
+        cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
         cut(true, "total");
         const IndexVector muons = CollectMuons();
@@ -135,33 +127,61 @@ private:
         cut(!electrons.size(), "no_electron");
         const IndexVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
         const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
-        try_cut(b_jets_loose.size() == 2, "2b_loose");
-        try_cut(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
-        try_cut(b_jets_medium.size() == 2, "2b_medium");
-        try_cut(b_jets_loose.size() >= 2, ">=2b_loose");
-        try_cut(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
-        try_cut(b_jets_medium.size() >= 2, ">=2b_medium");
+        cut.test(b_jets_loose.size() == 2, "2b_loose");
+        cut.test(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
+        cut.test(b_jets_medium.size() == 2, "2b_medium");
+        cut.test(b_jets_loose.size() >= 2, ">=2b_loose");
+        cut.test(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
+        cut.test(b_jets_medium.size() >= 2, ">=2b_medium");
+    }
+
+    template<typename BaseSelector, typename ValueType>
+    IndexVector CollectObjects(TH1D& selection_histogram, Int_t n_objects,
+                               const BaseSelector base_selector, const ValueType* values_to_compare)
+    {
+        const auto selector = [&](unsigned id) { base_selector(id, true, anaDataBeforeCut); };
+
+        const auto comparitor = [&](unsigned a, unsigned b) -> bool
+            { return values_to_compare[a] >  values_to_compare[b]; };
+
+        const auto selected = cuts::collect_objects(anaData.Counter(), selection_histogram, n_objects, selector,
+                                                    comparitor);
+        for(Int_t id : selected) base_selector(id, false, anaDataAfterCut);
+        return selected;
     }
 
     IndexVector CollectMuons()
     {
-        const auto selector = [&](unsigned id) { SelectMuon(id, true, anaDataBeforeCut); };
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+            { SelectMuon(id, apply_cut, _anaData); };
+        return CollectObjects(anaData.MuonSelection(), event->nMuon, base_selector, event->Muon_pt);
+    }
 
-        const auto comparitor = [&](unsigned a, unsigned b) -> bool
-            { return event->Muon_pt[a] >  event->Muon_pt[b]; };
+    IndexVector CollectTaus()
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+            { SelectTau(id, apply_cut, _anaData); };
+        return CollectObjects(anaData.TauSelection(), event->nTau, base_selector, event->Tau_pt);
+    }
 
-        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.MuonSelection(), event->nMuon, selector,
-                                                    comparitor);
-        for(Int_t id : selected) SelectMuon(id, false, anaDataAfterCut);
-        return selected;
+    IndexVector CollectElectrons()
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+            { SelectElectron(id, apply_cut, _anaData); };
+        return CollectObjects(anaData.ElectronSelection(), event->nElectron, base_selector, event->Electron_pt);
+    }
+
+    IndexVector CollectBJets(double csv, const std::string& selection_label)
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+            { SelectBJet(id, csv, selection_label, apply_cut, _anaData); };
+        return CollectObjects(anaData.BJetSelection(selection_label), event->nJet, base_selector, event->Jet_pt);
     }
 
     void SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::muonID;
-        int param_id = -1;
-        const auto cut = [&](bool expected, const std::string& label)
-            { if(apply_cut) cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.MuonSelection(), label); };
+        cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), apply_cut);
 
         cut(true, ">0 mu cand");
         cut(X(Muon_pt) > pt, "pt");
@@ -178,25 +198,10 @@ private:
         cut(X(Muon_pfRelIso) < pFRelIso, "pFRelIso");
     }
 
-    IndexVector CollectTaus()
-    {
-        const auto selector = [&](unsigned id) { SelectTau(id, true, anaDataBeforeCut); };
-
-        const auto comparitor = [&](unsigned a, unsigned b) -> bool
-            { return event->Tau_pt[a] >  event->Tau_pt[b]; };
-
-        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.TauSelection(), event->nTau, selector,
-                                                    comparitor);
-        for(Int_t id : selected) SelectTau(id, false, anaDataAfterCut);
-        return selected;
-    }
-
     void SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::tauID;
-        int param_id = -1;
-        const auto cut = [&](bool expected, const std::string& label)
-            { if(apply_cut) cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.TauSelection(), label); };
+        cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), apply_cut);
 
         cut(true, ">0 tau cand");
         cut(X(Tau_pt) > pt, "pt");
@@ -207,27 +212,10 @@ private:
         cut(X(Tau_againstElectronLoose) > againstElectronLoose, "vs_e_loose");
     }
 
-    IndexVector CollectElectrons()
-    {
-        const auto selector = [&](unsigned id) { SelectElectron(id, true, anaDataBeforeCut); };
-
-        const auto comparitor = [&](unsigned a, unsigned b) -> bool
-            { return event->Electron_pt[a] >  event->Electron_pt[b]; };
-
-        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.ElectronSelection(),
-                                     event->nElectron, selector, comparitor);
-        for(Int_t id : selected) SelectElectron(id, false, anaDataAfterCut);
-        return selected;
-
-    }
-
     void SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::electronID;
-        int param_id = -1;
-        const auto cut = [&](bool expected, const std::string& label)
-            { if(apply_cut)
-                cuts::apply_cut(expected, anaData.Counter(), ++param_id, anaData.ElectronSelection(), label); };
+        cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), apply_cut);
 
         cut(true, ">0 ele cand");
         cut(X(Electron_pt) > pt, "pt");
@@ -242,27 +230,11 @@ private:
         cut(X(Electron_mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
     }
 
-    IndexVector CollectBJets(double csv, const std::string& selection_label)
-    {
-        const auto selector = [&](unsigned id) { SelectBJet(id, csv, selection_label, true, anaDataBeforeCut); };
-
-        const auto comparitor = [&](unsigned a, unsigned b) -> bool
-            { return event->Jet_pt[a] >  event->Jet_pt[b]; };
-
-        const auto selected = cuts::collect_objects(anaData.Counter(), anaData.BJetSelection(selection_label),
-                                     event->nJet, selector, comparitor);
-        for(Int_t id : selected) SelectBJet(id, csv, selection_label, false, anaDataAfterCut);
-        return selected;
-    }
-
     void SelectBJet(Int_t id, double csv, const std::string& selection_label, bool apply_cut,
                     root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::btag;
-        int param_id = -1;
-        const auto cut = [&](bool expected, const std::string& label)
-            { if(apply_cut) cuts::apply_cut(expected, anaData.Counter(), ++param_id,
-                              anaData.BJetSelection(selection_label), label); };
+        cuts::Cutter cut(anaData.Counter(), anaData.BJetSelection(selection_label), apply_cut);
 
         cut(true, ">0 b-jet cand");
         cut(XX(Jet_pt, selection_label) > pt, "pt");
