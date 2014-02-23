@@ -20,27 +20,17 @@
 #define ENTRY_1D(type, name, ...) \
     template<typename Key> \
     root_ext::SmartHistogram< type >& name(const Key& key) { \
-        std::ostringstream ss_key; \
-        ss_key << key; \
-        type* t = nullptr; \
-        return Get(t, #name, ss_key.str(), ##__VA_ARGS__); \
+        return Get((type*)nullptr, #name, key, ##__VA_ARGS__); \
     } \
-    root_ext::SmartHistogram< type >& name() { \
-        return name<std::string>(""); \
-    } \
+    root_ext::SmartHistogram< type >& name() { return name(""); } \
     /**/
 
 #define ENTRY_2D(type, name, ...) \
     template<typename Key> \
     root_ext::SmartHistogram< std::pair<type, type> >& name(const Key& key) { \
-        std::ostringstream ss_key; \
-        ss_key << key; \
-        std::pair<type, type>* t = nullptr; \
-        return Get(t, #name, ss_key.str(), ##__VA_ARGS__); \
+        return Get((std::pair<type, type>*)nullptr, #name, key, ##__VA_ARGS__); \
     } \
-    root_ext::SmartHistogram< std::pair<type, type> >& name() { \
-        return name<std::string>(""); \
-    } \
+    root_ext::SmartHistogram< std::pair<type, type> >& name() { return name(""); } \
     /**/
 
 #define TH1D_ENTRY(name, nbinsx, xlow, xup) ENTRY_1D(TH1D, name, nbinsx, xlow, xup)
@@ -104,12 +94,14 @@ public:
         }
     }
 
-    template<typename ValueType, typename ...Args>
-    SmartHistogram<ValueType>& Get(ValueType*, const std::string& name, const std::string& suffix, Args... args)
+    template<typename ValueType, typename KeySuffix, typename ...Args>
+    SmartHistogram<ValueType>& Get(ValueType*, const std::string& name, const KeySuffix& suffix, Args... args)
     {
+        std::ostringstream ss_suffix;
+        ss_suffix << suffix;
         std::string full_name =  name;
-        if(suffix.size())
-            full_name += "_" + suffix;
+        if(ss_suffix.str().size())
+            full_name += "_" + ss_suffix.str();
         if(!data.count(full_name)) {
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
@@ -118,17 +110,16 @@ public:
     }
 
     template<typename ValueType>
-    SmartHistogram<ValueType>& Get(const std::string& name)
+    SmartHistogram<ValueType>& Get(ValueType* null_value, const std::string& name)
     {
-        ValueType *t = nullptr;
-        return Get(t, name, "");
+        return Get(null_value, name, "");
     }
 
+
     template<typename ValueType>
-    SmartHistogram<ValueType>& Get(const std::string& name, const std::string& suffix)
+    SmartHistogram<ValueType>& Get(const std::string& name)
     {
-        ValueType *t = nullptr;
-        return Get(t, name, suffix);
+        return Get((ValueType*)nullptr, name, "");
     }
 
 private:

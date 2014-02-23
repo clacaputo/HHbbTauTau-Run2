@@ -7,6 +7,7 @@
  */
 
 #include <vector>
+#include <set>
 #include <type_traits>
 #include <boost/shared_ptr.hpp>
 
@@ -31,23 +32,48 @@ namespace ntuple {
 #include "../include/CutTools.h"
 #include "../include/GenParticle.h"
 
-#define SELECTION_ENTRY(name, n_bins) \
-    TH1D_ENTRY_FIX(name, 1, n_bins, -0.5) \
-    TH1D_ENTRY_FIX(name##_relative, 1, n_bins, -0.5) \
+
+#define SELECTION_ENTRY(name, n_bins, ...) \
+    template<typename ...Args> \
+    root_ext::SmartHistogram< TH1D >& name(const Args& ...args) { \
+        auto abs = &name##_abs(args...); \
+        auto rel = &name##_rel(args...); \
+        selectionDescriptors[abs] = SelectionDescriptor(abs, rel, ##__VA_ARGS__); \
+        return name##_abs(args...); } \
+    TH1D_ENTRY_FIX(name##_abs, 1, n_bins, -0.5) \
+    TH1D_ENTRY_FIX(name##_rel, 1, n_bins, -0.5) \
     /**/
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
-    SignalAnalyzerData(const std::string& outputFileName) : AnalyzerData(outputFileName) {}
-    ~SignalAnalyzerData() { Erase("Counter"); }
+    struct SelectionDescriptor {
+        root_ext::SmartHistogram<TH1D> *absolute, *relative;
+        Int_t fix_bin;
+        SelectionDescriptor(root_ext::SmartHistogram<TH1D> *abs = nullptr,
+                            root_ext::SmartHistogram<TH1D> *rel = nullptr,
+                            Int_t fix = std::numeric_limits<Int_t>::max())
+            : absolute(abs), relative(rel), fix_bin(fix) {}
+    };
 
-    SELECTION_ENTRY(EventSelection, 15)
+public:
+    SignalAnalyzerData(const std::string& outputFileName) : AnalyzerData(outputFileName) {}
+    ~SignalAnalyzerData()
+    {
+        Erase("Counter");
+        for(const auto& desc : selectionDescriptors)
+            cuts::fill_relative_selection_histogram(*desc.second.absolute, *desc.second.relative, desc.second.fix_bin);
+    }
+
+    SELECTION_ENTRY(EventSelection, 15, 5)
     SELECTION_ENTRY(MuonSelection, 15)
     SELECTION_ENTRY(TauSelection, 15)
     SELECTION_ENTRY(ElectronSelection, 15)
     SELECTION_ENTRY(BJetSelection, 15)
 
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
+
+private:
+    std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
 };
 
 using ntuple::EventTree;
@@ -60,15 +86,8 @@ const unsigned N_bjet_Medium = 1;
 }
 }
 
-#define X(name) \
-    cuts::fill_histogram( event->name[id], \
-    _anaData.Get< std::remove_reference< decltype(event->name[id]) >::type >(#name) )
-
-
-#define XX(name, suffix) \
-    cuts::fill_histogram( event->name[id], \
-    _anaData.Get< std::remove_reference< decltype(event->name[id]) >::type >(#name, suffix) )
-
+#define X(name, ...) \
+    cuts::fill_histogram( event->name[id], _anaData.Get(&event->name[id], #name, ##__VA_ARGS__) )
 
 class HHbbTauTau_analyzer
 {
@@ -103,8 +122,6 @@ public:
                 ProcessEvent();
             } catch(cuts::cut_failed&) {}
         }
-
-        FillRelativeSelectionHistograms();
     }
 
 private:
@@ -125,6 +142,7 @@ private:
         cut(mu_tau_pairs.size(), "mu_tau");
         const IndexVector electrons = CollectElectrons();
         cut(!electrons.size(), "no_electron");
+
         const IndexVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
         const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
         cut.test(b_jets_loose.size() == 2, "2b_loose");
@@ -142,7 +160,7 @@ private:
         const auto selector = [&](unsigned id) { base_selector(id, true, anaDataBeforeCut); };
 
         const auto comparitor = [&](unsigned a, unsigned b) -> bool
-            { return values_to_compare[a] >  values_to_compare[b]; };
+            { return values_to_compare[a] > values_to_compare[b]; };
 
         const auto selected = cuts::collect_objects(anaData.Counter(), selection_histogram, n_objects, selector,
                                                     comparitor);
@@ -237,9 +255,9 @@ private:
         cuts::Cutter cut(anaData.Counter(), anaData.BJetSelection(selection_label), apply_cut);
 
         cut(true, ">0 b-jet cand");
-        cut(XX(Jet_pt, selection_label) > pt, "pt");
-        cut(std::abs( XX(Jet_eta, selection_label) ) < eta, "eta");
-        cut(XX(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
+        cut(X(Jet_pt, selection_label) > pt, "pt");
+        cut(std::abs( X(Jet_eta, selection_label) ) < eta, "eta");
+        cut(X(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
     }
 
     IndexPairVector FindCompatibleLeptonCombinations(const IndexVector& muons, const IndexVector& taus)
@@ -256,16 +274,6 @@ private:
             }
         }
         return result;
-    }
-
-    void FillRelativeSelectionHistograms()
-    {
-        cuts::fill_relative_selection_histogram(anaData.EventSelection(), anaData.EventSelection_relative(), 5);
-        cuts::fill_relative_selection_histogram(anaData.MuonSelection(), anaData.MuonSelection_relative());
-        cuts::fill_relative_selection_histogram(anaData.TauSelection(), anaData.TauSelection_relative());
-        cuts::fill_relative_selection_histogram(anaData.ElectronSelection(), anaData.ElectronSelection_relative());
-        cuts::fill_relative_selection_histogram(anaData.BJetSelection("loose"), anaData.BJetSelection_relative("loose"));
-        cuts::fill_relative_selection_histogram(anaData.BJetSelection("medium"), anaData.BJetSelection_relative("medium"));
     }
 
 private:
