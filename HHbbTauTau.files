@@ -8,4 +8,11 @@ Analysis/include/Htautau_Summer13.h
 Analysis/include/CutTools.h
 Analysis/include/GenParticle.h
 Analysis/include/SmartHistogram.h
+<<<<<<< HEAD
 Analysis/include/iostream_operators.h
+=======
+PrintTools/include/RootPrintTools.h
+PrintTools/include/RootPrintToPdf.h
+PrintTools/source/Print_Selection.C
+PrintTools/include/RootPrintSource.h
+>>>>>>> 3de1fda2e683e1d8c8b03ad7af04fd538eb93643
