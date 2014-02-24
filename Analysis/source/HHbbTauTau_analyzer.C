@@ -138,11 +138,18 @@ private:
         const analysis::GenEvent genEvent(*event);
         //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
 
-        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes, particles::HardInteractionProduct);
         if (resonances.size() != 1)
             throw std::runtime_error("not one resonance per event");
 
         const analysis::GenParticle& resonance = **resonances.begin();
+        if (resonance.MissingDaughter)
+            throw std::runtime_error("resonance has no daughters");
+        std::cout << "N resonance daughters = " << resonance.daughters.size() << std::endl;
+//        if (resonance.daughters.size() != 2)
+//            throw std::runtime_error("the candidate resonance has not 2 daughters");
+
+//        genEvent.Print();
 
         anaData.Radion_Mass().Fill(resonance.momentum.M());
         anaData.Radion_Pt().Fill(resonance.momentum.Pt());

@@ -13,6 +13,7 @@
 #include <TLorentzVector.h>
 
 #include "../include/Particles.h"
+#include "../include/iostream_operators.h"
 
 namespace analysis {
 
@@ -124,24 +125,44 @@ public:
             if (particle.second->daughters.size() !=
                     event.GenParticle_numDaught[particle.second->GenParticle_index])
                 particle.second->MissingDaughter = true;
-            if (particle.second->status == particles::FinalStateParticle ||
-                    particle.second->status == particles::Decayed_or_fragmented)
-                particleCodeMap[particle.second->pdg.Code].insert(particle.second.get());
+            particleCodeMap[particle.second->pdg.Code].insert(particle.second.get());
         }
-
     }
 
-    GenParticleSet GetParticles(const ParticleCodes& particleCodes) const {
+    GenParticleSet GetParticles(const ParticleCodes& particleCodes,
+                                particles::Status status = particles::Decayed_or_fragmented ) const {
         GenParticleSet results;
         for (const particles::ParticleCode& code : particleCodes){
             const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(code);
             if (code_iter == particleCodeMap.end())
                 continue;
             for (GenParticle* particle : code_iter->second){
-                results.insert(particle);
+                if (particle->status == status)
+                    results.insert(particle);
             }
         }
         return results;
+    }
+
+    void Print() const {
+        for (const GenParticle* particle : primaryParticles){
+            PrintChain(particle);
+        }
+    }
+
+    void PrintChain(const GenParticle* particle, unsigned iteration = 0) const
+    {
+        const particles::PdgParticle pdgParticle(particle->pdg);
+        const particles::Status particleStatus = particles::NameProvider<particles::Status>::Convert(particle->status);
+        const TLorentzVector genParticle_momentum = particle->momentum;
+        for (unsigned n = 0; n < iteration; ++n)
+            std::cout << "  ";
+        std::cout << "index=" << particle->index << " name=" << pdgParticle << " status=" << particleStatus
+                  <<  " pt= " << genParticle_momentum.Pt() <<"\n";
+        for(unsigned n = 0; n < particle->daughters.size(); ++n) {
+            const GenParticle* daughter = particle->daughters.at(n);
+                PrintChain(daughter,iteration+1);
+        }
     }
 };
 
