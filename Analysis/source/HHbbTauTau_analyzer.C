@@ -39,7 +39,7 @@ namespace ntuple {
         auto abs = &name##_abs(args...); \
         auto rel = &name##_rel(args...); \
         selectionDescriptors[abs] = SelectionDescriptor(abs, rel, ##__VA_ARGS__); \
-        return name##_abs(args...); } \
+        return *abs; } \
     TH1D_ENTRY_FIX(name##_abs, 1, n_bins, -0.5) \
     TH1D_ENTRY_FIX(name##_rel, 1, n_bins, -0.5) \
     /**/
@@ -59,7 +59,7 @@ public:
     SignalAnalyzerData(const std::string& outputFileName) : AnalyzerData(outputFileName) {}
     ~SignalAnalyzerData()
     {
-        Erase("Counter");
+        Erase(Counter().Name());
         for(const auto& desc : selectionDescriptors)
             cuts::fill_relative_selection_histogram(*desc.second.absolute, *desc.second.relative, desc.second.fix_bin);
     }
