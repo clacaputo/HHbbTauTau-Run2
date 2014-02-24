@@ -18,68 +18,83 @@ namespace analysis {
 
 class GenParticle;
 
-typedef std::vector< boost::shared_ptr<GenParticle> > GenParticleVector;
-typedef std::map<size_t, boost::shared_ptr<GenParticle> > GenParticleMap;
+typedef std::vector< GenParticle* > GenParticleVector;
+typedef std::set< GenParticle* > GenParticleSet;
+typedef std::map<size_t, boost::shared_ptr<GenParticle>> GenParticleMap;
+typedef std::map<particles::ParticleCode, GenParticleSet> ParticleCodeMap;
+typedef std::vector<particles::ParticleCode> ParticleCodes;
 
 class GenParticle {
 public:
-    size_t index;
+    size_t GenParticle_index,index;
     particles::PdgParticle pdg;
     particles::Status status;
     TLorentzVector momentum;
-    TVector3 direction;
     GenParticleVector mothers;
     GenParticleVector daughters;
+    bool MissingMother;
+    bool MissingDaughter;
 
 public:
     template<typename EventTree>
-    GenParticle(size_t _index, const EventTree& event)
-        : index(_index)
+    GenParticle(size_t n, const EventTree& event)
+        : GenParticle_index(n), index(event.GenParticle_index[n]), MissingMother(false), MissingDaughter(false)
     {
-        if(event.nGenParticle < 0 || index >= static_cast<size_t>(event.nGenParticle))
+
+        if(event.nGenParticle < 0 || GenParticle_index >= static_cast<size_t>(event.nGenParticle))
             throw std::runtime_error("GenParticles index is out of range.");
-        pdg = particles::PdgParticle(event.GenParticle_pdgId[index]);
-        status = particles::NameProvider<particles::Status>::Convert(event.GenParticle_status[index]);
-        momentum.SetXYZT(event.GenParticle_px[index], event.GenParticle_py[index], event.GenParticle_pz[index],
-                         event.GenParticle_energy[index]);
-        direction.SetPtEtaPhi(event.GenParticle_pt[index], event.GenParticle_eta[index], event.GenParticle_phi[index]);
+        pdg = particles::PdgParticle(event.GenParticle_pdgId[GenParticle_index]);
+        status = particles::NameProvider<particles::Status>::Convert(event.GenParticle_status[GenParticle_index]);
+        momentum.SetXYZT(event.GenParticle_px[GenParticle_index], event.GenParticle_py[GenParticle_index],
+                         event.GenParticle_pz[GenParticle_index],event.GenParticle_energy[GenParticle_index]);
     }
 
     template<typename EventTree>
-    void Initialize(const EventTree& event, const GenParticleVector& particles)
+    void Initialize(const EventTree& event, const GenParticleMap& particles)
     {
         mothers.clear();
         daughters.clear();
-        const size_t n_mothers = event.GenParticle_motherIndices[index].size();
-        const size_t n_daughters = event.GenParticle_daughtIndices[index].size();
+        const size_t n_mothers = event.GenParticle_numMother[GenParticle_index];
+        const size_t n_daughters = event.GenParticle_numDaught[GenParticle_index];
         mothers.reserve(n_mothers);
         daughters.reserve(n_daughters);
 
-        if( event.GenParticle_numMother[index] < 0
-                || static_cast<size_t>(event.GenParticle_numMother[index]) != n_mothers ) {
-            std::cerr << "index=" << index << "num=" << event.GenParticle_numMother[index]
-                         << ",n=" << n_mothers << std::endl;
 
-            throw std::runtime_error("Inconsistent GenParticles mother relations in the input event.");
+        bool noMother1 = false;
+        bool noMother2 = false;
+
+        if (event.GenParticle_motherIndex_1[GenParticle_index] != std::numeric_limits<unsigned>::max()){
+            GenParticleMap::const_iterator particle_iter_1 = particles.find(event.GenParticle_motherIndex_1[GenParticle_index]);
+            if (particle_iter_1 != particles.end()){
+                GenParticle* mother = particle_iter_1->second.get();
+                mothers.push_back(mother);
+                //GenParticle* daughter = this;
+                mother->daughters.push_back(this);
+            }
+            else noMother1 = true;
         }
-//        if( event.GenParticle_numDaught[index] < 0
-//                || static_cast<size_t>(event.GenParticle_numDaught[index]) != n_daughters ) {
-//            std::cerr << "index=" << index << "num=" << event.GenParticle_numDaught[index]
-//                         << ",n=" << n_daughters << std::endl;
-//            throw std::runtime_error("Inconsistent GenParticles daughter relations in the input event.");
-//        }
 
-        for(size_t n = 0; n < n_mothers; ++n)
-            mothers.push_back(particles.at(event.GenParticle_motherIndices[index].at(n)));
-//        for(size_t n = 0; n < n_daughters; ++n)
-//            daughters.push_back(particles.at(event.GenParticle_daughtIndices[index].at(n)));
+        if (event.GenParticle_motherIndex_2[GenParticle_index] != std::numeric_limits<unsigned>::max()){
+            GenParticleMap::const_iterator particle_iter_2 = particles.find(event.GenParticle_motherIndex_2[GenParticle_index]);
+            if (particle_iter_2 != particles.end()){
+                GenParticle* mother = particle_iter_2->second.get();
+                mothers.push_back(mother);
+                //GenParticle* daughter = this;
+                mother->daughters.push_back(this);
+            }
+            else noMother2 = true;
+        }
+
+        if (noMother1 || noMother2) MissingMother = true;
     }
 
 };
 
 class GenEvent {
 public:
-    GenParticleVector particles;
+    GenParticleMap genParticles;
+    ParticleCodeMap particleCodeMap;
+    GenParticleSet primaryParticles;
 
 public:
     template<typename EventTree>
@@ -88,12 +103,45 @@ public:
         if(event.nGenParticle < 0)
             throw std::runtime_error("Number of GenParticles in the event is less than 0.");
         const size_t n_genParticles = static_cast<size_t>(event.nGenParticle);
-        std::cout << "N_gen=" << n_genParticles << std::endl;
-        particles.reserve(n_genParticles);
-        for(size_t n = 0; n < n_genParticles; ++n)
-            particles.push_back(boost::shared_ptr<GenParticle>(new GenParticle(n, event)));
-        for(auto& particle : particles)
-            particle->Initialize(event, particles);
+        //std::cout << "N_gen=" << n_genParticles << std::endl;
+        for(size_t n = 0; n < n_genParticles; ++n){
+            auto particle = boost::shared_ptr<GenParticle>(new GenParticle(n, event));
+            genParticles[particle->index]=particle;
+        }
+        for(GenParticleMap::value_type& particle : genParticles){
+            particle.second->Initialize(event, genParticles);
+            if (!particle.second->MissingMother && particle.second->mothers.size() !=
+                    event.GenParticle_numMother[particle.second->GenParticle_index])
+                throw std::runtime_error("inconsistent number of mothers");
+            if (particle.second->mothers.size() == 0 && !particle.second->MissingMother){
+                GenParticle* primaryParticle = particle.second.get();
+                primaryParticles.insert(primaryParticle);
+            }
+        }
+        //std::cout << "primary particles = " << primaryParticles.size() << std::endl;
+
+        for(GenParticleMap::value_type& particle : genParticles){
+            if (particle.second->daughters.size() !=
+                    event.GenParticle_numDaught[particle.second->GenParticle_index])
+                particle.second->MissingDaughter = true;
+            if (particle.second->status == particles::FinalStateParticle ||
+                    particle.second->status == particles::Decayed_or_fragmented)
+                particleCodeMap[particle.second->pdg.Code].insert(particle.second.get());
+        }
+
+    }
+
+    GenParticleSet GetParticles(const ParticleCodes& particleCodes) const {
+        GenParticleSet results;
+        for (const particles::ParticleCode& code : particleCodes){
+            const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(code);
+            if (code_iter == particleCodeMap.end())
+                continue;
+            for (GenParticle* particle : code_iter->second){
+                results.insert(particle);
+            }
+        }
+        return results;
     }
 };
 

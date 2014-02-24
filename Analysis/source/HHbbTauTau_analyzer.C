@@ -71,6 +71,12 @@ public:
     SELECTION_ENTRY(BJetSelection, 15)
 
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
+    ENTRY_1D(double, Radion_Mass)
+    ENTRY_1D(double, Radion_Pt)
+    ENTRY_1D(double, Radion_Eta)
+    ENTRY_1D(double, Radion_Phi)
+    ENTRY_1D(double, Mu_tau_mass)
+    ENTRY_1D(double, BB_mass)
 
 private:
     std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
@@ -128,8 +134,20 @@ private:
 
     void ProcessEvent()
     {
-//        const analysis::GenEvent genEvent(*event);
-//        std::cout << "N gen particles = " << genEvent.particles.size() << std::endl;
+        static const analysis::ParticleCodes resonanceCodes = { particles::Radion };
+        const analysis::GenEvent genEvent(*event);
+        //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
+
+        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+        if (resonances.size() != 1)
+            throw std::runtime_error("not one resonance per event");
+
+        const analysis::GenParticle& resonance = **resonances.begin();
+
+        anaData.Radion_Mass().Fill(resonance.momentum.M());
+        anaData.Radion_Pt().Fill(resonance.momentum.Pt());
+        anaData.Radion_Eta().Fill(resonance.momentum.Eta());
+        anaData.Radion_Phi().Fill(resonance.momentum.Phi());
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
@@ -147,10 +165,20 @@ private:
         const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
         cut.test(b_jets_loose.size() == 2, "2b_loose");
         cut.test(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
-        cut.test(b_jets_medium.size() == 2, "2b_medium");
+        if (cut.test(b_jets_medium.size() == 2, "2b_medium")){
+            TLorentzVector bjet1_momentum;
+            bjet1_momentum.SetPtEtaPhiE(event->Jet_pt[b_jets_medium.at(0)], event->Jet_eta[b_jets_medium.at(0)],
+                    event->Jet_phi[b_jets_medium.at(0)],event->Jet_energy[b_jets_medium.at(0)]);
+            TLorentzVector bjet2_momentum;
+            bjet2_momentum.SetPtEtaPhiE(event->Jet_pt[b_jets_medium.at(1)], event->Jet_eta[b_jets_medium.at(1)],
+                    event->Jet_phi[b_jets_medium.at(1)],event->Jet_energy[b_jets_medium.at(1)]);
+            TLorentzVector bb_momentum = bjet1_momentum + bjet2_momentum;
+            anaData.BB_mass().Fill(bb_momentum.M());
+        }
         cut.test(b_jets_loose.size() >= 2, ">=2b_loose");
         cut.test(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
         cut.test(b_jets_medium.size() >= 2, ">=2b_medium");
+
     }
 
     template<typename BaseSelector, typename ValueType>
@@ -264,13 +292,18 @@ private:
     {
         IndexPairVector result;
         for(auto mu_id : muons) {
-            TVector3 mu_direction;
-            mu_direction.SetPtEtaPhi(event->Muon_pt[mu_id], event->Muon_eta[mu_id], event->Muon_phi[mu_id]);
+            TLorentzVector mu_momentum;
+            mu_momentum.SetPtEtaPhiE(event->Muon_pt[mu_id], event->Muon_eta[mu_id], event->Muon_phi[mu_id],
+                                     event->Muon_energy[mu_id]);
             for(auto tau_id : taus) {
-                TVector3 tau_direction;
-                tau_direction.SetPtEtaPhi(event->Tau_pt[tau_id], event->Tau_eta[tau_id], event->Tau_phi[tau_id]);
-                if(tau_direction.DeltaR(mu_direction) > cuts::DeltaR_signalLeptons)
+                TLorentzVector tau_momentum;
+                tau_momentum.SetPtEtaPhiE(event->Tau_pt[tau_id], event->Tau_eta[tau_id], event->Tau_phi[tau_id],
+                                         event->Tau_energy[tau_id]);
+                TLorentzVector mu_tau_momentum = mu_momentum + tau_momentum;
+                if(tau_momentum.DeltaR(mu_momentum) > cuts::DeltaR_signalLeptons){
                     result.push_back(IndexPair(mu_id, tau_id));
+                    anaData.Mu_tau_mass().Fill(mu_tau_momentum.M());
+                }
             }
         }
         return result;

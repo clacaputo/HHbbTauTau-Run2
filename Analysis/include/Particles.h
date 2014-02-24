@@ -219,12 +219,20 @@ PARTICLE(upsilon_1s, 553);
 PARTICLE(B_c_plus, 541);
 PARTICLE(B_c_star_plus, 543);
 PARTICLE(xi_b_prime_0, 5322);
+PARTICLE(xi_b_minus_star, 5314);
+PARTICLE(omega_b_minus_star, 5334);
+PARTICLE(omega_b_minus, 5332);
+PARTICLE(eta_b_1S, 551);
+PARTICLE(omega_c_star_0, 4334);
+PARTICLE(omega_c_0, 4332);
+PARTICLE(sd_1, 3103);
+PARTICLE(Radion, 35);
 PARTICLE(NONEXISTENT, 0);
 
 #undef PARTICLE
 
 enum Status {
-    FinalStateParticle = 1, Decayed_or_fragmented = 2, HardInteractionProduct = 3
+    FinalStateParticle = 1, Decayed_or_fragmented = 2, HardInteractionProduct = 3, Generator_dependet_51 = 51
 };
 
 enum ParticleType {
@@ -293,6 +301,7 @@ struct NameCollection<Status> {
             names[FinalStateParticle] = "FinalStateParticle";
             names[Decayed_or_fragmented] = "Decayed_or_fragmented";
             names[HardInteractionProduct] = "HardInteractionProduct";
+            names[Generator_dependet_51] = "Generator_dependet_51";
         }
         return names;
     }
