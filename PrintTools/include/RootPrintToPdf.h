@@ -54,7 +54,9 @@ public:
         }
 
         canvas->Draw();
-        canvas->Print(output_file_name.c_str());
+        std::ostringstream print_options;
+        print_options << "Title:" << page.title;
+        canvas->Print(output_file_name.c_str(), print_options.str().c_str());
     }
 
     ~PdfPrinter()
@@ -67,6 +69,7 @@ private:
     void DrawHistograms(const PageSide& page_side, const Source& source)
     {
         typedef root_ext::HistogramPlotter<typename Source::Histogram, typename Source::ValueType> Plotter;
+        typedef root_ext::HistogramFitter<typename Source::Histogram, typename Source::ValueType> Fitter;
 
         TPad* stat_pad = 0;
         if(page_side.layout.has_stat_pad) {
@@ -88,7 +91,10 @@ private:
             const typename Plotter::Entry entry = source.Get(n, page_side.histogram_name);
             plotter.Add(entry);
         }
-        plotter.Superpose(pad, stat_pad, page_side.fit_range, page_side.layout.has_legend, page_side.layout.legend_pad,
+
+        Fitter::SetRanges(plotter.Histograms(), page_side.fit_range_x, page_side.fit_range_y, page_side.xRange,
+                          page_side.yRange, page_side.use_log_scaleY);
+        plotter.Superpose(pad, stat_pad, page_side.layout.has_legend, page_side.layout.legend_pad,
                           page_side.draw_options);
     }
 
