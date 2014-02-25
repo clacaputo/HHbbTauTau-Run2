@@ -30,8 +30,10 @@ struct PageSide {
     std::string draw_options;
     bool use_log_scaleX;
     bool use_log_scaleY;
-    bool fit_range;
-
+    bool fit_range_x;
+    bool fit_range_y;
+    Range xRange;
+    Range yRange;
     PageSideLayout layout;
 };
 
@@ -74,7 +76,8 @@ struct SingleSidedPage : public Page {
         side.layout.has_legend = has_legend;
         side.use_log_scaleX = false;
         side.use_log_scaleY = false;
-        side.fit_range = true;
+        side.fit_range_x = true;
+        side.fit_range_y = true;
 
         side.layout.main_pad = Box(0.01, 0.01, 0.85, 0.91);
         side.layout.stat_pad = Box(0.86, 0.01, 0.99, 0.91);
@@ -110,7 +113,8 @@ struct DoubleSidedPage : public Page {
         left_side.layout.has_legend = has_legend;
         left_side.use_log_scaleX = false;
         left_side.use_log_scaleY = false;
-        left_side.fit_range = true;
+        left_side.fit_range_x = true;
+        left_side.fit_range_y = true;
         left_side.layout.main_pad = Box(0.01, 0.01, 0.35, 0.91);
         left_side.layout.stat_pad = Box(0.36, 0.01, 0.49, 0.91);
         left_side.layout.legend_pad = Box(0.5, 0.67, 0.88, 0.88);
@@ -119,7 +123,8 @@ struct DoubleSidedPage : public Page {
         right_side.layout.has_legend = has_legend;
         right_side.use_log_scaleX = false;
         right_side.use_log_scaleY = false;
-        right_side.fit_range = true;
+        right_side.fit_range_x = true;
+        right_side.fit_range_y = true;
         right_side.layout.main_pad = Box(0.51, 0.01, 0.85, 0.91);
         right_side.layout.stat_pad = Box(0.86, 0.01, 0.99, 0.91);
         right_side.layout.legend_pad = Box(0.5, 0.67, 0.88, 0.88);
@@ -176,8 +181,11 @@ public:
         std::string realName = GenerateName(id, name);
         OriginalHistogram* original_histogram
                 = static_cast<OriginalHistogram*>(source_files[id]->Get(realName.c_str()));
-        if(!original_histogram)
-            throw std::runtime_error("original histogram not found.");
+        if(!original_histogram) {
+            std::ostringstream ss;
+            ss << "original histogram '" << realName << "' not found in file '" << source_files[id]->GetPath() << "'.";
+            throw std::runtime_error(ss.str());
+        }
         Histogram* histogram = Convert(original_histogram);
         if(!histogram)
             throw std::runtime_error("source histogram not found.");

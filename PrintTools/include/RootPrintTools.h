@@ -16,44 +16,81 @@
 #include <TLegend.h>
 
 namespace root_ext {
-template<typename Histogram, typename ValueType=Double_t, typename Container=std::vector<Histogram*> >
+
+struct Range {
+    Double_t min, max;
+    Range() : min(0), max(0) {}
+    Range(Double_t _min, Double_t _max) : min(_min), max(_max) {}
+};
+
+template<typename Histogram, typename ValueType=Double_t>
 class HistogramFitter {
 public:
-    static ValueType FindMinLimit(const Histogram* h)
+    static ValueType FindMinLimitX(const Histogram& h)
     {
-        if(!h)
-            return std::numeric_limits<ValueType>::max();
-        for(Int_t i = 0; i < h->GetNbinsX(); ++i) {
-            if(h->GetBinContent(i))
-                return h->GetBinLowEdge(i);
+        for(Int_t i = 0; i < h.GetNbinsX(); ++i) {
+            if(h.GetBinContent(i))
+                return h.GetBinLowEdge(i);
         }
-        return h->GetMinimum();
+        return std::numeric_limits<ValueType>::max();
     }
 
-    static ValueType FindMaxLimit(const Histogram* h)
+    static ValueType FindMaxLimitX(const Histogram& h)
     {
-        if(!h)
-            return std::numeric_limits<ValueType>::min();
-        for(Int_t i = h->GetNbinsX() - 1; i > 0; --i) {
-            if(h->GetBinContent(i))
-                return h->GetBinLowEdge(i) + h->GetBinWidth(i);
+        for(Int_t i = h.GetNbinsX() - 1; i > 0; --i) {
+            if(h.GetBinContent(i))
+                return h.GetBinLowEdge(i) + h.GetBinWidth(i);
         }
-        return h->GetMaximum();
+        return std::numeric_limits<ValueType>::lowest();
     }
 
-    static void FitRange(const Container& hists)
+    static ValueType FindMinLimitY(const Histogram& h)
+    {
+        ValueType min = std::numeric_limits<ValueType>::max();
+        for(Int_t i = 0; i < h.GetNbinsX(); ++i) {
+            if(h.GetBinContent(i))
+                min = std::min(min, h.GetBinContent(i));
+        }
+        return min;
+    }
+
+    template<typename Container>
+    static void SetRanges(const Container& hists, bool fitX, bool fitY, Range xRange, Range yRange, bool isLogY)
     {
         if(!hists.size())
             return;
-        ValueType min = FindMinLimit(hists[0]);
-        ValueType max = FindMaxLimit(hists[0]);
-        for(unsigned n = 1; n < hists.size(); ++n) {
-            min = std::min(min, FindMinLimit(hists[n]));
-            max = std::max(max, FindMaxLimit(hists[n]));
+
+        if(fitX) {
+            xRange.min = std::numeric_limits<ValueType>::max();
+            xRange.max = std::numeric_limits<ValueType>::lowest();
+            for(auto h : hists) {
+                if(!h) continue;
+                xRange.min = std::min(xRange.min, FindMinLimitX(*h));
+                xRange.max = std::max(xRange.max, FindMaxLimitX(*h));
+            }
         }
-        for(unsigned n = 0; n < hists.size(); ++n) {
-            if(hists[n])
-                hists[n]->SetAxisRange(min, max, "X");
+
+        if(fitY) {
+            yRange.min = std::numeric_limits<ValueType>::max();
+            yRange.max = std::numeric_limits<ValueType>::lowest();
+            for(auto h : hists) {
+                if(!h) continue;
+                yRange.min = std::min(yRange.min, FindMinLimitY(*h));
+                yRange.max = std::max(yRange.max, h->GetMaximum());
+            }
+            const double factor = isLogY ? 2.0 : 1.1;
+            yRange.min /= factor;
+            yRange.max *= factor;
+            if(isLogY) {
+                yRange.min = std::max(yRange.min, std::numeric_limits<ValueType>::min());
+                yRange.max = std::max(yRange.max, std::numeric_limits<ValueType>::min());
+            }
+        }
+
+        for(auto h : hists) {
+            if(!h) continue;
+            h->SetAxisRange(xRange.min, xRange.max, "X");
+            h->SetAxisRange(yRange.min, yRange.max, "Y");
         }
     }
 
@@ -134,14 +171,11 @@ public:
         options.push_back(entry.plot_options);
     }
 
-    void Superpose(TPad* main_pad, TPad* stat_pad, bool fit_range, bool draw_legend, const Box& legend_box,
+    void Superpose(TPad* main_pad, TPad* stat_pad, bool draw_legend, const Box& legend_box,
                    const std::string& draw_options)
     {
         if(!histograms.size() || !main_pad)
             return;
-
-        if(fit_range)
-            HistogramFitter<Histogram, ValueType>::FitRange(histograms);
 
         histograms[0]->SetTitle(title.c_str());
         histograms[0]->GetXaxis()->SetTitle(axis_titleX.c_str());
@@ -187,6 +221,8 @@ public:
             stat_pad->Update();
         }
     }
+
+    const HistogramContainer& Histograms() const { return histograms; }
 
 private:
     HistogramContainer histograms;

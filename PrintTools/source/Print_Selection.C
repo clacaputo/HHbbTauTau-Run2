@@ -8,49 +8,39 @@
 
 #include "../include/RootPrintToPdf.h"
 
-class MyHistogramSource : public root_ext::SimpleHistogramSource<TH1D, Double_t> {
-public:
-
-protected:
-    virtual void Prepare(TH1D* histogram, const std::string& display_name,
-                         const PlotOptions& plot_options) const
-    {
-        SimpleHistogramSource::Prepare(histogram, display_name, plot_options);
-    }
-
-}; //1D plot
-
-
 class Print_Selection {
 public:
     typedef std::pair< std::string, std::string > FileTagPair;
+    typedef root_ext::PdfPrinter Printer;
+    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
 
     template<typename ...Args>
-    Print_Selection(const std::string& _outputFileName, const Args& ...args):
-       outputFileName(_outputFileName)
+    Print_Selection(const std::string& outputFileName, const Args& ...args):
+       printer(outputFileName)
     {
         Initialize(args...);
+        for(const FileTagPair& fileTag : inputs) {
+            TFile* file = new TFile(fileTag.first.c_str());
+            if(file->IsZombie()) {
+                std::ostringstream ss;
+                ss << "Input file '" << fileTag.first << "' not found.";
+                throw std::runtime_error(ss.str());
+            }
+            source.Add(fileTag.second, file);
+        }
     }
 
     void Run()
     {
-        typedef root_ext::PdfPrinter Printer;
-        MyHistogramSource source;
-
-        for(const FileTagPair& fileTag : inputs) {
-            TFile* file = new TFile(fileTag.first.c_str());
-            source.Add(fileTag.second, file);
-        }
-
-        root_ext::SingleSidedPage page;
-        page.side.histogram_name = "EventSelection_abs";
-        page.title = page.side.histogram_title = "Event selection";
-        page.side.axis_titleY = "N entries";
         page.side.use_log_scaleY = true;
-        page.side.layout.legend_pad = root_ext::Box(0.6, 0.67, 0.87, 0.8);
+        page.side.layout.has_legend = false;
 
-        Printer printer(outputFileName);
-        printer.Print(page, source);
+        PrintAll("EventSelection", "Event selection");
+        PrintAll("MuonSelection", "Muon selection");
+        PrintAll("TauSelection", "Tau selection");
+        PrintAll("ElectronSelection", "Electron selection");
+        PrintAll("BJetSelection", "b-jet selection", "loose");
+        PrintAll("BJetSelection", "b-jet selection", "medium");
     }
 
 private:
@@ -66,8 +56,32 @@ private:
 
     void Initialize() {}
 
-private:
+    void PrintAll(const std::string& name, const std::string& title, std::string second_suffix = "")
+    {
+        Print(name, title, AddSuffix("abs", second_suffix), "Number of entries");
+        Print(name, title, AddSuffix("rel", second_suffix), "Relative efficiency");
+    }
 
-    std::string outputFileName;
+    void Print(const std::string& name, const std::string& title,
+               std::string name_suffix = "", std::string title_suffix = "")
+    {
+        page.side.histogram_name = AddSuffix(name, name_suffix);
+        page.title = page.side.histogram_title = AddSuffix(title, title_suffix, ". ");
+        printer.Print(page, source);
+    }
+
+    static std::string AddSuffix(const std::string& name, const std::string& suffix, std::string separator = "_")
+    {
+        std::ostringstream full_name;
+        full_name << name;
+        if(suffix.size())
+            full_name << separator << suffix;
+        return full_name.str();
+    }
+
+private:
     std::vector<FileTagPair> inputs;
+    MyHistogramSource source;
+    root_ext::SingleSidedPage page;
+    Printer printer;
 };
