@@ -58,8 +58,9 @@ private:
 
     void PrintAll(const std::string& name, const std::string& title, std::string second_suffix = "")
     {
-        Print(name, title, AddSuffix("abs", second_suffix), "Number of entries");
-        Print(name, title, AddSuffix("rel", second_suffix), "Relative efficiency");
+        Print(name, title, AddSuffix("event", second_suffix), "Number of entries");
+        Print(name, title, AddSuffix("effRel", second_suffix), "Relative efficiency");
+        Print(name, title, AddSuffix("effAbs", second_suffix), "Absolute efficiency");
     }
 
     void Print(const std::string& name, const std::string& title,

@@ -111,6 +111,11 @@ void fill_relative_selection_histogram(const TH1D& selection_histogram, TH1D& re
     }
 }
 
+void fill_absolute_selection_histogram(const TH1D& selection_histogram, TH1D& absolute_selection_histogram)
+{
+    fill_relative_selection_histogram(selection_histogram, absolute_selection_histogram,1);
+}
+
 class Cutter {
 public:
     Cutter(TH1D& _counter_histogram, TH1D& _selection_histogram, bool _enabled = true)

@@ -36,23 +36,26 @@ namespace ntuple {
 #define SELECTION_ENTRY(name, n_bins, ...) \
     template<typename ...Args> \
     root_ext::SmartHistogram< TH1D >& name(const Args& ...args) { \
-        auto abs = &name##_abs(args...); \
-        auto rel = &name##_rel(args...); \
-        selectionDescriptors[abs] = SelectionDescriptor(abs, rel, ##__VA_ARGS__); \
-        return *abs; } \
-    TH1D_ENTRY_FIX(name##_abs, 1, n_bins, -0.5) \
-    TH1D_ENTRY_FIX(name##_rel, 1, n_bins, -0.5) \
+        auto event = &name##_event(args...); \
+        auto eff_rel = &name##_effRel(args...); \
+        auto eff_abs = &name##_effAbs(args...); \
+        selectionDescriptors[event] = SelectionDescriptor(event, eff_rel, eff_abs, ##__VA_ARGS__); \
+        return *event; } \
+    TH1D_ENTRY_FIX(name##_event, 1, n_bins, -0.5) \
+    TH1D_ENTRY_FIX(name##_effRel, 1, n_bins, -0.5) \
+    TH1D_ENTRY_FIX(name##_effAbs, 1, n_bins, -0.5)\
     /**/
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
     struct SelectionDescriptor {
-        root_ext::SmartHistogram<TH1D> *absolute, *relative;
+        root_ext::SmartHistogram<TH1D> *event, *eff_relative, *eff_absolute;
         Int_t fix_bin;
-        SelectionDescriptor(root_ext::SmartHistogram<TH1D> *abs = nullptr,
-                            root_ext::SmartHistogram<TH1D> *rel = nullptr,
+        SelectionDescriptor(root_ext::SmartHistogram<TH1D> *_event = nullptr,
+                            root_ext::SmartHistogram<TH1D> *eff_rel = nullptr,
+                            root_ext::SmartHistogram<TH1D> *eff_abs = nullptr,
                             Int_t fix = std::numeric_limits<Int_t>::max())
-            : absolute(abs), relative(rel), fix_bin(fix) {}
+            : event(_event), eff_relative(eff_rel), eff_absolute(eff_abs), fix_bin(fix) {}
     };
 
 public:
@@ -60,8 +63,10 @@ public:
     ~SignalAnalyzerData()
     {
         Erase(Counter().Name());
-        for(const auto& desc : selectionDescriptors)
-            cuts::fill_relative_selection_histogram(*desc.second.absolute, *desc.second.relative, desc.second.fix_bin);
+        for(const auto& desc : selectionDescriptors){
+            cuts::fill_relative_selection_histogram(*desc.second.event, *desc.second.eff_relative, desc.second.fix_bin);
+            cuts::fill_absolute_selection_histogram(*desc.second.event, *desc.second.eff_absolute);
+        }
     }
 
     SELECTION_ENTRY(EventSelection, 15, 5)
@@ -99,10 +104,10 @@ class HHbbTauTau_analyzer
 {
 public:
     HHbbTauTau_analyzer(const std::string& inputFileName, const std::string& outputFileName,
-                        Long64_t _maxNumberOfEvents = 0)
+                        Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
         : anaData(outputFileName), anaDataBeforeCut(anaData.getOutputFile(), "before_cut"),
           anaDataAfterCut(anaData.getOutputFile(), "after_cut"),
-          maxNumberOfEvents(_maxNumberOfEvents)
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth)
     {
         TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
         if(inputFile->IsZombie())
@@ -134,27 +139,29 @@ private:
 
     void ProcessEvent()
     {
-        static const analysis::ParticleCodes resonanceCodes = { particles::Radion };
-        const analysis::GenEvent genEvent(*event);
-        //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
+        if (useMCtruth){
+            static const analysis::ParticleCodes resonanceCodes = { particles::Radion };
+            const analysis::GenEvent genEvent(*event);
+            //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
 
-        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes, particles::HardInteractionProduct);
-        if (resonances.size() != 1)
-            throw std::runtime_error("not one resonance per event");
+            const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes, particles::HardInteractionProduct);
+            if (resonances.size() != 1)
+                throw std::runtime_error("not one resonance per event");
 
-        const analysis::GenParticle& resonance = **resonances.begin();
-        if (resonance.MissingDaughter)
-            throw std::runtime_error("resonance has no daughters");
-        std::cout << "N resonance daughters = " << resonance.daughters.size() << std::endl;
-//        if (resonance.daughters.size() != 2)
-//            throw std::runtime_error("the candidate resonance has not 2 daughters");
+            const analysis::GenParticle& resonance = **resonances.begin();
+            if (resonance.MissingDaughter)
+                throw std::runtime_error("resonance has no daughters");
+//            std::cout << "N resonance daughters = " << resonance.daughters.size() << std::endl;
+//            if (resonance.daughters.size() != 2)
+//                throw std::runtime_error("the candidate resonance has not 2 daughters");
 
-//        genEvent.Print();
+//            genEvent.Print();
 
-        anaData.Radion_Mass().Fill(resonance.momentum.M());
-        anaData.Radion_Pt().Fill(resonance.momentum.Pt());
-        anaData.Radion_Eta().Fill(resonance.momentum.Eta());
-        anaData.Radion_Phi().Fill(resonance.momentum.Phi());
+            anaData.Radion_Mass().Fill(resonance.momentum.M());
+            anaData.Radion_Pt().Fill(resonance.momentum.Pt());
+            anaData.Radion_Eta().Fill(resonance.momentum.Eta());
+            anaData.Radion_Phi().Fill(resonance.momentum.Phi());
+        }
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
@@ -321,4 +328,5 @@ private:
     SignalAnalyzerData anaData;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut;
     Long64_t maxNumberOfEvents;
+    bool useMCtruth;
 };
