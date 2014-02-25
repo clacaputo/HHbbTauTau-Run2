@@ -82,6 +82,11 @@ public:
     ENTRY_1D(double, Radion_Phi)
     ENTRY_1D(double, Mu_tau_mass)
     ENTRY_1D(double, BB_mass)
+    ENTRY_1D(double,Tau_Pt_MC)
+    ENTRY_1D(double,Mu_Pt_MC)
+    ENTRY_1D(double,Bjets_Pt_MC)
+    ENTRY_1D(double,Higgs_MuTau_MC_Pt)
+    ENTRY_1D(double,Higgs_BB_MC_Pt)
 
 private:
     std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
@@ -141,10 +146,16 @@ private:
     {
         if (useMCtruth){
             static const analysis::ParticleCodes resonanceCodes = { particles::Radion };
+            static const analysis::ParticleCodes resonanceDecay = { particles::Higgs, particles::Higgs };
+            static const analysis::ParticleCodes2D HiggsDecays = { {particles::b, particles::b},
+                                                                   {particles::tau, particles::tau}};
+            static const analysis::ParticleCodes TauMuonicDecay = {particles::mu, particles::nu_mu, particles::nu_tau};
+            static const analysis::ParticleCodes TauElectronDecay = {particles::e, particles::nu_e, particles::nu_tau};
+
             const analysis::GenEvent genEvent(*event);
             //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
 
-            const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes, particles::HardInteractionProduct);
+            const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
             if (resonances.size() != 1)
                 throw std::runtime_error("not one resonance per event");
 
@@ -156,11 +167,50 @@ private:
 //                throw std::runtime_error("the candidate resonance has not 2 daughters");
 
 //            genEvent.Print();
+            analysis::GenParticleVector HiggsBosons;
+            if(!analysis::FindDecayProducts(resonance, resonanceDecay,HiggsBosons))
+                throw std::runtime_error("Resonance does not decay into 2 Higgs");
+
+            analysis::GenParticleVector2D HiggsDecayProducts;
+            analysis::GenParticleIndexVector HiggsIndexes;
+            if(!analysis::FindDecayProducts2D(HiggsBosons,HiggsDecays,HiggsDecayProducts,HiggsIndexes))
+                throw std::runtime_error("NOT HH -> bb tautau");
+
+            const analysis::GenParticleVector& b_jets_MC = HiggsDecayProducts.at(0);
+            const analysis::GenParticleVector& taus_MC = HiggsDecayProducts.at(1);
+
+            const analysis::GenParticle* muon_MC = nullptr;
+            const analysis::GenParticle* tau_jet_MC = nullptr;
+            for (const analysis::GenParticle* tau_MC : taus_MC){
+                analysis::GenParticleVector TauProducts;
+                if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts)){
+                    muon_MC = TauProducts.at(0);
+                    continue;
+                }
+                if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts)){
+                    tau_jet_MC = tau_MC;
+                }
+            }
+
+            if (!muon_MC || !tau_jet_MC) {
+                //std::cout << "not our final state mu-tau" << std::endl;
+                return;
+            }
+
+            const analysis::GenParticle& Higgs_MuTau_MC = *HiggsBosons.at(HiggsIndexes.at(1));
+            const analysis::GenParticle& Higgs_BB_MC = *HiggsBosons.at(HiggsIndexes.at(0));
 
             anaData.Radion_Mass().Fill(resonance.momentum.M());
             anaData.Radion_Pt().Fill(resonance.momentum.Pt());
             anaData.Radion_Eta().Fill(resonance.momentum.Eta());
             anaData.Radion_Phi().Fill(resonance.momentum.Phi());
+
+            anaData.Tau_Pt_MC().Fill(tau_jet_MC->momentum.Pt());
+            anaData.Mu_Pt_MC().Fill(muon_MC->momentum.Pt());
+            anaData.Bjets_Pt_MC().Fill(b_jets_MC.at(0)->momentum.Pt());
+            anaData.Bjets_Pt_MC().Fill(b_jets_MC.at(1)->momentum.Pt());
+            anaData.Higgs_MuTau_MC_Pt().Fill(Higgs_MuTau_MC.momentum.Pt());
+            anaData.Higgs_BB_MC_Pt().Fill(Higgs_BB_MC.momentum.Pt());
         }
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());

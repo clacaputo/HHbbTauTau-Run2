@@ -335,5 +335,16 @@ struct PdgParticle {
         if(Code > other.Code) return false;
         return Type < other.Type;
     }
+
+    bool operator!=(const PdgParticle& other) const
+    {
+        return Code != other.Code || Type != other.Type;
+    }
+
+    bool operator==(const PdgParticle& other) const
+    {
+        return Code == other.Code && Type == other.Type;
+    }
+
 };
 } // particles
