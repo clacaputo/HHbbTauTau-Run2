@@ -1,0 +1,80 @@
+/*!
+ * \file Print_Histogram.C
+ * \brief Print histograms with specified name superimposing several files.
+ * \author Konstantin Androsov (INFN Pisa, Siena University)
+ * \author Maria Teresa Grippo (INFN Pisa, Siena University)
+ * \date 2014-02-25 created
+ */
+
+#include "../include/RootPrintToPdf.h"
+
+class Print_Histogram {
+public:
+    typedef std::pair< std::string, std::string > FileTagPair;
+    typedef root_ext::PdfPrinter Printer;
+    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
+
+    template<typename ...Args>
+    Print_Histogram(const std::string& outputFileName, const std::string& _histogramName, const std::string& _title,
+                    bool _useLogY, const Args& ...args):
+       printer(outputFileName), histogramName(_histogramName), title(_title), useLogY(_useLogY)
+    {
+        Initialize(args...);
+        for(const FileTagPair& fileTag : inputs) {
+            TFile* file = new TFile(fileTag.first.c_str());
+            if(file->IsZombie()) {
+                std::ostringstream ss;
+                ss << "Input file '" << fileTag.first << "' not found.";
+                throw std::runtime_error(ss.str());
+            }
+            source.Add(fileTag.second, file);
+        }
+    }
+
+    void Run()
+    {
+        page.side.use_log_scaleY = useLogY;
+        page.side.layout.has_legend = false;
+
+
+        Print(histogramName, title);
+    }
+
+private:
+    template<typename ...Args>
+    void Initialize(const std::string& inputName, const Args& ...args)
+    {
+        const size_t split_index = inputName.find_first_of(':');
+        const std::string fileName = inputName.substr(0, split_index);
+        const std::string tagName = inputName.substr(split_index + 1);
+        inputs.push_back(FileTagPair(fileName, tagName));
+        Initialize(args...);
+    }
+
+    void Initialize() {}
+
+    void Print(const std::string& name, const std::string& title,
+               std::string name_suffix = "", std::string title_suffix = "")
+    {
+        page.side.histogram_name = AddSuffix(name, name_suffix);
+        page.title = page.side.histogram_title = AddSuffix(title, title_suffix, ". ");
+        printer.Print(page, source);
+    }
+
+    static std::string AddSuffix(const std::string& name, const std::string& suffix, std::string separator = "_")
+    {
+        std::ostringstream full_name;
+        full_name << name;
+        if(suffix.size())
+            full_name << separator << suffix;
+        return full_name.str();
+    }
+
+private:
+    std::vector<FileTagPair> inputs;
+    MyHistogramSource source;
+    root_ext::SingleSidedPage page;
+    Printer printer;
+    std::string histogramName, title;
+    bool useLogY;
+};
