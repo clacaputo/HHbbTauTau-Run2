@@ -87,6 +87,8 @@ public:
     ENTRY_1D(double,Bjets_Pt_MC)
     ENTRY_1D(double,Higgs_MuTau_MC_Pt)
     ENTRY_1D(double,Higgs_BB_MC_Pt)
+    ENTRY_2D(double, DR_bjets_vs_HiggsPt_MC)
+    ENTRY_2D(double, DR_Higgs_vs_RadionPt_MC)
 
 private:
     std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
@@ -211,6 +213,11 @@ private:
             anaData.Bjets_Pt_MC().Fill(b_jets_MC.at(1)->momentum.Pt());
             anaData.Higgs_MuTau_MC_Pt().Fill(Higgs_MuTau_MC.momentum.Pt());
             anaData.Higgs_BB_MC_Pt().Fill(Higgs_BB_MC.momentum.Pt());
+            anaData.DR_bjets_vs_HiggsPt_MC().Fill(Higgs_BB_MC.momentum.Pt(),
+                                                  b_jets_MC.at(0)->momentum.DeltaR(b_jets_MC.at(1)->momentum));
+            anaData.DR_Higgs_vs_RadionPt_MC().Fill(resonance.momentum.Pt(),
+                                                   Higgs_MuTau_MC.momentum.DeltaR(Higgs_BB_MC.momentum));
+
         }
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
