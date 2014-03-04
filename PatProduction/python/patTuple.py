@@ -2,6 +2,12 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 process.options.wantSummary = False
 
+process.source.dropDescendantsOfDroppedBranches = cms.untracked.bool(False)
+process.source.inputCommands = cms.untracked.vstring(
+        'keep *',
+        'drop recoPFTaus_*_*_*'
+    )
+
 ## Parse and apply options.
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
@@ -35,13 +41,23 @@ switchToPFTauHPS(process)
 ## Define process path.
 process.p = cms.Path( process.PFTau * process.patDefaultSequence )
 
+## MET corrections.
+from PhysicsTools.PatAlgos.tools.metTools import *
+addPfMET(process, 'PF')
+process.patMETsPF.metSource = cms.InputTag("pfMet")
 
-## Customize output.
-#from PhysicsTools.PatAlgos.tools.coreTools import *
-## remove MC matching from the default sequence
-# removeMCMatching(process, ['Muons'])
-# runOnData(process)
-
-## remove certain objects from the default sequence
-# removeAllPATObjectsBut(process, ['Muons'])
-# removeSpecificPATObjects(process, ['Electrons', 'Muons', 'Taus'])
+## Output selection.
+process.out.outputCommands = [
+    'drop *',
+    'keep patElectrons_patElectrons_*_*',
+    'keep patJets_patJets_*_*',
+    'keep patMETs_patMETsPF_*_*',
+    'keep patMuons_patMuons_*_*',
+    'keep patTaus_patTaus_*_*',
+    'keep recoGenParticles_genParticles_*_*',
+    'keep recoVertexs_offlinePrimaryVertices_*_*',
+    'keep PileupSummaryInfos_*_*_*',
+    'keep *_offlineBeamSpot_*_*',
+    'keep *_TriggerResults_*_HLT',
+    'keep *_genMetTrue_*_*'
+                             ]
