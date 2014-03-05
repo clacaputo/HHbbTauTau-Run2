@@ -21,6 +21,11 @@ options.register ('isMC',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.bool,
                   "Sample Type: MC or data")
+options.register ('runOnCrab',
+                False,
+                VarParsing.multiplicity.singleton,
+                VarParsing.varType.bool,
+                "Indicates if script will be executed on CRAB.")
 options.register ('fileList',
                   'fileList.py',
                   VarParsing.multiplicity.singleton,
@@ -35,12 +40,14 @@ options.register ('includeSim',
 options.parseArguments()
 
 process.GlobalTag.globaltag = options.globalTag
-process.maxEvents.input = options.maxEvents
 
-fileList = cms.untracked.vstring()
-process.source.fileNames = fileList
-execfile(options.fileList)
-process.out.fileName = options.outputFile
+if not options.runOnCrab:
+    fileList = cms.untracked.vstring()
+    process.source.fileNames = fileList
+    execfile(options.fileList)
+    process.out.fileName = options.outputFile
+    process.maxEvents.input = options.maxEvents
+
 
 ## Muons
 from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFMuonIso
