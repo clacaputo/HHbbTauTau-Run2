@@ -3,4 +3,7 @@ __init__.py
 /HHbbTauTau.creator.user
 /data
 /run
+PatProduction/python/crab.history
+PatProduction/python/*.log
+*~
 
