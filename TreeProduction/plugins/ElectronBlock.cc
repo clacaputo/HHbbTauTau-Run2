@@ -59,11 +59,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::LogInfo("ElectronBlock") << "Total # PAT Electrons: " << electrons->size();
     for (std::vector<pat::Electron>::const_iterator it  = electrons->begin(); 
                                                     it != electrons->end(); ++it) {
-      if (fnElectron == kMaxElectron) {
-	edm::LogInfo("ElectronBlock") << "Too many PAT Electrons, fnElectron = " 
-                                      << fnElectron; 
-	break;
-      }
+
       bool hasGsfTrack  = it->gsfTrack().isNonnull() ? true : false;
       reco::GsfTrackRef tk = it->gsfTrack();
 
@@ -150,8 +146,9 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
           }
         } 
         else {
-	  edm::LogError("ElectronBlock") << "Error >> Failed to get VertexCollection for label: " 
+            edm::LogError("ElectronBlock") << "Error >> Failed to get VertexCollection for label: "
                                          << _vtxInputTag;
+            throw std::runtime_error("Failed to get VertexCollection for label");
         }      
       }
       // Vertex association variables
@@ -229,6 +226,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   else {
     edm::LogError("ElectronBlock") << "Error >> Failed to get pat::Electron Collection for label: " 
                                    << _electronInputTag;
+    throw std::runtime_error("Failed to get pat::Electron Collection for label");
   }
 }
 #include "FWCore/Framework/interface/MakerMacros.h"

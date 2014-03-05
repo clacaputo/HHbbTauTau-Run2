@@ -78,3 +78,7 @@ TreeProduction/src/classes.h
 TreeProduction/src/classes_def.xml
 TreeProduction/src/PhysicsObjects.cc
 TreeProduction/src/Utility.cc
+PatProduction/plugins/BuildFile.xml
+PatProduction/plugins/MuonsUserEmbedded.cc
+PatProduction/plugins/ElectronsUserEmbedder.cc
+Analysis/include/EventTreeMC.h

@@ -28,10 +28,6 @@ public:
   explicit GenParticleBlock(const edm::ParameterSet& iConfig);
   virtual ~GenParticleBlock();
 
-//  enum {
-//    kMaxGenParticle = 2500
-//  };
-
 private:
   TClonesArray* cloneGenParticle; 
   int  fnGenParticle;

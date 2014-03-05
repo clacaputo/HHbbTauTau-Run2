@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Wed Mar  5 16:07:50 2014 by ROOT version 5.32/00
+// Wed Mar  5 16:04:14 2014 by ROOT version 5.32/00
 // from TTree vhtree/VH Analysis Tree
-// found on file: ../myTree_NoSim_numEvent10.root
+// found on file: ../myTree_Sim_numEvent10.root
 //////////////////////////////////////////////////////////
 
 #pragma once
@@ -21,6 +21,7 @@
 const Int_t kMaxEvent = 1;
 const Int_t kMaxVertex = 100;
 const Int_t kMaxElectron = 20;
+const Int_t kMaxGenParticle = 2000;
 const Int_t kMaxJet = 100;
 const Int_t kMaxMET = 1;
 const Int_t kMaxMuon = 20;
@@ -434,6 +435,29 @@ public :
    vector<string>  *hltpaths;
    vector<int>     *hltresults;
    vector<int>     *hltprescales;
+   Int_t           GenParticle_;
+   UInt_t          GenParticle_fUniqueID[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_fBits[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_index[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_eta[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_phi[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_p[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_px[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_py[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_pz[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_pt[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_energy[kMaxGenParticle];   //[GenParticle_]
+   Int_t           GenParticle_pdgId[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_vx[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_vy[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_vz[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_status[kMaxGenParticle];   //[GenParticle_]
+   Double_t        GenParticle_charge[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_numDaught[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_numMother[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_motherIndex_1[kMaxGenParticle];   //[GenParticle_]
+   UInt_t          GenParticle_motherIndex_2[kMaxGenParticle];   //[GenParticle_]
+   Int_t           nGenParticle;
 
    // List of branches
    TBranch        *b_Event_;   //!
@@ -838,6 +862,29 @@ public :
    TBranch        *b_hltpaths;   //!
    TBranch        *b_hltresults;   //!
    TBranch        *b_hltprescales;   //!
+   TBranch        *b_GenParticle_;   //!
+   TBranch        *b_GenParticle_fUniqueID;   //!
+   TBranch        *b_GenParticle_fBits;   //!
+   TBranch        *b_GenParticle_index;   //!
+   TBranch        *b_GenParticle_eta;   //!
+   TBranch        *b_GenParticle_phi;   //!
+   TBranch        *b_GenParticle_p;   //!
+   TBranch        *b_GenParticle_px;   //!
+   TBranch        *b_GenParticle_py;   //!
+   TBranch        *b_GenParticle_pz;   //!
+   TBranch        *b_GenParticle_pt;   //!
+   TBranch        *b_GenParticle_energy;   //!
+   TBranch        *b_GenParticle_pdgId;   //!
+   TBranch        *b_GenParticle_vx;   //!
+   TBranch        *b_GenParticle_vy;   //!
+   TBranch        *b_GenParticle_vz;   //!
+   TBranch        *b_GenParticle_status;   //!
+   TBranch        *b_GenParticle_charge;   //!
+   TBranch        *b_GenParticle_numDaught;   //!
+   TBranch        *b_GenParticle_numMother;   //!
+   TBranch        *b_GenParticle_motherIndex_1;   //!
+   TBranch        *b_GenParticle_motherIndex_2;   //!
+   TBranch        *b_fnGenParticle;   //!
 
    EventTree(TTree *tree=0);
    virtual ~EventTree();
@@ -857,11 +904,11 @@ EventTree::EventTree(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../myTree_NoSim_numEvent10.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../myTree_Sim_numEvent10.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("../myTree_NoSim_numEvent10.root");
+         f = new TFile("../myTree_Sim_numEvent10.root");
       }
-      TDirectory * dir = (TDirectory*)f->Get("../myTree_NoSim_numEvent10.root:/treeCreator");
+      TDirectory * dir = (TDirectory*)f->Get("../myTree_Sim_numEvent10.root:/treeCreator");
       dir->GetObject("vhtree",tree);
 
    }
@@ -1320,6 +1367,29 @@ void EventTree::Init(TTree *tree)
    fChain->SetBranchAddress("hltpaths", &hltpaths, &b_hltpaths);
    fChain->SetBranchAddress("hltresults", &hltresults, &b_hltresults);
    fChain->SetBranchAddress("hltprescales", &hltprescales, &b_hltprescales);
+   fChain->SetBranchAddress("GenParticle", &GenParticle_, &b_GenParticle_);
+   fChain->SetBranchAddress("GenParticle.fUniqueID", GenParticle_fUniqueID, &b_GenParticle_fUniqueID);
+   fChain->SetBranchAddress("GenParticle.fBits", GenParticle_fBits, &b_GenParticle_fBits);
+   fChain->SetBranchAddress("GenParticle.index", GenParticle_index, &b_GenParticle_index);
+   fChain->SetBranchAddress("GenParticle.eta", GenParticle_eta, &b_GenParticle_eta);
+   fChain->SetBranchAddress("GenParticle.phi", GenParticle_phi, &b_GenParticle_phi);
+   fChain->SetBranchAddress("GenParticle.p", GenParticle_p, &b_GenParticle_p);
+   fChain->SetBranchAddress("GenParticle.px", GenParticle_px, &b_GenParticle_px);
+   fChain->SetBranchAddress("GenParticle.py", GenParticle_py, &b_GenParticle_py);
+   fChain->SetBranchAddress("GenParticle.pz", GenParticle_pz, &b_GenParticle_pz);
+   fChain->SetBranchAddress("GenParticle.pt", GenParticle_pt, &b_GenParticle_pt);
+   fChain->SetBranchAddress("GenParticle.energy", GenParticle_energy, &b_GenParticle_energy);
+   fChain->SetBranchAddress("GenParticle.pdgId", GenParticle_pdgId, &b_GenParticle_pdgId);
+   fChain->SetBranchAddress("GenParticle.vx", GenParticle_vx, &b_GenParticle_vx);
+   fChain->SetBranchAddress("GenParticle.vy", GenParticle_vy, &b_GenParticle_vy);
+   fChain->SetBranchAddress("GenParticle.vz", GenParticle_vz, &b_GenParticle_vz);
+   fChain->SetBranchAddress("GenParticle.status", GenParticle_status, &b_GenParticle_status);
+   fChain->SetBranchAddress("GenParticle.charge", GenParticle_charge, &b_GenParticle_charge);
+   fChain->SetBranchAddress("GenParticle.numDaught", GenParticle_numDaught, &b_GenParticle_numDaught);
+   fChain->SetBranchAddress("GenParticle.numMother", GenParticle_numMother, &b_GenParticle_numMother);
+   fChain->SetBranchAddress("GenParticle.motherIndex_1", GenParticle_motherIndex_1, &b_GenParticle_motherIndex_1);
+   fChain->SetBranchAddress("GenParticle.motherIndex_2", GenParticle_motherIndex_2, &b_GenParticle_motherIndex_2);
+   fChain->SetBranchAddress("nGenParticle", &nGenParticle, &b_fnGenParticle);
    Notify();
 }
 

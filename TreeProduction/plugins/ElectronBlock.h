@@ -34,9 +34,6 @@ public:
   explicit ElectronBlock(const edm::ParameterSet& iConfig);
   virtual ~ElectronBlock();
 
-  enum {
-    kMaxElectron = 100
-  };
 
 private:
   TClonesArray* cloneElectron; 

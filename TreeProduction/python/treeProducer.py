@@ -9,7 +9,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 10
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
-options.register ('globaltag',
+options.register ('globalTag',
                   'START53_V21::All',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
@@ -19,6 +19,11 @@ options.register ('fileList',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   "List of root files to process.")
+options.register ('includeSim',
+                  False,
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.bool,
+                  "Include Sim. Default: False")
 
 options.parseArguments()
 
@@ -45,7 +50,7 @@ process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cf
 # Global Tag
 #-------------
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.GlobalTag.globaltag = options.globaltag
+process.GlobalTag.globaltag = options.globalTag
 
 #-------------
 # Output ROOT file
@@ -73,8 +78,25 @@ import PhysicsTools.PatAlgos.tools.tauTools as tauTools
 import PhysicsTools.PatAlgos.tools.trigTools as trigTools
 trigTools.switchOnTrigger( process, outputModule='' ) # This is optional and can be omitted.
 
+process.mainTreeContentSequence = cms.Sequence(
+    process.eventBlock
+  + process.vertexBlock
+  + process.electronBlock
+  + process.jetBlock
+  + process.metBlock
+  + process.muonBlock
+  + process.tauBlock
+  + process.triggerBlock
+)
+
+process.simTreeContentSequence = cms.Sequence()
+if options.includeSim:
+    process.simTreeContentSequence = cms.Sequence(process.genParticleBlock)
+
+
 process.p = cms.Path(
   process.treeCreator +
-  process.treeContentSequence +
+  process.mainTreeContentSequence +
+  process.simTreeContentSequence +
   process.treeWriter
 )

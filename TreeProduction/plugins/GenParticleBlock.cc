@@ -54,11 +54,7 @@ void GenParticleBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       unsigned n = 0;
       for (reco::GenParticleCollection::const_iterator it = genParticles.begin(); 
                                                       it != genParticles.end(); ++it, ++n ) {
-        /*if (fnGenParticle == kMaxGenParticle) {
-	  edm::LogInfo("GenParticleBlock") << "Too many GenParticles, fnGenParticle = " 
-                                           << fnGenParticle;
-	  break;
-        }*/
+
 
         // Doat store low energy gluons
         int pdgid     = it->pdgId(); 
@@ -140,6 +136,7 @@ void GenParticleBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     else {
       edm::LogError("GenParticleBlock") << "Error >> Failed to get GenParticleCollection for label: " 
                                         << _inputTag;
+      throw std::runtime_error("Failed to get GenParticleCollection for label");
     }
   }
 }

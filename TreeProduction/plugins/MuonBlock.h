@@ -27,9 +27,6 @@ public:
   explicit MuonBlock(const edm::ParameterSet& iConfig);
   virtual ~MuonBlock();
 
-  enum {
-    kMaxMuon = 100
-  };
 
 private:
   TClonesArray* cloneMuon; 

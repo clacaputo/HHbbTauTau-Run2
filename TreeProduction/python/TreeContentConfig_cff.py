@@ -15,12 +15,11 @@ from HHbbTauTau.TreeProduction.TriggerObjectBlock_cfi import triggerObjectBlock
 treeContentSequence = cms.Sequence(
     eventBlock
   + vertexBlock
-#    + electronBlock
+  + electronBlock
   + genParticleBlock
-#    + genJetBlock
-#    + jetBlock
+  + jetBlock
   + metBlock
-#    + muonBlock
+  + muonBlock
   + tauBlock
   + triggerBlock
 )

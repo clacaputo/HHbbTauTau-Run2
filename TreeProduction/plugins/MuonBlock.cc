@@ -58,11 +58,6 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // consider only global muons
       if (!it->isGlobalMuon()) continue;
 
-      if (fnMuon == kMaxMuon) {
-	edm::LogInfo("MuonBlock") << "Too many PAT Muons, fnMuon = " << fnMuon; 
-	break;
-      }
-
       reco::TrackRef tk  = it->innerTrack();  // tracker segment only
       reco::TrackRef gtk = it->globalTrack(); 
 
@@ -86,9 +81,11 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           trkd0 = -(tk->dxy(beamSpot->position()));
           trkdz = tk->dz(beamSpot->position());
         }
-        else
+        else{
           edm::LogError("MuonsBlock") << "Error >> Failed to get BeamSpot for label: "
                                       << _beamSpotInputTag;
+          throw std::runtime_error("Failed to get BeamSpot for label");
+        }
       }
       muonB->trkD0      = trkd0;
       muonB->trkD0Error = tk->d0Error();
@@ -117,8 +114,9 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
       } 
       else {
-	edm::LogError("MuonBlock") << "Error >> Failed to get VertexCollection for label: " 
+        edm::LogError("MuonBlock") << "Error >> Failed to get VertexCollection for label: "
                                    << _vtxInputTag;
+        throw std::runtime_error("Failed to get VertexCollection for label");
       }
       muonB->vtxDist3D = minVtxDist3D;
       muonB->vtxIndex  = indexVtx;
@@ -153,10 +151,10 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       //      const reco::MuonPFIsolation pfIsolationR03() ;
       //      std::cout<<" pfiso  "<<it->pfIsolationR03().sumChargedHadronPt()<<std::endl;
       const reco::MuonPFIsolation& pfIsolationR03() ;
-      std::cout<<" sumChHad "<<it->pfIsolationR03().sumChargedHadronPt<<std::endl;
-      std::cout<<" sumChPart "<<it->pfIsolationR03().sumChargedParticlePt<<std::endl;
-      std::cout<<" sumNeHad "<<it->pfIsolationR03().sumNeutralHadronEt<<std::endl;
-      std::cout<<" sumPU "<<it->pfIsolationR03().sumPUPt<<std::endl;
+      //std::cout<<" sumChHad "<<it->pfIsolationR03().sumChargedHadronPt<<std::endl;
+      //std::cout<<" sumChPart "<<it->pfIsolationR03().sumChargedParticlePt<<std::endl;
+      //std::cout<<" sumNeHad "<<it->pfIsolationR03().sumNeutralHadronEt<<std::endl;
+      //std::cout<<" sumPU "<<it->pfIsolationR03().sumPUPt<<std::endl;
 
 
 
@@ -196,6 +194,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   else {
     edm::LogError("MuonBlock") << "Error >> Failed to get pat::Muon collection for label: " 
                                << _muonInputTag;
+    throw std::runtime_error("Failed to get pat::Muon collection for label");
   }
 }
 #include "FWCore/Framework/interface/MakerMacros.h"
