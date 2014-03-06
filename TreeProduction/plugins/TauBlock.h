@@ -28,7 +28,6 @@ private:
 
 public:
   explicit TauBlock(const edm::ParameterSet& iConfig);
-  virtual ~TauBlock();
 
   static const reco::PFJetRef& getJetRef(const reco::PFTau& tau);
 
@@ -38,7 +37,5 @@ private:
   int _verbosity;
   edm::InputTag _inputTag;
   edm::InputTag _vtxInputTag;
-
-  vhtm::Tau* tauB;
 };
 #endif

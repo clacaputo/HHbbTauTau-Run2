@@ -202,11 +202,6 @@ vhtm::Tau::Tau():
   ptSumPhotonsIsoCone(-999),
 
   decayModeFinding(-1),
-  decayModeFindingNewDMs(-1),
-  decayModeFindingOldDMs(-1),
-  chargedIsoPtSum(-1),
-  neutralIsoPtSum(-1),
-  puCorrPtSum(-1),
 
   ChHadCandPt3Prong_1track(-1),
   ChHadCandPt3Prong_2track(-1),
@@ -224,8 +219,6 @@ vhtm::Tau::Tau():
   ChHadCandEta1Prong(-10),
   ChHadCandPhi1Prong(-10),
 
-  CombinedIsolationDeltaBetaCorrRaw3Hits(-1),
-  CombinedIsolationDeltaBetaCorrRaw(-1),
   byIsolationMVA3newDMwLTraw(-1),
   byIsolationMVA3newDMwoLTraw(-1),
   byIsolationMVA3oldDMwLTraw(-1),
@@ -243,29 +236,23 @@ vhtm::Tau::Tau():
 
   byLooseIsolationMVA3newDMwLT(-1),
   byLooseIsolationMVA3newDMwoLT(-1),
-  byLooseIsolationMva3oldDMwLT(-1),
   byLooseIsolationMVA3oldDMwoLT(-1),
 
   byMediumIsolationMVA3newDMwLT(-1),
 
   byMediumIsolationMVA3newDMwoLT(-1),
-  byMediumIsolationMva3oldDMwLT(-1),
-  byMediumIsolationMVA3oldDMwoLT(-1),
 
   byTightIsolationMVA3newDMwLT(-1),
   byTightIsolationMVA3newDMwoLT(-1),
-  byTightIsolationMva3oldDMwLT(-1),
   byTightIsolationMVA3oldDMwoLT(-1),
 
 
       // discriminators against electrons/muons
   againstMuonLoose(-1),      
-  againstMuonLoose2(-1),     
   againstMuonLoose3(-1),     
   againstMuonLooseMVA(-1),   
   againstMuonTight(-1),
   
-  againstMuonTight2(-1),    
   againstMuonTight3(-1),    
   againstMuonTightMVA(-1),  
   againstElectronLoose(-1), 
@@ -274,18 +261,9 @@ vhtm::Tau::Tau():
   pfElectronMVA(-1),        
                             
 
-      // ElectronIDMVA, electron faking tau
-  againstElectronMVALooseMVA5(-1),
-  againstElectronMVAMediumMVA5(-1),
-  againstElectronMVATightMVA5(-1), 
 
   byVLooseCombinedIsolationDeltaBetaCorr(-1),
      
-   
-      // MVA based isolation
-  byLooseIsolationMVA(-1),                   
-  byMediumIsolationMVA(-1),                  
-  byTightIsolationMVA(-1),                  
 
 
   jetPt(-999),
@@ -304,33 +282,12 @@ vhtm::Tau::Tau():
   vx(-999), vy(-999), vz(-999),
   zvertex(-999), ltsipt(-999),
 
-  TauVertexPos_x(-999),
-  TauVertexPos_y(-999),
-  TauVertexPos_z(-999),
-
-  PVPos_x(-999),
-  PVPos_y(-999),
-  PVPos_z(-999),
-
-  FlightLengh(-999),
-  FlightLenghtSig(-999),
-  DXY(-999),
-  DXY_err(-999),
-  DXY_sig(-999),
-
-  NumChHad(-1),
-  selbit(0) 
+  NumChHad(-1)
 {
 
   for (int i = 0; i < kMaxPFChargedCand; ++i) {
     sigChHadCandPt[i] = sigChHadCandEta[i] = sigChHadCandPhi[i] = 
     isoChHadCandPt[i] = isoChHadCandEta[i] = isoChHadCandPhi[i] = -10;
-
-    // ChHadCandPt[i]=-10;
-    //ChHadCandEta[i]=-20;
-    //ChHadCandPhi[i]=-20;
-    //    ChHadCandEnergy[i]=-20;
-
   
   }
   for (int i = 0; i < kMaxPFNeutralCand; ++i) {

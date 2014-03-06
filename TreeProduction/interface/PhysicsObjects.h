@@ -220,6 +220,9 @@ namespace vhtm {
   
     ClassDef(MET,1) 
   };
+
+  #define TAU_DISCRIMINATOR(name) float name
+
   class Tau: public TObject {
   public:
     Tau();
@@ -246,7 +249,7 @@ namespace vhtm {
     double leadTrkDz;
     double leadTrkDzError;
 
-       int vtxIndex;
+    int vtxIndex;
     double vtxDxy;
     double vtxDz;
 
@@ -288,26 +291,61 @@ namespace vhtm {
     double isoGammaCandEta[kMaxPFNeutralCand];
     double isoGammaCandPhi[kMaxPFNeutralCand];
 
+    TAU_DISCRIMINATOR(decayModeFinding);
 
-    // std::vector<double> ChHadCandPt;
-    //std::vector<double> ChHadCandEta;
-    //std::vector<double> ChHadCandPhi;
-    
-    //    double    ChHadCandEnergy[kMaxPFNeutralCand];
+    TAU_DISCRIMINATOR(againstElectronLoose);
+    TAU_DISCRIMINATOR(againstElectronMedium);
+    TAU_DISCRIMINATOR(againstElectronTight);
+    TAU_DISCRIMINATOR(againstElectronLooseMVA5);
+    TAU_DISCRIMINATOR(againstElectronMediumMVA5);
+    TAU_DISCRIMINATOR(againstElectronTightMVA5);
+    TAU_DISCRIMINATOR(againstElectronVTightMVA5);
 
-    // double ChHadCandPt[6];
-    // double ChHadCandEta[6];
-    //double ChHadCandPhi[6];
+    TAU_DISCRIMINATOR(againstMuonLoose);
+    TAU_DISCRIMINATOR(againstMuonMedium);
+    TAU_DISCRIMINATOR(againstMuonTight);
+    TAU_DISCRIMINATOR(againstMuonLoose3);
+    TAU_DISCRIMINATOR(againstMuonTight3);
+    TAU_DISCRIMINATOR(againstMuonLooseMVA);
+    TAU_DISCRIMINATOR(againstMuonMediumMVA);
+    TAU_DISCRIMINATOR(againstMuonTightMVA);
+    TAU_DISCRIMINATOR(againstMuonMVAraw);
 
-
-    /////////////////
-    float decayModeFinding;
-    float   decayModeFindingNewDMs; 
-    float   decayModeFindingOldDMs;
-    
-    float  chargedIsoPtSum ;
-    float neutralIsoPtSum;
-    float puCorrPtSum;
+    TAU_DISCRIMINATOR(byVLooseCombinedIsolationDeltaBetaCorr);
+    TAU_DISCRIMINATOR(byLooseCombinedIsolationDeltaBetaCorr);
+    TAU_DISCRIMINATOR(byMediumCombinedIsolationDeltaBetaCorr);
+    TAU_DISCRIMINATOR(byTightCombinedIsolationDeltaBetaCorr);
+    TAU_DISCRIMINATOR(byLooseCombinedIsolationDeltaBetaCorr3Hits);
+    TAU_DISCRIMINATOR(byMediumCombinedIsolationDeltaBetaCorr3Hits);
+    TAU_DISCRIMINATOR(byTightCombinedIsolationDeltaBetaCorr3Hits);
+    TAU_DISCRIMINATOR(byIsolationMVA3oldDMwoLTraw);
+    TAU_DISCRIMINATOR(byVLooseIsolationMVA3oldDMwoLT);
+    TAU_DISCRIMINATOR(byLooseIsolationMVA3oldDMwoLT);
+    TAU_DISCRIMINATOR(byMediumIsolationMVA3oldDMwoLT);
+    TAU_DISCRIMINATOR(byTightIsolationMVA3oldDMwoLT);
+    TAU_DISCRIMINATOR(byVTightIsolationMVA3oldDMwoLT);
+    TAU_DISCRIMINATOR(byVVTightIsolationMVA3oldDMwoLT);
+    TAU_DISCRIMINATOR(byIsolationMVA3oldDMwLTraw);
+    TAU_DISCRIMINATOR(byVLooseIsolationMVA3oldDMwLT);
+    TAU_DISCRIMINATOR(byLooseIsolationMVA3oldDMwLT);
+    TAU_DISCRIMINATOR(byMediumIsolationMVA3oldDMwLT);
+    TAU_DISCRIMINATOR(byTightIsolationMVA3oldDMwLT);
+    TAU_DISCRIMINATOR(byVTightIsolationMVA3oldDMwLT);
+    TAU_DISCRIMINATOR(byVVTightIsolationMVA3oldDMwLT);
+    TAU_DISCRIMINATOR(byIsolationMVA3newDMwoLTraw);
+    TAU_DISCRIMINATOR(byVLooseIsolationMVA3newDMwoLT);
+    TAU_DISCRIMINATOR(byLooseIsolationMVA3newDMwoLT);
+    TAU_DISCRIMINATOR(byMediumIsolationMVA3newDMwoLT);
+    TAU_DISCRIMINATOR(byTightIsolationMVA3newDMwoLT);
+    TAU_DISCRIMINATOR(byVTightIsolationMVA3newDMwoLT);
+    TAU_DISCRIMINATOR(byVVTightIsolationMVA3newDMwoLT);
+    TAU_DISCRIMINATOR(byIsolationMVA3newDMwLTraw);
+    TAU_DISCRIMINATOR(byVLooseIsolationMVA3newDMwLT);
+    TAU_DISCRIMINATOR(byLooseIsolationMVA3newDMwLT);
+    TAU_DISCRIMINATOR(byMediumIsolationMVA3newDMwLT);
+    TAU_DISCRIMINATOR(byTightIsolationMVA3newDMwLT);
+    TAU_DISCRIMINATOR(byVTightIsolationMVA3newDMwLT);
+    TAU_DISCRIMINATOR(byVVTightIsolationMVA3newDMwLT);
 
   double ChHadCandPt3Prong_1track;
   double ChHadCandPt3Prong_2track;
@@ -325,72 +363,7 @@ namespace vhtm {
   double ChHadCandEta1Prong;
   double ChHadCandPhi1Prong;
 
-  float CombinedIsolationDeltaBetaCorrRaw3Hits;
-  float CombinedIsolationDeltaBetaCorrRaw;
-  float byIsolationMVA3newDMwLTraw;
-  float byIsolationMVA3newDMwoLTraw;
-  float byIsolationMVA3oldDMwLTraw;
-  float byIsolationMVA3oldDMwoLTraw;
-
-  float byLooseCombinedIsolationDeltaBetaCorr;
-  float byLooseCombinedIsolationDeltaBetaCorr3Hits;
-
-  float byMediumCombinedIsolationDeltaBetaCorr;
-  float byMediumCombinedIsolationDeltaBetaCorr3Hits;
-
-
-  float byTightCombinedIsolationDeltaBetaCorr;
-  float byTightCombinedIsolationDeltaBetaCorr3Hits;
-
-  float byLooseIsolationMVA3newDMwLT;
-  float byLooseIsolationMVA3newDMwoLT;
-  float byLooseIsolationMva3oldDMwLT;
-  float byLooseIsolationMVA3oldDMwoLT;
-
-  float byMediumIsolationMVA3newDMwLT;
-
-  float byMediumIsolationMVA3newDMwoLT;
-  float byMediumIsolationMva3oldDMwLT;
-  float byMediumIsolationMVA3oldDMwoLT;
-
-  float byTightIsolationMVA3newDMwLT;
-  float byTightIsolationMVA3newDMwoLT;
-  float byTightIsolationMva3oldDMwLT;
-  float byTightIsolationMVA3oldDMwoLT;
-
-    // discriminators against electrons/muons
-  float againstMuonLoose;      
-  float againstMuonLoose2;     
-  float againstMuonLoose3;     
-  float againstMuonLooseMVA;   
-  float againstMuonTight;
-  
-  float againstMuonTight2;    
-  float againstMuonTight3;    
-  float againstMuonTightMVA;  
-  float againstElectronLoose; 
-  float againstElectronMedium;
-  float againstElectronTight;
  float  pfElectronMVA;        
-                            
-
-      // ElectronIDMVA, electron faking tau
-  float againstElectronMVALooseMVA5;
-  float againstElectronMVAMediumMVA5;
-  float againstElectronMVATightMVA5; 
-
-  float byVLooseCombinedIsolationDeltaBetaCorr;
-     
-   
-      // MVA based isolation
-  float byLooseIsolationMVA;                   
-  float byMediumIsolationMVA;                  
-  float byTightIsolationMVA;                  
-
-
-
-    //////////// 
-
 
      // kinematic variables for PFJet associated to PFTau
     double jetPt;
@@ -414,25 +387,11 @@ namespace vhtm {
     double vz;
   
     double zvertex;
-    double ltsipt;
-    double    TauVertexPos_x;
-    double      TauVertexPos_y;
-    double   TauVertexPos_z;
-    double     PVPos_x;
-    double  PVPos_y;
-    double  PVPos_z;
-    
-    double    FlightLengh;
-    double  FlightLenghtSig;
-    double  DXY;
-    double  DXY_err;
-    double      DXY_sig;
-    
+    double ltsipt;    
 
     int NumChHad;
-    int selbit;
   
-    ClassDef(Tau, 1) 
+    ClassDef(Tau, 2)
   };
   class Muon: public TObject {
   public:

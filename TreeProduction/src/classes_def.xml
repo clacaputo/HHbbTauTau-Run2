@@ -20,8 +20,8 @@
   <class name="vhtm::MET" ClassVersion="1">
     <version ClassVersion="1" checksum="1036931265" />
   </class>
-  <class name="vhtm::Tau" ClassVersion="1">
-    <version ClassVersion="1" checksum="2477470325" />
+  <class name="vhtm::Tau" ClassVersion="2">
+    <version ClassVersion="2" checksum="3860911013" />
   </class>
   <class name="vhtm::Muon" ClassVersion="1">
     <version ClassVersion="1" checksum="1276554683" />
