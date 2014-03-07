@@ -29,7 +29,7 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("LHESource",
-    fileNames = cms.untracked.vstring('file:../LHE_GRAVITON/MGraviton_500.lhe')
+    fileNames = cms.untracked.vstring('file:/data/mc/analysis/LHE_GRAVITON/MGraviton_500.lhe')
 )
 
 process.options = cms.untracked.PSet(

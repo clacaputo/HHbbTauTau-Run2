@@ -37,7 +37,16 @@ options.register ('includeSim',
                 VarParsing.varType.bool,
                 "Include Sim. Default: False")
 
-options.parseArguments()
+import sys
+print sys.argv
+
+if len(sys.argv) > 0:
+    last = sys.argv.pop()
+    sys.argv.extend(last.split(","))
+
+if hasattr(sys, "argv") == True:
+        options.parseArguments()
+
 
 process.GlobalTag.globaltag = options.globalTag
 
