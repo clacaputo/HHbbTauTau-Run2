@@ -97,3 +97,4 @@ PatProduction/python/multicrab_VV.cfg
 PatProduction/python/multicrab_TT_QCD.cfg
 PatProduction/python/multicrab_WJet.cfg
 PatProduction/python/multicrab_Radion.cfg
+PatProduction/python/crab_cern_SIM.cfg
