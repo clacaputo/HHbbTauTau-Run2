@@ -111,9 +111,11 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
 # Additional output definition
 
 # Other statements
-process.genstepfilter.triggerConditions=cms.vstring("generation_step")
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')
+#process.genstepfilter.triggerConditions=cms.vstring("generation_step")
+#from Configuration.AlCa.GlobalTag import GlobalTag
+#process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')
+process.GlobalTag.globaltag = 'START53_V7A::All'
+process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 # Path and EndPath definitions
 process.generation_step = cms.Path(process.pgen)
@@ -125,3 +127,8 @@ process.RAWSIMoutput_step = cms.EndPath(process.RAWSIMoutput)
 # Schedule definition
 process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.endjob_step,process.RAWSIMoutput_step)
 
+# filter all path with the production filter sequence
+for path in process.paths:
+        getattr(process,path)._seq = process.ProductionFilterSequence * getattr(process,path)._seq
+
+#print process.dumpPython()
