@@ -223,7 +223,7 @@ switchJetCollection(process, cms.InputTag('ak5PFJets'),
 ## remove MC matching from the default sequence
 if not options.isMC:
         removeMCMatching(process, ['All'])
-        removeMCMatching(process, ['METs'], "TC")
+        #removeMCMatching(process, ['METs'], "TC")
         removeMCMatching(process, ['METs'], "PF")
         process.patDefaultSequence.remove(process.patJetPartonMatch)
         #process.patDefaultSequence.remove(process.patJetPartonMatchAK5PF)
