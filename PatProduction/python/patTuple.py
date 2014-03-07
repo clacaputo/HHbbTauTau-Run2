@@ -220,6 +220,23 @@ switchJetCollection(process, cms.InputTag('ak5PFJets'),
      jetIdLabel   = 'ak5'
 )
 
+## remove MC matching from the default sequence
+if not options.isMC:
+        removeMCMatching(process, ['All'])
+        removeMCMatching(process, ['METs'], "TC")
+        removeMCMatching(process, ['METs'], "PF")
+        process.patDefaultSequence.remove(process.patJetPartonMatch)
+        #process.patDefaultSequence.remove(process.patJetPartonMatchAK5PF)
+        #process.patDefaultSequence.remove(process.patJetGenJetMatchAK5PF)
+        process.patDefaultSequence.remove(process.patJetFlavourId)
+        process.patDefaultSequence.remove(process.patJetPartons)
+        process.patDefaultSequence.remove(process.patJetPartonAssociation)
+        #process.patDefaultSequence.remove(process.patJetPartonAssociationAK5PF)
+        process.patDefaultSequence.remove(process.patJetFlavourAssociation)
+        #process.patDefaultSequence.remove(process.patJetFlavourAssociationAK5PF)
+        runOnData(process)
+
+
 ## Define process path.
 process.p = cms.Path(
     process.PFTau
