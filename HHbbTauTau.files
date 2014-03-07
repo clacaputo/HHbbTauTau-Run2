@@ -92,3 +92,8 @@ McProduction/python/Graviton500_GEN_SIM.py
 McProduction/python/HH_TauTauBB_GENSIM_cfg.py
 McProduction/python/HH_TauTauBB_RAWSIM_cfg.py
 McProduction/python/HH_TauTauBB_RECO_cfg.py
+PatProduction/python/multicrab_DY.cfg
+PatProduction/python/multicrab_VV.cfg
+PatProduction/python/multicrab_TT_QCD.cfg
+PatProduction/python/multicrab_WJet.cfg
+PatProduction/python/multicrab_Radion.cfg
