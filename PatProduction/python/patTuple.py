@@ -27,10 +27,15 @@ options.register ('runOnCrab',
                 VarParsing.varType.bool,
                 "Indicates if script will be executed on CRAB.")
 options.register ('fileList',
-                  'fileList.py',
+                  'fileList.txt',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   "List of root files to process.")                  
+options.register ('fileNamePrefix',
+                  '',
+                   VarParsing.multiplicity.singleton,
+                   VarParsing.varType.string,
+                   "Prefix to add to input file names.")
 options.register ('includeSim',
                 False,
                 VarParsing.multiplicity.singleton,
@@ -50,10 +55,10 @@ if hasattr(sys, "argv") == True:
 
 process.GlobalTag.globaltag = options.globalTag
 
+from HHbbTauTau.RunTools.readFileList import *
+
 if not options.runOnCrab:
-    fileList = cms.untracked.vstring()
-    process.source.fileNames = fileList
-    execfile(options.fileList)
+    readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
     process.out.fileName = options.outputFile
     process.maxEvents.input = options.maxEvents
 

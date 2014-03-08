@@ -101,3 +101,6 @@ PatProduction/python/crab_cern_SIM.cfg
 PatProduction/python/crab_cern_DATA.cfg
 PatProduction/python/multicrab_DATA.cfg
 PatProduction/python/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt
+generate_file_list.sh
+RunTools/generate_file_list.sh
+RunTools/python/readFileList.py
