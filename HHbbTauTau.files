@@ -88,7 +88,7 @@ McProduction/python/crab_cesar.cfg
 McProduction/python/crab_GENSIM.cfg
 McProduction/python/crab_RAWSIM.cfg
 McProduction/python/crab_RECO.cfg
-McProduction/python/Graviton500_GEN_SIM.py
+McProduction/python/Graviton_GEN_SIM.py
 McProduction/python/HH_TauTauBB_GENSIM_cfg.py
 McProduction/python/HH_TauTauBB_RAWSIM_cfg.py
 McProduction/python/HH_TauTauBB_RECO_cfg.py

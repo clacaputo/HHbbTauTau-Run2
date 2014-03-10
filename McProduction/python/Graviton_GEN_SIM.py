@@ -23,18 +23,28 @@ process.load('Configuration.StandardSequences.SimIdeal_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
+
+## Parse and apply options.
+from FWCore.ParameterSet.VarParsing import VarParsing
+options = VarParsing('analysis')
+options.register ('globalTag',
+                  'START53_V7A::All',
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  "Global Tag to use. Default: START53_V7A::All")
+
+options.parseArguments()
+
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10)
+    input = cms.untracked.int32(options.maxEvents)
 )
 
 # Input source
 process.source = cms.Source("LHESource",
-    fileNames = cms.untracked.vstring('file:/afs/cern.ch/work/m/mgrippo/LHE_GRAVITON/MGraviton_500.lhe')
+    fileNames = cms.untracked.vstring(options.inputFiles)
 )
 
-process.options = cms.untracked.PSet(
-
-)
+process.options = cms.untracked.PSet()
 
 from Configuration.Generator.PythiaUEZ2Settings_cfi import *
 
@@ -98,7 +108,7 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     outputCommands = process.RAWSIMEventContent.outputCommands,
-    fileName = cms.untracked.string('file:Graviton500_GENSIM.root'),
+    fileName = cms.untracked.string(options.outputFile),
     dataset = cms.untracked.PSet(
         filterName = cms.untracked.string(''),
         dataTier = cms.untracked.string('GEN-SIM')
@@ -114,7 +124,7 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
 #process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 #from Configuration.AlCa.GlobalTag import GlobalTag
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')
-process.GlobalTag.globaltag = 'START53_V7A::All'
+process.GlobalTag.globaltag = options.globalTag
 process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 # Path and EndPath definitions
