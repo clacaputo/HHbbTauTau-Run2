@@ -32,11 +32,40 @@ options.register ('globalTag',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   "Global Tag to use. Default: START53_V7A::All")
+options.register ('runOnCrab',
+                  False,
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.bool,
+                  "Indicates if script will be executed on CRAB.")
 
-options.parseArguments()
+import sys
+print sys.argv
+
+if len(sys.argv) > 0:
+    last = sys.argv.pop()
+    sys.argv.extend(last.split(","))
+
+if hasattr(sys, "argv") == True:
+        options.parseArguments()
+
+# Output definition
+
+process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
+    splitLevel = cms.untracked.int32(0),
+    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
+    outputCommands = process.RAWSIMEventContent.outputCommands,
+    fileName = cms.untracked.string(""),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(''),
+        dataTier = cms.untracked.string('GEN-SIM')
+    ),
+    SelectEvents = cms.untracked.PSet(
+        SelectEvents = cms.vstring('generation_step')
+    )
+)
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(options.maxEvents)
+    input = cms.untracked.int32(-1)
 )
 
 # Input source
@@ -45,6 +74,10 @@ process.source = cms.Source("LHESource",
 )
 
 process.options = cms.untracked.PSet()
+
+if not options.runOnCrab:
+    process.RAWSIMoutput.fileName = options.outputFile
+    process.maxEvents.input = options.maxEvents
 
 from Configuration.Generator.PythiaUEZ2Settings_cfi import *
 
@@ -102,21 +135,7 @@ process.configurationMetadata = cms.untracked.PSet(
     name = cms.untracked.string('PyReleaseValidation')
 )
 
-# Output definition
 
-process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
-    splitLevel = cms.untracked.int32(0),
-    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
-    outputCommands = process.RAWSIMEventContent.outputCommands,
-    fileName = cms.untracked.string(options.outputFile),
-    dataset = cms.untracked.PSet(
-        filterName = cms.untracked.string(''),
-        dataTier = cms.untracked.string('GEN-SIM')
-    ),
-    SelectEvents = cms.untracked.PSet(
-        SelectEvents = cms.vstring('generation_step')
-    )
-)
 
 # Additional output definition
 
