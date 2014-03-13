@@ -94,10 +94,7 @@ McProduction/python/HH_TauTauBB_RAWSIM_cfg.py
 McProduction/python/HH_TauTauBB_RECO_cfg.py
 PatProduction/python/multicrab_DY.cfg
 PatProduction/python/multicrab_VV.cfg
-PatProduction/python/multicrab_TT_QCD.cfg
-PatProduction/python/multicrab_WJet.cfg
-PatProduction/python/multicrab_Radion.cfg
-PatProduction/python/crab_cern_SIM.cfg
+PatProduction/python/multicrab_TT_W.cfg
 PatProduction/python/crab_cern_DATA.cfg
 PatProduction/python/multicrab_TauPlusX.cfg
 PatProduction/python/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt

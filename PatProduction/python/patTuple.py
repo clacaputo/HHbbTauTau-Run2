@@ -43,14 +43,12 @@ options.register ('includeSim',
                 "Include Sim. Default: False")
 
 import sys
-print sys.argv
 
 if len(sys.argv) > 0:
     last = sys.argv.pop()
     sys.argv.extend(last.split(","))
 
-if hasattr(sys, "argv") == True:
-        options.parseArguments()
+options.parseArguments()
 
 
 process.GlobalTag.globaltag = options.globalTag
@@ -283,6 +281,7 @@ process.out.outputCommands = [
     'keep *_genMetTrue_*_*',
     'keep recoTracks_generalTracks_*_*',
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
+    'keep GenFilterInfo_*_*_*',
                              ]
 
 if options.includeSim:
