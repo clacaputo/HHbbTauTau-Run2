@@ -85,7 +85,7 @@ Analysis/include/EventTreeMC.h
 PatProduction/python/crab_cern.cfg
 PatProduction/python/multicrab.cfg
 McProduction/python/crab_cesar.cfg
-McProduction/python/crab_GENSIM.cfg
+McProduction/python/crab_Graviton.cfg
 McProduction/python/crab_RAWSIM.cfg
 McProduction/python/crab_RECO.cfg
 McProduction/python/Graviton_GEN_SIM.py
@@ -103,3 +103,4 @@ RunTools/generate_file_list.sh
 RunTools/python/readFileList.py
 PatProduction/python/Cert_190456-208686_8TeV_22Jan2013ReReco_Collisions12_JSON.txt
 PatProduction/python/multicrab_Tau.cfg
+McProduction/python/multicrab_Graviton_GENSIM.cfg
