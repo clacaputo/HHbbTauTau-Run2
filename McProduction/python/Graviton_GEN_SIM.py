@@ -70,7 +70,7 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("LHESource",
-    fileNames = cms.untracked.vstring("file:MGraviton_300.lhe")
+    fileNames = cms.untracked.vstring("options.inputFiles")
 )
 
 process.options = cms.untracked.PSet()
@@ -78,7 +78,6 @@ process.options = cms.untracked.PSet()
 if not options.runOnCrab:
     process.RAWSIMoutput.fileName = options.outputFile
     process.maxEvents.input = options.maxEvents
-    process.source.fileNames = options.inputFiles
 
 from Configuration.Generator.PythiaUEZ2Settings_cfi import *
 
