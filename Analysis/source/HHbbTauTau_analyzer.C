@@ -1,4 +1,4 @@
-/*
+/*!
  * \file HHbbTauTau_analyzer.C
  * \brief Analysis HHbbTauTau.
  * \author Konstantin Androsov (INFN Pisa, Siena University)
