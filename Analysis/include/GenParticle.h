@@ -173,8 +173,8 @@ public:
 
 namespace  {
 
-    bool FindDecayProducts(const GenParticle& genParticle, const ParticleCodes& particleCodes,
-                           GenParticleVector& decayProducts)
+    inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCodes& particleCodes,
+                                  GenParticleVector& decayProducts)
     {
         if (genParticle.status != particles::Decayed_or_fragmented)
             throw std::runtime_error("particle type not supported");
@@ -235,8 +235,8 @@ namespace  {
 
     }
 
-    bool FindDecayProducts2D(const GenParticleVector& genParticles, const ParticleCodes2D& particleCodes2D,
-                           GenParticleVector2D& decayProducts2D, GenParticleIndexVector& indexes)
+    inline bool FindDecayProducts2D(const GenParticleVector& genParticles, const ParticleCodes2D& particleCodes2D,
+                                    GenParticleVector2D& decayProducts2D, GenParticleIndexVector& indexes)
     {
         std::set<size_t> taken_genParticles;
         if (genParticles.size() != particleCodes2D.size())
