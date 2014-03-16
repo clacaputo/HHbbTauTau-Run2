@@ -11,7 +11,13 @@ function get_arg_value {
 
 NAME=$1
 ARGS=($*)
-SCRIPT_PATH="$CMSSW_BASE/src/HHbbTauTau"
+
+if [ "$CMSSW_BASE/" = "/" ] ; then
+    SCRIPT_PATH="."
+else
+    SCRIPT_PATH="$CMSSW_BASE/src/HHbbTauTau"
+fi
+
 SCRIPT_RUN_PATH="$SCRIPT_PATH/run"
 mkdir -p $SCRIPT_RUN_PATH
 
@@ -51,7 +57,7 @@ int main()
 " > $CODE_OUT
 
 g++ -std=c++0x -Wall \
-	-Isrc/ -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
+        -I. -Isrc/ -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
 	`root-config --libs` \
 	-o $EXE_NAME $CODE_OUT
 
