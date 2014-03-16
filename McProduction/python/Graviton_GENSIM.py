@@ -32,29 +32,22 @@ options.register ('globalTag',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   "Global Tag to use. Default: START53_V7A::All")
-options.register ('runOnCrab',
-                  False,
-                  VarParsing.multiplicity.singleton,
-                  VarParsing.varType.bool,
-                  "Indicates if script will be executed on CRAB.")
 
 import sys
 print sys.argv
-
 if len(sys.argv) > 0:
     last = sys.argv.pop()
     sys.argv.extend(last.split(","))
+options.parseArguments()
 
-if hasattr(sys, "argv") == True:
-        options.parseArguments()
-
-# Output definition
+process.source = cms.Source("LHESource", fileNames = cms.untracked.vstring(options.inputFiles) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
 
 process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     outputCommands = process.RAWSIMEventContent.outputCommands,
-    fileName = cms.untracked.string(""),
+    fileName = cms.untracked.string(options.outputFile),
     dataset = cms.untracked.PSet(
         filterName = cms.untracked.string(''),
         dataTier = cms.untracked.string('GEN-SIM')
@@ -64,23 +57,7 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
     )
 )
 
-process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
-)
-
-# Input source
-process.source = cms.Source("LHESource",
-    fileNames = cms.untracked.vstring("options.inputFiles")
-)
-
-process.options = cms.untracked.PSet()
-
-if not options.runOnCrab:
-    process.RAWSIMoutput.fileName = options.outputFile
-    process.maxEvents.input = options.maxEvents
-
 from Configuration.Generator.PythiaUEZ2Settings_cfi import *
-
 process.generator = cms.EDFilter("Pythia6HadronizerFilter",
     ExternalDecays = cms.PSet(
         Tauola = cms.untracked.PSet(
@@ -135,14 +112,8 @@ process.configurationMetadata = cms.untracked.PSet(
     name = cms.untracked.string('PyReleaseValidation')
 )
 
-
-
-# Additional output definition
-
 # Other statements
 #process.genstepfilter.triggerConditions=cms.vstring("generation_step")
-#from Configuration.AlCa.GlobalTag import GlobalTag
-#process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')
 process.GlobalTag.globaltag = options.globalTag
 process.ProductionFilterSequence = cms.Sequence(process.generator)
 
@@ -154,7 +125,12 @@ process.endjob_step = cms.EndPath(process.endOfProcess)
 process.RAWSIMoutput_step = cms.EndPath(process.RAWSIMoutput)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.endjob_step,process.RAWSIMoutput_step)
+process.schedule = cms.Schedule(
+    process.generation_step,
+    process.genfiltersummary_step,
+    process.simulation_step,
+    process.endjob_step,
+    process.RAWSIMoutput_step)
 
 # filter all path with the production filter sequence
 for path in process.paths:
