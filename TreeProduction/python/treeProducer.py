@@ -15,10 +15,15 @@ options.register ('globalTag',
                   VarParsing.varType.string,
                   "Global Tag to use. Default: START53_V21::All")
 options.register ('fileList',
-                  'fileList.py',
+                  'fileList.txt',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   "List of root files to process.")
+options.register ('fileNamePrefix',
+                  '',
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  "Prefix to add to input file names.")
 options.register ('includeSim',
                   False,
                   VarParsing.multiplicity.singleton,
@@ -30,9 +35,12 @@ options.parseArguments()
 #--------------------------------------
 # Event Source & # of Events to process
 #---------------------------------------
-fileList = cms.untracked.vstring()
-process.source = cms.Source ("PoolSource", fileNames = fileList)
-execfile(options.fileList)
+
+from HHbbTauTau.RunTools.readFileList import *
+
+process.source = cms.Source ("PoolSource", fileNames = cms.untracked.vstring())
+readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
+
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
 
