@@ -27,14 +27,7 @@ namespace ntuple {
     void EventTree::Loop(){} //just declared
 }
 
-namespace ntupleMC {
-    using namespace std;
 
-
-    #include "../include/EventTreeMC.h"
-
-    void EventTree::Loop(){} //just declared
-}
 
 #include "../include/AnalyzerData.h"
 #include "../include/Particles.h"
@@ -104,7 +97,7 @@ private:
     std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
 };
 
-using ntupleMC::EventTree;
+using ntuple::EventTree;
 
 namespace cuts {
 namespace HHbbTauTau {
@@ -131,7 +124,7 @@ public:
             throw std::runtime_error("Input file not found.");
 
         TTree* inputTree = dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree"));
-        event = new EventTree(inputTree);
+        event = new EventTree(inputTree,useMCtruth);
         anaData.getOutputFile().cd();
         std::cout << "Starting analyzer...\n";
     }

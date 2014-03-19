@@ -81,7 +81,6 @@ TreeProduction/src/Utility.cc
 PatProduction/plugins/BuildFile.xml
 PatProduction/plugins/MuonsUserEmbedded.cc
 PatProduction/plugins/ElectronsUserEmbedder.cc
-Analysis/include/EventTreeMC.h
 PatProduction/python/crab_cern.cfg
 PatProduction/python/multicrab.cfg
 McProduction/python/crab_cesar.cfg
