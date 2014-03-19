@@ -1,5 +1,3 @@
-/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_167_2_5YO.root
-/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_247_2_6Lq.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_426_1_0PR.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_312_2_kwm.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_425_1_KRW.root
@@ -34,3 +32,5 @@
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_255_2_Xvm.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_238_2_WWS.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_310_2_a4S.root
+/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_237_2_EfK.root
+/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_7_2_CVC.root

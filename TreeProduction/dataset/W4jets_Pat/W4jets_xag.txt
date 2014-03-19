@@ -1,3 +1,8 @@
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1734_1_mIH.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_110_1_iq7.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1699_1_ABf.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_773_1_egJ.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1649_1_doQ.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3256_1_DPP.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3337_1_w29.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_117_1_3nP.root
@@ -6,7 +11,6 @@
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3134_1_zhe.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2683_1_SWN.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1600_1_LUA.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_140_1_La8.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1608_1_Aoa.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_770_1_Oqi.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3103_1_0jw.root
@@ -366,9 +370,3 @@
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2435_1_i0b.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1290_1_Ezo.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_265_1_e4O.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1149_1_CsG.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2535_1_PZz.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_272_1_J9c.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2519_1_OFi.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2539_1_RHe.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2467_1_3qi.root

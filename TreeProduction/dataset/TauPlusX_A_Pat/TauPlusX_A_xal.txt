@@ -1,5 +1,3 @@
-/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_237_2_EfK.root
-/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_7_2_CVC.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_289_2_2xK.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_269_2_SE5.root
 /store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/PAT/patTuple_137_2_NLR.root

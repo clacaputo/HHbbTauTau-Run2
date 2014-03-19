@@ -1,5 +1,3 @@
-/store/user/kandroso/WW_8TeV/PAT/patTuple_414_1_FS2.root
-/store/user/kandroso/WW_8TeV/PAT/patTuple_2708_1_HdG.root
 /store/user/kandroso/WW_8TeV/PAT/patTuple_2828_1_RXf.root
 /store/user/kandroso/WW_8TeV/PAT/patTuple_1198_1_ZKO.root
 /store/user/kandroso/WW_8TeV/PAT/patTuple_2689_1_7Y0.root
@@ -332,3 +330,5 @@
 /store/user/kandroso/WW_8TeV/PAT/patTuple_1266_1_zlg.root
 /store/user/kandroso/WW_8TeV/PAT/patTuple_963_1_1LK.root
 /store/user/kandroso/WW_8TeV/PAT/patTuple_2201_1_D1f.root
+/store/user/kandroso/WW_8TeV/PAT/patTuple_725_1_X0f.root
+/store/user/kandroso/WW_8TeV/PAT/patTuple_2076_1_WDp.root

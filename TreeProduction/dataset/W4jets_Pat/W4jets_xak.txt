@@ -1,3 +1,11 @@
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3141_1_9kd.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3081_1_v6l.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3013_1_pEK.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3160_1_hhY.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_734_1_9OT.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_142_1_M3K.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_730_1_s5g.root
+/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2937_1_yKg.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2884_1_LRu.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_762_1_R0A.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3023_1_QQ9.root
@@ -266,10 +274,8 @@
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3528_1_wkG.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3483_1_3Of.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_789_1_770.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_129_1_a5D.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1645_1_64P.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1660_1_QcC.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_139_1_V3s.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1636_1_ZAM.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3550_1_e0H.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_3569_1_7gU.root
@@ -364,11 +370,3 @@
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1321_1_Ta1.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1278_1_1PR.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2636_1_t4x.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2725_1_Ech.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2624_1_1Le.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1355_1_zTL.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_577_1_mSu.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_367_1_okd.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1120_1_Rfj.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1317_1_8Sb.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2588_1_FjC.root

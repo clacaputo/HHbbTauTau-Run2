@@ -370,5 +370,3 @@
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2569_1_kNi.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2529_1_hYi.root
 /store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2601_1_aNT.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_2765_1_Rkm.root
-/store/user/kandroso/W4JetsToLNu_8TeV/PAT/patTuple_1291_1_TQh.root
