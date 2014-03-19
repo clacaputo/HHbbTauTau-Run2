@@ -17,6 +17,7 @@
 #include <TClonesArray.h>
 #include <TObject.h>
 
+
 #define EventTree_cxx
 
 namespace ntuple {
@@ -34,6 +35,8 @@ namespace ntuple {
 #include "../include/Htautau_Summer13.h"
 #include "../include/CutTools.h"
 #include "../include/GenParticle.h"
+#include "../include/MCfinalState.h"
+#include "../include/Candidate.h"
 
 
 #define SELECTION_ENTRY(name, n_bins, ...) \
@@ -149,105 +152,31 @@ private:
 
     void ProcessEvent()
     {
-        if (useMCtruth){
-            static const analysis::ParticleCodes resonanceCodes = { particles::Radion };
-            static const analysis::ParticleCodes resonanceDecay = { particles::Higgs, particles::Higgs };
-            static const analysis::ParticleCodes2D HiggsDecays = { {particles::b, particles::b},
-                                                                   {particles::tau, particles::tau}};
-            static const analysis::ParticleCodes TauMuonicDecay = {particles::mu, particles::nu_mu, particles::nu_tau};
-            static const analysis::ParticleCodes TauElectronDecay = {particles::e, particles::nu_e, particles::nu_tau};
+        using namespace analysis;
 
-            const analysis::GenEvent genEvent(*event);
-            //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
+        finalState::bbTauTau muTauJet;
+        if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
 
-            const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
-            if (resonances.size() != 1)
-                throw std::runtime_error("not one resonance per event");
-
-            const analysis::GenParticle& resonance = **resonances.begin();
-            if (resonance.MissingDaughter)
-                throw std::runtime_error("resonance has no daughters");
-//            std::cout << "N resonance daughters = " << resonance.daughters.size() << std::endl;
-//            if (resonance.daughters.size() != 2)
-//                throw std::runtime_error("the candidate resonance has not 2 daughters");
-
-//            genEvent.Print();
-            analysis::GenParticleVector HiggsBosons;
-            if(!analysis::FindDecayProducts(resonance, resonanceDecay,HiggsBosons))
-                throw std::runtime_error("Resonance does not decay into 2 Higgs");
-
-            analysis::GenParticleVector2D HiggsDecayProducts;
-            analysis::GenParticleIndexVector HiggsIndexes;
-            if(!analysis::FindDecayProducts2D(HiggsBosons,HiggsDecays,HiggsDecayProducts,HiggsIndexes))
-                throw std::runtime_error("NOT HH -> bb tautau");
-
-            const analysis::GenParticleVector& b_jets_MC = HiggsDecayProducts.at(0);
-            const analysis::GenParticleVector& taus_MC = HiggsDecayProducts.at(1);
-
-            const analysis::GenParticle* muon_MC = nullptr;
-            const analysis::GenParticle* tau_jet_MC = nullptr;
-            for (const analysis::GenParticle* tau_MC : taus_MC){
-                analysis::GenParticleVector TauProducts;
-                if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts)){
-                    muon_MC = TauProducts.at(0);
-                    continue;
-                }
-                if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts)){
-                    tau_jet_MC = tau_MC;
-                }
-            }
-
-            if (!muon_MC || !tau_jet_MC) {
-                //std::cout << "not our final state mu-tau" << std::endl;
-                return;
-            }
-
-            const analysis::GenParticle& Higgs_MuTau_MC = *HiggsBosons.at(HiggsIndexes.at(1));
-            const analysis::GenParticle& Higgs_BB_MC = *HiggsBosons.at(HiggsIndexes.at(0));
-
-            anaData.Radion_Mass().Fill(resonance.momentum.M());
-            anaData.Radion_Pt().Fill(resonance.momentum.Pt());
-            anaData.Radion_Eta().Fill(resonance.momentum.Eta());
-            anaData.Radion_Phi().Fill(resonance.momentum.Phi());
-
-            anaData.Tau_Pt_MC().Fill(tau_jet_MC->momentum.Pt());
-            anaData.Mu_Pt_MC().Fill(muon_MC->momentum.Pt());
-            anaData.Bjets_Pt_MC().Fill(b_jets_MC.at(0)->momentum.Pt());
-            anaData.Bjets_Pt_MC().Fill(b_jets_MC.at(1)->momentum.Pt());
-            anaData.Higgs_MuTau_MC_Pt().Fill(Higgs_MuTau_MC.momentum.Pt());
-            anaData.Higgs_BB_MC_Pt().Fill(Higgs_BB_MC.momentum.Pt());
-            anaData.DR_bjets_vs_HiggsPt_MC().Fill(Higgs_BB_MC.momentum.Pt(),
-                                                  b_jets_MC.at(0)->momentum.DeltaR(b_jets_MC.at(1)->momentum));
-            anaData.DR_Higgs_vs_RadionPt_MC().Fill(resonance.momentum.Pt(),
-                                                   Higgs_MuTau_MC.momentum.DeltaR(Higgs_BB_MC.momentum));
-
-        }
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
         cut(true, "total");
-        const IndexVector muons = CollectMuons();
+        const CandidateVector muons = CollectMuons();
         cut(muons.size(), "muon");
-        const IndexVector taus = CollectTaus();
+        const CandidateVector taus = CollectTaus();
         cut(taus.size(), "tau");
-        const IndexPairVector mu_tau_pairs = FindCompatibleLeptonCombinations(muons, taus);
-        cut(mu_tau_pairs.size(), "mu_tau");
-        const IndexVector electrons = CollectElectrons();
+        const CandidateVector Higgses_mu_tau = FindCompatibleLeptonCombinations(muons, taus);
+        cut(Higgses_mu_tau.size(), "mu_tau");
+        const CandidateVector electrons = CollectElectrons();
         cut(!electrons.size(), "no_electron");
 
-        const IndexVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
-        const IndexVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
+        const CandidateVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
+        const CandidateVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
         cut.test(b_jets_loose.size() == 2, "2b_loose");
         cut.test(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
         if (cut.test(b_jets_medium.size() == 2, "2b_medium")){
-            TLorentzVector bjet1_momentum;
-            bjet1_momentum.SetPtEtaPhiE(event->Jet_pt[b_jets_medium.at(0)], event->Jet_eta[b_jets_medium.at(0)],
-                    event->Jet_phi[b_jets_medium.at(0)],event->Jet_energy[b_jets_medium.at(0)]);
-            TLorentzVector bjet2_momentum;
-            bjet2_momentum.SetPtEtaPhiE(event->Jet_pt[b_jets_medium.at(1)], event->Jet_eta[b_jets_medium.at(1)],
-                    event->Jet_phi[b_jets_medium.at(1)],event->Jet_energy[b_jets_medium.at(1)]);
-            TLorentzVector bb_momentum = bjet1_momentum + bjet2_momentum;
-            anaData.BB_mass().Fill(bb_momentum.M());
+            const Candidate Higgs_bb(Candidate::Higgs, b_jets_medium.at(0), b_jets_medium.at(1));
+            anaData.BB_mass().Fill(Higgs_bb.momentum.M());
         }
         cut.test(b_jets_loose.size() >= 2, ">=2b_loose");
         cut.test(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
@@ -255,50 +184,48 @@ private:
 
     }
 
-    template<typename BaseSelector, typename ValueType>
-    IndexVector CollectObjects(TH1D& selection_histogram, Int_t n_objects,
-                               const BaseSelector base_selector, const ValueType* values_to_compare)
+    template<typename BaseSelector>
+    analysis::CandidateVector CollectObjects(TH1D& selection_histogram, Int_t n_objects,
+                               const BaseSelector base_selector)
     {
-        const auto selector = [&](unsigned id) { base_selector(id, true, anaDataBeforeCut); };
+        const auto selector = [&](unsigned id) -> analysis::Candidate
+            { return base_selector(id, true, anaDataBeforeCut); };
 
-        const auto comparitor = [&](unsigned a, unsigned b) -> bool
-            { return values_to_compare[a] > values_to_compare[b]; };
 
-        const auto selected = cuts::collect_objects(anaData.Counter(), selection_histogram, n_objects, selector,
-                                                    comparitor);
-        for(Int_t id : selected) base_selector(id, false, anaDataAfterCut);
+        const auto selected = cuts::collect_objects(anaData.Counter(), selection_histogram, n_objects, selector);
+        for(const analysis::Candidate& candidate : selected) base_selector(candidate.index, false, anaDataAfterCut);
         return selected;
     }
 
-    IndexVector CollectMuons()
+    analysis::CandidateVector CollectMuons()
     {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
-            { SelectMuon(id, apply_cut, _anaData); };
-        return CollectObjects(anaData.MuonSelection(), event->nMuon, base_selector, event->Muon_pt);
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectMuon(id, apply_cut, _anaData); };
+        return CollectObjects(anaData.MuonSelection(), event->nMuon, base_selector);
     }
 
-    IndexVector CollectTaus()
+    analysis::CandidateVector CollectTaus()
     {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
-            { SelectTau(id, apply_cut, _anaData); };
-        return CollectObjects(anaData.TauSelection(), event->nTau, base_selector, event->Tau_pt);
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectTau(id, apply_cut, _anaData); };
+        return CollectObjects(anaData.TauSelection(), event->nTau, base_selector);
     }
 
-    IndexVector CollectElectrons()
+    analysis::CandidateVector CollectElectrons()
     {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
-            { SelectElectron(id, apply_cut, _anaData); };
-        return CollectObjects(anaData.ElectronSelection(), event->nElectron, base_selector, event->Electron_pt);
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectElectron(id, apply_cut, _anaData); };
+        return CollectObjects(anaData.ElectronSelection(), event->nElectron, base_selector);
     }
 
-    IndexVector CollectBJets(double csv, const std::string& selection_label)
+    analysis::CandidateVector CollectBJets(double csv, const std::string& selection_label)
     {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData)
-            { SelectBJet(id, csv, selection_label, apply_cut, _anaData); };
-        return CollectObjects(anaData.BJetSelection(selection_label), event->nJet, base_selector, event->Jet_pt);
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectBJet(id, csv, selection_label, apply_cut, _anaData); };
+        return CollectObjects(anaData.BJetSelection(selection_label), event->nJet, base_selector);
     }
 
-    void SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::muonID;
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), apply_cut);
@@ -316,9 +243,13 @@ private:
         cut(X(Muon_globalChi2) < globalChiSquare, "chi2");
         cut(std::abs( X(Muon_dB) ) < dB, "dB");
         cut(X(Muon_pfRelIso) < pFRelIso, "pFRelIso");
+        TLorentzVector momentum;
+        momentum.SetPtEtaPhiE(event->Muon_pt[id], event->Muon_eta[id], event->Muon_phi[id],
+                                             event->Muon_energy[id]);
+        return analysis::Candidate(analysis::Candidate::Mu, id, momentum);
     }
 
-    void SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::tauID;
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), apply_cut);
@@ -330,9 +261,13 @@ private:
         cut(X(Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         cut(X(Tau_againstMuonTight) > againstMuonTight, "vs_mu_tight");
         cut(X(Tau_againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        TLorentzVector momentum;
+        momentum.SetPtEtaPhiE(event->Tau_pt[id], event->Tau_eta[id], event->Tau_phi[id],
+                              event->Tau_energy[id]);
+        return analysis::Candidate(analysis::Candidate::Tau, id, momentum);
     }
 
-    void SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::electronID;
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), apply_cut);
@@ -348,9 +283,13 @@ private:
         const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(Electron_mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        TLorentzVector momentum;
+        momentum.SetPtEtaPhiE(event->Electron_pt[id], event->Electron_eta[id], event->Electron_phi[id],
+                              event->Electron_energy[id]);
+        return analysis::Candidate(analysis::Candidate::Electron, id, momentum);
     }
 
-    void SelectBJet(Int_t id, double csv, const std::string& selection_label, bool apply_cut,
+    analysis::Candidate SelectBJet(Int_t id, double csv, const std::string& selection_label, bool apply_cut,
                     root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::btag;
@@ -360,27 +299,96 @@ private:
         cut(X(Jet_pt, selection_label) > pt, "pt");
         cut(std::abs( X(Jet_eta, selection_label) ) < eta, "eta");
         cut(X(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
+        TLorentzVector momentum;
+        momentum.SetPtEtaPhiE(event->Jet_pt[id], event->Jet_eta[id], event->Jet_phi[id],
+                              event->Jet_energy[id]);
+        return analysis::Candidate(analysis::Candidate::Bjet, id, momentum);
     }
 
-    IndexPairVector FindCompatibleLeptonCombinations(const IndexVector& muons, const IndexVector& taus)
+    analysis::CandidateVector FindCompatibleLeptonCombinations(const analysis::CandidateVector& muons,
+                                                               const analysis::CandidateVector& taus)
     {
-        IndexPairVector result;
-        for(auto mu_id : muons) {
-            TLorentzVector mu_momentum;
-            mu_momentum.SetPtEtaPhiE(event->Muon_pt[mu_id], event->Muon_eta[mu_id], event->Muon_phi[mu_id],
-                                     event->Muon_energy[mu_id]);
-            for(auto tau_id : taus) {
-                TLorentzVector tau_momentum;
-                tau_momentum.SetPtEtaPhiE(event->Tau_pt[tau_id], event->Tau_eta[tau_id], event->Tau_phi[tau_id],
-                                         event->Tau_energy[tau_id]);
-                TLorentzVector mu_tau_momentum = mu_momentum + tau_momentum;
-                if(tau_momentum.DeltaR(mu_momentum) > cuts::DeltaR_signalLeptons){
-                    result.push_back(IndexPair(mu_id, tau_id));
-                    anaData.Mu_tau_mass().Fill(mu_tau_momentum.M());
+        analysis::CandidateVector result;
+        for(const analysis::Candidate& mu : muons) {
+
+            for(const analysis::Candidate& tau : taus) {
+                const analysis::Candidate Higgs(analysis::Candidate::Higgs, mu, tau);
+
+                if(tau.momentum.DeltaR(mu.momentum) > cuts::DeltaR_signalLeptons){
+                    result.push_back(Higgs);
+                    anaData.Mu_tau_mass().Fill(Higgs.momentum.M());
                 }
             }
         }
         return result;
+    }
+
+    bool FindAnalysisFinalState(analysis::finalState::bbTauTau& finalState){
+        static const analysis::ParticleCodes resonanceCodes = { particles::Radion };
+        static const analysis::ParticleCodes resonanceDecay = { particles::Higgs, particles::Higgs };
+        static const analysis::ParticleCodes2D HiggsDecays = { {particles::b, particles::b},
+                                                               {particles::tau, particles::tau}};
+        static const analysis::ParticleCodes TauMuonicDecay = {particles::mu, particles::nu_mu, particles::nu_tau};
+        static const analysis::ParticleCodes TauElectronDecay = {particles::e, particles::nu_e, particles::nu_tau};
+
+        const analysis::GenEvent genEvent(*event);
+        //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
+
+        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+        if (resonances.size() != 1)
+            throw std::runtime_error("not one resonance per event");
+
+        finalState.resonance = *resonances.begin();
+
+//            genEvent.Print();
+        analysis::GenParticleVector HiggsBosons;
+        if(!analysis::FindDecayProducts(*finalState.resonance, resonanceDecay,HiggsBosons))
+            throw std::runtime_error("Resonance does not decay into 2 Higgs");
+
+        analysis::GenParticleVector2D HiggsDecayProducts;
+        analysis::GenParticleIndexVector HiggsIndexes;
+        if(!analysis::FindDecayProducts2D(HiggsBosons,HiggsDecays,HiggsDecayProducts,HiggsIndexes))
+            throw std::runtime_error("NOT HH -> bb tautau");
+
+        finalState.b_jets = HiggsDecayProducts.at(0);
+        const analysis::GenParticleVector& taus_MC = HiggsDecayProducts.at(1);
+
+        for (const analysis::GenParticle* tau_MC : taus_MC){
+            analysis::GenParticleVector TauProducts;
+            if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts)){
+                finalState.muon = TauProducts.at(0);
+                continue;
+            }
+            if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts)){
+                finalState.tau_jet = tau_MC;
+            }
+        }
+
+        if (!finalState.muon || !finalState.tau_jet) {
+            //std::cout << "not our final state mu-tau" << std::endl;
+            return false;
+        }
+
+        finalState.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(1));
+        finalState.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(0));
+
+        anaData.Radion_Mass().Fill(finalState.resonance->momentum.M());
+        anaData.Radion_Pt().Fill(finalState.resonance->momentum.Pt());
+        anaData.Radion_Eta().Fill(finalState.resonance->momentum.Eta());
+        anaData.Radion_Phi().Fill(finalState.resonance->momentum.Phi());
+
+        anaData.Tau_Pt_MC().Fill(finalState.tau_jet->momentum.Pt());
+        anaData.Mu_Pt_MC().Fill(finalState.muon->momentum.Pt());
+        anaData.Bjets_Pt_MC().Fill(finalState.b_jets.at(0)->momentum.Pt());
+        anaData.Bjets_Pt_MC().Fill(finalState.b_jets.at(1)->momentum.Pt());
+        anaData.Higgs_MuTau_MC_Pt().Fill(finalState.Higgs_TauTau->momentum.Pt());
+        anaData.Higgs_BB_MC_Pt().Fill(finalState.Higgs_BB->momentum.Pt());
+        anaData.DR_bjets_vs_HiggsPt_MC().Fill(finalState.Higgs_BB->momentum.Pt(),
+                                              finalState.b_jets.at(0)->momentum.DeltaR(finalState.b_jets.at(1)->momentum));
+        anaData.DR_Higgs_vs_RadionPt_MC().Fill(finalState.resonance->momentum.Pt(),
+                                               finalState.Higgs_TauTau->momentum.DeltaR(finalState.Higgs_BB->momentum));
+
+        return true;
     }
 
 private:

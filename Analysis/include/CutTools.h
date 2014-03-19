@@ -18,10 +18,9 @@
 #include <Rtypes.h>
 
 #include "SmartHistogram.h"
+#include "Candidate.h"
 
-typedef std::vector<Int_t> IndexVector;
-typedef std::pair<Int_t, Int_t> IndexPair;
-typedef std::vector<IndexPair> IndexPairVector;
+
 
 namespace cuts {
 
@@ -69,21 +68,21 @@ void fill_selection_histogram(TH1D& selection_histogram, const TH1D& counter_his
     }
 }
 
-template<typename Selector, typename Comparitor>
-IndexVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, Int_t n_objects,
-                           const Selector& selector, const Comparitor& comparitor)
+template<typename Selector>
+analysis::CandidateVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, Int_t n_objects,
+                           const Selector& selector)
 {
-    IndexVector selected;
+    analysis::CandidateVector selected;
     counter_histogram.Reset();
     for (Int_t n = 0; n < n_objects; ++n) {
         try {
-            selector(n);
-            selected.push_back(n);
+            const analysis::Candidate selectedCandidate = selector(n);
+            selected.push_back(selectedCandidate);
         } catch(cuts::cut_failed&) {}
     }
 
     fill_selection_histogram(selection_histogram, counter_histogram);
-    std::sort(selected.begin(), selected.end(), comparitor);
+    std::sort(selected.begin(), selected.end());
 
     return selected;
 }
