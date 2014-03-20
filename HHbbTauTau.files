@@ -108,3 +108,4 @@ RunTools/check_crab_duplicates.sh
 Analysis/include/MCfinalState.h
 Analysis/include/Candidate.h
 Analysis/include/BaseAnalyzer.h
+Analysis/source/HHbbETaujet_analyzer.C
