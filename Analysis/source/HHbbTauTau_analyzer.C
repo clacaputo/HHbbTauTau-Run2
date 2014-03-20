@@ -331,16 +331,17 @@ private:
         static const analysis::ParticleCodes TauMuonicDecay = {particles::mu, particles::nu_mu, particles::nu_tau};
         static const analysis::ParticleCodes TauElectronDecay = {particles::e, particles::nu_e, particles::nu_tau};
 
-        const analysis::GenEvent genEvent(*event);
-        //std::cout << "N gen particles = " << genEvent.genParticles.size() << std::endl;
+        //const analysis::GenEvent genEvent(*event);
+        genEvent = boost::shared_ptr<analysis::GenEvent>(new analysis::GenEvent(*event));
+        //std::cout << "N gen particles = " << genEvent->genParticles.size() << std::endl;
 
-        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+        const analysis::GenParticleSet resonances = genEvent->GetParticles(resonanceCodes);
         if (resonances.size() != 1)
             throw std::runtime_error("not one resonance per event");
 
         finalState.resonance = *resonances.begin();
 
-//            genEvent.Print();
+//            genEvent->Print();
         analysis::GenParticleVector HiggsBosons;
         if(!analysis::FindDecayProducts(*finalState.resonance, resonanceDecay,HiggsBosons))
             throw std::runtime_error("Resonance does not decay into 2 Higgs");
@@ -397,4 +398,5 @@ private:
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut;
     Long64_t maxNumberOfEvents;
     bool useMCtruth;
+    boost::shared_ptr<analysis::GenEvent> genEvent;
 };
