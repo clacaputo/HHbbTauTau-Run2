@@ -172,7 +172,7 @@ private:
         cut(eta < eta_high && (eta < eta_CrackVeto_low || eta > eta_CrackVeto_high), "eta");
         // cut dz_pv
         cut(X(Electron_missingHits) < missingHits, "mis_hits");
-        cut(X(Electron_hasMatchedConv) < hasMatchedConv, "has_conv");
+        cut(X(Electron_hasMatchedConv) > hasMatchedConv, "has_conv");
         cut(X(Electron_dB) < dB, "dB");
         const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);

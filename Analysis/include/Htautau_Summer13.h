@@ -44,7 +44,7 @@ namespace cuts
         const double eta_CrackVeto_high = 1.566;
         const double dz_pv = 0.2;
         const int missingHits = 1;
-        const int hasMatchedConv = 1;
+        const float hasMatchedConv = 0.5;
         const double dB = 0.045;
         const double ref_pt = 20;
         const double scEta_min[2] = {0.8, 1.479};

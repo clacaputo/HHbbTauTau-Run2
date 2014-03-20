@@ -20,7 +20,7 @@ public:
     SELECTION_ENTRY(ElectronSelection, 15)
     SELECTION_ENTRY(BJetSelection, 15)
 
-    ENTRY_1D(double, Mu_tau_mass)
+    ENTRY_1D(double, Ele_tau_mass)
     ENTRY_1D(double, BB_mass)
     ENTRY_1D(double,Tau_Pt_MC)
     ENTRY_1D(double,E_Pt_MC)
@@ -67,14 +67,14 @@ private:
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
         cut(true, "total");
-        const CandidateVector muons = CollectMuons();
-        cut(muons.size(), "muon");
+        const CandidateVector electrons = CollectElectrons();
+        cut(electrons.size(), "electron");
         const CandidateVector taus = CollectTaus();
         cut(taus.size(), "tau");
-        const CandidateVector Higgses_mu_tau = FindCompatibleLeptonCombinations(muons, taus);
-        cut(Higgses_mu_tau.size(), "mu_tau");
-        const CandidateVector electrons = CollectElectrons();
-        cut(!electrons.size(), "no_electron");
+        const CandidateVector Higgses_ele_tau = FindCompatibleLeptonCombinations(electrons, taus);
+        cut(Higgses_ele_tau.size(), "ele_tau");
+        const CandidateVector muons = CollectMuons();
+        cut(!muons.size(), "no_muon");
 
         const CandidateVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
         const CandidateVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
@@ -172,7 +172,7 @@ private:
         cut(eta < eta_high && (eta < eta_CrackVeto_low || eta > eta_CrackVeto_high), "eta");
         // cut dz_pv
         cut(X(Electron_missingHits) < missingHits, "mis_hits");
-        cut(X(Electron_hasMatchedConv) < hasMatchedConv, "has_conv");
+        cut(X(Electron_hasMatchedConv) > hasMatchedConv, "has_conv");
         cut(X(Electron_dB) < dB, "dB");
         const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
@@ -199,18 +199,18 @@ private:
         return analysis::Candidate(analysis::Candidate::Bjet, id, momentum);
     }
 
-    analysis::CandidateVector FindCompatibleLeptonCombinations(const analysis::CandidateVector& muons,
+    analysis::CandidateVector FindCompatibleLeptonCombinations(const analysis::CandidateVector& electrons,
                                                                const analysis::CandidateVector& taus)
     {
         analysis::CandidateVector result;
-        for(const analysis::Candidate& mu : muons) {
+        for(const analysis::Candidate& ele : electrons) {
 
             for(const analysis::Candidate& tau : taus) {
-                const analysis::Candidate Higgs(analysis::Candidate::Higgs, mu, tau);
+                const analysis::Candidate Higgs(analysis::Candidate::Higgs, ele, tau);
 
-                if(tau.momentum.DeltaR(mu.momentum) > cuts::DeltaR_signalLeptons){
+                if(tau.momentum.DeltaR(ele.momentum) > cuts::DeltaR_signalLeptons){
                     result.push_back(Higgs);
-                    anaData.Mu_tau_mass().Fill(Higgs.momentum.M());
+                    anaData.Ele_tau_mass().Fill(Higgs.momentum.M());
                 }
             }
         }
