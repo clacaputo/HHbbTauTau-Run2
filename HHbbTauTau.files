@@ -2,7 +2,7 @@ Analysis/source/VHAnalyzer_WH_New.C
 Analysis/source/VHAnalyzer_WH_New.h
 Analysis/include/AnalyzerData.h
 Analysis/include/EventTree.h
-Analysis/source/HHbbTauTau_analyzer.C
+Analysis/source/HHbbMuTaujet_analyzer.C
 Analysis/include/Particles.h
 Analysis/include/Htautau_Summer13.h
 Analysis/include/CutTools.h
@@ -107,3 +107,4 @@ PatProduction/python/multicrab_Embedded.cfg
 RunTools/check_crab_duplicates.sh
 Analysis/include/MCfinalState.h
 Analysis/include/Candidate.h
+Analysis/include/BaseAnalyzer.h

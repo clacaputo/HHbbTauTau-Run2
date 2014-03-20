@@ -52,12 +52,14 @@ public:
             throw std::runtime_error("Output file not created.");
         outputFile->cd();
     }
-    AnalyzerData(TFile& _outputFile, const std::string& _directoryName)
+    AnalyzerData(TFile& _outputFile, const std::string& _directoryName = "")
         : outputFile(&_outputFile), ownOutputFile(false), directoryName(_directoryName)
     {
         outputFile->cd();
-        outputFile->mkdir(directoryName.c_str());
-        outputFile->cd(directoryName.c_str());
+        if (directoryName.size()){
+            outputFile->mkdir(directoryName.c_str());
+            outputFile->cd(directoryName.c_str());
+        }
     }
 
     virtual ~AnalyzerData()
