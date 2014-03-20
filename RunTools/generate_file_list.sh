@@ -30,7 +30,13 @@ N_SPLIT=$(( (N_FILES + N_JOBS - 1) / N_JOBS ))
 echo "Total number of files: $N_FILES"
 echo "Total number of jobs: $N_JOBS"
 echo "Number of files per job: $N_SPLIT"
-split -l $N_SPLIT $TMP_OUT_FILE
-find . -maxdepth 1 -type f -name "x*" -printf "%f ${OUT_FILE_NAME}_%f.txt\n" | xargs -n 2 mv
+
+if [ $N_JOBS -eq 1 ] ; then
+	mv "$TMP_OUT_FILE" "${OUT_FILE_NAME}.txt"
+else
+	split -l $N_SPLIT $TMP_OUT_FILE
+	find . -maxdepth 1 -type f -name "x*" -printf "%f ${OUT_FILE_NAME}_%f.txt\n" | xargs -n 2 mv
+fi
+
 mv *.txt $OUT_DIR
 rm -rf $TMP_DIR
