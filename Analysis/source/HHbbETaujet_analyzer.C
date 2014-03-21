@@ -15,10 +15,7 @@ public:
 
 
     SELECTION_ENTRY(EventSelection, 15, 5)
-    SELECTION_ENTRY(MuonSelection, 15)
-    SELECTION_ENTRY(TauSelection, 15)
-    SELECTION_ENTRY(ElectronSelection, 15)
-    SELECTION_ENTRY(BJetSelection, 15)
+
 
     ENTRY_1D(double, Ele_tau_mass)
     ENTRY_1D(double, BB_mass)
@@ -71,7 +68,8 @@ private:
         cut(electrons.size(), "electron");
         const CandidateVector taus = CollectTaus();
         cut(taus.size(), "tau");
-        const CandidateVector Higgses_ele_tau = FindCompatibleLeptonCombinations(electrons, taus);
+        const CandidateVector Higgses_ele_tau = FindCompatibleObjects(electrons, taus,0.5,analysis::Candidate::Higgs,
+                                                                      anaData.Ele_tau_mass());
         cut(Higgses_ele_tau.size(), "ele_tau");
         const CandidateVector muons = CollectMuons();
         cut(!muons.size(), "no_muon");
@@ -91,35 +89,7 @@ private:
     }
 
 
-    analysis::CandidateVector CollectMuons()
-    {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
-            { return SelectMuon(id, apply_cut, _anaData); };
-        return CollectObjects(anaData.MuonSelection(), event->nMuon, base_selector);
-    }
-
-    analysis::CandidateVector CollectTaus()
-    {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
-            { return SelectTau(id, apply_cut, _anaData); };
-        return CollectObjects(anaData.TauSelection(), event->nTau, base_selector);
-    }
-
-    analysis::CandidateVector CollectElectrons()
-    {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
-            { return SelectElectron(id, apply_cut, _anaData); };
-        return CollectObjects(anaData.ElectronSelection(), event->nElectron, base_selector);
-    }
-
-    analysis::CandidateVector CollectBJets(double csv, const std::string& selection_label)
-    {
-        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
-            { return SelectBJet(id, csv, selection_label, apply_cut, _anaData); };
-        return CollectObjects(anaData.BJetSelection(selection_label), event->nJet, base_selector);
-    }
-
-    analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) override
     {
         using namespace cuts::muonID;
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), apply_cut);
@@ -143,7 +113,7 @@ private:
         return analysis::Candidate(analysis::Candidate::Mu, id, momentum);
     }
 
-    analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) override
     {
         using namespace cuts::tauID;
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), apply_cut);
@@ -161,7 +131,7 @@ private:
         return analysis::Candidate(analysis::Candidate::Tau, id, momentum);
     }
 
-    analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) override
     {
         using namespace cuts::electronID;
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), apply_cut);
@@ -183,39 +153,7 @@ private:
         return analysis::Candidate(analysis::Candidate::Electron, id, momentum);
     }
 
-    analysis::Candidate SelectBJet(Int_t id, double csv, const std::string& selection_label, bool apply_cut,
-                    root_ext::AnalyzerData& _anaData)
-    {
-        using namespace cuts::btag;
-        cuts::Cutter cut(anaData.Counter(), anaData.BJetSelection(selection_label), apply_cut);
 
-        cut(true, ">0 b-jet cand");
-        cut(X(Jet_pt, selection_label) > pt, "pt");
-        cut(std::abs( X(Jet_eta, selection_label) ) < eta, "eta");
-        cut(X(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiE(event->Jet_pt[id], event->Jet_eta[id], event->Jet_phi[id],
-                              event->Jet_energy[id]);
-        return analysis::Candidate(analysis::Candidate::Bjet, id, momentum);
-    }
-
-    analysis::CandidateVector FindCompatibleLeptonCombinations(const analysis::CandidateVector& electrons,
-                                                               const analysis::CandidateVector& taus)
-    {
-        analysis::CandidateVector result;
-        for(const analysis::Candidate& ele : electrons) {
-
-            for(const analysis::Candidate& tau : taus) {
-                const analysis::Candidate Higgs(analysis::Candidate::Higgs, ele, tau);
-
-                if(tau.momentum.DeltaR(ele.momentum) > cuts::DeltaR_signalLeptons){
-                    result.push_back(Higgs);
-                    anaData.Ele_tau_mass().Fill(Higgs.momentum.M());
-                }
-            }
-        }
-        return result;
-    }
 
     bool FindAnalysisFinalState(analysis::finalState::bbETaujet& finalState){
 
