@@ -75,6 +75,11 @@ public:
         }
     }
 
+    SELECTION_ENTRY(MuonSelection, 15)
+    SELECTION_ENTRY(TauSelection, 15)
+    SELECTION_ENTRY(ElectronSelection, 15)
+    SELECTION_ENTRY(BJetSelection, 15)
+
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
     ENTRY_1D(double, Resonance_Mass)
     ENTRY_1D(double, Resonance_Pt)
@@ -146,6 +151,78 @@ protected:
         const auto selected = cuts::collect_objects(GetAnaData().Counter(), selection_histogram, n_objects, selector);
         for(const analysis::Candidate& candidate : selected) base_selector(candidate.index, false, anaDataAfterCut);
         return selected;
+    }
+
+    analysis::CandidateVector CollectMuons()
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectMuon(id, apply_cut, _anaData); };
+        return CollectObjects(GetAnaData().MuonSelection(), event->nMuon, base_selector);
+    }
+
+    analysis::CandidateVector CollectTaus()
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectTau(id, apply_cut, _anaData); };
+        return CollectObjects(GetAnaData().TauSelection(), event->nTau, base_selector);
+    }
+
+    analysis::CandidateVector CollectElectrons()
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectElectron(id, apply_cut, _anaData); };
+        return CollectObjects(GetAnaData().ElectronSelection(), event->nElectron, base_selector);
+    }
+
+    analysis::CandidateVector CollectBJets(double csv, const std::string& selection_label)
+    {
+        const auto base_selector = [&](unsigned id, bool apply_cut, root_ext::AnalyzerData& _anaData) -> analysis::Candidate
+            { return SelectBJet(id, csv, selection_label, apply_cut, _anaData); };
+        return CollectObjects(GetAnaData().BJetSelection(selection_label), event->nJet, base_selector);
+    }
+
+    virtual analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) = 0;
+
+
+    virtual analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) = 0;
+
+    virtual analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) = 0;
+
+
+    analysis::Candidate SelectBJet(Int_t id, double csv, const std::string& selection_label, bool apply_cut,
+                    root_ext::AnalyzerData& _anaData)
+    {
+        using namespace cuts::btag;
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), apply_cut);
+
+        cut(true, ">0 b-jet cand");
+        cut(X(Jet_pt, selection_label) > pt, "pt");
+        cut(std::abs( X(Jet_eta, selection_label) ) < eta, "eta");
+        cut(X(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
+        TLorentzVector momentum;
+        momentum.SetPtEtaPhiE(event->Jet_pt[id], event->Jet_eta[id], event->Jet_phi[id],
+                              event->Jet_energy[id]);
+        return analysis::Candidate(analysis::Candidate::Bjet, id, momentum);
+    }
+
+    template<typename Histogram>
+    analysis::CandidateVector FindCompatibleObjects(const analysis::CandidateVector& objects1,
+                                                    const analysis::CandidateVector& objects2, double minDeltaR,
+                                                    const analysis::Candidate::Type type, Histogram& mass)
+    {
+        analysis::CandidateVector result;
+        for(const analysis::Candidate& object1 : objects1) {
+
+            for(const analysis::Candidate& object2 : objects2) {
+                const analysis::Candidate Candidate(type, object1, object2);
+
+                if(object2.momentum.DeltaR(object1.momentum) > minDeltaR){
+                    result.push_back(Candidate);
+                    mass.Fill(Candidate.momentum.M());
+                }
+            }
+        }
+        return result;
     }
 
 
