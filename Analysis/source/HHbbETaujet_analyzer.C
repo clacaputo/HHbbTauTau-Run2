@@ -47,14 +47,14 @@ public:
     }
 
 protected:
-     virtual SignalAnalyzerData& GetAnaData() override
+     virtual SignalAnalyzerData& GetAnaData()
     {
         return anaData;
     }
 
-private:
 
-    virtual void ProcessEvent() override
+
+    virtual void ProcessEvent()
     {
 
         using namespace analysis;
@@ -89,7 +89,7 @@ private:
     }
 
 
-    virtual analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) override
+    virtual analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::muonID;
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), apply_cut);
@@ -113,7 +113,7 @@ private:
         return analysis::Candidate(analysis::Candidate::Mu, id, momentum);
     }
 
-    virtual analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) override
+    virtual analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::tauID;
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), apply_cut);
@@ -131,7 +131,7 @@ private:
         return analysis::Candidate(analysis::Candidate::Tau, id, momentum);
     }
 
-    virtual analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData) override
+    virtual analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::electronID;
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), apply_cut);
