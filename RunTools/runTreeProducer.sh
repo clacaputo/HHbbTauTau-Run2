@@ -6,7 +6,7 @@ if [ $# -ne 7 ] ; then
 fi
 
 NAME=$1
-WORKING_PATH=$( echo $(cd $2; pwd) )
+WORKING_PATH=$2
 FILE_LIST_PATH=$3
 OUTPUT_PATH=$4
 GLOBAL_TAG=$5
