@@ -34,7 +34,7 @@ if [ ! -f "$RUN_SCRIPT_PATH" ] ; then
 	exit
 fi
 
-JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" )
+JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" )
 
 if [ "x$JOBS" = "x" ] ; then
 	echo "ERROR: directory '$FILE_LIST_PATH' does not contains any job description."
@@ -51,11 +51,9 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
 	exit
 fi
 
-for f in $JOBS ; do
-    NAME="${f%.*}"
-    bsub -q local $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
-	                               $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
+for NAME in $JOBS ; do
+    bsub -q local -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+                                            $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
 done
 
 echo "$N_JOBS have been submited."
-
