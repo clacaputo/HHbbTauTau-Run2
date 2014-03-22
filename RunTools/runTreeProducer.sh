@@ -14,10 +14,13 @@ INCLUDE_SIM=$6
 N_EVENTS=$7
 
 cd $WORKING_PATH
+
+echo "$NAME $( date )" >> $OUTPUT_PATH/job_start.log
+
 source cmsenv.sh
 eval $( scramv1 runtime -sh )
 
-echo "$NAME $( date )" >> $OUTPUT_PATH/job_start.log
+echo "$NAME $( date )" >> $OUTPUT_PATH/job_cmsRun_start.log
 
 cmsRun TreeProduction/python/treeProducer.py globalTag=$GLOBAL_TAG includeSim=$INCLUDE_SIM \
        fileList=$FILE_LIST_PATH/${NAME}.txt maxEvents=$N_EVENTS outputFile=$OUTPUT_PATH/${NAME}_Tree.root \
