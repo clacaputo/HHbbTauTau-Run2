@@ -20,8 +20,6 @@
 #include "SmartHistogram.h"
 #include "Candidate.h"
 
-
-
 namespace cuts {
 
 class cut_failed : public std::exception {
@@ -145,4 +143,4 @@ private:
     TH1D *counter_histogram, *selection_histogram;
 };
 
-} // namespace cuts
+} // cuts

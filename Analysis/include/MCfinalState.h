@@ -24,30 +24,24 @@ struct bbTauTau{
 
     bbTauTau() : resonance(nullptr), Higgs_TauTau(nullptr), Higgs_BB(nullptr){}
 
-    virtual ~bbTauTau(){}
-
+    virtual ~bbTauTau() {}
 };
 
 struct bbETaujet : public bbTauTau {
     const GenParticle* electron;
     const GenParticle* tau_jet;
 
-    bbETaujet() : electron(nullptr), tau_jet(nullptr){}
+    bbETaujet() : electron(nullptr), tau_jet(nullptr) {}
 };
 
 struct bbMuTaujet : public bbTauTau{
     const GenParticle* muon;
     const GenParticle* tau_jet;
 
-    bbMuTaujet() : muon(nullptr), tau_jet(nullptr){}
+    bbMuTaujet() : muon(nullptr), tau_jet(nullptr) {}
 };
 
-struct bbTaujetTaujet : public bbTauTau{
+struct bbTaujetTaujet : public bbTauTau {};
 
-
-};
-
-} //close finalState
-
-
-} //close analysis
+} // finalState
+} // analysis

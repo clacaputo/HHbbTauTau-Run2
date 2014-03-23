@@ -411,4 +411,4 @@ struct HistogramFactory {
     }
 };
 
-} // namespace root_ext
+} // root_ext

@@ -1,6 +1,6 @@
 /*!
- * \file HHbbTauTau_analyzer.C
- * \brief Analysis HHbbTauTau.
+ * \file HHbbMuTaujet_analyzer.C
+ * \brief X->HH->bbTauTau->b_jet,b_jet,mu,tau_jet analysis.
  * \author Konstantin Androsov (INFN Pisa, Siena University)
  * \author Maria Teresa Grippo (INFN Pisa, Siena University)
  * \date 2014-02-12 created
@@ -8,36 +8,19 @@
 
 #include "../include/BaseAnalyzer.h"
 
-class MuTauSignalAnalyzerData : public SignalAnalyzerData {
-
+class MuTauSignalAnalyzerData : public analysis::SignalAnalyzerData {
 public:
     MuTauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
 
-
     SELECTION_ENTRY(EventSelection, 15, 5)
-
 
     ENTRY_1D(double, Mu_tau_mass)
     ENTRY_1D(double, BB_mass)
     ENTRY_1D(double,Tau_Pt_MC)
     ENTRY_1D(double,Mu_Pt_MC)
-
 };
 
-
-using ntuple::EventTree;
-
-namespace cuts {
-namespace HHbbTauTau {
-
-const unsigned N_bjet_Loose = 2;
-const unsigned N_bjet_Medium = 1;
-}
-}
-
-
-class HHbbMuTaujet_analyzer : public BaseAnalyzer
-{
+class HHbbMuTaujet_analyzer : public analysis::BaseAnalyzer {
 public:
     HHbbMuTaujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
@@ -47,15 +30,10 @@ public:
     }
 
 protected:
-     virtual SignalAnalyzerData& GetAnaData()
-    {
-        return anaData;
-    }
-
+    virtual analysis::SignalAnalyzerData& GetAnaData() { return anaData; }
 
     virtual void ProcessEvent()
     {
-
         using namespace analysis;
         finalState::bbMuTaujet muTauJet;
         if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
@@ -68,13 +46,14 @@ protected:
         const CandidateVector taus = CollectTaus();
         cut(taus.size(), "tau");
         const CandidateVector Higgses_mu_tau =
-                FindCompatibleObjects(muons, taus,0.5,analysis::Candidate::Higgs,anaData.Mu_tau_mass());
+                FindCompatibleObjects(muons, taus, cuts::Htautau_Summer13::DeltaR_signalLeptons,
+                                      analysis::Candidate::Higgs, anaData.Mu_tau_mass());
         cut(Higgses_mu_tau.size(), "mu_tau");
         const CandidateVector electrons = CollectElectrons();
         cut(!electrons.size(), "no_electron");
 
-        const CandidateVector b_jets_loose = CollectBJets(cuts::btag::CSVL, "loose");
-        const CandidateVector b_jets_medium = CollectBJets(cuts::btag::CSVM, "medium");
+        const CandidateVector b_jets_loose = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
+        const CandidateVector b_jets_medium = CollectBJets(cuts::Htautau_Summer13::btag::CSVM, "medium");
         cut.test(b_jets_loose.size() == 2, "2b_loose");
         cut.test(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
         if (cut.test(b_jets_medium.size() == 2, "2b_medium")){
@@ -84,14 +63,12 @@ protected:
         cut.test(b_jets_loose.size() >= 2, ">=2b_loose");
         cut.test(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
         cut.test(b_jets_medium.size() >= 2, ">=2b_medium");
-
     }
 
-
-    virtual analysis::Candidate SelectMuon(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectMuon(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::muonID;
-        cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), apply_cut);
+        using namespace cuts::Htautau_Summer13::muonID::MuTau;
+        cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
 
         cut(true, ">0 mu cand");
         cut(X(Muon_pt) > pt, "pt");
@@ -106,16 +83,17 @@ protected:
         cut(X(Muon_globalChi2) < globalChiSquare, "chi2");
         cut(std::abs( X(Muon_dB) ) < dB, "dB");
         cut(X(Muon_pfRelIso) < pFRelIso, "pFRelIso");
+
         TLorentzVector momentum;
         momentum.SetPtEtaPhiE(event->Muon_pt[id], event->Muon_eta[id], event->Muon_phi[id],
                                              event->Muon_energy[id]);
         return analysis::Candidate(analysis::Candidate::Mu, id, momentum);
     }
 
-    virtual analysis::Candidate SelectTau(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::tauID;
-        cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), apply_cut);
+        using namespace cuts::Htautau_Summer13::tauID::MuTau;
+        cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
 
         cut(true, ">0 tau cand");
         cut(X(Tau_pt) > pt, "pt");
@@ -124,16 +102,17 @@ protected:
         cut(X(Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         cut(X(Tau_againstMuonTight) > againstMuonTight, "vs_mu_tight");
         cut(X(Tau_againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+
         TLorentzVector momentum;
         momentum.SetPtEtaPhiE(event->Tau_pt[id], event->Tau_eta[id], event->Tau_phi[id],
                               event->Tau_energy[id]);
         return analysis::Candidate(analysis::Candidate::Tau, id, momentum);
     }
 
-    virtual analysis::Candidate SelectElectron(Int_t id, bool apply_cut, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectElectron(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::electronID;
-        cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), apply_cut);
+        using namespace cuts::Htautau_Summer13::electronID;
+        cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), enabled);
 
         cut(true, ">0 ele cand");
         cut(X(Electron_pt) > pt, "pt");
@@ -146,44 +125,36 @@ protected:
         const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(Electron_mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+
         TLorentzVector momentum;
         momentum.SetPtEtaPhiE(event->Electron_pt[id], event->Electron_eta[id], event->Electron_phi[id],
                               event->Electron_energy[id]);
         return analysis::Candidate(analysis::Candidate::Electron, id, momentum);
     }
 
-
-    bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& finalState){
-
+    bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& finalState)
+    {
         BaseAnalyzer::FindAnalysisFinalState(finalState);
 
-        static const analysis::ParticleCodes TauMuonicDecay = {particles::mu, particles::nu_mu, particles::nu_tau};
-        static const analysis::ParticleCodes TauElectronDecay = {particles::e, particles::nu_e, particles::nu_tau};
+        static const analysis::ParticleCodes TauMuonicDecay = { particles::mu, particles::nu_mu, particles::nu_tau };
+        static const analysis::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
-
-        for (const analysis::GenParticle* tau_MC : finalState.taus){
+        finalState.muon = finalState.tau_jet = nullptr;
+        for (const analysis::GenParticle* tau_MC : finalState.taus) {
             analysis::GenParticleVector TauProducts;
-            if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts)){
+            if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts))
                 finalState.muon = TauProducts.at(0);
-                continue;
-            }
-            if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts)){
+            else if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts))
                 finalState.tau_jet = tau_MC;
-            }
         }
 
-        if (!finalState.muon || !finalState.tau_jet) {
-            //std::cout << "not our final state mu-tau" << std::endl;
-            return false;
-        }
+        if (!finalState.muon || !finalState.tau_jet) return false;
 
         anaData.Tau_Pt_MC().Fill(finalState.tau_jet->momentum.Pt());
         anaData.Mu_Pt_MC().Fill(finalState.muon->momentum.Pt());
-
         return true;
     }
 
 private:
     MuTauSignalAnalyzerData anaData;
-
 };

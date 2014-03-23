@@ -18,7 +18,6 @@ std::ostream& operator<<(std::ostream& s, const particles::Status& particleStatu
 }
 
 std::ostream& operator<<(std::ostream& s, const particles::ParticleCode& code){
-    //s << particles::NameProvider<particles::ParticleCode>::Name(code);
     s << code.Name();
     return s;
 }

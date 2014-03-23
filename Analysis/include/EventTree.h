@@ -16,7 +16,6 @@
 #include <TClonesArray.h>
 #include <TObject.h>
 #include <vector>
-#include <vector>
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 const Int_t kMaxEvent = 1;
@@ -51,12 +50,12 @@ public :
    Bool_t          Event_isPrimaryVertex[kMaxEvent];   //[Event_]
    Bool_t          Event_isBeamScraping[kMaxEvent];   //[Event_]
    Bool_t          Event_passHBHENoiseFilter[kMaxEvent];   //[Event_]
-   vector<int>     Event_nPU[kMaxEvent];
-   vector<int>     Event_bunchCrossing[kMaxEvent];
-   vector<int>     Event_trueNInt[kMaxEvent];
-   vector<int>     *nPU;
-   vector<int>     *bunchCrossing;
-   vector<int>     *trueNInt;
+   std::vector<int>     Event_nPU[kMaxEvent];
+   std::vector<int>     Event_bunchCrossing[kMaxEvent];
+   std::vector<int>     Event_trueNInt[kMaxEvent];
+   std::vector<int>     *nPU;
+   std::vector<int>     *bunchCrossing;
+   std::vector<int>     *trueNInt;
    Int_t           Vertex_;
    UInt_t          Vertex_fUniqueID[kMaxVertex];   //[Vertex_]
    UInt_t          Vertex_fBits[kMaxVertex];   //[Vertex_]
@@ -423,11 +422,11 @@ public :
    Double_t        Tau_ltsipt[kMaxTau];   //[Tau_]
    Int_t           Tau_NumChHad[kMaxTau];   //[Tau_]
    Int_t           nTau;
-   vector<int>     *l1physbits;
-   vector<int>     *l1techbits;
-   vector<string>  *hltpaths;
-   vector<int>     *hltresults;
-   vector<int>     *hltprescales;
+   std::vector<int>     *l1physbits;
+   std::vector<int>     *l1techbits;
+   std::vector<std::string>  *hltpaths;
+   std::vector<int>     *hltresults;
+   std::vector<int>     *hltprescales;
    Int_t           GenParticle_;
    UInt_t          GenParticle_fUniqueID[kMaxGenParticle];   //[GenParticle_]
    UInt_t          GenParticle_fBits[kMaxGenParticle];   //[GenParticle_]
