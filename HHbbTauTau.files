@@ -24,9 +24,7 @@ TreeProduction/interface/Utility.h
 TreeProduction/interface/PhysicsObjects.h
 TreeProduction/plugins/BuildFile.xml
 TreeProduction/plugins/ElectronBlock.cc
-TreeProduction/plugins/ElectronBlock.h
 TreeProduction/plugins/EventBlock.cc
-TreeProduction/plugins/EventBlock.h
 TreeProduction/plugins/GenEventBlock.cc
 TreeProduction/plugins/GenEventBlock.h
 TreeProduction/plugins/GenJetBlock.cc
@@ -113,3 +111,4 @@ RunTools/runTreeProducer.sh
 RunTools/submitTreeProducer_BatchPisa.sh
 TreeProduction/interface/SmartTree.h
 TreeProduction/interface/Electron.h
+TreeProduction/interface/Event.h
