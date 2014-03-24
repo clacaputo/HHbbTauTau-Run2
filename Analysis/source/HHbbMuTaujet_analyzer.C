@@ -82,6 +82,7 @@ protected:
         cut(X(Muon_pixHits) > pixHits, "pix_hits");
         cut(X(Muon_globalChi2) < globalChiSquare, "chi2");
         cut(std::abs( X(Muon_dB) ) < dB, "dB");
+        cut(std::abs( X(Muon_vtxDistZ) ) < dz, "dz");
         cut(X(Muon_pfRelIso) < pFRelIso, "pFRelIso");
 
         TLorentzVector momentum;
@@ -122,6 +123,7 @@ protected:
         cut(X(Electron_missingHits) < missingHits, "mis_hits");
         cut(X(Electron_hasMatchedConv) > hasMatchedConv, "has_conv");
         cut(X(Electron_dB) < dB, "dB");
+        cut(X(Electron_vtxDistZ) < dz_pv, "dZ");
         const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(Electron_mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");

@@ -420,6 +420,7 @@ namespace vhtm {
     double vtxDist3D;
        int vtxIndex;
     double vtxDistZ;
+//    double deltaZ;
        int pixHits;
        int trkHits;
        int muoHits;

@@ -59,7 +59,8 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       if (!it->isGlobalMuon()) continue;
 
       reco::TrackRef tk  = it->innerTrack();  // tracker segment only
-      reco::TrackRef gtk = it->globalTrack(); 
+      reco::TrackRef gtk = it->globalTrack();
+//      reco::TrackRef bestTrack = it->muonBestTrack();
 
       muonB = new ((*cloneMuon)[fnMuon++]) vhtm::Muon();
       muonB->isTrackerMuon = (it->isTrackerMuon()) ? true : false;
@@ -121,6 +122,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       muonB->vtxDist3D = minVtxDist3D;
       muonB->vtxIndex  = indexVtx;
       muonB->vtxDistZ  = vertexDistZ;
+//      muonB->deltaZ = std::abs(bestTrack->dz(vit->position()));
 
       // Hit pattern
       const reco::HitPattern& hitp = gtk->hitPattern();  // innerTrack will not provide Muon Hits 
