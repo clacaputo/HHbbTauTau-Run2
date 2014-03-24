@@ -43,9 +43,9 @@ void GenMETBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     }
       edm::LogInfo("GenMETBlock") << "Total # GenMETs: " << mets->size();
       for (const reco::GenMET& genMET : *mets) {
-        genMETTree.met    = genMET.pt();
-        genMETTree.metphi = genMET.phi();
-        genMETTree.sumet  = genMET.sumEt();
+        genMETTree.met()    = genMET.pt();
+        genMETTree.metphi() = genMET.phi();
+        genMETTree.sumet()  = genMET.sumEt();
 
         genMETTree.Fill();
     } 
