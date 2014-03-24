@@ -19,7 +19,7 @@ public:
         _verbosity(iConfig.getParameter<int>("verbosity")),
         _inputTag(iConfig.getParameter<edm::InputTag>("genJetSrc")) {}
 private:
-    virtual void endJob() { genEventTree.Write(); }
+    virtual void endJob() { genJetTree.Write(); }
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:

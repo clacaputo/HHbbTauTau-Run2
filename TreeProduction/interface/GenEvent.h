@@ -13,7 +13,7 @@
 #define GENEVENT_DATA() \
     SIMPLE_VAR(UInt_t, processID, 0) \
     SIMPLE_VAR(Float_t, ptHat, 0.0) \
-    VECTOR_VAR(Float_t, pdfWeights) \
+    VECTOR_VAR(Double_t, pdfWeights) \
     /**/
 
 #define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
