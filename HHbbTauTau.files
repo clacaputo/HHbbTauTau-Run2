@@ -111,3 +111,5 @@ Analysis/include/BaseAnalyzer.h
 Analysis/source/HHbbETaujet_analyzer.C
 RunTools/runTreeProducer.sh
 RunTools/submitTreeProducer_BatchPisa.sh
+TreeProduction/interface/SmartTree.h
+TreeProduction/interface/Electron.h
