@@ -27,7 +27,6 @@ TreeProduction/plugins/ElectronBlock.cc
 TreeProduction/plugins/EventBlock.cc
 TreeProduction/plugins/GenEventBlock.cc
 TreeProduction/plugins/GenJetBlock.cc
-TreeProduction/plugins/GenJetBlock.h
 TreeProduction/plugins/GenMETBlock.cc
 TreeProduction/plugins/GenMETBlock.h
 TreeProduction/plugins/GenParticleBlock.cc
@@ -112,3 +111,4 @@ TreeProduction/interface/SmartTree.h
 TreeProduction/interface/Electron.h
 TreeProduction/interface/Event.h
 TreeProduction/interface/GenEvent.h
+TreeProduction/interface/GenJet.h
