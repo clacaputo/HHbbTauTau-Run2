@@ -21,7 +21,6 @@
 class EventBlock : public edm::EDAnalyzer {
 public:
     explicit EventBlock(const edm::ParameterSet& iConfig) :
-        _verbosity(iConfig.getParameter<int>("verbosity")),
         _l1InputTag(iConfig.getParameter<edm::InputTag>("l1InputTag")),
         _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexInputTag")),
         _trkInputTag(iConfig.getParameter<edm::InputTag>("trkInputTag")),
@@ -32,7 +31,7 @@ public:
         _hpTrackThreshold(iConfig.getParameter<double>("hpTrackThreshold")) {}
 
 private:
-    virtual void endJob() { electronTree.Write(); }
+    virtual void endJob() { eventTree.Write(); }
     virtual void analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup);
 
 private:
@@ -156,7 +155,9 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
 
     // More info about PU is here:
     // https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupInformation#Accessing_PileupSummaryInfo_in_r
-  } 
+  }
+  eventTree.Fill();
+ 
 }
 
 DEFINE_FWK_MODULE(EventBlock);

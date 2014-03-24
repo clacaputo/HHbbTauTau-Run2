@@ -56,7 +56,7 @@ namespace ntuple {
 struct Event {
     EVENT_DATA()
     Event() {}
-    inline Electron(EventTree& tree);
+    inline Event(EventTree& tree);
 };
 } // ntuple
 
