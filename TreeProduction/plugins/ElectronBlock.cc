@@ -24,6 +24,8 @@
 #include "DataFormats/Provenance/interface/EventID.h"
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
+#define SMART_TREE_FOR_CMSSW
+
 #include "HHbbTauTau/TreeProduction/interface/Electron.h"
 
 class ElectronBlock : public edm::EDAnalyzer {
