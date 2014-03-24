@@ -145,8 +145,8 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       edm::LogInfo("ElectronBlock") << "Total # Primary Vertices: " << primaryVertices->size();
           for (reco::VertexCollection::const_iterator vit  = primaryVertices->begin();
                                                       vit != primaryVertices->end(); ++vit) {
-            double dxy = tk->dxy(vpatElectron.position());
-            double dz  = tk->dz(vpatElectron.position());
+            double dxy = tk->dxy(vit->position());
+            double dz  = tk->dz(vit->position());
             double dist3D = std::sqrt(pow(dxy, 2) + pow(dz, 2));
             if (dist3D < minVtxDist3D) {
               minVtxDist3D = dist3D;
