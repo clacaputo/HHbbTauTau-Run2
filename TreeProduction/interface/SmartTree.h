@@ -184,11 +184,13 @@ namespace detail {
 
 class SmartTree {
 public:
-    explicit SmartTree(const std::string& name, bool detachFromFile = true)
-        : readMode(false)
+    explicit SmartTree(const std::string& name, const std::string& _directory = "", bool detachFromFile = true)
+        : readMode(false), directory(_directory)
     {
 #ifdef SMART_TREE_FOR_CMSSW
         edm::Service<TFileService> tfserv;
+        if(directory.size())
+            tfsrv->file().cd(directory.c_str());
         tree = tfserv->make<TTree>(name.c_str(), name.c_str());
 #else
         tree = new TTree(name.c_str(), name.c_str());
@@ -221,7 +223,14 @@ public:
 
     Long64_t GetEntries() const { return tree->GetEntries(); }
     void GetEntry(Long64_t entry) { tree->GetEntry(entry); }
-    void Write() { tree->Write(); }
+    void Write()
+    {
+#ifdef SMART_TREE_FOR_CMSSW
+        if(directory.size())
+            tfsrv->file().cd(directory.c_str());
+#endif
+        tree->Write("", TObject::kWriteDelete);
+    }
 
 #ifndef SMART_TREE_FOR_CMSSW
     TTree& RootTree() { return *tree; }
@@ -289,5 +298,6 @@ protected:
 private:
     bool readMode;
     TTree* tree;
+    std::string directory;
 };
 } // root_ext

@@ -115,7 +115,7 @@ namespace ntuple {
 class ElectronTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "electrons"; return name; }
-    ElectronTree() : SmartTree(Name()) {}
+    ElectronTree() : SmartTree(Name(), "/", false) {}
     ElectronTree(const std::string& prefix, TFile& file)
         : SmartTree(prefix + "/" + Name(), file) {}
 

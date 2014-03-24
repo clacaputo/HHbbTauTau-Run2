@@ -37,7 +37,7 @@ namespace ntuple {
 class EventTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "events"; return name; }
-    EventTree() : SmartTree(Name()) {}
+    EventTree() : SmartTree(Name(), "/", false) {}
     EventTree(const std::string& prefix, TFile& file)
         : SmartTree(prefix + "/" + Name(), file) {}
 
