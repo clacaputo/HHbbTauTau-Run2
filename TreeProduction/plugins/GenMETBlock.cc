@@ -1,56 +1,55 @@
-#include "TTree.h"
-#include "TClonesArray.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
 
-#include "HHbbTauTau/TreeProduction/plugins/GenMETBlock.h"
-#include "HHbbTauTau/TreeProduction/interface/Utility.h"
+#include "HHbbTauTau/TreeProduction/interface/GenMET.h"
 
-GenMETBlock::GenMETBlock(const edm::ParameterSet& iConfig) :
-  _verbosity(iConfig.getParameter<int>("verbosity")),
-  _inputTag(iConfig.getParameter<edm::InputTag>("genMETSrc"))
-{
-}
-void GenMETBlock::beginJob() 
-{
-  // Get TTree pointer
-  TTree* tree = vhtm::Utility::getTree("vhtree");
-  cloneGenMET = new TClonesArray("vhtm::GenMET");
-  tree->Branch("GenMET", &cloneGenMET, 32000, 2);
-  tree->Branch("nGenMET", &fnGenMET,  "fnGenMET/I");
-}
-void GenMETBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  // Reset the TClonesArray and the nObj variables
-  cloneGenMET->Clear();
-  fnGenMET = 0;
+class GenMETBlock : public edm::EDAnalyzer {
+public:
+    explicit GenMETBlock(const edm::ParameterSet& iConfig) :
+        _verbosity(iConfig.getParameter<int>("verbosity")),
+        _inputTag(iConfig.getParameter<edm::InputTag>("genMETSrc")) {}
 
-  if (!iEvent.isRealData()) {
+private:
+    virtual void endJob() { genMETTree.Write(); }
+    virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+private:
+  int _verbosity;
+  edm::InputTag _inputTag;
+  ntuple::GenMETTree genMETTree;
+};
+
+void GenMETBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+    if (iEvent.isRealData()) return;
+
+    genMETTree.EventId() = iEvent.id().event();
+
     edm::Handle<reco::GenMETCollection> mets;
     iEvent.getByLabel(_inputTag, mets);
-    if (mets.isValid()) {
-      edm::LogInfo("GenMETBlock") << "Total # GenMETs: " << mets->size();
-      for (reco::GenMETCollection::const_iterator it = mets->begin(); 
-                                                 it != mets->end(); ++it ) {
-        if (fnGenMET == kMaxGenMET) {
-	  edm::LogInfo("GenMETBlock") << "Too many GenMET, fnGenMET = " << fnGenMET; 
-	  break;
-        }
-        genMetB = new ((*cloneGenMET)[fnGenMET++]) vhtm::GenMET();
-
-        // fill in all the vectors
-        genMetB->met    = it->pt();
-        genMetB->metphi = it->phi();
-        genMetB->sumet  = it->sumEt();
-      }
-    } 
-    else {
-      edm::LogError("GenMETBlock") << "Error >>  Failed to get GenMETCollection for label: " 
-                                   << _inputTag;
+    if (!mets.isValid()) {
+        edm::LogError("GenMETBlock") << "Error >>  Failed to get GenMETCollection for label: "
+                                     << _inputTag;
+        throw std::runtime_error("Failed to get GenMETCollection.");
     }
-  }
+      edm::LogInfo("GenMETBlock") << "Total # GenMETs: " << mets->size();
+      for (const reco::GenMET& genMET : *mets) {
+        genMETTree.met    = genMET.pt();
+        genMETTree.metphi = genMET.phi();
+        genMETTree.sumet  = genMET.sumEt();
+
+        genMETTree.Fill();
+    } 
 }
+
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(GenMETBlock);
