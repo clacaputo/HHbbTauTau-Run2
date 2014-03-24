@@ -189,9 +189,12 @@ public:
     {
 #ifdef SMART_TREE_FOR_CMSSW
         edm::Service<TFileService> tfserv;
-        if(directory.size())
-            tfsrv->file().cd(directory.c_str());
-        tree = tfserv->make<TTree>(name.c_str(), name.c_str());
+        if(directory.size()) {
+            tfserv->file().cd(directory.c_str());
+			tree = new TTree(name.c_str(), name.c_str());
+		}
+		else
+			tree = tfserv->make<TTree>(name.c_str(), name.c_str());
 #else
         tree = new TTree(name.c_str(), name.c_str());
 #endif
@@ -209,10 +212,10 @@ public:
     }
     virtual ~SmartTree()
     {
-#ifndef SMART_TREE_FOR_CMSSW
+//#ifndef SMART_TREE_FOR_CMSSW
         if(!readMode)
             delete tree;
-#endif
+//#endif
     }
 
     void Fill()
@@ -226,8 +229,9 @@ public:
     void Write()
     {
 #ifdef SMART_TREE_FOR_CMSSW
+        edm::Service<TFileService> tfserv;
         if(directory.size())
-            tfsrv->file().cd(directory.c_str());
+            tfserv->file().cd(directory.c_str());
 #endif
         tree->Write("", TObject::kWriteDelete);
     }
