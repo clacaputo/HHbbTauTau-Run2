@@ -20,8 +20,6 @@ PrintTools/source/Print_Histogram.C
 runx.sh
 PatProduction/python/patTuple.py
 TreeProduction/BuildFile.xml
-TreeProduction/interface/Utility.h
-TreeProduction/interface/PhysicsObjects.h
 TreeProduction/plugins/BuildFile.xml
 TreeProduction/plugins/ElectronBlock.cc
 TreeProduction/plugins/EventBlock.cc
@@ -34,8 +32,6 @@ TreeProduction/plugins/METBlock.cc
 TreeProduction/plugins/MuonBlock.cc
 TreeProduction/plugins/TauBlock.cc
 TreeProduction/plugins/TrackBlock.cc
-TreeProduction/plugins/TreeMakerModule.cc
-TreeProduction/plugins/TreeMakerModule.h
 TreeProduction/plugins/TriggerBlock.cc
 TreeProduction/plugins/TriggerObjectBlock.cc
 TreeProduction/plugins/VertexBlock.cc
@@ -53,17 +49,11 @@ TreeProduction/python/TauBlock_cfi.py
 TreeProduction/python/TrackBlock_cfi.py
 TreeProduction/python/TreeContentConfig_cff.py
 TreeProduction/python/TreeContentConfig_data_cff.py
-TreeProduction/python/TreeCreator_cfi.py
 TreeProduction/python/treeProducer.py
-TreeProduction/python/TreeWriter_cfi.py
 TreeProduction/python/TriggerBlock_cfi.py
 TreeProduction/python/TriggerMatchProducer_cfi.py
 TreeProduction/python/TriggerObjectBlock_cfi.py
 TreeProduction/python/VertexBlock_cfi.py
-TreeProduction/src/classes.h
-TreeProduction/src/classes_def.xml
-TreeProduction/src/PhysicsObjects.cc
-TreeProduction/src/Utility.cc
 PatProduction/plugins/BuildFile.xml
 PatProduction/plugins/MuonsUserEmbedded.cc
 PatProduction/plugins/ElectronsUserEmbedder.cc
