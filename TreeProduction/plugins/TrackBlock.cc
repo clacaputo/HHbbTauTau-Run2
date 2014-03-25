@@ -15,6 +15,7 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "Math/GenVector/VectorUtil.h"
 
+#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Track.h"
 
 class TrackBlock : public edm::EDAnalyzer {

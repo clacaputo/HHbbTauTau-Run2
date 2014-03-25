@@ -8,6 +8,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
+#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/GenParticle.h"
 
 #include <limits>

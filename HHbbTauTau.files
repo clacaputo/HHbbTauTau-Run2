@@ -38,7 +38,6 @@ TreeProduction/plugins/TreeMakerModule.cc
 TreeProduction/plugins/TreeMakerModule.h
 TreeProduction/plugins/TriggerBlock.cc
 TreeProduction/plugins/TriggerObjectBlock.cc
-TreeProduction/plugins/TriggerObjectBlock.h
 TreeProduction/plugins/VertexBlock.cc
 TreeProduction/plugins/VertexBlock.h
 TreeProduction/python/ElectronBlock_cfi.py
@@ -112,3 +111,4 @@ TreeProduction/interface/MET.h
 TreeProduction/interface/Track.h
 TreeProduction/interface/Muon.h
 TreeProduction/interface/Trigger.h
+TreeProduction/interface/TriggerObject.h
