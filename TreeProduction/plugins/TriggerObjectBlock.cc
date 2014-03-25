@@ -127,18 +127,6 @@ void TriggerObjectBlock::analyze(const edm::Event& iEvent, const edm::EventSetup
             triggerObjectTree.pathValues().push_back(imap.second);
         }
         triggerObjectTree.Fill();
-
-        if (_verbosity) {
-            std::cout << std::setprecision(2);
-            std::cout << std::setw(4) << fnTriggerObject
-                      << std::setw(8) << _triggerObject->eta
-                      << std::setw(8) << _triggerObject->phi
-                      << std::setw(8) << _triggerObject->pt
-                      << std::setw(8) << _triggerObject->energy
-                      << std::endl;
-            for (const auto& jt : pathInfoMap)
-                std::cout << "\t\t\t\t\t" << jt.first << " " << jt.second << std::endl;
-        }
     }
 }
 #include "FWCore/Framework/interface/MakerMacros.h"
