@@ -29,6 +29,7 @@
     SIMPLE_VAR(Float_t, electronEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, muonEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, neutralEmEnergyFraction, 0.0) \
+    SIMPLE_VAR(Float_t, neutralHadronEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, photonEnergyFraction, 0.0) \
     SIMPLE_VAR(Int_t, chargedHadronMultiplicity, 0) \
     SIMPLE_VAR(Int_t, chargedMultiplicity, 0) \

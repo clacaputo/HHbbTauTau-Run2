@@ -81,12 +81,12 @@ void GenParticleBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         genParticleTree.Daughter_Indexes().size();
         for(size_t n = 0; n < particle.numberOfMothers(); ++n)
         {
-            const size_t motherIndex = FindParticleIndex(particles, particle.mother(n));
+            const size_t motherIndex = FindParticleIndex(genParticles, particle.mother(n));
             genParticleTree.Mother_Indexes().push_back(motherIndex);
         }
         for(size_t n = 0; n < particle.numberOfDaughters(); ++n)
         {
-            const size_t daughterIndex = FindParticleIndex(particles, particle.daughter(n));
+            const size_t daughterIndex = FindParticleIndex(genParticles, particle.daughter(n));
             genParticleTree.Daughter_Indexes().push_back(daughterIndex);
         }
         genParticleTree.Fill();
