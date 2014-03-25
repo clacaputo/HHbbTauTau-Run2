@@ -44,20 +44,20 @@ void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     edm::LogInfo("VertexBlock") << "Total # Primary Vertices: " << primaryVertices->size();
 
     for (const reco::Vertex& vertex : *primaryVertices) {
-        vertexTree.x = vertex.x();
-        vertexTree.y = vertex.y();
-        vertexTree.z = vertex.z();
-        vertexTree.xErr = vertex.xError();
-        vertexTree.yErr = vertex.yError();
-        vertexTree.zErr = vertex.zError();
-        vertexTree.rho =  vertex.position().rho();
-        vertexTree.chi2 = vertex.chi2();
-        vertexTree.ndf = vertex.ndof();
-        vertexTree.ntracks = int(vertex.tracksSize());
-        vertexTree.ntracksw05 = vertex.nTracks(0.5); // number of tracks in the vertex with weight above 0.5
-        vertexTree.isfake = vertex.isFake();
-        vertexTree.isvalid = vertex.isValid();
-        vertexTree.sumPt = vertex.p4().pt();
+        vertexTree.x() = vertex.x();
+        vertexTree.y() = vertex.y();
+        vertexTree.z() = vertex.z();
+        vertexTree.xErr() = vertex.xError();
+        vertexTree.yErr() = vertex.yError();
+        vertexTree.zErr() = vertex.zError();
+        vertexTree.rho() =  vertex.position().rho();
+        vertexTree.chi2() = vertex.chi2();
+        vertexTree.ndf() = vertex.ndof();
+        vertexTree.ntracks() = int(vertex.tracksSize());
+        vertexTree.ntracksw05() = vertex.nTracks(0.5); // number of tracks in the vertex with weight above 0.5
+        vertexTree.isfake() = vertex.isFake();
+        vertexTree.isvalid() = vertex.isValid();
+        vertexTree.sumPt() = vertex.p4().pt();
 
         vertexTree.Fill();
     }
