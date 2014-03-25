@@ -6,6 +6,9 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+
+#define SMART_TREE_FOR_CMSSW
+
 #include "HHbbTauTau/TreeProduction/interface/MET.h"
 
 class METBlock : public edm::EDAnalyzer {
