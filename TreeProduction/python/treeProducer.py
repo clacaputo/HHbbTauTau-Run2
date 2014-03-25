@@ -67,8 +67,6 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(options
 #--------------------------------------------------
 # VHTauTau Tree Specific
 #--------------------------------------------------
-process.load("HHbbTauTau.TreeProduction.TreeCreator_cfi")
-process.load("HHbbTauTau.TreeProduction.TreeWriter_cfi")
 process.load("HHbbTauTau.TreeProduction.TreeContentConfig_cff")
 
 #-------------------------------------------------------
@@ -103,8 +101,6 @@ if options.includeSim:
 
 
 process.p = cms.Path(
-  process.treeCreator +
   process.mainTreeContentSequence +
-  process.simTreeContentSequence +
-  process.treeWriter
+  process.simTreeContentSequence
 )
