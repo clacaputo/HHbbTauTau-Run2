@@ -1,5 +1,10 @@
-#include "TTree.h"
-#include "TClonesArray.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -10,88 +15,87 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "Math/GenVector/VectorUtil.h"
 
-#include "HHbbTauTau/TreeProduction/plugins/TrackBlock.h"
-#include "HHbbTauTau/TreeProduction/interface/Utility.h"
+#include "HHbbTauTau/TreeProduction/interface/Track.h"
 
-TrackBlock::TrackBlock(const edm::ParameterSet& iConfig) :
-  _verbosity(iConfig.getParameter<int>("verbosity")),
-  _inputTag(iConfig.getParameter<edm::InputTag>("trackSrc")),
-  _beamSpot(iConfig.getParameter<edm::InputTag>("offlineBeamSpot"))
-{}
-void TrackBlock::beginJob() 
+class TrackBlock : public edm::EDAnalyzer {
+public:
+    explicit TrackBlock(const edm::ParameterSet& iConfig) :
+        _verbosity(iConfig.getParameter<int>("verbosity")),
+        _inputTag(iConfig.getParameter<edm::InputTag>("trackSrc")),
+        _beamSpot(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")) {}
+
+private:
+    virtual void endJob() { trackTree.Write(); }
+    virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+private:
+    int _verbosity;
+    edm::InputTag _inputTag;
+    edm::InputTag _beamSpot;
+    ntuple::TrackTree trackTree;
+};
+
+void TrackBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  // Get TTree pointer
-  TTree* tree = vhtm::Utility::getTree("vhtree");
-  cloneTrack = new TClonesArray("vhtm::Track");
-  tree->Branch("Track", &cloneTrack);
-  tree->Branch("nTrack", &fnTrack,  "fnTrack/I");
-}
-void TrackBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  // Reset the TClonesArray and the nObj variables
-  cloneTrack->Clear();
-  fnTrack = 0;
+    trackTree.EventId() = iEvent.id().event();
 
-  // read the beam spot
-  edm::Handle<reco::BeamSpot> beamSpot;
-  iEvent.getByLabel(_beamSpot, beamSpot);
+    // read the beam spot
+    edm::Handle<reco::BeamSpot> beamSpot;
+    iEvent.getByLabel(_beamSpot, beamSpot);
 
-  edm::Handle<reco::TrackCollection> tracks;
-  iEvent.getByLabel(_inputTag, tracks);
+    edm::Handle<reco::TrackCollection> tracks;
+    iEvent.getByLabel(_inputTag, tracks);
 
-  if (tracks.isValid()) {
+    if (!tracks.isValid()) {
+        edm::LogError("TrackBlock") << "Error! Failed to get reco::Track collection, "
+                                    << _inputTag;
+        throw std::runtime_error("Failed to get reco::Track collection");
+    }
+
     edm::LogInfo("TrackBlock") << "Total # of Tracks: " << tracks->size();
     reco::Track::TrackQuality quality = reco::Track::qualityByName("loose");
-    for (reco::TrackCollection::const_iterator  it  = tracks->begin(); 
-                                                it != tracks->end(); ++it) {
-      const reco::Track &track = *it;
-      if (!track.quality(quality)) continue;
+    for (const reco::Track& track : *tracks) {
+        if (!track.quality(quality)) continue;
 
-      if (fnTrack == kMaxTrack) {
-	edm::LogInfo("TrackBlock") << "Too many Tracks in the event, fnTrack = " << fnTrack; 
-	break;
-      }
-      trackB = new ((*cloneTrack)[fnTrack++]) vhtm::Track();
-      trackB->eta         = track.eta();
-      trackB->etaError    = track.etaError();
-      trackB->theta       = track.theta();
-      trackB->thetaError  = track.thetaError();
-      trackB->phi         = track.phi();
-      trackB->phiError    = track.phiError();
-      trackB->p           = track.p();
-      trackB->pt          = track.pt();
-      trackB->ptError     = track.ptError();
-      trackB->qoverp      = track.qoverp();
-      trackB->qoverpError = track.qoverpError(); 
-      trackB->charge      = track.charge();
+        trackTree.eta()         = track.eta();
+        trackTree.etaError()    = track.etaError();
+        trackTree.theta()       = track.theta();
+        trackTree.thetaError()  = track.thetaError();
+        trackTree.phi()         = track.phi();
+        trackTree.phiError()    = track.phiError();
+        trackTree.p()           = track.p();
+        trackTree.pt()          = track.pt();
+        trackTree.ptError()     = track.ptError();
+        trackTree.qoverp()      = track.qoverp();
+        trackTree.qoverpError() = track.qoverpError();
+        trackTree.charge()      = track.charge();
 
-      trackB->nValidHits  = track.numberOfValidHits();
-      trackB->nLostHits   = track.numberOfLostHits();
-      trackB->validFraction = track.validFraction();
+        trackTree.nValidHits()  = track.numberOfValidHits();
+        trackTree.nLostHits()   = track.numberOfLostHits();
+        trackTree.validFraction() = track.validFraction();
 
-      const reco::HitPattern& hitp = track.hitPattern();
-      trackB->nValidTrackerHits  = hitp.numberOfValidTrackerHits();      
-      trackB->nValidPixelHits    = hitp.numberOfValidPixelHits();
-      trackB->nValidStripHits    = hitp.numberOfValidStripHits();
-      trackB->trackerLayersWithMeasurement = hitp.trackerLayersWithMeasurement(); 
-      trackB->pixelLayersWithMeasurement   = hitp.pixelLayersWithMeasurement();
-      trackB->stripLayersWithMeasurement   = hitp.stripLayersWithMeasurement();
- 
-      trackB->dxy       = track.dxy(beamSpot->position());
-      trackB->dxyError  = track.dxyError();
-      trackB->dz        = track.dz(beamSpot->position());
-      trackB->dzError   = track.dzError();
-     
-      trackB->chi2      = track.chi2();
-      trackB->ndof      = track.ndof();
-      trackB->vx        = track.vx();
-      trackB->vy        = track.vy();
-      trackB->vz        = track.vz();
+        const reco::HitPattern& hitp = track.hitPattern();
+        trackTree.nValidTrackerHits()  = hitp.numberOfValidTrackerHits();
+        trackTree.nValidPixelHits()    = hitp.numberOfValidPixelHits();
+        trackTree.nValidStripHits()    = hitp.numberOfValidStripHits();
+        trackTree.trackerLayersWithMeasurement() = hitp.trackerLayersWithMeasurement();
+        trackTree.pixelLayersWithMeasurement()   = hitp.pixelLayersWithMeasurement();
+        trackTree.stripLayersWithMeasurement()   = hitp.stripLayersWithMeasurement();
+
+        trackTree.dxy()       = track.dxy(beamSpot->position());
+        trackTree.dxyError()  = track.dxyError();
+        trackTree.dz()        = track.dz(beamSpot->position());
+        trackTree.dzError()   = track.dzError();
+
+        trackTree.chi2()      = track.chi2();
+        trackTree.ndof()      = track.ndof();
+        trackTree.vx()        = track.vx();
+        trackTree.vy()        = track.vy();
+        trackTree.vz()        = track.vz();
+
+        trackTree.Fill();
     }
-  } 
-  else {
-    edm::LogError("TrackBlock") << "Error! Failed to get reco::Track collection, " 
-                                << _inputTag;
-  }
 }
+
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(TrackBlock);
