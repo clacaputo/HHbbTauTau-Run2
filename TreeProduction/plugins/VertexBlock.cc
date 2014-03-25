@@ -1,64 +1,67 @@
-#include "TTree.h"
-#include "TClonesArray.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 
-#include "HHbbTauTau/TreeProduction/plugins/VertexBlock.h"
-#include "HHbbTauTau/TreeProduction/interface/Utility.h"
+#define SMART_TREE_FOR_CMSSW
+#include "HHbbTauTau/TreeProduction/interface/Vertex.h"
 
-VertexBlock::VertexBlock(const edm::ParameterSet& iConfig) :
-  _verbosity(iConfig.getParameter<int>("verbosity")),
-  _inputTag(iConfig.getParameter<edm::InputTag>("vertexSrc"))
+class VertexBlock : public edm::EDAnalyzer {
+public:
+    explicit VertexBlock(const edm::ParameterSet& iConfig) :
+        _verbosity(iConfig.getParameter<int>("verbosity")),
+        _inputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")) {}
+
+private:
+    virtual void endJob() { vertexTree.Write(); }
+    virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+private:
+    int _verbosity;
+    edm::InputTag _inputTag;
+    ntuple::VertexTree vertexTree;
+};
+
+void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-}
-void VertexBlock::beginJob() {
-  // Get TTree pointer
-  TTree* tree = vhtm::Utility::getTree("vhtree");
-  cloneVertex = new TClonesArray("vhtm::Vertex");
-  tree->Branch("Vertex", &cloneVertex, 32000, 2);
-  tree->Branch("nVertex", &fnVertex, "fnVertex/I");
-}
-void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  // Reset the TClonesArray and the nObj variables
-  cloneVertex->Clear();
-  fnVertex = 0;
+    vertexTree.EventId() = iEvent.id().event();
 
-  edm::Handle<reco::VertexCollection> primaryVertices;
-  iEvent.getByLabel(_inputTag, primaryVertices);
+    edm::Handle<reco::VertexCollection> primaryVertices;
+    iEvent.getByLabel(_inputTag, primaryVertices);
 
-  if (primaryVertices.isValid()) {
+    if (!primaryVertices.isValid()) {
+        edm::LogError("VertexBlock") << "Error >> Failed to get VertexCollection for label: "
+                                     << _inputTag;
+        throw std::runtime_error("Failed to get VertexCollection");
+    }
     edm::LogInfo("VertexBlock") << "Total # Primary Vertices: " << primaryVertices->size();
 
-    for (reco::VertexCollection::const_iterator it = primaryVertices->begin(); 
-                                               it != primaryVertices->end(); ++it) {
-      if (fnVertex == kMaxVertex) {
-	edm::LogInfo("VertexBlock") << "Too many Vertex, fnVertex = " << fnVertex; 
-	break;
-      }
-      vertexB = new ((*cloneVertex)[fnVertex++]) vhtm::Vertex();
-      vertexB->x = it->x();
-      vertexB->y = it->y();
-      vertexB->z = it->z();
-      vertexB->xErr = it->xError();
-      vertexB->yErr = it->yError();
-      vertexB->zErr = it->zError();
-      vertexB->rho =  it->position().rho();
-      vertexB->chi2 = it->chi2();
-      vertexB->ndf = it->ndof();
-      vertexB->ntracks = int(it->tracksSize());
-      vertexB->ntracksw05 = it->nTracks(0.5); // number of tracks in the vertex with weight above 0.5
-      vertexB->isfake = it->isFake();
-      vertexB->isvalid = it->isValid();
-      vertexB->sumPt = it->p4().pt();
+    for (const reco::Vertex& vertex : *primaryVertices) {
+        vertexTree.x = vertex.x();
+        vertexTree.y = vertex.y();
+        vertexTree.z = vertex.z();
+        vertexTree.xErr = vertex.xError();
+        vertexTree.yErr = vertex.yError();
+        vertexTree.zErr = vertex.zError();
+        vertexTree.rho =  vertex.position().rho();
+        vertexTree.chi2 = vertex.chi2();
+        vertexTree.ndf = vertex.ndof();
+        vertexTree.ntracks = int(vertex.tracksSize());
+        vertexTree.ntracksw05 = vertex.nTracks(0.5); // number of tracks in the vertex with weight above 0.5
+        vertexTree.isfake = vertex.isFake();
+        vertexTree.isvalid = vertex.isValid();
+        vertexTree.sumPt = vertex.p4().pt();
+
+        vertexTree.Fill();
     }
-  } 
-  else {
-    edm::LogError("VertexBlock") << "Error >> Failed to get VertexCollection for label: " 
-                                 << _inputTag;
-    throw std::runtime_error("Failed to get VertexCollection for label");
-  }
 }
+
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(VertexBlock);
