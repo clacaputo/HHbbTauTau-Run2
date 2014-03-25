@@ -11,7 +11,7 @@
 class METBlock : public edm::EDAnalyzer {
 public:
 
-    METBlock::METBlock(const edm::ParameterSet& iConfig) :
+    explicit METBlock(const edm::ParameterSet& iConfig) :
       _verbosity(iConfig.getParameter<int>("verbosity")),
       _pfinputTag(iConfig.getParameter<edm::InputTag>("metSrc")),
       _corrinputTag(iConfig.getParameter<edm::InputTag>("corrmetSrc")),
