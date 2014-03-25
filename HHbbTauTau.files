@@ -33,7 +33,6 @@ TreeProduction/plugins/JetBlock.cc
 TreeProduction/plugins/METBlock.cc
 TreeProduction/plugins/MuonBlock.cc
 TreeProduction/plugins/TauBlock.cc
-TreeProduction/plugins/TauBlock.h
 TreeProduction/plugins/TrackBlock.cc
 TreeProduction/plugins/TrackBlock.h
 TreeProduction/plugins/TreeMakerModule.cc
@@ -110,5 +109,6 @@ TreeProduction/interface/GenJet.h
 TreeProduction/interface/GenMET.h
 TreeProduction/interface/GenParticle.h
 TreeProduction/interface/Jet.h
+TreeProduction/interface/Tau.h
 TreeProduction/interface/MET.h
 TreeProduction/interface/Muon.h
