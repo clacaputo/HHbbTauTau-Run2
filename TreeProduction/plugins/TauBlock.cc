@@ -1,7 +1,13 @@
 #include <iostream>
-#include "TTree.h"
-#include "TMath.h"
-#include "TClonesArray.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/Common/interface/Handle.h"
@@ -22,90 +28,78 @@
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
 
-#include "HHbbTauTau/TreeProduction/plugins/TauBlock.h"
-#include "HHbbTauTau/TreeProduction/interface/Utility.h"
+#include "HHbbTauTau/TreeProduction/interface/Tau.h"
 
 #define TAU_DISCRIMINATOR(name) \
-    tauB->name = patTau.tauID(#name) \
+    tauTree.name() = patTau.tauID(#name) \
     /**/
 
-namespace {
-  template<typename T>
-  bool isValidRef(const edm::Ref<T>& ref)
-  //  bool isValidRef(const PFCandidatePtr ref))
-  {
-    return ( (ref.isAvailable() || ref.isTransient()) && ref.isNonnull() );
-  }
-}
+class TauBlock : public edm::EDAnalyzer {
+public:
+    explicit TauBlock(const edm::ParameterSet& iConfig) :
+        _verbosity(iConfig.getParameter<int>("verbosity")),
+        _inputTag(iConfig.getParameter<edm::InputTag>("patTauSrc")),
+        _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")) {}
 
+private:
+    virtual void endJob() { tauTree.Write(); }
+    virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
-TauBlock::TauBlock(const edm::ParameterSet& iConfig) :
-  _verbosity(iConfig.getParameter<int>("verbosity")),
-  _inputTag(iConfig.getParameter<edm::InputTag>("patTauSrc")),
-  _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc"))
+private:
+    int _verbosity;
+    edm::InputTag _inputTag;
+    edm::InputTag _vtxInputTag;
+
+    const TransientTrackBuilder* trackBuilder_;
+    ntuple::TauTree tauTree;
+};
+
+void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-}
+    tauTree.EventId() = iEvent.id().event();
 
-void TauBlock::beginJob() 
-{
+    edm::Handle<reco::VertexCollection> primaryVertices;
+    iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
-  // Get TTree pointer
-  TTree* tree = vhtm::Utility::getTree("vhtree");
-  cloneTau = new TClonesArray("vhtm::Tau");
-  tree->Branch("Tau", &cloneTau, 32000, 2);
-  tree->Branch("nTau", &fnTau, "fnTau/I");
-}
-
-void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  // Reset the TClonesArray and the nObj variables
-  cloneTau->Clear();
-  fnTau = 0;
-
-  edm::Handle<reco::VertexCollection> primaryVertices;
-  iEvent.getByLabel(_vtxInputTag, primaryVertices);
-
-  edm::Handle<pat::TauCollection> tausHandle;
-  iEvent.getByLabel(_inputTag,tausHandle);
-  const pat::TauCollection* taus = tausHandle.product();
-  if(!taus)
-      throw std::runtime_error("Tau collection not found.");
+    edm::Handle<pat::TauCollection> tausHandle;
+    iEvent.getByLabel(_inputTag,tausHandle);
+    const pat::TauCollection* taus = tausHandle.product();
+    if(!taus)
+        throw std::runtime_error("Tau collection not found.");
 
     edm::LogInfo("TauBlock") << "Total # PAT Taus: " << taus->size();
     
     for (const pat::Tau& patTau : *taus) {
-      vhtm::Tau* tauB = new ((*cloneTau)[fnTau++]) vhtm::Tau();
-
       // Store Tau variables
-      tauB->eta    = patTau.eta();
-      tauB->phi    = patTau.phi();
-      tauB->pt     = patTau.pt();
-      tauB->energy = patTau.energy();
-      tauB->charge = patTau.charge();
+      tauTree.eta()    = patTau.eta();
+      tauTree.phi()    = patTau.phi();
+      tauTree.pt()     = patTau.pt();
+      tauTree.energy() = patTau.energy();
+      tauTree.charge() = patTau.charge();
       
       
 
       // Leading particle pT
-      tauB->leadChargedParticlePt = patTau.leadPFChargedHadrCand().isNonnull()
+      tauTree.leadChargedParticlePt() = patTau.leadPFChargedHadrCand().isNonnull()
                                   ? patTau.leadPFChargedHadrCand()->pt() : 0.;
-      tauB->leadNeutralParticlePt = patTau.leadPFNeutralCand().isNonnull()
+      tauTree.leadNeutralParticlePt() = patTau.leadPFNeutralCand().isNonnull()
                                   ? patTau.leadPFNeutralCand()->et(): 0.;
-      tauB->leadParticlePt        = patTau.leadPFCand().isNonnull()
+      tauTree.leadParticlePt()        = patTau.leadPFCand().isNonnull()
                                   ? patTau.leadPFCand()->et(): 0.;
       
       // Number of charged/neutral candidates and photons in different cones
-      tauB->numChargedHadronsSignalCone = patTau.signalPFChargedHadrCands().size();
-      tauB->numNeutralHadronsSignalCone = patTau.signalPFNeutrHadrCands().size();
-      tauB->numPhotonsSignalCone        = patTau.signalPFGammaCands().size();
-      tauB->numParticlesSignalCone      = patTau.signalPFCands().size();
+      tauTree.numChargedHadronsSignalCone() = patTau.signalPFChargedHadrCands().size();
+      tauTree.numNeutralHadronsSignalCone() = patTau.signalPFNeutrHadrCands().size();
+      tauTree.numPhotonsSignalCone()        = patTau.signalPFGammaCands().size();
+      tauTree.numParticlesSignalCone()      = patTau.signalPFCands().size();
       
-      tauB->numChargedHadronsIsoCone = patTau.isolationPFChargedHadrCands().size();
-      tauB->numNeutralHadronsIsoCone = patTau.isolationPFNeutrHadrCands().size();
-      tauB->numPhotonsIsoCone        = patTau.isolationPFGammaCands().size();
-      tauB->numParticlesIsoCone      = patTau.isolationPFCands().size();
+      tauTree.numChargedHadronsIsoCone() = patTau.isolationPFChargedHadrCands().size();
+      tauTree.numNeutralHadronsIsoCone() = patTau.isolationPFNeutrHadrCands().size();
+      tauTree.numPhotonsIsoCone()        = patTau.isolationPFGammaCands().size();
+      tauTree.numParticlesIsoCone()      = patTau.isolationPFCands().size();
       
-      tauB->ptSumPFChargedHadronsIsoCone = patTau.isolationPFChargedHadrCandsPtSum();
-      tauB->ptSumPhotonsIsoCone          = patTau.isolationPFGammaCandsEtSum();
-
+      tauTree.ptSumPFChargedHadronsIsoCone() = patTau.isolationPFChargedHadrCandsPtSum();
+      tauTree.ptSumPhotonsIsoCone()          = patTau.isolationPFGammaCandsEtSum();
 
       // tau id. discriminators
       // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
@@ -167,29 +161,29 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) 
       TAU_DISCRIMINATOR(byVVTightIsolationMVA3newDMwLT);
 
 
-      tauB->pfElectronMVA = patTau.leadPFCand().isNonnull() ? patTau.leadPFCand()->mva_e_pi() : 1.;
+      tauTree.pfElectronMVA() = patTau.leadPFCand().isNonnull() ? patTau.leadPFCand()->mva_e_pi() : 1.;
 
       // NEW quantities
-      tauB->emFraction              = patTau.emFraction();
-      tauB->maximumHCALPFClusterEt  = patTau.maximumHCALPFClusterEt();
-      tauB->ecalStripSumEOverPLead  = patTau.ecalStripSumEOverPLead();
-      tauB->bremsRecoveryEOverPLead = patTau.bremsRecoveryEOverPLead();
-      tauB->hcalTotOverPLead        = patTau.hcalTotOverPLead();
-      tauB->hcalMaxOverPLead        = patTau.hcalMaxOverPLead();
-      tauB->hcal3x3OverPLead        = patTau.hcal3x3OverPLead();
+      tauTree.emFraction()              = patTau.emFraction();
+      tauTree.maximumHCALPFClusterEt()  = patTau.maximumHCALPFClusterEt();
+      tauTree.ecalStripSumEOverPLead()  = patTau.ecalStripSumEOverPLead();
+      tauTree.bremsRecoveryEOverPLead() = patTau.bremsRecoveryEOverPLead();
+      tauTree.hcalTotOverPLead()        = patTau.hcalTotOverPLead();
+      tauTree.hcalMaxOverPLead()        = patTau.hcalMaxOverPLead();
+      tauTree.hcal3x3OverPLead()        = patTau.hcal3x3OverPLead();
 
-      tauB->etaetaMoment = patTau.etaetaMoment();
-      tauB->phiphiMoment = patTau.phiphiMoment();
-      tauB->phiphiMoment = patTau.etaphiMoment();
+      tauTree.etaetaMoment() = patTau.etaetaMoment();
+      tauTree.phiphiMoment() = patTau.phiphiMoment();
+      tauTree.phiphiMoment() = patTau.etaphiMoment();
       
       // Vertex information
       const reco::Candidate::Point& vertex = patTau.vertex();
-      tauB->vx = vertex.x();             
-      tauB->vy = vertex.y();             
-      tauB->vz = vertex.z();             
+      tauTree.vx() = vertex.x();
+      tauTree.vy() = vertex.y();
+      tauTree.vz() = vertex.z();
 
-      tauB->zvertex = patTau.vz(); // distance from the primary vertex
-      tauB->mass    = patTau.p4().M();
+      tauTree.zvertex() = patTau.vz(); // distance from the primary vertex
+      tauTree.mass()    = patTau.p4().M();
 
       edm::ESHandle<TransientTrackBuilder> trackBuilderHandle;
        iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", trackBuilderHandle);
@@ -210,34 +204,36 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) 
             transtrack2 = trackBuilderHandle->build(patTau.signalPFChargedHadrCands()[2]->trackRef());
       }
 
-      tauB->NumChHad=patTau.signalPFChargedHadrCands().size();
+      tauTree.NumChHad()=patTau.signalPFChargedHadrCands().size();
 
       if(signalPFChargedHadrCandidates.size()==1){
         if(patTau.signalPFChargedHadrCands()[0]->trackRef().isNonnull()) {
-          tauB->ChHadCandPt1Prong=patTau.signalPFChargedHadrCands()[0]->trackRef()->pt();
-          tauB->ChHadCandEta1Prong=patTau.signalPFChargedHadrCands()[0]->trackRef()->eta();
-          tauB->ChHadCandPhi1Prong=patTau.signalPFChargedHadrCands()[0]->trackRef()->phi();
+          tauTree.ChHadCandPt1Prong()=patTau.signalPFChargedHadrCands()[0]->trackRef()->pt();
+          tauTree.ChHadCandEta1Prong()=patTau.signalPFChargedHadrCands()[0]->trackRef()->eta();
+          tauTree.ChHadCandPhi1Prong()=patTau.signalPFChargedHadrCands()[0]->trackRef()->phi();
         }
       }
 
       if( ( patTau.signalPFChargedHadrCands().size() )==3) {
           if(patTau.signalPFChargedHadrCands()[0]->trackRef().isNonnull()) {
-            tauB->ChHadCandPt3Prong_1track=patTau.signalPFChargedHadrCands()[0]->trackRef()->pt();
-            tauB->ChHadCandEta3Prong_1track=patTau.signalPFChargedHadrCands()[0]->trackRef()->eta();
-            tauB->ChHadCandPhi3Prong_1track=patTau.signalPFChargedHadrCands()[0]->trackRef()->phi();
+            tauTree.ChHadCandPt3Prong_1track()=patTau.signalPFChargedHadrCands()[0]->trackRef()->pt();
+            tauTree.ChHadCandEta3Prong_1track()=patTau.signalPFChargedHadrCands()[0]->trackRef()->eta();
+            tauTree.ChHadCandPhi3Prong_1track()=patTau.signalPFChargedHadrCands()[0]->trackRef()->phi();
           }
           if(patTau.signalPFChargedHadrCands()[1]->trackRef().isNonnull()) {
-            tauB->ChHadCandPt3Prong_2track=patTau.signalPFChargedHadrCands()[1]->trackRef()->pt();
-            tauB->ChHadCandEta3Prong_2track=patTau.signalPFChargedHadrCands()[1]->trackRef()->eta();
-            tauB->ChHadCandPhi3Prong_2track=patTau.signalPFChargedHadrCands()[1]->trackRef()->phi();
+            tauTree.ChHadCandPt3Prong_2track()=patTau.signalPFChargedHadrCands()[1]->trackRef()->pt();
+            tauTree.ChHadCandEta3Prong_2track()=patTau.signalPFChargedHadrCands()[1]->trackRef()->eta();
+            tauTree.ChHadCandPhi3Prong_2track()=patTau.signalPFChargedHadrCands()[1]->trackRef()->phi();
 
           }
           if(patTau.signalPFChargedHadrCands()[2]->trackRef().isNonnull())	{
-            tauB->ChHadCandPt3Prong_3track=patTau.signalPFChargedHadrCands()[2]->trackRef()->pt();
-            tauB->ChHadCandEta3Prong_3track=patTau.signalPFChargedHadrCands()[2]->trackRef()->eta();
-            tauB->ChHadCandPhi3Prong_3track=patTau.signalPFChargedHadrCands()[2]->trackRef()->phi();
+            tauTree.ChHadCandPt3Prong_3track()=patTau.signalPFChargedHadrCands()[2]->trackRef()->pt();
+            tauTree.ChHadCandEta3Prong_3track()=patTau.signalPFChargedHadrCands()[2]->trackRef()->eta();
+            tauTree.ChHadCandPhi3Prong_3track()=patTau.signalPFChargedHadrCands()[2]->trackRef()->phi();
           }
       }
+
+      tauTree.Fill();
     }
 }
 
