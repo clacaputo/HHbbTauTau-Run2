@@ -1,8 +1,11 @@
 #include <iostream>
+#include <algorithm>
 
-#include "TTree.h"
-#include "TClonesArray.h"
-
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
@@ -14,33 +17,41 @@
 #include "DataFormats/MuonReco/interface/MuonPFIsolation.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/GeometryVector/interface/VectorUtil.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Provenance/interface/EventID.h"
 
-#include "HHbbTauTau/TreeProduction/plugins/MuonBlock.h"
-#include "HHbbTauTau/TreeProduction/interface/Utility.h"
+#define SMART_TREE_FOR_CMSSW
 
-MuonBlock::MuonBlock(const edm::ParameterSet& iConfig) :
-  _verbosity(iConfig.getParameter<int>("verbosity")),
-  _muonInputTag(iConfig.getParameter<edm::InputTag>("muonSrc")),
-  _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")),
-  _beamSpotInputTag(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")),
-  _beamSpotCorr(iConfig.getParameter<bool>("beamSpotCorr")),
-  _muonID(iConfig.getParameter<std::string>("muonID"))
-{
-}
-MuonBlock::~MuonBlock() {
-}
-void MuonBlock::beginJob() 
-{
-  // Get TTree pointer
-  TTree* tree = vhtm::Utility::getTree("vhtree");
-  cloneMuon = new TClonesArray("vhtm::Muon");
-  tree->Branch("Muon", &cloneMuon, 32000, 2);
-  tree->Branch("nMuon", &fnMuon,  "fnMuon/I");
-}
+#include "HHbbTauTau/TreeProduction/interface/Muon.h"
+
+class MuonBlock : public edm::EDAnalyzer {
+public:
+    explicit MuonBlock(const edm::ParameterSet& iConfig) :
+        _verbosity(iConfig.getParameter<int>("verbosity")),
+        _muonInputTag(iConfig.getParameter<edm::InputTag>("muonSrc")),
+        _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")),
+        _beamSpotInputTag(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")),
+        _beamSpotCorr(iConfig.getParameter<bool>("beamSpotCorr")),
+        _muonID(iConfig.getParameter<std::string>("muonID")) {}
+
+private:
+    virtual void endJob() { muonTree.Write(); }
+    virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+private:
+    int _verbosity;
+    edm::InputTag _muonInputTag;
+    edm::InputTag _vtxInputTag;
+    edm::InputTag _beamSpotInputTag;
+    bool _beamSpotCorr;
+    std::string _muonID;
+    ntuple::MuonTree muonTree;
+};
+
 void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  // Reset the TClonesArray and the nObj variables
-  cloneMuon->Clear();
-  fnMuon = 0;
+
+  muonTree.EventId() = iEvent.id().event();
 
   edm::Handle<std::vector<pat::Muon> > muons;
   iEvent.getByLabel(_muonInputTag, muons);
@@ -51,28 +62,33 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<reco::BeamSpot> beamSpot;
   iEvent.getByLabel(_beamSpotInputTag, beamSpot);
 
-  if (muons.isValid()) {
-    edm::LogInfo("MuonBlock") << "Total # Muons: " << muons->size();
-    for (std::vector<pat::Muon>::const_iterator it  = muons->begin(); 
-                                                it != muons->end(); ++it) {
+  if (!muons.isValid()) {
+      edm::LogError("MuonBlock") << "Error >> Failed to get pat::Muon Collection for label: "
+                                     << _muonInputTag;
+      throw std::runtime_error("Failed to get pat::Muon Collection");
+  }
+
+  edm::LogInfo("MuonBlock") << "Total # PAT Muons: " << muons->size();
+  for (const pat::Muon& patMuon : *muons) {
+
       // consider only global muons
-      if (!it->isGlobalMuon()) continue;
+      if (!patMuon.isGlobalMuon()) continue;
 
-      reco::TrackRef tk  = it->innerTrack();  // tracker segment only
-      reco::TrackRef gtk = it->globalTrack();
-//      reco::TrackRef bestTrack = it->muonBestTrack();
+      reco::TrackRef tk  = patMuon.innerTrack();  // tracker segment only
+      reco::TrackRef gtk = patMuon.globalTrack();
+      reco::TrackRef bestTrack = patMuon.muonBestTrack();
 
-      muonB = new ((*cloneMuon)[fnMuon++]) vhtm::Muon();
-      muonB->isTrackerMuon = (it->isTrackerMuon()) ? true : false;
-      muonB->isPFMuon = it->userInt("isPFMuon") ? true :  false; 
 
-      muonB->eta     = it->eta();
-      muonB->phi     = it->phi();
-      muonB->pt      = it->pt();
-      muonB->ptError = tk->ptError();
-      muonB->p       = it->p();
-      muonB->energy  = it->energy();
-      muonB->charge  = it->charge();
+      muonTree.isTrackerMuon() = (patMuon.isTrackerMuon()) ? true : false;
+      muonTree.isPFMuon = patMuon.userInt("isPFMuon") ? true :  false;
+
+      muonTree.eta()     = patMuon.eta();
+      muonTree.phi()     = patMuon.phi();
+      muonTree.pt()      = patMuon.pt();
+      muonTree.ptError() = tk->ptError();
+      muonTree.p()       = patMuon.p();
+      muonTree.energy()  = patMuon.energy();
+      muonTree.charge()  = patMuon.charge();
 
 
       double trkd0 = tk->d0();
@@ -88,12 +104,13 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           throw std::runtime_error("Failed to get BeamSpot for label");
         }
       }
-      muonB->trkD0      = trkd0;
-      muonB->trkD0Error = tk->d0Error();
-      muonB->trkDz      = trkdz;
-      muonB->trkDzError = tk->dzError();
-      muonB->globalChi2 = it->normChi2();
-      muonB->passID     = (it->muonID(_muonID)) ? true : false;
+      muonTree.trkD0()  = trkd0;
+      muonTree.trkD0Error() = tk->d0Error();
+      muonTree.trkDz()  = trkdz;
+      muonTree.trkDzError() = tk->dzError();
+      muonTree.globalChi2() = patMuon.normChi2();
+      muonTree.passID() = (patMuon.muonID(_muonID)) ? true : false;
+
 
       // Vertex association
       double minVtxDist3D = 9999.;
@@ -119,85 +136,83 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                    << _vtxInputTag;
         throw std::runtime_error("Failed to get VertexCollection for label");
       }
-      muonB->vtxDist3D = minVtxDist3D;
-      muonB->vtxIndex  = indexVtx;
-      muonB->vtxDistZ  = vertexDistZ;
-//      muonB->deltaZ = std::abs(bestTrack->dz(vit->position()));
+      muonTree.vtxDist3D() = minVtxDist3D;
+      muonTree.vtxIndex()  = indexVtx;
+      muonTree.vtxDistZ()  = vertexDistZ;
+      muonTree.deltaZ() = std::abs(bestTrack->dz(vit->position()));
 
       // Hit pattern
       const reco::HitPattern& hitp = gtk->hitPattern();  // innerTrack will not provide Muon Hits 
-      muonB->pixHits = hitp.numberOfValidPixelHits();
-      muonB->trkHits = hitp.numberOfValidTrackerHits();
-      muonB->muoHits = hitp.numberOfValidMuonHits();
-      muonB->matches = it->numberOfMatches();
-      muonB->trackerLayersWithMeasurement = hitp.trackerLayersWithMeasurement();
+      muonTree.pixHits() = hitp.numberOfValidPixelHits();
+      muonTree.trkHits() = hitp.numberOfValidTrackerHits();
+      muonTree.muoHits() = hitp.numberOfValidMuonHits();
+      muonTree.matches() = patMuon.numberOfMatches();
+      muonTree.trackerLayersWithMeasurement() = hitp.trackerLayersWithMeasurement();
 
       // Isolation
-      muonB->trkIso  = it->trackIso();
-      muonB->ecalIso = it->ecalIso();
-      muonB->hcalIso = it->hcalIso();
-      muonB->hoIso   = it->isolationR03().hoEt;
-      double reliso  = (it->trackIso() + it->ecalIso() + it->hcalIso())/it->pt();
-      muonB->relIso  = reliso;
+      muonTree.trkIso()  = patMuon.trackIso();
+      muonTree.ecalIso() = patMuon.ecalIso();
+      muonTree.hcalIso() = patMuon.hcalIso();
+      muonTree.hoIso()   = patMuon.isolationR03().hoEt;
+      float reliso  = (patMuon.trackIso() + patMuon.ecalIso() + patMuon.hcalIso())/patMuon.pt();
+      muonTree.relIso()  = reliso;
 
-      muonB->pfRelIso = it->userFloat("PFRelIsoDB04v2");
+      muonTree.pfRelIso() = patMuon.userFloat("PFRelIsoDB04v2");
 
       // IP information
-      muonB->dB  = it->dB(pat::Muon::PV2D);
-      muonB->edB = it->edB(pat::Muon::PV2D);
+      muonTree.dB()  = patMuon.dB(pat::Muon::PV2D);
+      muonTree.edB() = patMuon.edB(pat::Muon::PV2D);
 
-      muonB->dB3d  = it->dB(pat::Muon::PV3D);
-      muonB->edB3d = it->edB(pat::Muon::PV3D);
+      muonTree.dB3d()  = patMuon.dB(pat::Muon::PV3D);
+      muonTree.edB3d() = patMuon.edB(pat::Muon::PV3D);
 
       //Iso Info
       //      const reco::MuonPFIsolation pfIsolationR03() ;
-      //      std::cout<<" pfiso  "<<it->pfIsolationR03().sumChargedHadronPt()<<std::endl;
+      //      std::cout<<" pfiso  "<<patMuon.pfIsolationR03().sumChargedHadronPt()<<std::endl;
       const reco::MuonPFIsolation& pfIsolationR03() ;
-      //std::cout<<" sumChHad "<<it->pfIsolationR03().sumChargedHadronPt<<std::endl;
-      //std::cout<<" sumChPart "<<it->pfIsolationR03().sumChargedParticlePt<<std::endl;
-      //std::cout<<" sumNeHad "<<it->pfIsolationR03().sumNeutralHadronEt<<std::endl;
-      //std::cout<<" sumPU "<<it->pfIsolationR03().sumPUPt<<std::endl;
+      //std::cout<<" sumChHad "<<patMuon.pfIsolationR03().sumChargedHadronPt<<std::endl;
+      //std::cout<<" sumChPart "<<patMuon.pfIsolationR03().sumChargedParticlePt<<std::endl;
+      //std::cout<<" sumNeHad "<<patMuon.pfIsolationR03().sumNeutralHadronEt<<std::endl;
+      //std::cout<<" sumPU "<<patMuon.pfIsolationR03().sumPUPt<<std::endl;
 
 
 
       // UW recommendation
-      muonB->isGlobalMuonPromptTight = muon::isGoodMuon(*it, muon::GlobalMuonPromptTight);
-      muonB->isAllArbitrated         = muon::isGoodMuon(*it, muon::AllArbitrated);
-      muonB->nChambers               = it->numberOfChambers();
-      muonB->nMatches                = it->numberOfMatches();
-      muonB->nMatchedStations        = it->numberOfMatchedStations();
-      muonB->stationMask             = it->stationMask();
-      muonB->stationGapMaskDistance  = it->stationGapMaskDistance();
-      muonB->stationGapMaskPull      = it->stationGapMaskPull();
-      muonB->muonID                  = it->userInt("muonID");
+      muonTree.isGlobalMuonPromptTight() = muon::isGoodMuon(*patMuon, muon::GlobalMuonPromptTight);
+      muonTree.isAllArbitrated()         = muon::isGoodMuon(*patMuon, muon::AllArbitrated);
+      muonTree.nChambers()               = patMuon.numberOfChambers();
+      muonTree.nMatches()                = patMuon.numberOfMatches();
+      muonTree.nMatchedStations()        = patMuon.numberOfMatchedStations();
+      muonTree.stationMask()             = patMuon.stationMask();
+      muonTree.stationGapMaskDistance()  = patMuon.stationGapMaskDistance();
+      muonTree.stationGapMaskPull()      = patMuon.stationGapMaskPull();
+      muonTree.muonID()                  = patMuon.userInt("muonID");
 
       // Vertex information
-      const reco::Candidate::Point& vertex = it->vertex();
-      muonB->vx = vertex.x();             
-      muonB->vy = vertex.y();             
-      muonB->vz = vertex.z();             
+      const reco::Candidate::Point& vertex = patMuon.vertex();
+      muonTree.vx() = vertex.x();
+      muonTree.vy() = vertex.y();
+      muonTree.vz() = vertex.z();
 
-      muonB->idMVA = it->userFloat("muonIdMVA");
-      muonB->isoRingsMVA = it->userFloat("muonIsoRingsMVA");
-      muonB->isoRingsRadMVA = it->userFloat("muonIsoRingsRadMVA");
-      muonB->idIsoCombMVA = it->userFloat("muonIdIsoCombMVA");
+      muonTree.idMVA() = patMuon.userFloat("muonIdMVA");
+      muonTree.isoRingsMVA() = patMuon.userFloat("muonIsoRingsMVA");
+      muonTree.isoRingsRadMVA() = patMuon.userFloat("muonIsoRingsRadMVA");
+      muonTree.idIsoCombMVA() = patMuon.userFloat("muonIdIsoCombMVA");
 
-      muonB->pfRelIso03v1 = it->userFloat("PFRelIso03v1");
-      muonB->pfRelIso03v2 = it->userFloat("PFRelIso03v2");
-      muonB->pfRelIsoDB03v1 = it->userFloat("PFRelIsoDB03v1");
-      muonB->pfRelIsoDB03v2 = it->userFloat("PFRelIsoDB03v2");
+      muonTree.pfRelIso03v1() = patMuon.userFloat("PFRelIso03v1");
+      muonTree.pfRelIso03v2() = patMuon.userFloat("PFRelIso03v2");
+      muonTree.pfRelIsoDB03v1() = patMuon.userFloat("PFRelIsoDB03v1");
+      muonTree.pfRelIsoDB03v2() = patMuon.userFloat("PFRelIsoDB03v2");
 
-      muonB->pfRelIso04v1 = it->userFloat("PFRelIso04v1");
-      muonB->pfRelIso04v2 = it->userFloat("PFRelIso04v2");
-      muonB->pfRelIsoDB04v1 = it->userFloat("PFRelIsoDB04v1");
-      muonB->pfRelIsoDB04v2 = it->userFloat("PFRelIsoDB04v2");
+      muonTree.pfRelIso04v1() = patMuon.userFloat("PFRelIso04v1");
+      muonTree.pfRelIso04v2() = patMuon.userFloat("PFRelIso04v2");
+      muonTree.pfRelIsoDB04v1() = patMuon.userFloat("PFRelIsoDB04v1");
+      muonTree.pfRelIsoDB04v2() = patMuon.userFloat("PFRelIsoDB04v2");
+
+      muonTree.Fill();
     }
-  } 
-  else {
-    edm::LogError("MuonBlock") << "Error >> Failed to get pat::Muon collection for label: " 
-                               << _muonInputTag;
-    throw std::runtime_error("Failed to get pat::Muon collection for label");
-  }
+
 }
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(MuonBlock);
+
