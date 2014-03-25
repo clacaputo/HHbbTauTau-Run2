@@ -80,7 +80,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
       muonTree.isTrackerMuon() = (patMuon.isTrackerMuon()) ? true : false;
-      muonTree.isPFMuon = patMuon.userInt("isPFMuon") ? true :  false;
+      muonTree.isPFMuon() = patMuon.userInt("isPFMuon") ? true :  false;
 
       muonTree.eta()     = patMuon.eta();
       muonTree.phi()     = patMuon.phi();
@@ -116,6 +116,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       double minVtxDist3D = 9999.;
          int indexVtx = -1;
       double vertexDistZ = 9999.;
+	  double deltaZbestTrack = 9999.;
       if (primaryVertices.isValid()) {
 	edm::LogInfo("MuonBlock") << "Total # Primary Vertices: " << primaryVertices->size();
 
@@ -123,6 +124,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                                     vit != primaryVertices->end(); ++vit) {
           double dxy = tk->dxy(vit->position());
           double dz  = tk->dz(vit->position());
+          deltaZbestTrack = std::abs(bestTrack->dz(vit->position()));
           double dist3D = std::sqrt(pow(dxy,2) + pow(dz,2));
           if (dist3D < minVtxDist3D) {
             minVtxDist3D = dist3D;
@@ -139,7 +141,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       muonTree.vtxDist3D() = minVtxDist3D;
       muonTree.vtxIndex()  = indexVtx;
       muonTree.vtxDistZ()  = vertexDistZ;
-      muonTree.deltaZ() = std::abs(bestTrack->dz(vit->position()));
+      muonTree.deltaZ() = deltaZbestTrack;
 
       // Hit pattern
       const reco::HitPattern& hitp = gtk->hitPattern();  // innerTrack will not provide Muon Hits 
@@ -178,8 +180,8 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
       // UW recommendation
-      muonTree.isGlobalMuonPromptTight() = muon::isGoodMuon(*patMuon, muon::GlobalMuonPromptTight);
-      muonTree.isAllArbitrated()         = muon::isGoodMuon(*patMuon, muon::AllArbitrated);
+      muonTree.isGlobalMuonPromptTight() = muon::isGoodMuon(patMuon, muon::GlobalMuonPromptTight);
+      muonTree.isAllArbitrated()         = muon::isGoodMuon(patMuon, muon::AllArbitrated);
       muonTree.nChambers()               = patMuon.numberOfChambers();
       muonTree.nMatches()                = patMuon.numberOfMatches();
       muonTree.nMatchedStations()        = patMuon.numberOfMatchedStations();
