@@ -10,6 +10,7 @@
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
 
+#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/GenMET.h"
 
 class GenMETBlock : public edm::EDAnalyzer {

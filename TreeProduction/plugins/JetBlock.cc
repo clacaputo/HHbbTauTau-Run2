@@ -23,6 +23,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "PhysicsTools/SelectorUtils/interface/PFJetIDSelectionFunctor.h"
  
+#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Jet.h"
 
 namespace {

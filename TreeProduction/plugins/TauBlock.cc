@@ -27,7 +27,7 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
-
+#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Tau.h"
 
 #define TAU_DISCRIMINATOR(name) \
