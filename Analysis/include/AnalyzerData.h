@@ -27,10 +27,10 @@
 
 #define ENTRY_2D(type, name, ...) \
     template<typename Key> \
-    root_ext::SmartHistogram< std::pair<type, type> >& name(const Key& key) { \
-        return Get((std::pair<type, type>*)nullptr, #name, key, ##__VA_ARGS__); \
+    root_ext::SmartHistogram< root_ext::detail::Base2DHistogram<type>::Value >& name(const Key& key) { \
+        return Get((root_ext::detail::Base2DHistogram<type>::Value*)nullptr, #name, key, ##__VA_ARGS__); \
     } \
-    root_ext::SmartHistogram< std::pair<type, type> >& name() { return name(""); } \
+    root_ext::SmartHistogram< root_ext::detail::Base2DHistogram<type>::Value >& name() { return name(""); } \
     /**/
 
 #define TH1D_ENTRY(name, nbinsx, xlow, xup) ENTRY_1D(TH1D, name, nbinsx, xlow, xup)

@@ -67,15 +67,15 @@ public:
     SELECTION_ENTRY(BJetSelection, 15)
 
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
-    ENTRY_1D(double, Resonance_Mass)
-    ENTRY_1D(double, Resonance_Pt)
-    ENTRY_1D(double, Resonance_Eta)
-    ENTRY_1D(double, Resonance_Phi)
-    ENTRY_1D(double, Bjets_Pt_MC)
-    ENTRY_1D(double, Higgs_leptonic_MC_Pt)
-    ENTRY_1D(double, Higgs_BB_MC_Pt)
-    ENTRY_2D(double, DR_bjets_vs_HiggsPt_MC)
-    ENTRY_2D(double, DR_Higgs_vs_ResonancePt_MC)
+    ENTRY_1D(float, Resonance_Mass)
+    ENTRY_1D(float, Resonance_Pt)
+    ENTRY_1D(float, Resonance_Eta)
+    ENTRY_1D(float, Resonance_Phi)
+    ENTRY_1D(float, Bjets_Pt_MC)
+    ENTRY_1D(float, Higgs_leptonic_MC_Pt)
+    ENTRY_1D(float, Higgs_BB_MC_Pt)
+    ENTRY_2D(float, DR_bjets_vs_HiggsPt_MC)
+    ENTRY_2D(float, DR_Higgs_vs_ResonancePt_MC)
 
 protected:
     std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;

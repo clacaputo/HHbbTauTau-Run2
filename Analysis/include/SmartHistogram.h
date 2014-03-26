@@ -141,25 +141,25 @@ public:
 };
 
 template<>
-class SmartHistogram< std::pair<double, double> > : public detail::Base2DHistogram<double> {
+class SmartHistogram< detail::Base2DHistogram<double>::Value > : public detail::Base2DHistogram<double> {
 public:
     SmartHistogram(const std::string& name) : Base2DHistogram<double>(name) {}
 };
 
 template<>
-class SmartHistogram< std::pair<float, float> > : public detail::Base2DHistogram<float> {
+class SmartHistogram< detail::Base2DHistogram<float>::Value > : public detail::Base2DHistogram<float> {
 public:
     SmartHistogram(const std::string& name) : Base2DHistogram<float>(name) {}
 };
 
 template<>
-class SmartHistogram< std::pair<int, int> > : public detail::Base2DHistogram<int> {
+class SmartHistogram< detail::Base2DHistogram<int>::Value > : public detail::Base2DHistogram<int> {
 public:
     SmartHistogram(const std::string& name) : Base2DHistogram<int>(name) {}
 };
 
 template<>
-class SmartHistogram< std::pair<bool, bool> > : public detail::Base2DHistogram<bool> {
+class SmartHistogram< detail::Base2DHistogram<bool>::Value > : public detail::Base2DHistogram<bool> {
 public:
     SmartHistogram(const std::string& name) : Base2DHistogram<bool>(name) {}
 };

@@ -15,10 +15,10 @@ public:
 
     SELECTION_ENTRY(EventSelection, 15, 5)
 
-    ENTRY_1D(double, Ele_tau_mass)
-    ENTRY_1D(double, BB_mass)
-    ENTRY_1D(double,Tau_Pt_MC)
-    ENTRY_1D(double,E_Pt_MC)
+    ENTRY_1D(float, Ele_tau_mass)
+    ENTRY_1D(float, BB_mass)
+    ENTRY_1D(float, Tau_Pt_MC)
+    ENTRY_1D(float, E_Pt_MC)
 };
 
 class HHbbETaujet_analyzer : public analysis::BaseAnalyzer {
