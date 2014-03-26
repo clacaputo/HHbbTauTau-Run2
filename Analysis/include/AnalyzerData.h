@@ -66,7 +66,7 @@ public:
     {
         cd();
         for(const auto& iter : data) {
-            iter.second->WriteRootHistogram();
+            iter.second->WriteRootObject();
             delete iter.second;
         }
         if(ownOutputFile)

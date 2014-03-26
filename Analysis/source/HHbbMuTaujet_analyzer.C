@@ -112,7 +112,7 @@ protected:
 
     virtual analysis::Candidate SelectElectron(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::Htautau_Summer13::electronID;
+        using namespace cuts::Htautau_Summer13::electronID::MuTau;
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), enabled);
 
         cut(true, ">0 ele cand");
