@@ -47,14 +47,12 @@ void GenJetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     edm::LogInfo("GenJetBlock") << "Total # GenJets: " << genJets->size();
 
     for (const reco::GenJet& genJet : *genJets) {
+        genJetTree.pt()     = genJet.pt();
         genJetTree.eta()    = genJet.eta();
         genJetTree.phi()    = genJet.phi();
-        genJetTree.p()      = genJet.p();
-        genJetTree.pt()     = genJet.pt();
-        double energy   = genJet.energy();
-        genJetTree.energy() = energy;
-        genJetTree.emf()    = (energy>0) ? genJet.emEnergy()/energy : 0;
-        genJetTree.hadf()   = (energy>0) ? genJet.hadEnergy()/energy : 0;
+        genJetTree.energy() = genJet.energy();
+        genJetTree.emEnergy()    = genJet.emEnergy();
+        genJetTree.hadEnergy()   = genJet.hadEnergy();
 
         genJetTree.Fill();
     }

@@ -26,6 +26,8 @@
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Jet.h"
 
+#define SIMPLE_VAR(type, name, default_value) jetTree.name() = jet.bDiscriminator(#name);
+
 namespace {
 PFJetIDSelectionFunctor pfjetIDLoose(PFJetIDSelectionFunctor::FIRSTDATA, PFJetIDSelectionFunctor::LOOSE);
 PFJetIDSelectionFunctor pfjetIDTight(PFJetIDSelectionFunctor::FIRSTDATA, PFJetIDSelectionFunctor::TIGHT);
@@ -85,11 +87,12 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::LogInfo("JetBlock") << "Total # PAT Jets: " << njets;
     for (size_t i = 0; i < njets; ++i) {
       const pat::Jet& jet = jets->at(i);
-      retpf.set(false);
-      int passjetLoose = (pfjetIDLoose(jet, retpf)) ? 1 : 0;
 
       retpf.set(false);
-      int passjetTight = (pfjetIDTight(jet, retpf)) ? 1 : 0;
+      jetTree.passLooseID() = pfjetIDLoose(jet, retpf);
+
+      retpf.set(false);
+      jetTree.passTightID() = pfjetIDTight(jet, retpf);
 
       double corr = 1.;
       if (_applyResJEC && iEvent.isRealData() ) {
@@ -137,18 +140,9 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       jetTree.photonMultiplicity()          = jet.photonMultiplicity();
 
       jetTree.nConstituents()               = jet.numberOfDaughters();
-      jetTree.trackCountingHighEffBTag()         = jet.bDiscriminator("trackCountingHighEffBJetTags");
-      jetTree.trackCountingHighPurBTag()         = jet.bDiscriminator("trackCountingHighPurBJetTags");
-      jetTree.simpleSecondaryVertexHighEffBTag() = jet.bDiscriminator("simpleSecondaryVertexHighEffBJetTags");
-      jetTree.simpleSecondaryVertexHighPurBTag() = jet.bDiscriminator("simpleSecondaryVertexHighPurBJetTags");
-      jetTree.jetProbabilityBTag()               = jet.bDiscriminator("jetProbabilityBJetTags");
-      jetTree.jetBProbabilityBTag()              = jet.bDiscriminator("jetBProbabilityBJetTags");
-      jetTree.combinedSecondaryVertexBTag()      = jet.bDiscriminator("combinedSecondaryVertexBJetTags");
-      jetTree.combinedSecondaryVertexMVABTag()   = jet.bDiscriminator("combinedSecondaryVertexMVABJetTags");
-      jetTree.combinedInclusiveSecondaryVertexBTag() = jet.bDiscriminator("combinedInclusiveSecondaryVertexBJetTags");
-      jetTree.combinedMVABTag()                  = jet.bDiscriminator("combinedMVABJetTags");
-      jetTree.passLooseID() = passjetLoose;
-      jetTree.passTightID() = passjetTight;
+
+      B_TAG_DATA()
+
       if (_verbosity > 0) 
           std::cout << "JetBlock: trackCountingHighEffBJetTag = " << jetTree.trackCountingHighEffBTag()
                     << ", trackCountingHighPurBJetTag = " << jetTree.trackCountingHighPurBTag()
@@ -159,6 +153,9 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       jetTree.Fill();
     }
 }
+
+#undef SIMPLE_VAR
+#undef B_TAG_DATA
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(JetBlock);

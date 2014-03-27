@@ -11,18 +11,21 @@
 #include "SmartTree.h"
 
 #define JET_DATA() \
-    SIMPLE_VAR(Float_t, eta, 0.0) \
-    SIMPLE_VAR(Float_t, phi, 0.0) \
+    /* 4-momentum */ \
     SIMPLE_VAR(Float_t, pt, 0.0) \
     SIMPLE_VAR(Float_t, pt_raw, 0.0) \
+    SIMPLE_VAR(Float_t, eta, 0.0) \
+    SIMPLE_VAR(Float_t, phi, 0.0) \
     SIMPLE_VAR(Float_t, energy, 0.0) \
     SIMPLE_VAR(Float_t, energy_raw, 0.0) \
+    /* Jet energy correction */ \
     SIMPLE_VAR(Float_t, jecUnc, 0.0) \
     SIMPLE_VAR(Float_t, resJEC, 0.0) \
     SIMPLE_VAR(Int_t, partonFlavour, 0) \
+    /* Jet identification in high PU environment */ \
     SIMPLE_VAR(Float_t, puIdMVA, 0.0) \
-    SIMPLE_VAR(Int_t, puIdFlag, 0) \
     SIMPLE_VAR(Int_t, puIdBits, 0) \
+    /* Energy fraction information */ \
     SIMPLE_VAR(Float_t, chargedEmEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, chargedHadronEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, chargedMuEnergyFraction, 0.0) \
@@ -31,6 +34,7 @@
     SIMPLE_VAR(Float_t, neutralEmEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, neutralHadronEnergyFraction, 0.0) \
     SIMPLE_VAR(Float_t, photonEnergyFraction, 0.0) \
+    /* Multiplicity information */ \
     SIMPLE_VAR(Int_t, chargedHadronMultiplicity, 0) \
     SIMPLE_VAR(Int_t, chargedMultiplicity, 0) \
     SIMPLE_VAR(Int_t, electronMultiplicity, 0) \
@@ -38,20 +42,22 @@
     SIMPLE_VAR(Int_t, neutralHadronMultiplicity, 0) \
     SIMPLE_VAR(Int_t, neutralMultiplicity, 0) \
     SIMPLE_VAR(Int_t, photonMultiplicity, 0) \
-    SIMPLE_VAR(Int_t, nConstituents, 0) \
-    SIMPLE_VAR(Float_t, trackCountingHighEffBTag, 0.0) \
-    SIMPLE_VAR(Float_t, trackCountingHighPurBTag, 0.0) \
-    SIMPLE_VAR(Float_t, simpleSecondaryVertexHighEffBTag, 0.0) \
-    SIMPLE_VAR(Float_t, simpleSecondaryVertexHighPurBTag, 0.0) \
-    SIMPLE_VAR(Float_t, jetProbabilityBTag, 0.0) \
-    SIMPLE_VAR(Float_t, jetBProbabilityBTag, 0.0) \
-    SIMPLE_VAR(Float_t, combinedSecondaryVertexBTag, 0.0) \
-    SIMPLE_VAR(Float_t, combinedSecondaryVertexMVABTag, 0.0) \
-    SIMPLE_VAR(Float_t, combinedInclusiveSecondaryVertexBTag, 0.0) \
-    SIMPLE_VAR(Float_t, combinedMVABTag, 0.0) \
-    SIMPLE_VAR(Int_t, passLooseID, 0) \
-    SIMPLE_VAR(Int_t, passTightID, 0) \
-    SIMPLE_VAR(Int_t, selbit, 0) \
+    SIMPLE_VAR(UInt_t, nConstituents, 0) \
+    SIMPLE_VAR(Bool_t, passLooseID, 0) \
+    SIMPLE_VAR(Bool_t, passTightID, 0) \
+    /**/
+
+#define B_TAG_DATA() \
+    SIMPLE_VAR(Float_t, trackCountingHighEffBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, trackCountingHighPurBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, simpleSecondaryVertexHighEffBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, simpleSecondaryVertexHighPurBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, jetProbabilityBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, jetBProbabilityBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, combinedSecondaryVertexBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, combinedSecondaryVertexMVABJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, combinedInclusiveSecondaryVertexBJetTags, 0.0) \
+    SIMPLE_VAR(Float_t, combinedMVABJetTags, 0.0) \
     /**/
 
 #define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
@@ -67,6 +73,7 @@ public:
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     JET_DATA()
+    B_TAG_DATA()
 };
 } // ntuple
 
@@ -80,6 +87,7 @@ public:
 namespace ntuple {
 struct Jet {
     JET_DATA()
+    B_TAG_DATA()
     Jet() {}
     inline Jet(JetTree& tree);
 };
@@ -95,6 +103,7 @@ namespace ntuple {
 inline Jet::Jet(JetTree& tree)
 {
     JET_DATA()
+    B_TAG_DATA()
 }
 } // ntuple
 
