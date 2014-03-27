@@ -11,31 +11,35 @@
 #include "SmartTree.h"
 
 #define ELECTRON_DATA() \
+    /* 4-momentum */ \
     SIMPLE_VAR(Float_t, eta, 0.0) \
     SIMPLE_VAR(Float_t, phi, 0.0) \
     SIMPLE_VAR(Float_t, pt, 0.0) \
-    SIMPLE_VAR(Bool_t, ecalDriven, false) \
-    SIMPLE_VAR(Bool_t, hasGsfTrack, false) \
-    SIMPLE_VAR(Float_t, trackPt, 0.0) \
-    SIMPLE_VAR(Float_t, trackPtError, 0.0) \
     SIMPLE_VAR(Float_t, energy, 0.0) \
     SIMPLE_VAR(Float_t, caloEnergy, 0.0) \
     SIMPLE_VAR(Float_t, caloEnergyError, 0.0) \
+    /* Origin */ \
+    SIMPLE_VAR(Bool_t, ecalDriven, false) \
+    SIMPLE_VAR(Bool_t, hasGsfTrack, false) \
+    /* Gsf based electrons */ \
+    SIMPLE_VAR(Float_t, trackPt, 0.0) \
+    SIMPLE_VAR(Float_t, trackPtError, 0.0) \
     SIMPLE_VAR(Int_t, charge, 0) \
     SIMPLE_VAR(Int_t, pixHits, 0) \
     SIMPLE_VAR(Int_t, trkHits, 0) \
-    SIMPLE_VAR(Int_t, nValidHits, 0) \
+    SIMPLE_VAR(UInt_t, nValidHits, 0) \
     SIMPLE_VAR(Float_t, trkD0, 0.0) \
     SIMPLE_VAR(Float_t, trkD0Error, 0.0) \
+    SIMPLE_VAR(Int_t, missingHits, 0) \
     /* ID variables */ \
-    SIMPLE_VAR(Float_t, hoe, 0.0) \
-    SIMPLE_VAR(Float_t, hoeDepth1, 0.0) \
-    SIMPLE_VAR(Float_t, eop, 0.0) \
+    SIMPLE_VAR(Float_t, hcalOverEcal, 0.0) \
+    SIMPLE_VAR(Float_t, hcalDepth1OverEcal, 0.0) \
+    SIMPLE_VAR(Float_t, eSuperClusterOverP, 0.0) \
     SIMPLE_VAR(Float_t, sigmaEtaEta, 0.0) \
     SIMPLE_VAR(Float_t, sigmaIEtaIEta, 0.0) \
     SIMPLE_VAR(Float_t, deltaPhiTrkSC, 0.0) \
     SIMPLE_VAR(Float_t, deltaEtaTrkSC, 0.0) \
-    SIMPLE_VAR(Int_t, classif, 0) \
+    SIMPLE_VAR(Int_t, classification, 0) \
     SIMPLE_VAR(Float_t, e1x5overe5x5, 0.0) \
     SIMPLE_VAR(Float_t, e2x5overe5x5, 0.0) \
     /* Iso variables */ \
@@ -67,23 +71,17 @@
     SIMPLE_VAR(Float_t, chargedHadronIso, 0.0) \
     SIMPLE_VAR(Float_t, neutralHadronIso, 0.0) \
     SIMPLE_VAR(Float_t, photonIso, 0.0) \
-    /**/ \
-    SIMPLE_VAR(Int_t, missingHits, 0) \
+    /* IP information */ \
     SIMPLE_VAR(Float_t, dB, 0.0) \
     SIMPLE_VAR(Float_t, edB, 0.0) \
     SIMPLE_VAR(Float_t, dB3d, 0.0) \
     SIMPLE_VAR(Float_t, edB3d, 0.0) \
-    SIMPLE_VAR(Float_t, scE1E9, 0.0) \
-    SIMPLE_VAR(Float_t, scS4S1, 0.0) \
-    SIMPLE_VAR(Float_t, sckOutOfTime, 0.0) \
-    SIMPLE_VAR(Float_t, scEcalIso, 0.0) \
-    SIMPLE_VAR(Float_t, scHEEPEcalIso, 0.0) \
-    SIMPLE_VAR(Float_t, scHEEPTrkIso, 0.0) \
     SIMPLE_VAR(Int_t, nBrems, 0) \
     SIMPLE_VAR(Float_t, fbrem, 0.0) \
     SIMPLE_VAR(Float_t, dist_vec, 0.0) \
     SIMPLE_VAR(Float_t, dCotTheta, 0.0) \
-    SIMPLE_VAR(Float_t, hasMatchedConv, 0.0) \
+    SIMPLE_VAR(Bool_t, hasMatchedConversion, false) \
+    /* MVA */ \
     SIMPLE_VAR(Float_t, mva, 0.0) \
     SIMPLE_VAR(Float_t, mvaPOGTrig, 0.0) \
     SIMPLE_VAR(Float_t, mvaPOGNonTrig, 0.0) \
@@ -104,8 +102,7 @@
     SIMPLE_VAR(Float_t, pfRelIso04, 0.0) \
     SIMPLE_VAR(Float_t, pfRelIsoDB03, 0.0) \
     SIMPLE_VAR(Float_t, pfRelIsoDB04, 0.0) \
-    SIMPLE_VAR(Int_t, selbit, 0) \
-    SIMPLE_VAR(Int_t, fidFlag, 0) \
+    SIMPLE_VAR(UInt_t, fidFlag, 0) \
     /**/
 
 #define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)

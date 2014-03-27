@@ -76,17 +76,14 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       reco::TrackRef tk  = patMuon.innerTrack();  // tracker segment only
       reco::TrackRef gtk = patMuon.globalTrack();
-      reco::TrackRef bestTrack = patMuon.muonBestTrack();
 
-
-      muonTree.isTrackerMuon() = (patMuon.isTrackerMuon()) ? true : false;
-      muonTree.isPFMuon() = patMuon.userInt("isPFMuon") ? true :  false;
+      muonTree.isTrackerMuon() = patMuon.isTrackerMuon();
+      muonTree.isPFMuon() = patMuon.userInt("isPFMuon");
 
       muonTree.eta()     = patMuon.eta();
       muonTree.phi()     = patMuon.phi();
       muonTree.pt()      = patMuon.pt();
       muonTree.ptError() = tk->ptError();
-      muonTree.p()       = patMuon.p();
       muonTree.energy()  = patMuon.energy();
       muonTree.charge()  = patMuon.charge();
 
@@ -109,14 +106,13 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       muonTree.trkDz()  = trkdz;
       muonTree.trkDzError() = tk->dzError();
       muonTree.globalChi2() = patMuon.normChi2();
-      muonTree.passID() = (patMuon.muonID(_muonID)) ? true : false;
+      muonTree.passID() = patMuon.muonID(_muonID);
 
 
       // Vertex association
       double minVtxDist3D = 9999.;
          int indexVtx = -1;
       double vertexDistZ = 9999.;
-	  double deltaZbestTrack = 9999.;
       if (primaryVertices.isValid()) {
 	edm::LogInfo("MuonBlock") << "Total # Primary Vertices: " << primaryVertices->size();
 
@@ -124,7 +120,6 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                                     vit != primaryVertices->end(); ++vit) {
           double dxy = tk->dxy(vit->position());
           double dz  = tk->dz(vit->position());
-          deltaZbestTrack = std::abs(bestTrack->dz(vit->position()));
           double dist3D = std::sqrt(pow(dxy,2) + pow(dz,2));
           if (dist3D < minVtxDist3D) {
             minVtxDist3D = dist3D;
@@ -138,16 +133,23 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                    << _vtxInputTag;
         throw std::runtime_error("Failed to get VertexCollection for label");
       }
+      if(indexVtx >= 0) {
+          muonTree.isTightMuon() = patMuon.isTightMuon(primaryVertices->at(indexVtx));
+          muonTree.isHighPtMuon() = patMuon.isHighPtMuon(primaryVertices->at(indexVtx), reco::improvedTuneP);
+      }
+      else {
+          muonTree.isTightMuon() = false;
+          muonTree.isHighPtMuon() = false;
+      }
       muonTree.vtxDist3D() = minVtxDist3D;
       muonTree.vtxIndex()  = indexVtx;
       muonTree.vtxDistZ()  = vertexDistZ;
-      muonTree.deltaZ() = deltaZbestTrack;
 
       // Hit pattern
       const reco::HitPattern& hitp = gtk->hitPattern();  // innerTrack will not provide Muon Hits 
       muonTree.pixHits() = hitp.numberOfValidPixelHits();
       muonTree.trkHits() = hitp.numberOfValidTrackerHits();
-      muonTree.muoHits() = hitp.numberOfValidMuonHits();
+      muonTree.muonHits() = hitp.numberOfValidMuonHits();
       muonTree.matches() = patMuon.numberOfMatches();
       muonTree.trackerLayersWithMeasurement() = hitp.trackerLayersWithMeasurement();
 

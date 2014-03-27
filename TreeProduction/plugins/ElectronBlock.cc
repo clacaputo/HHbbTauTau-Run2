@@ -100,14 +100,14 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         electronTree.trkD0Error() = tk->d0Error();
       }
       // ID variables
-      electronTree.hoe() = patElectron.hcalOverEcal();
-      electronTree.hoeDepth1() = patElectron.hcalDepth1OverEcal();
-      electronTree.eop() = patElectron.eSuperClusterOverP();
+      electronTree.hcalOverEcal() = patElectron.hcalOverEcal();
+      electronTree.hcalDepth1OverEcal() = patElectron.hcalDepth1OverEcal();
+      electronTree.eSuperClusterOverP() = patElectron.eSuperClusterOverP();
       electronTree.sigmaEtaEta() = patElectron.sigmaEtaEta();
       electronTree.sigmaIEtaIEta() = patElectron.sigmaIetaIeta();
       electronTree.deltaPhiTrkSC() = patElectron.deltaPhiSuperClusterTrackAtVtx();
       electronTree.deltaEtaTrkSC() = patElectron.deltaEtaSuperClusterTrackAtVtx();
-      electronTree.classif() = patElectron.classification();
+      electronTree.classification() = patElectron.classification();
       electronTree.e1x5overe5x5() = (patElectron.e5x5() > 0) ? (patElectron.e1x5()/patElectron.e5x5()) : 0;
       electronTree.e2x5overe5x5() = (patElectron.e5x5() > 0) ? (patElectron.e2x5Max()/patElectron.e5x5()) : 0;
 
@@ -134,7 +134,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
       electronTree.dist_vec() = patElectron.userFloat("dist");
       electronTree.dCotTheta() = patElectron.userFloat("dcot");
-      electronTree.hasMatchedConv() = (patElectron.userInt("antiConv") ? true : false);
+      electronTree.hasMatchedConversion() = ! patElectron.userInt("antiConv");
 
       // Vertex association
       double minVtxDist3D = 9999.;
@@ -198,7 +198,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       electronTree.isoMVA() = patElectron.userFloat("eleIsoMVA");
 
       // Fiducial flag
-      int fidFlag = 0;
+      unsigned fidFlag = 0;
       if (patElectron.isEB())        fidFlag |= (1 << 0);
       if (patElectron.isEE())        fidFlag |= (1 << 1);
       if (patElectron.isEBEtaGap())  fidFlag |= (1 << 2);
