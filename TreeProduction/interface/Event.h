@@ -12,11 +12,12 @@
 
 #define EVENT_DATA() \
     SIMPLE_VAR(UInt_t, run, 0) \
-    SIMPLE_VAR(UInt_t, event, 0) \
+    SIMPLE_VAR(UInt_t, EventId, 0) \
     SIMPLE_VAR(UInt_t, lumis, 0) \
-    SIMPLE_VAR(UInt_t, bunch, 0) \
-    SIMPLE_VAR(UInt_t, orbit, 0) \
-    SIMPLE_VAR(Double_t, time, 0.0) \
+    SIMPLE_VAR(Int_t, bunch, 0) \
+    SIMPLE_VAR(Int_t, orbit, 0) \
+    SIMPLE_VAR(UInt_t, unixTime, 0) \
+    SIMPLE_VAR(UInt_t, microsecondOffset, 0) \
     SIMPLE_VAR(Bool_t, isdata, false) \
     SIMPLE_VAR(Bool_t, isPhysDeclared, false) \
     SIMPLE_VAR(Bool_t, isBPTX0, false) \
@@ -24,10 +25,9 @@
     SIMPLE_VAR(Bool_t, isBSCBeamHalo, false) \
     SIMPLE_VAR(Bool_t, isPrimaryVertex, false) \
     SIMPLE_VAR(Bool_t, isBeamScraping, false) \
-    SIMPLE_VAR(Bool_t, passHBHENoiseFilter, false) \
     VECTOR_VAR(Int_t, nPU) \
     VECTOR_VAR(Int_t, bunchCrossing) \
-    VECTOR_VAR(Int_t, trueNInt) \
+    VECTOR_VAR(Float_t, trueNInt) \
     /**/
 
 #define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)

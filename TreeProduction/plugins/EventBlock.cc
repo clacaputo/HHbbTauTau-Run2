@@ -49,15 +49,13 @@ private:
 void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup)
 {
   eventTree.run()   = iEvent.id().run();
-  eventTree.event() = iEvent.id().event();
+  eventTree.EventId() = iEvent.id().event();
   eventTree.lumis() = iEvent.id().luminosityBlock();
   eventTree.bunch() = iEvent.bunchCrossing();
   eventTree.orbit() = iEvent.orbitNumber();
 
-  double sec  = iEvent.time().value() >> 32 ;
-  double usec = 0xFFFFFFFF & iEvent.time().value();
-  double conv = 1e6;
-  eventTree.time() = sec+usec/conv;
+  eventTree.unixTime() = iEvent.time().unixTime();
+  eventTree.microsecondOffset() = iEvent.time().microsecondOffset();
   eventTree.isdata() = iEvent.isRealData();
  
   edm::Handle<L1GlobalTriggerReadoutRecord> l1GtReadoutRecord;
