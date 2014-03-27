@@ -15,8 +15,8 @@
     SIMPLE_VAR(Bool_t, isTrackerMuon, false) \
     SIMPLE_VAR(Bool_t, isPFMuon, false) \
     SIMPLE_VAR(Bool_t, isGlobalMuonPromptTight, false) \
-    SIMPLE_VAR(Bool_t, isTightMoun, false) \
-    SIMPLE_VAR(Bool_t, isHighPtMoun, false) \
+    SIMPLE_VAR(Bool_t, isTightMuon, false) \
+    SIMPLE_VAR(Bool_t, isHighPtMuon, false) \
     /* 4-momentum */ \
     SIMPLE_VAR(Float_t, eta, 0.0) \
     SIMPLE_VAR(Float_t, phi, 0.0) \
