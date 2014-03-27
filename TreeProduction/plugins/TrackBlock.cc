@@ -64,7 +64,6 @@ void TrackBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
         trackTree.thetaError()  = track.thetaError();
         trackTree.phi()         = track.phi();
         trackTree.phiError()    = track.phiError();
-        trackTree.p()           = track.p();
         trackTree.pt()          = track.pt();
         trackTree.ptError()     = track.ptError();
         trackTree.qoverp()      = track.qoverp();

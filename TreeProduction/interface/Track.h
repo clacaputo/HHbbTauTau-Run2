@@ -17,15 +17,14 @@
     SIMPLE_VAR(Float_t, thetaError, 0.0) \
     SIMPLE_VAR(Float_t, phi, 0.0) \
     SIMPLE_VAR(Float_t, phiError, 0.0) \
-    SIMPLE_VAR(Float_t, p, 0.0) \
     SIMPLE_VAR(Float_t, pt, 0.0) \
     SIMPLE_VAR(Float_t, ptError, 0.0) \
     SIMPLE_VAR(Float_t, qoverp, 0.0) \
     SIMPLE_VAR(Float_t, qoverpError, 0.0) \
-    SIMPLE_VAR(Float_t, charge, 0.0) \
+    SIMPLE_VAR(Int_t, charge, 0) \
     /* */ \
-    SIMPLE_VAR(Int_t, nValidHits, 0) \
-    SIMPLE_VAR(Int_t, nLostHits, 0) \
+    SIMPLE_VAR(UInt_t, nValidHits, 0) \
+    SIMPLE_VAR(UInt_t, nLostHits, 0) \
     SIMPLE_VAR(Float_t, validFraction, 0.0) \
     SIMPLE_VAR(Int_t, nValidTrackerHits, 0) \
     SIMPLE_VAR(Int_t, nValidPixelHits, 0) \
@@ -39,7 +38,7 @@
     SIMPLE_VAR(Float_t, dz, 0.0) \
     SIMPLE_VAR(Float_t, dzError, 0.0) \
     SIMPLE_VAR(Float_t, chi2, 0.0) \
-    SIMPLE_VAR(Int_t, ndof, 0.0) \
+    SIMPLE_VAR(Float_t, ndof, 0.0) \
     SIMPLE_VAR(Float_t, vx, 0.0) \
     SIMPLE_VAR(Float_t, vy, 0.0) \
     SIMPLE_VAR(Float_t, vz, 0.0) \

@@ -11,11 +11,11 @@
 #include "SmartTree.h"
 
 #define TRIGGER_DATA() \
-    VECTOR_VAR(Int_t, l1physbits) \
-    VECTOR_VAR(Int_t, l1techbits) \
+    VECTOR_VAR(Bool_t, l1physbits) \
+    VECTOR_VAR(Bool_t, l1techbits) \
     VECTOR_VAR(std::string, hltpaths) \
-    VECTOR_VAR(Int_t, hltresults) \
-    VECTOR_VAR(Int_t, hltprescales) \
+    VECTOR_VAR(Bool_t, hltresults) \
+    VECTOR_VAR(UInt_t, hltprescales) \
     /**/
 
 #define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)

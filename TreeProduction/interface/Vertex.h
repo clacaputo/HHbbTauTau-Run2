@@ -20,12 +20,11 @@
     SIMPLE_VAR(Float_t, rho, 0.0) \
     SIMPLE_VAR(Float_t, chi2, 0.0) \
     SIMPLE_VAR(Float_t, ndf, 0.0) \
-    SIMPLE_VAR(Int_t, ntracks, 0) \
-    SIMPLE_VAR(Int_t, ntracksw05, 0) \
+    SIMPLE_VAR(UInt_t, ntracks, 0) \
+    SIMPLE_VAR(UInt_t, ntracksw05, 0) \
     SIMPLE_VAR(Bool_t, isfake, false) \
     SIMPLE_VAR(Bool_t, isvalid, false) \
     SIMPLE_VAR(Float_t, sumPt, 0.0) \
-    SIMPLE_VAR(Int_t, selbit, 0.0) \
     /**/
 
 #define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)

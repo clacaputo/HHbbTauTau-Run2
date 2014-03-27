@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <limits>
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -92,14 +93,8 @@ void TriggerBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     }
     edm::LogInfo("TriggerBlock") << "Successfully obtained L1GlobalTriggerReadoutRecord for label: "
                                  << _l1InputTag;
-    for (unsigned int i = 0; i < NmaxL1AlgoBit; ++i) {
-      triggerTree.l1physbits().push_back(l1GtReadoutRecord->decisionWord()[i] ? 1 : 0);
-    }
-    for (unsigned int i = 0; i < NmaxL1TechBit; ++i) {
-      triggerTree.l1techbits().push_back(l1GtReadoutRecord->technicalTriggerWord()[i] ? 1 : 0 );
-    }
-
-
+    triggerTree.l1physbits() = l1GtReadoutRecord->decisionWord();
+    triggerTree.l1techbits() = l1GtReadoutRecord->technicalTriggerWord();
 
     edm::Handle<edm::TriggerResults> triggerResults;
     iEvent.getByLabel(_hltInputTag, triggerResults);
@@ -124,17 +119,17 @@ void TriggerBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         }
         triggerTree.hltpaths().push_back(*it);
 
-        int fired = 0;
+        bool fired = false;
         unsigned int index = hltConfig.triggerIndex(*it);
         if (index < triggerResults->size()) {
-            if (triggerResults->accept(index)) fired = 1;
+            if (triggerResults->accept(index)) fired = true;
         }
         else {
             edm::LogInfo("TriggerBlock") << "Requested HLT path \"" << (*it) << "\" does not exist";
         }
         triggerTree.hltresults().push_back(fired);
 
-        int prescale = -1;
+        unsigned prescale = std::numeric_limits<unsigned>::max();
         if (hltConfig.prescaleSet(iEvent, iSetup) < 0) {
             edm::LogError("TriggerBlock") << "Error >> The prescale set index number could not be obtained";
         }
