@@ -59,7 +59,7 @@ namespace muonID {
         const double pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
         const double eta = 2.1; // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
         const bool isTrackerMuon = true; //
-        //def of isTightMuon: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId#Tight_Muon
+        //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
         const bool isGlobalMuonPromptTight = true;
               //https://cmssdt.cern.ch/SDT/lxr/source/DataFormats/MuonReco/src/MuonSelectors.cc#567 and 590 definition
         const bool isPFMuon = true; //def of isTightMuon
@@ -69,9 +69,9 @@ namespace muonID {
         const int pixHits = 0; //def of isTightMuon
         const double globalChiSquare = 10; //def of isTightMuon
         //const double dz_bestTrack = 0.5; //def of isTightMuon
-        const double dB = 0.045; //https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Muon_ID
-        const double dz = 0.2; //https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Muon_ID
-        const double pFRelIso = 0.1; //https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId#Muon_Isolation_AN1
+        const double dB = 0.045; // twiki HiggsToTauTauWorkingSummer2013#Muon_ID
+        const double dz = 0.2; // twiki HiggsToTauTauWorkingSummer2013#Muon_ID
+        const double pFRelIso = 0.1; // twiki SWGuideMuonId#Muon_Isolation_AN1
     }
 
     namespace ETau {
@@ -96,13 +96,12 @@ namespace electronID{
         const double eta_high = 2.5;
         const double eta_CrackVeto_low = 1.4442;
         const double eta_CrackVeto_high = 1.566;
-        const double dz_pv = 0.2;// https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const int missingHits = 1; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const float hasMatchedConv = 0.5; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double dB = 0.045; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double pFRelIso = 0.1; //https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
-                                     // #Electron_Muon_Isolation
-        const double ref_pt = 20; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double dz_pv = 0.2;// twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const int missingHits = 1; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const float hasMatchedConv = 0.5; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double dB = 0.045; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double pFRelIso = 0.1; // twiki HiggsToTauTauWorkingSummer2013#Electron_Muon_Isolation
+        const double ref_pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
         const double scEta_min[2] = {0.8, 1.479}; // to be checked!!!
         const double MVApogNonTrig[3] = {0.925, 0.975, 0.985}; // to be checked!!! tight Id
     }
@@ -112,13 +111,12 @@ namespace electronID{
         const double eta_high = 2.5;
         const double eta_CrackVeto_low = 1.4442;
         const double eta_CrackVeto_high = 1.566;
-        const double dz_pv = 0.2;// https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const int missingHits = 1; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const float hasMatchedConv = 0.5; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double dB = 0.045; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double pFRelIso = 0.1; //https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
-                                     // #Electron_Muon_Isolation
-        const double ref_pt = 20; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double dz_pv = 0.2;// twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const int missingHits = 1; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const float hasMatchedConv = 0.5; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double dB = 0.045; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double pFRelIso = 0.1; // twiki HiggsToTauTauWorkingSummer2013#Electron_Muon_Isolation
+        const double ref_pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
         const double scEta_min[2] = {0.8, 1.479};
         const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}}; //loose Id
     }
