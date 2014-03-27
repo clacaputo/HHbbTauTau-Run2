@@ -143,13 +143,6 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       B_TAG_DATA()
 
-      if (_verbosity > 0) 
-          std::cout << "JetBlock: trackCountingHighEffBJetTag = " << jetTree.trackCountingHighEffBTag()
-                    << ", trackCountingHighPurBJetTag = " << jetTree.trackCountingHighPurBTag()
-                    << ", jetProbabilityBTag = " << jetTree.jetProbabilityBTag()
-                    << ", jetBProbabilityBTag = " << jetTree.jetBProbabilityBTag()
-                    << std::endl;
-
       jetTree.Fill();
     }
 }
