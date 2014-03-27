@@ -125,12 +125,10 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       tauTree.vy() = vertex.y();
       tauTree.vz() = vertex.z();
 
-      tauTree.zvertex() = patTau.vz(); // distance from the primary vertex
-
       edm::ESHandle<TransientTrackBuilder> trackBuilderHandle;
        iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", trackBuilderHandle);
         
-      for(size_t n = 0; n <= patTau.signalPFChargedHadrCands().size(); ++n) {
+      for(size_t n = 0; n < patTau.signalPFChargedHadrCands().size(); ++n) {
           if(patTau.signalPFChargedHadrCands()[n]->trackRef().isNonnull()) {
             tauTree.ChHadCand_Pt().push_back(patTau.signalPFChargedHadrCands()[n]->trackRef()->pt());
             tauTree.ChHadCand_Eta().push_back(patTau.signalPFChargedHadrCands()[n]->trackRef()->eta());
@@ -142,7 +140,8 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
 }
 
-#undef TAU_DISCRIMINATOR
+#undef SIMPLE_VAR
+#undef TAU_DISCRIMINATOR_DATA
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(TauBlock);
