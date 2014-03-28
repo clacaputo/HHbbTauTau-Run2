@@ -67,23 +67,25 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
                                << _l1InputTag;
 
     L1GtFdlWord fdlWord = l1GtReadoutRecord->gtFdlWord();
-    if (fdlWord.physicsDeclared() == 1)
-      eventTree.isPhysDeclared() = true;
+    eventTree.isPhysDeclared() = fdlWord.physicsDeclared() == 1;
+
 
     // BPTX0
-    if (l1GtReadoutRecord->technicalTriggerWord()[0])
-      eventTree.isBPTX0() = true;
+    eventTree.isBPTX0() = l1GtReadoutRecord->technicalTriggerWord()[0];
+
 
     // MinBias
-    if (l1GtReadoutRecord->technicalTriggerWord()[40] || l1GtReadoutRecord->technicalTriggerWord()[41])
-      eventTree.isBSCMinBias() = true;
+    eventTree.isBSCMinBias() = l1GtReadoutRecord->technicalTriggerWord()[40] ||
+              l1GtReadoutRecord->technicalTriggerWord()[41];
+
 
     // BeamHalo
-    if ( (l1GtReadoutRecord->technicalTriggerWord()[36] || l1GtReadoutRecord->technicalTriggerWord()[37] ||
-          l1GtReadoutRecord->technicalTriggerWord()[38] || l1GtReadoutRecord->technicalTriggerWord()[39]) ||
-         ((l1GtReadoutRecord->technicalTriggerWord()[42] && !l1GtReadoutRecord->technicalTriggerWord()[43]) ||
-          (l1GtReadoutRecord->technicalTriggerWord()[43] && !l1GtReadoutRecord->technicalTriggerWord()[42])) )
-      eventTree.isBSCBeamHalo() = true;
+    eventTree.isBSCBeamHalo() =
+              (l1GtReadoutRecord->technicalTriggerWord()[36] || l1GtReadoutRecord->technicalTriggerWord()[37] ||
+              l1GtReadoutRecord->technicalTriggerWord()[38] || l1GtReadoutRecord->technicalTriggerWord()[39]) ||
+             ((l1GtReadoutRecord->technicalTriggerWord()[42] && !l1GtReadoutRecord->technicalTriggerWord()[43]) ||
+              (l1GtReadoutRecord->technicalTriggerWord()[43] && !l1GtReadoutRecord->technicalTriggerWord()[42])) ;
+
   } 
   else {
     edm::LogError("EventBlock") << "Error >> Failed to get L1GlobalTriggerReadoutRecord for label:" 
@@ -95,6 +97,7 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
   edm::Handle<reco::VertexCollection> primaryVertices;
   iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
+  eventTree.isPrimaryVertex() = false;
   if (primaryVertices.isValid()) {
     edm::LogInfo("EventBlock") << "Total # Primary Vertices: " << primaryVertices->size();
     for (reco::VertexCollection::const_iterator it = primaryVertices->begin(); 
@@ -130,8 +133,8 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
         if (it->quality(trackQuality)) numhighpurity++;
       }
       fraction = (double)numhighpurity/(double)tracks->size();
-      if (fraction < _hpTrackThreshold)
-        eventTree.isBeamScraping() = true;
+      eventTree.isBeamScraping() = fraction < _hpTrackThreshold;
+
     }
   } 
   else {

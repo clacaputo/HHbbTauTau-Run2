@@ -51,7 +51,7 @@
     /* ET weighted eta-phi statistics starting from PFJet, see DataFormats/JetReco/interface/Jet.h */ \
     SIMPLE_VAR(Float_t, etaetaMoment, 0.0) \
     SIMPLE_VAR(Float_t, phiphiMoment, 0.0) \
-    /*SIMPLE_VAR(Float_t, etaphiMoment, 0.0) */ \
+    SIMPLE_VAR(Float_t, etaphiMoment, 0.0)  \
     /* Vertex */ \
     SIMPLE_VAR(Float_t, vx, 0.0) \
     SIMPLE_VAR(Float_t, vy, 0.0) \
