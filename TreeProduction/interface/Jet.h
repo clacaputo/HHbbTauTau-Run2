@@ -91,6 +91,9 @@ struct Jet {
     Jet() {}
     inline Jet(JetTree& tree);
 };
+
+typedef std::vector<Jet> JetVector;
+
 } // ntuple
 
 #undef SIMPLE_VAR

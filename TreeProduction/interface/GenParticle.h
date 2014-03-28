@@ -55,6 +55,9 @@ struct GenParticle {
     GenParticle() {}
     inline GenParticle(GenParticleTree& tree);
 };
+
+typedef std::vector<GenParticle> GenParticleVector;
+
 } // ntuple
 
 #undef SIMPLE_VAR

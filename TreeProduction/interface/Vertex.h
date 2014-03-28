@@ -56,6 +56,9 @@ struct Vertex {
     Vertex() {}
     inline Vertex(VertexTree& tree);
 };
+
+typedef std::vector<Vertex> VertexVector;
+
 } // ntuple
 
 #undef SIMPLE_VAR

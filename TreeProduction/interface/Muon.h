@@ -110,6 +110,9 @@ struct Muon {
     Muon() {}
     inline Muon(MuonTree& tree);
 };
+
+typedef std::vector<Muon> MuonVector;
+
 } // ntuple
 
 #undef SIMPLE_VAR

@@ -148,6 +148,9 @@ struct Tau {
     Tau() {}
     inline Tau(TauTree& tree);
 };
+
+typedef std::vector<Tau> TauVector;
+
 } // ntuple
 
 #undef SIMPLE_VAR

@@ -102,3 +102,5 @@ TreeProduction/interface/Muon.h
 TreeProduction/interface/Trigger.h
 TreeProduction/interface/TriggerObject.h
 TreeProduction/interface/Vertex.h
+Analysis/include/EventDescriptor.h
+Analysis/include/TreeExtractor.h

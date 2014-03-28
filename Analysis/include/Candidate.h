@@ -21,13 +21,17 @@ public:
     enum Type { Unknown, Mu, Electron, Tau, Bjet, Higgs, Resonance };
 
     Type type;
-    int index;
+    size_t index;
     TLorentzVector momentum;
     CandidatePtrVector daughters;
 
-    Candidate() : type(Unknown), index(-1){}
-    Candidate(Type _type, int _index, const TLorentzVector& _momentum) :
-        type(_type), index(_index), momentum(_momentum) {}
+    Candidate() : type(Unknown), index(0){}
+
+    template<typename NtupleObject>
+    Candidate(Type _type, int _index, const NtupleObject& ntupleObject) :
+        type(_type), index(_index) {
+        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
+    }
 
     Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type), index(-1) {
         daughters.push_back(&daughter1);

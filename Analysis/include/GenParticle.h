@@ -14,6 +14,8 @@
 
 #include "../include/Particles.h"
 #include "../include/iostream_operators.h"
+#include "TreeProduction/interface/GenParticle.h"
+
 
 namespace analysis {
 
@@ -31,67 +33,41 @@ typedef std::vector<size_t> GenParticleIndexVector;
 
 class GenParticle {
 public:
-    size_t GenParticle_index,index;
+    size_t index;
     particles::PdgParticle pdg;
     particles::Status status;
     TLorentzVector momentum;
     GenParticleVector mothers;
     GenParticleVector daughters;
-    bool MissingMother;
-    bool MissingDaughter;
+
 
 public:
-    template<typename EventTree>
-    GenParticle(size_t n, const EventTree& event)
-        : GenParticle_index(n), index(event.GenParticle_index[n]), MissingMother(false), MissingDaughter(false)
+
+    GenParticle(size_t n, const ntuple::GenParticleVector& genParticles)
+        : index(n)
     {
 
-        if(event.nGenParticle < 0 || GenParticle_index >= static_cast<size_t>(event.nGenParticle))
+        if(n >= genParticles.size())
             throw std::runtime_error("GenParticles index is out of range.");
-        pdg = particles::PdgParticle(event.GenParticle_pdgId[GenParticle_index]);
-        status = particles::NameProvider<particles::Status>::Convert(event.GenParticle_status[GenParticle_index]);
-        momentum.SetXYZT(event.GenParticle_px[GenParticle_index], event.GenParticle_py[GenParticle_index],
-                         event.GenParticle_pz[GenParticle_index],event.GenParticle_energy[GenParticle_index]);
+        const ntuple::GenParticle& ntupleGenParticle = genParticles.at(n);
+        pdg = particles::PdgParticle(ntupleGenParticle.PdgId);
+        status = particles::NameProvider<particles::Status>::Convert(ntupleGenParticle.Status);
+        momentum.SetXYZT(ntupleGenParticle.Px, ntupleGenParticle.Py,ntupleGenParticle.Pz,ntupleGenParticle.E);
     }
 
-    template<typename EventTree>
-    void Initialize(const EventTree& event, const GenParticleMap& particles)
+
+    void Initialize(const ntuple::GenParticleVector& genParticles, const GenParticleMap& particles)
     {
+        const ntuple::GenParticle& ntupleGenParticle = genParticles.at(index);
         mothers.clear();
         daughters.clear();
-        const size_t n_mothers = event.GenParticle_numMother[GenParticle_index];
-        const size_t n_daughters = event.GenParticle_numDaught[GenParticle_index];
-        mothers.reserve(n_mothers);
-        daughters.reserve(n_daughters);
-
-        bool noMother1 = false;
-        bool noMother2 = false;
-
-        if (event.GenParticle_motherIndex_1[GenParticle_index] != std::numeric_limits<unsigned>::max()){
-            GenParticleMap::const_iterator particle_iter_1 =
-                    particles.find(event.GenParticle_motherIndex_1[GenParticle_index]);
-            if (particle_iter_1 != particles.end()){
-                GenParticle* mother = particle_iter_1->second.get();
-                mothers.push_back(mother);
-                //GenParticle* daughter = this;
-                mother->daughters.push_back(this);
-            }
-            else noMother1 = true;
+        mothers.reserve(ntupleGenParticle.Mother_Indexes.size());
+        daughters.reserve(ntupleGenParticle.Daughter_Indexes.size());
+        for (unsigned motherIndex : ntupleGenParticle.Mother_Indexes){
+            GenParticle* mother = particles.at(motherIndex).get();
+            mothers.push_back(mother);
+            mother->daughters.push_back(this);
         }
-
-        if (event.GenParticle_motherIndex_2[GenParticle_index] != std::numeric_limits<unsigned>::max()){
-            GenParticleMap::const_iterator particle_iter_2 =
-                    particles.find(event.GenParticle_motherIndex_2[GenParticle_index]);
-            if (particle_iter_2 != particles.end()){
-                GenParticle* mother = particle_iter_2->second.get();
-                mothers.push_back(mother);
-                //GenParticle* daughter = this;
-                mother->daughters.push_back(this);
-            }
-            else noMother2 = true;
-        }
-
-        if (noMother1 || noMother2) MissingMother = true;
     }
 
 };
@@ -103,37 +79,23 @@ public:
     GenParticleSet primaryParticles;
 
 public:
-    template<typename EventTree>
-    GenEvent(const EventTree& event, size_t maxNParticles = std::numeric_limits<size_t>::max())
+
+    GenEvent(const ntuple::GenParticleVector& ntupleGenParticles)
     {
-        if(event.nGenParticle < 0)
-            throw std::runtime_error("Number of GenParticles in the event is less than 0.");
-        const size_t n_genParticles = std::min(static_cast<size_t>(event.nGenParticle),maxNParticles);
-        //std::cout << "N_gen=" << n_genParticles << std::endl;
-        for(size_t n = 0; n < n_genParticles; ++n){
-            auto particle = boost::shared_ptr<GenParticle>(new GenParticle(n, event));
+        for(size_t n = 0; n < ntupleGenParticles.size(); ++n){
+            auto particle = boost::shared_ptr<GenParticle>(new GenParticle(n, ntupleGenParticles));
             genParticles[particle->index]=particle;
         }
         for(GenParticleMap::value_type& particle : genParticles){
-            particle.second->Initialize(event, genParticles);
-            if (!particle.second->MissingMother && particle.second->mothers.size() !=
-                    event.GenParticle_numMother[particle.second->GenParticle_index])
-                throw std::runtime_error("inconsistent number of mothers");
-            if (particle.second->mothers.size() == 0 && !particle.second->MissingMother){
+            particle.second->Initialize(ntupleGenParticles, genParticles);
+            if (particle.second->mothers.size() == 0){
                 GenParticle* primaryParticle = particle.second.get();
                 primaryParticles.insert(primaryParticle);
             }
-        }
-        //std::cout << "primary particles = " << primaryParticles.size() << std::endl;
-
-        for(GenParticleMap::value_type& particle : genParticles){
-            if (particle.second->daughters.size() !=
-                    event.GenParticle_numDaught[particle.second->GenParticle_index])
-                particle.second->MissingDaughter = true;
             if (particle.second->status == particles::Decayed_or_fragmented ||
                     particle.second->status == particles::FinalStateParticle)
                 particleCodeMap[particle.second->pdg.Code].insert(particle.second.get());
-        }
+        }    
     }
 
     GenParticleSet GetParticles(const ParticleCodes& particleCodes) const
@@ -178,11 +140,7 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCode
 {
     if (genParticle.status != particles::Decayed_or_fragmented)
         throw std::runtime_error("particle type not supported");
-    if (genParticle.MissingMother || genParticle.MissingDaughter){
-        std::ostringstream ss ;
-        ss << "broken Gen Particle tree for pdg = " << genParticle.pdg << " index = " << genParticle.index;
-        throw std::runtime_error(ss.str());
-    }
+
     decayProducts.clear();
     const GenParticleVector* daughters = &genParticle.daughters;
     size_t expected_nDaughters = particleCodes.size();
@@ -219,11 +177,7 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCode
                 if (!grandDaughter_found)
                     throw std::runtime_error("cannot find decay products");
             }
-            if (daughter->MissingMother/* || daughter->MissingDaughter*/){
-                std::ostringstream ss ;
-                ss << "broken Gen Particle tree for pdg = " << daughter->pdg << " index = " << daughter->index ;
-                throw std::runtime_error(ss.str());
-            }
+
             decayProducts.push_back(daughter);
             taken_daughters.insert(n);
             daughter_found = true;

@@ -134,6 +134,9 @@ struct Electron {
     Electron() {}
     inline Electron(ElectronTree& tree);
 };
+
+typedef std::vector<Electron> ElectronVector;
+
 } // ntuple
 
 #undef SIMPLE_VAR
