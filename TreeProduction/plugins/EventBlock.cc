@@ -69,14 +69,17 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
     L1GtFdlWord fdlWord = l1GtReadoutRecord->gtFdlWord();
     if (fdlWord.physicsDeclared() == 1)
       eventTree.isPhysDeclared() = true;
+    else eventTree.isPhysDeclared() = false;
 
     // BPTX0
     if (l1GtReadoutRecord->technicalTriggerWord()[0])
       eventTree.isBPTX0() = true;
+    else eventTree.isBPTX0() = false;
 
     // MinBias
     if (l1GtReadoutRecord->technicalTriggerWord()[40] || l1GtReadoutRecord->technicalTriggerWord()[41])
       eventTree.isBSCMinBias() = true;
+    else eventTree.isBSCMinBias() = false;
 
     // BeamHalo
     if ( (l1GtReadoutRecord->technicalTriggerWord()[36] || l1GtReadoutRecord->technicalTriggerWord()[37] ||
@@ -84,6 +87,7 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
          ((l1GtReadoutRecord->technicalTriggerWord()[42] && !l1GtReadoutRecord->technicalTriggerWord()[43]) ||
           (l1GtReadoutRecord->technicalTriggerWord()[43] && !l1GtReadoutRecord->technicalTriggerWord()[42])) )
       eventTree.isBSCBeamHalo() = true;
+    else eventTree.isBSCBeamHalo() = false;
   } 
   else {
     edm::LogError("EventBlock") << "Error >> Failed to get L1GlobalTriggerReadoutRecord for label:" 
@@ -106,6 +110,7 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
         eventTree.isPrimaryVertex() = true;
         break;
       }
+      else eventTree.isPrimaryVertex() = false;
     }
   } 
   else {
@@ -132,6 +137,7 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
       fraction = (double)numhighpurity/(double)tracks->size();
       if (fraction < _hpTrackThreshold)
         eventTree.isBeamScraping() = true;
+      else eventTree.isBeamScraping() = false;
     }
   } 
   else {
