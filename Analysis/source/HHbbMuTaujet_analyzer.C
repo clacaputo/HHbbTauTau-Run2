@@ -41,15 +41,15 @@ protected:
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
         cut(true, "total");
-        const CandidateVector muons = CollectMuons();
+        const CandidateVector muons = CollectMuons(true);
         cut(muons.size(), "muon");
-        const CandidateVector taus = CollectTaus();
+        const CandidateVector taus = CollectTaus(true);
         cut(taus.size(), "tau");
         const CandidateVector Higgses_mu_tau =
                 FindCompatibleObjects(muons, taus, cuts::Htautau_Summer13::DeltaR_betweenSignalLeptons,
                                       analysis::Candidate::Higgs, anaData.Mu_tau_mass());
         cut(Higgses_mu_tau.size(), "mu_tau");
-        const CandidateVector electrons = CollectElectrons();
+        const CandidateVector electrons = CollectElectrons(false);
         cut(!electrons.size(), "no_electron");
 
         const CandidateVector b_jets_loose = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
@@ -102,7 +102,7 @@ protected:
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
 
-    virtual analysis::Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectBackgroundElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::electronID::veto;
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), enabled);
@@ -114,6 +114,7 @@ protected:
         cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
                                eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
         cut(X(vtxDistZ) < dz, "dZ");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");

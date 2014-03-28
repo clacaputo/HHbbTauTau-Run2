@@ -127,37 +127,68 @@ protected:
         return selected;
     }
 
-    CandidateVector CollectMuons()
+    CandidateVector CollectMuons(bool signal = true)
     {
-        const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectMuon(id, enabled, _anaData); };
-        return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), base_selector);
+        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+            { return SelectBackgroundMuon(id, enabled, _anaData); };
+        if (signal)
+            return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), base_selector_signal);
+        else return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), base_selector_bkg);
     }
 
-    CandidateVector CollectTaus()
+    CandidateVector CollectTaus(bool signal = true)
     {
-        const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectTau(id, enabled, _anaData); };
-        return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), base_selector);
+        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+            { return SelectBackgroundTau(id, enabled, _anaData); };
+        if (signal)
+            return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), base_selector_signal);
+        else return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), base_selector_bkg);
     }
 
-    CandidateVector CollectElectrons()
+    CandidateVector CollectElectrons(bool signal = true)
     {
-        const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectElectron(id, enabled, _anaData); };
-        return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), base_selector);
+        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+            { return SelectBackgroundElectron(id, enabled, _anaData); };
+        if (signal)
+            return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), base_selector_signal);
+        else return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), base_selector_bkg);
     }
 
-    CandidateVector CollectBJets(double csv, const std::string& selection_label)
+    CandidateVector CollectBJets(double csv, const std::string& selection_label, bool signal = true)
     {
-        const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectBJet(id, csv, selection_label, enabled, _anaData); };
-        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), base_selector);
+        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
+            { return SelectBackgroundBJet(id, csv, selection_label, enabled, _anaData); };
+        if (signal)
+            return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), base_selector_signal);
+        else return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), base_selector_bkg);
     }
 
-    virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
-    virtual Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
-    virtual Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
+    virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+        throw std::runtime_error("Muon selection for signal not implemented");
+    }
+    virtual Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) {
+        throw std::runtime_error("Tau selection for signal not implemented");
+    }
+    virtual Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+        throw std::runtime_error("Electron selection for signal not implemented");
+    }
+    virtual Candidate SelectBackgroundMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+        throw std::runtime_error("Muon selection for background not implemented");
+    }
+    virtual Candidate SelectBackgroundTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+        throw std::runtime_error("Tau selection for background not implemented");
+    }
+    virtual Candidate SelectBackgroundElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+        throw std::runtime_error("Electron selection for background not implemented");
+    }
 
     Candidate SelectBJet(size_t id, double csv, const std::string& selection_label, bool enabled,
                          root_ext::AnalyzerData& _anaData)
@@ -169,7 +200,24 @@ protected:
         cut(true, ">0 b-jet cand");
         cut(X(pt, selection_label) > pt, "pt");
         cut(std::abs( X(eta, selection_label) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags, selection_label) > csv, "CSV");
+        cut(X(combinedSecondaryVertexBJetTags, selection_label) > CSV, "CSV");
+
+        return analysis::Candidate(analysis::Candidate::Bjet, id, object);
+    }
+
+    Candidate SelectBackgroundBJet(size_t id, double csv, const std::string& selection_label, bool enabled,
+                         root_ext::AnalyzerData& _anaData)
+    {
+        using namespace cuts::Htautau_Summer13::btag::veto;
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
+
+        const ntuple::Jet& object = event.jets.at(id);
+        cut(true, ">0 b-jet cand");
+        cut(X(pt, selection_label) > pt, "pt");
+        cut(std::abs( X(eta, selection_label) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags, selection_label) > CSV, "CSV");
+        cut(X(passLooseID, selection_label) == passLooseID, "passLooseID");
+        //DeltaR with leptons is missing
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
