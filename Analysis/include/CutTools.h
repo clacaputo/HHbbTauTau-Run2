@@ -67,12 +67,12 @@ void fill_selection_histogram(TH1D& selection_histogram, const TH1D& counter_his
 }
 
 template<typename Selector>
-analysis::CandidateVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, Int_t n_objects,
+analysis::CandidateVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, size_t n_objects,
                            const Selector& selector)
 {
     analysis::CandidateVector selected;
     counter_histogram.Reset();
-    for (Int_t n = 0; n < n_objects; ++n) {
+    for (size_t n = 0; n < n_objects; ++n) {
         try {
             const analysis::Candidate selectedCandidate = selector(n);
             selected.push_back(selectedCandidate);

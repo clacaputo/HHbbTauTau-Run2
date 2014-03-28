@@ -7,11 +7,7 @@
  */
 
 #pragma once
-
-#define EventTree_cxx
-#include "../include/EventTree.h"
-void EventTree::Loop(){} //just declared
-
+#include "TreeExtractor.h"
 #include "../include/AnalyzerData.h"
 #include "../include/Particles.h"
 #include "../include/Htautau_Summer13.h"
@@ -19,6 +15,7 @@ void EventTree::Loop(){} //just declared
 #include "../include/GenParticle.h"
 #include "../include/MCfinalState.h"
 #include "../include/Candidate.h"
+#include <chrono>
 
 #define SELECTION_ENTRY(name, n_bins, ...) \
     template<typename ...Args> \
@@ -34,7 +31,7 @@ void EventTree::Loop(){} //just declared
     /**/
 
 #define X(name, ...) \
-    cuts::fill_histogram( event->name[id], _anaData.Get(&event->name[id], #name, ##__VA_ARGS__) )
+    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, ##__VA_ARGS__) )
 
 namespace analysis {
 
@@ -85,16 +82,10 @@ class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
-        : outputFile(new TFile(outputFileName.c_str(),"RECREATE")), anaDataBeforeCut(*outputFile, "before_cut"),
-          anaDataAfterCut(*outputFile, "after_cut"),
+        : treeExtractor(inputFileName, _useMCtruth), outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
+          anaDataBeforeCut(*outputFile, "before_cut"),anaDataAfterCut(*outputFile, "after_cut"),
           maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth)
     {
-        TFile* inputFile = new TFile(inputFileName.c_str(),"READ");
-        if(inputFile->IsZombie())
-            throw std::runtime_error("Input file not found.");
-
-        TTree* inputTree = dynamic_cast<TTree*> (inputFile->Get("treeCreator/vhtree"));
-        event = boost::shared_ptr<EventTree>(new EventTree(inputTree,useMCtruth));
         std::cout << "Starting analyzer...\n";
     }
 
@@ -102,18 +93,22 @@ public:
 
     void Run()
     {
-        if (event->fChain == nullptr) return;
+        auto start = std::chrono::high_resolution_clock::now();
+        unsigned n = 0;
+        for(; !maxNumberOfEvents || n < maxNumberOfEvents; ++n) {
+            if(!treeExtractor.ExtractNext(event))
+                break;
 
-        const Long64_t nentries = maxNumberOfEvents ? std::min(event->fChain->GetEntriesFast(),maxNumberOfEvents)
-                                                    : event->fChain->GetEntriesFast();
-        for (Long64_t jentry=0; jentry<nentries;jentry++) {
-            if (event->LoadTree(jentry) < 0)
-               throw std::runtime_error("cannot read entry");
-            event->fChain->GetEntry(jentry);
+            auto now = std::chrono::high_resolution_clock::now();
+            if (std::chrono::duration_cast<std::chrono::seconds>(now - start).count() >= 10 ){
+                std::cout << "event n = " << n << std::endl;
+                start = std::chrono::high_resolution_clock::now();
+            }
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&) {}
         }
+
     }
 
 protected:
@@ -121,9 +116,9 @@ protected:
     virtual void ProcessEvent() = 0;
 
     template<typename BaseSelector>
-    CandidateVector CollectObjects(TH1D& selection_histogram, Int_t n_objects, const BaseSelector base_selector)
+    CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, const BaseSelector base_selector)
     {
-        const auto selector = [&](unsigned id) -> analysis::Candidate
+        const auto selector = [&](size_t id) -> analysis::Candidate
             { return base_selector(id, true, anaDataBeforeCut); };
 
         const auto selected = cuts::collect_objects(GetAnaData().Counter(), selection_histogram, n_objects, selector);
@@ -136,48 +131,47 @@ protected:
     {
         const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectMuon(id, enabled, _anaData); };
-        return CollectObjects(GetAnaData().MuonSelection(), event->nMuon, base_selector);
+        return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), base_selector);
     }
 
     CandidateVector CollectTaus()
     {
         const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectTau(id, enabled, _anaData); };
-        return CollectObjects(GetAnaData().TauSelection(), event->nTau, base_selector);
+        return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), base_selector);
     }
 
     CandidateVector CollectElectrons()
     {
         const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectElectron(id, enabled, _anaData); };
-        return CollectObjects(GetAnaData().ElectronSelection(), event->nElectron, base_selector);
+        return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), base_selector);
     }
 
     CandidateVector CollectBJets(double csv, const std::string& selection_label)
     {
         const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
             { return SelectBJet(id, csv, selection_label, enabled, _anaData); };
-        return CollectObjects(GetAnaData().BJetSelection(selection_label), event->nJet, base_selector);
+        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), base_selector);
     }
 
-    virtual Candidate SelectMuon(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
-    virtual Candidate SelectTau(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
-    virtual Candidate SelectElectron(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
+    virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
+    virtual Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
+    virtual Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) = 0;
 
-    Candidate SelectBJet(Int_t id, double csv, const std::string& selection_label, bool enabled,
+    Candidate SelectBJet(size_t id, double csv, const std::string& selection_label, bool enabled,
                          root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::Htautau_Summer13::btag;
+        using namespace cuts::Htautau_Summer13::btag::signal;
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
 
+        const ntuple::Jet& object = event.jets.at(id);
         cut(true, ">0 b-jet cand");
-        cut(X(Jet_pt, selection_label) > pt, "pt");
-        cut(std::abs( X(Jet_eta, selection_label) ) < eta, "eta");
-        cut(X(Jet_combinedSecondaryVertexBTag, selection_label) > csv, "CSV");
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiE(event->Jet_pt[id], event->Jet_eta[id], event->Jet_phi[id],
-                              event->Jet_energy[id]);
-        return analysis::Candidate(analysis::Candidate::Bjet, id, momentum);
+        cut(X(pt, selection_label) > pt, "pt");
+        cut(std::abs( X(eta, selection_label) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags, selection_label) > csv, "CSV");
+
+        return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
 
     template<typename Histogram>
@@ -204,7 +198,7 @@ protected:
         static const ParticleCodes2D HiggsDecays = { { particles::b, particles::b },
                                                      { particles::tau, particles::tau } };
 
-        genEvent = boost::shared_ptr<GenEvent>(new GenEvent(*event));
+        genEvent = boost::shared_ptr<GenEvent>(new GenEvent(event.genParticles));
 
         const GenParticleSet resonances = genEvent->GetParticles(resonanceCodes);
         if (resonances.size() != 1)
@@ -243,7 +237,8 @@ protected:
     }
 
 protected:
-    boost::shared_ptr<EventTree> event;
+    EventDescriptor event;
+    TreeExtractor treeExtractor;
     boost::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut;
     Long64_t maxNumberOfEvents;

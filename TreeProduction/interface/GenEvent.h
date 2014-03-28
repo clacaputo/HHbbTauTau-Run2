@@ -24,8 +24,8 @@ class GenEventTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "genEvents"; return name; }
     GenEventTree() : SmartTree(Name(), "/", false) {}
-    GenEventTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    GenEventTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     GENEVENT_DATA()

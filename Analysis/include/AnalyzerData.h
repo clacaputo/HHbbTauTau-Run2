@@ -97,7 +97,7 @@ public:
     }
 
     template<typename ValueType, typename KeySuffix, typename ...Args>
-    SmartHistogram<ValueType>& Get(ValueType*, const std::string& name, const KeySuffix& suffix, Args... args)
+    SmartHistogram<ValueType>& Get(const ValueType*, const std::string& name, const KeySuffix& suffix, Args... args)
     {
         std::ostringstream ss_suffix;
         ss_suffix << suffix;
@@ -112,7 +112,7 @@ public:
     }
 
     template<typename ValueType>
-    SmartHistogram<ValueType>& Get(ValueType* null_value, const std::string& name)
+    SmartHistogram<ValueType>& Get(const ValueType* null_value, const std::string& name)
     {
         return Get(null_value, name, "");
     }

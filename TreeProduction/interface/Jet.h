@@ -68,8 +68,8 @@ class JetTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "jets"; return name; }
     JetTree() : SmartTree(Name(), "/", false) {}
-    JetTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    JetTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     JET_DATA()

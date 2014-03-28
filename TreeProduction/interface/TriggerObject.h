@@ -27,8 +27,8 @@ class TriggerObjectTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "triggerObjects"; return name; }
     TriggerObjectTree() : SmartTree(Name(), "/", false) {}
-    TriggerObjectTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    TriggerObjectTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     TRIGGER_OBJECT_DATA()

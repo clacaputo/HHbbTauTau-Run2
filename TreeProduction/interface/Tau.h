@@ -51,7 +51,7 @@
     /* ET weighted eta-phi statistics starting from PFJet, see DataFormats/JetReco/interface/Jet.h */ \
     SIMPLE_VAR(Float_t, etaetaMoment, 0.0) \
     SIMPLE_VAR(Float_t, phiphiMoment, 0.0) \
-    SIMPLE_VAR(Float_t, etaphiMoment, 0.0) \
+    /*SIMPLE_VAR(Float_t, etaphiMoment, 0.0) */ \
     /* Vertex */ \
     SIMPLE_VAR(Float_t, vx, 0.0) \
     SIMPLE_VAR(Float_t, vy, 0.0) \
@@ -125,8 +125,8 @@ class TauTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "taus"; return name; }
     TauTree() : SmartTree(Name(), "/", false) {}
-    TauTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    TauTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     TAU_DATA()

@@ -52,8 +52,8 @@ class TrackTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "tracks"; return name; }
     TrackTree() : SmartTree(Name(), "/", false) {}
-    TrackTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    TrackTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     TRACK_DATA()

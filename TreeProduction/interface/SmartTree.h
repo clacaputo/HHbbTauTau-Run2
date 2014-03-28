@@ -7,6 +7,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <sstream>
 
 #ifdef SMART_TREE_FOR_CMSSW
 #include "FWCore/ServiceRegistry/interface/Service.h"

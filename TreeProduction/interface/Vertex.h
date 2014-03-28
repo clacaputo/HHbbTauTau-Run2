@@ -35,8 +35,8 @@ class VertexTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "vertices"; return name; }
     VertexTree() : SmartTree(Name(), "/", false) {}
-    VertexTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    VertexTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     VERTEX_DATA()

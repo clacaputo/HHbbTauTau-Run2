@@ -27,8 +27,8 @@ class GenJetTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "genJets"; return name; }
     GenJetTree() : SmartTree(Name(), "/", false) {}
-    GenJetTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    GenJetTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     GENJET_DATA()

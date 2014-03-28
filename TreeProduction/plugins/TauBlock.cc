@@ -117,7 +117,7 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       tauTree.etaetaMoment() = patTau.etaetaMoment();
       tauTree.phiphiMoment() = patTau.phiphiMoment();
-      tauTree.phiphiMoment() = patTau.etaphiMoment();
+      tauTree.etaphiMoment() = patTau.etaphiMoment();
       
       // Vertex information
       const reco::Candidate::Point& vertex = patTau.vertex();

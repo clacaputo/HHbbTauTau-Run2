@@ -24,8 +24,8 @@ class GenMETTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "genMETs"; return name; }
     GenMETTree() : SmartTree(Name(), "/", false) {}
-    GenMETTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    GenMETTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     GENMET_DATA()

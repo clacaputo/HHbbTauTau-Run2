@@ -114,7 +114,7 @@ private:
 } // namespace detail
 
 template<typename ValueType>
-class SmartHistogram;
+class SmartHistogram{};
 
 template<>
 class SmartHistogram<double> : public detail::Base1DHistogram<double> {

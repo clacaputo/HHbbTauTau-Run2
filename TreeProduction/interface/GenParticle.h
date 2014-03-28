@@ -34,8 +34,8 @@ class GenParticleTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "genParticles"; return name; }
     GenParticleTree() : SmartTree(Name(), "/", false) {}
-    GenParticleTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    GenParticleTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     GEN_PARTICLE_DATA()

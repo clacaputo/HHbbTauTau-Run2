@@ -17,14 +17,14 @@ class TreeExtractor{
 public:
 
     TreeExtractor(const std::string& inputFileName, bool extractMCtruth)
-        :inputFile(new TFile(inputFileName.c_str(), "READ")), eventTree("", *inputFile),
-          electronTree("", *inputFile),muonTree("", *inputFile),tauTree("", *inputFile),jetTree("", *inputFile),
-          vertexTree("", *inputFile),genParticleTree(nullptr),current_entry(-1){
+        :inputFile(new TFile(inputFileName.c_str(), "READ")), eventTree(*inputFile),
+          electronTree(*inputFile),muonTree(*inputFile),tauTree(*inputFile),jetTree(*inputFile),
+          vertexTree(*inputFile),genParticleTree(nullptr),current_entry(-1){
         if(inputFile->IsZombie())
             throw std::runtime_error("Input file not found.");
 
         if (extractMCtruth){
-            genParticleTree = new ntuple::GenParticleTree("", *inputFile);
+            genParticleTree = new ntuple::GenParticleTree(*inputFile);
         }
 
         if (electronTree.GetEntries() > 0)

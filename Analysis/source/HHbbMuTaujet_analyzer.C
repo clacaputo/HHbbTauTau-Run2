@@ -46,7 +46,7 @@ protected:
         const CandidateVector taus = CollectTaus();
         cut(taus.size(), "tau");
         const CandidateVector Higgses_mu_tau =
-                FindCompatibleObjects(muons, taus, cuts::Htautau_Summer13::DeltaR_signalLeptons,
+                FindCompatibleObjects(muons, taus, cuts::Htautau_Summer13::DeltaR_betweenSignalLeptons,
                                       analysis::Candidate::Higgs, anaData.Mu_tau_mass());
         cut(Higgses_mu_tau.size(), "mu_tau");
         const CandidateVector electrons = CollectElectrons();
@@ -65,73 +65,60 @@ protected:
         cut.test(b_jets_medium.size() >= 2, ">=2b_medium");
     }
 
-    virtual analysis::Candidate SelectMuon(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::muonID::MuTau;
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
-
+        const ntuple::Muon& object = event.muons.at(id);
         cut(true, ">0 mu cand");
-        cut(X(Muon_pt) > pt, "pt");
-        cut(std::abs( X(Muon_eta) ) < eta, "eta");
-        cut(!isTrackerMuon || X(Muon_isTrackerMuon), "tracker");
-        cut(!isGlobalMuonPromptTight || X(Muon_isGlobalMuonPromptTight), "tight");
-        cut(!isPFMuon || X(Muon_isPFMuon), "PF");
-        cut(X(Muon_nChambers) > nChambers, "chamers");
-        cut(X(Muon_nMatchedStations) > nMatched_Stations, "stations");
-        cut(X(Muon_trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
-        cut(X(Muon_pixHits) > pixHits, "pix_hits");
-        cut(X(Muon_globalChi2) < globalChiSquare, "chi2");
-        cut(std::abs( X(Muon_dB) ) < dB, "dB");
-        cut(std::abs( X(Muon_vtxDistZ) ) < dz, "dz");
-        cut(X(Muon_pfRelIso) < pFRelIso, "pFRelIso");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(std::abs( X(dB) ) < dB, "dB");
+        cut(std::abs( X(vtxDistZ) ) < dz, "dz");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
 
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiE(event->Muon_pt[id], event->Muon_eta[id], event->Muon_phi[id],
-                                             event->Muon_energy[id]);
-        return analysis::Candidate(analysis::Candidate::Mu, id, momentum);
+        return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
 
-    virtual analysis::Candidate SelectTau(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::MuTau;
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
 
+        const ntuple::Tau& object = event.taus.at(id);
         cut(true, ">0 tau cand");
-        cut(X(Tau_pt) > pt, "pt");
-        cut(std::abs( X(Tau_eta) ) < eta, "eta");
-        cut(X(Tau_decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(Tau_byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
-        cut(X(Tau_againstMuonTight) > againstMuonTight, "vs_mu_tight");
-        cut(X(Tau_againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
+        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
 
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiE(event->Tau_pt[id], event->Tau_eta[id], event->Tau_phi[id],
-                              event->Tau_energy[id]);
-        return analysis::Candidate(analysis::Candidate::Tau, id, momentum);
+        return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
 
-    virtual analysis::Candidate SelectElectron(Int_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::Htautau_Summer13::electronID::MuTau;
+        using namespace cuts::Htautau_Summer13::electronID::veto;
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), enabled);
 
+        const ntuple::Electron& object = event.electrons.at(id);
         cut(true, ">0 ele cand");
-        cut(X(Electron_pt) > pt, "pt");
-        const double eta = std::abs( X(Electron_eta) );
-        cut(eta < eta_high && (eta < eta_CrackVeto_low || eta > eta_CrackVeto_high), "eta");
-        // cut dz_pv
-        cut(X(Electron_missingHits) < missingHits, "mis_hits");
-        cut(X(Electron_hasMatchedConv) > hasMatchedConv, "has_conv");
-        cut(X(Electron_dB) < dB, "dB");
-        cut(X(Electron_vtxDistZ) < dz_pv, "dZ");
-        const size_t pt_index = event->Electron_pt[id] < ref_pt ? 0 : 1;
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
+                               eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
+        cut(X(vtxDistZ) < dz, "dZ");
+        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(Electron_mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
 
-        TLorentzVector momentum;
-        momentum.SetPtEtaPhiE(event->Electron_pt[id], event->Electron_eta[id], event->Electron_phi[id],
-                              event->Electron_energy[id]);
-        return analysis::Candidate(analysis::Candidate::Electron, id, momentum);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
     bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& finalState)

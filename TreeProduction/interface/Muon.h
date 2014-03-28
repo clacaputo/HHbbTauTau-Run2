@@ -89,8 +89,8 @@ class MuonTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "muons"; return name; }
     MuonTree() : SmartTree(Name(), "/", false) {}
-    MuonTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    MuonTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     MUON_DATA()

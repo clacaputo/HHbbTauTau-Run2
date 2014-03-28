@@ -27,8 +27,8 @@ class METTree : public root_ext::SmartTree {
 public:
     static const std::string& Name() { static const std::string name = "METs"; return name; }
     METTree() : SmartTree(Name(), "/", false) {}
-    METTree(const std::string& prefix, TFile& file)
-        : SmartTree(prefix + "/" + Name(), file) {}
+    METTree(TFile& file)
+        : SmartTree(Name(), file) {}
 
     SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
     MET_DATA()
