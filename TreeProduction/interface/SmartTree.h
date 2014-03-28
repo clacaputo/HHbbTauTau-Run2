@@ -18,169 +18,96 @@
 
 #include "TTree.h"
 
-#define DEFINE_TREE_DATA_ACCESSOR(type) \
-    template<> \
-    struct DataAccessor<type> { \
-        typedef std::vector<type>* p_vector; \
-        typedef type* p_type; \
-        static bool HaveSimpleValue(const SmartTreeData& data, const std::string& name) \
-        { \
-            return data.type##_simple.find(name) != data.type##_simple.end(); \
-        } \
-        static p_type& GetSimpleValue(SmartTreeData& data, const std::string& name) \
-        { \
-            return data.type##_simple[name]; \
-        } \
-        static bool HaveVectorValue(const SmartTreeData& data, const std::string& name) \
-        { \
-            return data.type##_vector.find(name) != data.type##_vector.end(); \
-        } \
-        static p_vector& GetVectorValue(SmartTreeData& data, const std::string& name) \
-        { \
-            return data.type##_vector[name]; \
-        } \
-    };
-
-#define DEFINE_SMART_TREE_DATA_CONTAINER(type) \
-    std::map< std::string, type* > type##_simple; \
-    std::map< std::string, std::vector<type>* > type##_vector;
-
-#define CLEAR_SMART_TREE_DATA_CONTAINER(type) \
-    for(std::map< std::string, std::vector<type>* >::iterator iter = type##_vector.begin(); \
-                                                              iter != type##_vector.end(); ++iter) { \
-        iter->second->clear(); }
-
-#define DELETE_SMART_TREE_DATA_CONTAINER(type) \
-    for(std::map< std::string, std::vector<type>* >::iterator iter = type##_vector.begin(); \
-                                                              iter != type##_vector.end(); ++iter) { \
-        delete iter->second; } \
-    for(std::map< std::string, type* >::iterator iter = type##_simple.begin(); \
-                                                 iter != type##_simple.end(); ++iter) { \
-        delete iter->second; }
-
 #define SIMPLE_TREE_BRANCH(type, name, default_value) \
-    type& name() \
-    { \
-        if(!data.HaveSimpleValue< type >(#name)) { \
-            const type def_val(default_value); \
-            AddSimpleBranch< type >(#name, &def_val); \
-        } \
-        return *data.GetSimpleValue< type >(#name); \
-    }
-
-#define POINTER_TREE_BRANCH(type, name) \
-    type& name() \
-    { \
-        if(!data.HaveSimpleValue< type >(#name)) \
-            AddSimpleBranch< type >(#name, 0); \
-        return *data.GetSimpleValue< type >(#name); \
-    }
-
-#define MAPPED_TREE_BRANCH(type, storage_type, name, default_value) \
-    type get##name() \
-    { \
-        if(!data.HaveSimpleValue< storage_type >(#name)) { \
-            const type def_val(default_value); \
-            const storage_type storage_def_val = ConvertToStorageUnits < type, storage_type >( def_val ); \
-            AddSimpleBranch< storage_type >(#name, &storage_def_val); \
-        } \
-        const storage_type& result = *data.GetSimpleValue< storage_type >(#name); \
-        return ConvertFromStorageUnits < type, storage_type >( result ); \
-    } \
-    void set##name(const type& value) \
-    { \
-        get##name(); \
-        storage_type& result = *data.GetSimpleValue< storage_type >(#name); \
-        result = ConvertToStorageUnits < type, storage_type >( value ); \
-    }
+private: type _##name; \
+public:  type& name() { return _##name; }
 
 #define VECTOR_TREE_BRANCH(type, name) \
-    std::vector< type >& name() \
-    { \
-        if(!data.HaveVectorValue< type >(#name)) \
-            AddVectorBranch< type >(#name); \
-        return *data.GetVectorValue< type >(#name); \
-    }
+private: std::vector< type > _##name; \
+public:  std::vector< type >& name() { return _##name; }
+
+#define SIMPLE_DATA_TREE_BRANCH(type, name, default_value) \
+    type& name() { return data.name; }
+
+#define VECTOR_DATA_TREE_BRANCH(type, name) \
+    std::vector< type >& name() { return data.name; }
+
+#define ADD_SIMPLE_TREE_BRANCH(name) AddSimpleBranch(#name, _##name);
+#define ADD_SIMPLE_DATA_TREE_BRANCH(name) AddSimpleBranch(#name, data.name);
+#define ADD_VECTOR_TREE_BRANCH(name) AddVectorBranch(#name, _##name);
+#define ADD_VECTOR_DATA_TREE_BRANCH(name) AddVectorBranch(#name, data.name);
+
+#define DATA_CLASS(namespace_name, class_name, data_macro) \
+    namespace namespace_name { \
+        struct class_name { data_macro() }; \
+        typedef std::vector< class_name > class_name##Vector; \
+    } \
+    /**/
+
+#define TREE_CLASS(namespace_name, tree_class_name, data_macro, data_class_name, tree_name) \
+    namespace namespace_name { \
+    class tree_class_name : public root_ext::SmartTree { \
+    public: \
+        static const std::string& Name() { static const std::string name = tree_name; return name; } \
+        inline tree_class_name() : SmartTree(Name(), "/", false) { Initialize(); } \
+        inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
+        data_class_name data; \
+        data_macro() \
+    private: \
+        inline void Initialize(); \
+    }; \
+    } \
+    /**/
+
+#define TREE_CLASS_WITH_EVENT_ID(namespace_name, tree_class_name, data_macro, data_class_name, tree_name) \
+    namespace namespace_name { \
+    class tree_class_name : public root_ext::SmartTree { \
+    public: \
+        static const std::string& Name() { static const std::string name = tree_name; return name; } \
+        inline tree_class_name() : SmartTree(Name(), "/", false) { Initialize(); } \
+        inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
+        data_class_name data; \
+        SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
+        data_macro() \
+    private: \
+        inline void Initialize(); \
+    }; \
+    } \
+    /**/
+
+#define TREE_CLASS_INITIALIZE(namespace_name, tree_class_name, data_macro) \
+    namespace namespace_name { \
+        inline void tree_class_name::Initialize() { \
+            data_macro() \
+            if (GetEntries() > 0) GetEntry(0); \
+        } \
+    } \
+    /**/
+
+#define TREE_CLASS_WITH_EVENT_ID_INITIALIZE(namespace_name, tree_class_name, data_macro) \
+    namespace namespace_name { \
+        inline void tree_class_name::Initialize() { \
+            ADD_SIMPLE_TREE_BRANCH(EventId) \
+            data_macro() \
+            if (GetEntries() > 0) GetEntry(0); \
+        } \
+    } \
+    /**/
 
 namespace root_ext {
 namespace detail {
-
-    using std::string;
-
-    template<typename DataType>
-    struct DataAccessor;
-
-    struct SmartTreeData {
-        DEFINE_SMART_TREE_DATA_CONTAINER(Bool_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(Int_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(UInt_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(Long64_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(ULong64_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(Double_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(size_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(Float_t)
-        DEFINE_SMART_TREE_DATA_CONTAINER(string)
-
-        ~SmartTreeData()
-        {
-            DELETE_SMART_TREE_DATA_CONTAINER(Bool_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(Int_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(UInt_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(Long64_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(ULong64_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(Double_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(size_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(Float_t)
-            DELETE_SMART_TREE_DATA_CONTAINER(string)
-        }
-
-        template<typename DataType>
-        bool HaveSimpleValue(const std::string& name) const
-        {
-            return DataAccessor<DataType>::HaveSimpleValue(*this, name);
-        }
-
-        template<typename DataType>
-        DataType*& GetSimpleValue(const std::string& name)
-        {
-            return DataAccessor<DataType>::GetSimpleValue(*this, name);
-        }
-
-        template<typename DataType>
-        bool HaveVectorValue(const std::string& name) const
-        {
-            return DataAccessor<DataType>::HaveVectorValue(*this, name);
-        }
-
-        template<typename DataType>
-        std::vector<DataType>*& GetVectorValue(const std::string& name)
-        {
-            return DataAccessor<DataType>::GetVectorValue(*this, name);
-        }
-
-        void Reset()
-        {
-            CLEAR_SMART_TREE_DATA_CONTAINER(Bool_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(Int_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(UInt_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(Long64_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(ULong64_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(Double_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(size_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(Float_t)
-            CLEAR_SMART_TREE_DATA_CONTAINER(string)
-        }
+    struct BaseSmartTreeEntry {
+        virtual ~BaseSmartTreeEntry() {}
+        virtual void clear() = 0;
     };
 
-    DEFINE_TREE_DATA_ACCESSOR(Bool_t)
-    DEFINE_TREE_DATA_ACCESSOR(Int_t)
-    DEFINE_TREE_DATA_ACCESSOR(UInt_t)
-    DEFINE_TREE_DATA_ACCESSOR(Long64_t)
-    DEFINE_TREE_DATA_ACCESSOR(ULong64_t)
-    DEFINE_TREE_DATA_ACCESSOR(Double_t)
-    DEFINE_TREE_DATA_ACCESSOR(size_t)
-    DEFINE_TREE_DATA_ACCESSOR(Float_t)
-    DEFINE_TREE_DATA_ACCESSOR(string)
+    template<typename DataType>
+    struct SmartTreeVectorPtrEntry : public BaseSmartTreeEntry {
+        std::vector<DataType>* value;
+        SmartTreeVectorPtrEntry(std::vector<DataType>& origin)
+            : value(&origin) {}
+        virtual void clear() { value->clear(); }
+    };
 } // detail
 
 class SmartTree {
@@ -222,11 +149,13 @@ public:
     void Fill()
     {
         tree->Fill();
-        data.Reset();
+        for(auto& entry : entries)
+            entry.second->clear();
     }
 
     Long64_t GetEntries() const { return tree->GetEntries(); }
-    void GetEntry(Long64_t entry) { tree->GetEntry(entry); }
+    Long64_t GetReadEntry() const { return tree->GetReadEntry(); }
+    Int_t GetEntry(Long64_t entry) { return tree->GetEntry(entry); }
     void Write()
     {
 #ifdef SMART_TREE_FOR_CMSSW
@@ -237,31 +166,17 @@ public:
         tree->Write("", TObject::kWriteDelete);
     }
 
-#ifndef SMART_TREE_FOR_CMSSW
-    TTree& RootTree() { return *tree; }
-#endif
-
 protected:
     template<typename DataType>
-    void AddSimpleBranch(const std::string& name, const DataType* default_value)
+    void AddSimpleBranch(const std::string& name, DataType& value)
     {
-        DataType*& value = data.GetSimpleValue<DataType>(name);
-        const bool use_pointer = !default_value;
-        value = use_pointer ? 0 : new DataType(*default_value);
         if(readMode) {
             EnableBranch(name);
-            if(use_pointer)
-                tree->SetBranchAddress(name.c_str(), &value);
-            else
-                tree->SetBranchAddress(name.c_str(), value);
+            tree->SetBranchAddress(name.c_str(), &value);
             if(tree->GetReadEntry() >= 0)
                 tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
         } else {
-            TBranch* branch;
-            if(use_pointer)
-                branch = tree->Branch(name.c_str(), &value);
-            else
-                branch = tree->Branch(name.c_str(), value);
+            TBranch* branch = tree->Branch(name.c_str(), &value);
             const Long64_t n_entries = tree->GetEntries();
             for(Long64_t n = 0; n < n_entries; ++n)
                 branch->Fill();
@@ -269,17 +184,20 @@ protected:
     }
 
     template<typename DataType>
-    void AddVectorBranch(const std::string& name)
+    void AddVectorBranch(const std::string& name, std::vector<DataType>& value)
     {
-        std::vector<DataType>*& value = data.GetVectorValue<DataType>(name);
-        value = new std::vector<DataType>();
+        typedef detail::SmartTreeVectorPtrEntry<DataType> PtrEntry;
+        auto entry = std::shared_ptr<PtrEntry>( new PtrEntry(value) );
+        if(entries.count(name))
+            throw std::runtime_error("Entry is already defined.");
+        entries[name] = entry;
         if(readMode) {
             EnableBranch(name);
-            tree->SetBranchAddress(name.c_str(), &value);
+            tree->SetBranchAddress(name.c_str(), &entry->value);
             if(tree->GetReadEntry() >= 0)
                 tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
         } else {
-            TBranch* branch = tree->Branch(name.c_str(), value);
+            TBranch* branch = tree->Branch(name.c_str(), entry->value);
             const Long64_t n_entries = tree->GetEntries();
             for(Long64_t n = 0; n < n_entries; ++n)
                 branch->Fill();
@@ -297,12 +215,11 @@ protected:
         }
     }
 
-protected:
-    detail::SmartTreeData data;
-
 private:
+    std::map< std::string, std::shared_ptr<detail::BaseSmartTreeEntry> > entries;
     bool readMode;
     TTree* tree;
     std::string directory;
 };
+
 } // root_ext

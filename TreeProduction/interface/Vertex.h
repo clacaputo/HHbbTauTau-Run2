@@ -27,53 +27,21 @@
     SIMPLE_VAR(Float_t, sumPt, 0.0) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
-#define VECTOR_VAR(type, name) VECTOR_TREE_BRANCH(type, name)
-
-namespace ntuple {
-class VertexTree : public root_ext::SmartTree {
-public:
-    static const std::string& Name() { static const std::string name = "vertices"; return name; }
-    VertexTree() : SmartTree(Name(), "/", false) {}
-    VertexTree(TFile& file)
-        : SmartTree(Name(), file) {}
-
-    SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
-    VERTEX_DATA()
-};
-} // ntuple
-
-
-#undef SIMPLE_VAR
-#undef VECTOR_VAR
-
 #define SIMPLE_VAR(type, name, default_value) type name;
 #define VECTOR_VAR(type, name) std::vector< type > name;
-
-namespace ntuple {
-struct Vertex {
-    VERTEX_DATA()
-    Vertex() {}
-    inline Vertex(VertexTree& tree);
-};
-
-typedef std::vector<Vertex> VertexVector;
-
-} // ntuple
-
+DATA_CLASS(ntuple, Vertex, VERTEX_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) name = tree.name();
-#define VECTOR_VAR(type, name) name = tree.name();
+#define SIMPLE_VAR(type, name, default_value) SIMPLE_DATA_TREE_BRANCH(type, name, default_value)
+#define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
+TREE_CLASS_WITH_EVENT_ID(ntuple, VertexTree, VERTEX_DATA, Vertex, "vertices")
+#undef SIMPLE_VAR
+#undef VECTOR_VAR
 
-namespace ntuple {
-inline Vertex::Vertex(VertexTree& tree)
-{
-    VERTEX_DATA()
-}
-} // ntuple
-
+#define SIMPLE_VAR(type, name, default_value) AddSimpleBranch(#name, data.name);
+#define VECTOR_VAR(type, name) AddVectorBranch(#name, data.name);
+TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, VertexTree, VERTEX_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef VERTEX_DATA

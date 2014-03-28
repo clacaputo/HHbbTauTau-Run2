@@ -30,49 +30,21 @@
     VECTOR_VAR(Float_t, trueNInt) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
-#define VECTOR_VAR(type, name) VECTOR_TREE_BRANCH(type, name)
-
-namespace ntuple {
-class EventTree : public root_ext::SmartTree {
-public:
-    static const std::string& Name() { static const std::string name = "events"; return name; }
-    EventTree() : SmartTree(Name(), "/", false) {}
-    EventTree(TFile& file)
-        : SmartTree(Name(), file) {}
-
-    EVENT_DATA()
-};
-} // ntuple
-
-
-#undef SIMPLE_VAR
-#undef VECTOR_VAR
-
 #define SIMPLE_VAR(type, name, default_value) type name;
 #define VECTOR_VAR(type, name) std::vector< type > name;
-
-namespace ntuple {
-struct Event {
-    EVENT_DATA()
-    Event() {}
-    inline Event(EventTree& tree);
-};
-} // ntuple
-
+DATA_CLASS(ntuple, Event, EVENT_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) name = tree.name();
-#define VECTOR_VAR(type, name) name = tree.name();
+#define SIMPLE_VAR(type, name, default_value) SIMPLE_DATA_TREE_BRANCH(type, name, default_value)
+#define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
+TREE_CLASS(ntuple, EventTree, EVENT_DATA, Event, "events")
+#undef SIMPLE_VAR
+#undef VECTOR_VAR
 
-namespace ntuple {
-inline Event::Event(EventTree& tree)
-{
-    EVENT_DATA()
-}
-} // ntuple
-
+#define SIMPLE_VAR(type, name, default_value) AddSimpleBranch(#name, data.name);
+#define VECTOR_VAR(type, name) AddVectorBranch(#name, data.name);
+TREE_CLASS_INITIALIZE(ntuple, EventTree, EVENT_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef EVENT_DATA

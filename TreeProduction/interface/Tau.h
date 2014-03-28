@@ -56,6 +56,8 @@
     SIMPLE_VAR(Float_t, vx, 0.0) \
     SIMPLE_VAR(Float_t, vy, 0.0) \
     SIMPLE_VAR(Float_t, vz, 0.0) \
+    /* tau discriminators */ \
+    TAU_DISCRIMINATOR_DATA() \
     /**/
 
 #define TAU_DISCRIMINATOR_DATA() \
@@ -117,56 +119,21 @@
     SIMPLE_VAR(Float_t, byVVTightIsolationMVA3newDMwLT, 0.0) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
-#define VECTOR_VAR(type, name) VECTOR_TREE_BRANCH(type, name)
-
-namespace ntuple {
-class TauTree : public root_ext::SmartTree {
-public:
-    static const std::string& Name() { static const std::string name = "taus"; return name; }
-    TauTree() : SmartTree(Name(), "/", false) {}
-    TauTree(TFile& file)
-        : SmartTree(Name(), file) {}
-
-    SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
-    TAU_DATA()
-    TAU_DISCRIMINATOR_DATA()
-};
-} // ntuple
-
-
-#undef SIMPLE_VAR
-#undef VECTOR_VAR
-
 #define SIMPLE_VAR(type, name, default_value) type name;
 #define VECTOR_VAR(type, name) std::vector< type > name;
-
-namespace ntuple {
-struct Tau {
-    TAU_DATA()
-    TAU_DISCRIMINATOR_DATA()
-    Tau() {}
-    inline Tau(TauTree& tree);
-};
-
-typedef std::vector<Tau> TauVector;
-
-} // ntuple
-
+DATA_CLASS(ntuple, Tau, TAU_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) name = tree.name();
-#define VECTOR_VAR(type, name) name = tree.name();
+#define SIMPLE_VAR(type, name, default_value) SIMPLE_DATA_TREE_BRANCH(type, name, default_value)
+#define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
+TREE_CLASS_WITH_EVENT_ID(ntuple, TauTree, TAU_DATA, Tau, "taus")
+#undef SIMPLE_VAR
+#undef VECTOR_VAR
 
-namespace ntuple {
-inline Tau::Tau(TauTree& tree)
-{
-    TAU_DATA()
-    TAU_DISCRIMINATOR_DATA()
-}
-} // ntuple
-
+#define SIMPLE_VAR(type, name, default_value) AddSimpleBranch(#name, data.name);
+#define VECTOR_VAR(type, name) AddVectorBranch(#name, data.name);
+TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, TauTree, TAU_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef TAU_DATA

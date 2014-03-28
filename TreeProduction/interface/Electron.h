@@ -105,53 +105,21 @@
     SIMPLE_VAR(UInt_t, fidFlag, 0) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
-#define VECTOR_VAR(type, name) VECTOR_TREE_BRANCH(type, name)
-
-namespace ntuple {
-class ElectronTree : public root_ext::SmartTree {
-public:
-    static const std::string& Name() { static const std::string name = "electrons"; return name; }
-    ElectronTree() : SmartTree(Name(), "/", false) {}
-    ElectronTree(TFile& file)
-        : SmartTree(Name(), file) {}
-
-    SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
-    ELECTRON_DATA()
-};
-} // ntuple
-
-
-#undef SIMPLE_VAR
-#undef VECTOR_VAR
-
 #define SIMPLE_VAR(type, name, default_value) type name;
 #define VECTOR_VAR(type, name) std::vector< type > name;
-
-namespace ntuple {
-struct Electron {
-    ELECTRON_DATA()
-    Electron() {}
-    inline Electron(ElectronTree& tree);
-};
-
-typedef std::vector<Electron> ElectronVector;
-
-} // ntuple
-
+DATA_CLASS(ntuple, Electron, ELECTRON_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) name = tree.name();
-#define VECTOR_VAR(type, name) name = tree.name();
+#define SIMPLE_VAR(type, name, default_value) SIMPLE_DATA_TREE_BRANCH(type, name, default_value)
+#define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
+TREE_CLASS_WITH_EVENT_ID(ntuple, ElectronTree, ELECTRON_DATA, Electron, "electrons")
+#undef SIMPLE_VAR
+#undef VECTOR_VAR
 
-namespace ntuple {
-inline Electron::Electron(ElectronTree& tree)
-{
-    ELECTRON_DATA()
-}
-} // ntuple
-
+#define SIMPLE_VAR(type, name, default_value) AddSimpleBranch(#name, data.name);
+#define VECTOR_VAR(type, name) AddVectorBranch(#name, data.name);
+TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, ElectronTree, ELECTRON_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef ELECTRON_DATA
