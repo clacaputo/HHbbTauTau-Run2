@@ -1,7 +1,6 @@
 Analysis/source/VHAnalyzer_WH_New.C
 Analysis/source/VHAnalyzer_WH_New.h
 Analysis/include/AnalyzerData.h
-Analysis/include/EventTree.h
 Analysis/source/HHbbMuTaujet_analyzer.C
 Analysis/include/Particles.h
 Analysis/include/Htautau_Summer13.h
@@ -104,3 +103,4 @@ TreeProduction/interface/TriggerObject.h
 TreeProduction/interface/Vertex.h
 Analysis/include/EventDescriptor.h
 Analysis/include/TreeExtractor.h
+Analysis/include/DebugTools.h
