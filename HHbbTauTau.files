@@ -104,3 +104,5 @@ TreeProduction/interface/Vertex.h
 Analysis/include/EventDescriptor.h
 Analysis/include/TreeExtractor.h
 Analysis/include/DebugTools.h
+Analysis/legacy/VHAnalyzer_WH_New.C
+Analysis/legacy/VHAnalyzer_WH_New.h
