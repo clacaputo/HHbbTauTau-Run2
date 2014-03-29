@@ -52,7 +52,7 @@ DATA_CLASS(ntuple, Track, TRACK_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS_WITH_EVENT_ID(ntuple, TrackTree, TRACK_DATA, Track, "tracks")
+TREE_CLASS_WITH_EVENT_ID(ntuple, TrackTree, TRACK_DATA, Track, "tracks", false)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

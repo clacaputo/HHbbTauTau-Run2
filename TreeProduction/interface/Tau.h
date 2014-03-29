@@ -127,7 +127,7 @@ DATA_CLASS(ntuple, Tau, TAU_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS_WITH_EVENT_ID(ntuple, TauTree, TAU_DATA, Tau, "taus")
+TREE_CLASS_WITH_EVENT_ID(ntuple, TauTree, TAU_DATA, Tau, "taus", false)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

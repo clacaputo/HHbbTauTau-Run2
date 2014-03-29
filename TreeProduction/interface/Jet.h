@@ -71,7 +71,7 @@ DATA_CLASS(ntuple, Jet, JET_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS_WITH_EVENT_ID(ntuple, JetTree, JET_DATA, Jet, "jets")
+TREE_CLASS_WITH_EVENT_ID(ntuple, JetTree, JET_DATA, Jet, "jets", false)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

@@ -38,7 +38,7 @@ DATA_CLASS(ntuple, Event, EVENT_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS(ntuple, EventTree, EVENT_DATA, Event, "events")
+TREE_CLASS(ntuple, EventTree, EVENT_DATA, Event, "events", false)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

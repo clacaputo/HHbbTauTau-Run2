@@ -169,25 +169,25 @@ protected:
 
     CandidateVector CollectMuons(bool signal = true)
     {
-        return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), signal,
+        return CollectObjects(GetAnaData().MuonSelection(), event.muons().size(), signal,
                               &BaseAnalyzer::SelectMuon, &BaseAnalyzer::SelectBackgroundMuon);
     }
 
     CandidateVector CollectTaus(bool signal = true)
     {
-        return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), signal,
+        return CollectObjects(GetAnaData().TauSelection(), event.taus().size(), signal,
                               &BaseAnalyzer::SelectTau, &BaseAnalyzer::SelectBackgroundTau);
     }
 
     CandidateVector CollectElectrons(bool signal = true)
     {
-        return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), signal,
+        return CollectObjects(GetAnaData().ElectronSelection(), event.electrons().size(), signal,
                               &BaseAnalyzer::SelectElectron, &BaseAnalyzer::SelectBackgroundElectron);
     }
 
     CandidateVector CollectBJets(double csv, const std::string& selection_label, bool signal = true)
     {
-        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), signal,
+        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets().size(), signal,
                               &BaseAnalyzer::SelectBJet, &BaseAnalyzer::SelectBackgroundBJet, csv, selection_label);
     }
 
@@ -216,7 +216,7 @@ protected:
         using namespace cuts::Htautau_Summer13::btag::signal;
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
 
-        const ntuple::Jet& object = event.jets.at(id);
+        const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
@@ -232,7 +232,7 @@ protected:
         const std::string selection_label = _selection_label + "_bkg";
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
 
-        const ntuple::Jet& object = event.jets.at(id);
+        const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
@@ -267,7 +267,7 @@ protected:
         static const ParticleCodes2D HiggsDecays = { { particles::b, particles::b },
                                                      { particles::tau, particles::tau } };
 
-        genEvent.Initialize(event.genParticles);
+        genEvent.Initialize(event.genParticles());
 
         const GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
         if (resonances.size() != 1)

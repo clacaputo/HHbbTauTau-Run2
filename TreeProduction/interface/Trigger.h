@@ -26,7 +26,7 @@ DATA_CLASS(ntuple, Trigger, TRIGGER_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS_WITH_EVENT_ID(ntuple, TriggerTree, TRIGGER_DATA, Trigger, "triggers")
+TREE_CLASS_WITH_EVENT_ID(ntuple, TriggerTree, TRIGGER_DATA, Trigger, "triggers", false)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

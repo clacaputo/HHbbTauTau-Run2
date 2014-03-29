@@ -113,7 +113,7 @@ DATA_CLASS(ntuple, Electron, ELECTRON_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS_WITH_EVENT_ID(ntuple, ElectronTree, ELECTRON_DATA, Electron, "electrons")
+TREE_CLASS_WITH_EVENT_ID(ntuple, ElectronTree, ELECTRON_DATA, Electron, "electrons", false)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

@@ -24,7 +24,7 @@ DATA_CLASS(ntuple, GenEvent, GENEVENT_DATA)
 
 #define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
-TREE_CLASS_WITH_EVENT_ID(ntuple, GenEventTree, GENEVENT_DATA, GenEvent, "genEvents")
+TREE_CLASS_WITH_EVENT_ID(ntuple, GenEventTree, GENEVENT_DATA, GenEvent, "genEvents", true)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 

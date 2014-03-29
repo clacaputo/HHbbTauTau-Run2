@@ -47,10 +47,11 @@ public:  std::vector< type >& name() { return _##name; }
     } \
     /**/
 
-#define TREE_CLASS(namespace_name, tree_class_name, data_macro, data_class_name, tree_name) \
+#define TREE_CLASS(namespace_name, tree_class_name, data_macro, data_class_name, tree_name, is_mc_truth) \
     namespace namespace_name { \
     class tree_class_name : public root_ext::SmartTree { \
     public: \
+        static bool IsMCtruth() { return is_mc_truth; } \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
         inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
@@ -62,10 +63,11 @@ public:  std::vector< type >& name() { return _##name; }
     } \
     /**/
 
-#define TREE_CLASS_WITH_EVENT_ID(namespace_name, tree_class_name, data_macro, data_class_name, tree_name) \
+#define TREE_CLASS_WITH_EVENT_ID(namespace_name, tree_class_name, data_macro, data_class_name, tree_name, is_mc_truth) \
     namespace namespace_name { \
     class tree_class_name : public root_ext::SmartTree { \
     public: \
+        static bool IsMCtruth() { return is_mc_truth; } \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
         inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
@@ -141,6 +143,19 @@ public:
         if(tree->GetNbranches())
             tree->SetBranchStatus("*");
     }
+    SmartTree(const SmartTree& other)
+    {
+        throw std::runtime_error("Can't copy a smart tree");
+    }
+
+    SmartTree(const SmartTree&& other)
+    {
+        entries = other.entries;
+        readMode = other.readMode;
+        tree = other.tree;
+        directory = other.directory;
+    }
+
     virtual ~SmartTree()
     {
 //#ifndef SMART_TREE_FOR_CMSSW
