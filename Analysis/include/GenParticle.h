@@ -8,7 +8,6 @@
 
 #pragma once
 #include <set>
-#include <boost/shared_ptr.hpp>
 
 #include <TLorentzVector.h>
 
@@ -21,14 +20,13 @@ namespace analysis {
 
 class GenParticle;
 
-typedef std::vector< GenParticle* > GenParticleVector;
-typedef std::vector< GenParticleVector > GenParticleVector2D;
-typedef std::set< GenParticle* > GenParticleSet;
-typedef std::map<size_t, boost::shared_ptr<GenParticle>> GenParticleMap;
+typedef std::vector< GenParticle > GenParticleVector;
+typedef std::vector< const GenParticle* > GenParticlePtrVector;
+typedef std::vector< GenParticlePtrVector > GenParticleVector2D;
+typedef std::set< const GenParticle* > GenParticleSet;
 typedef std::map<particles::ParticleCode, GenParticleSet> ParticleCodeMap;
 typedef std::vector<particles::ParticleCode> ParticleCodes;
 typedef std::vector<ParticleCodes> ParticleCodes2D;
-
 typedef std::vector<size_t> GenParticleIndexVector;
 
 class GenParticle {
@@ -37,65 +35,65 @@ public:
     particles::PdgParticle pdg;
     particles::Status status;
     TLorentzVector momentum;
-    GenParticleVector mothers;
-    GenParticleVector daughters;
-
+    GenParticlePtrVector mothers;
+    GenParticlePtrVector daughters;
 
 public:
-
+    GenParticle() {}
     GenParticle(size_t n, const ntuple::GenParticleVector& genParticles)
         : index(n)
     {
-
         if(n >= genParticles.size())
             throw std::runtime_error("GenParticles index is out of range.");
         const ntuple::GenParticle& ntupleGenParticle = genParticles.at(n);
+        if(ntupleGenParticle.Index != index)
+            throw std::runtime_error("bad index");
         pdg = particles::PdgParticle(ntupleGenParticle.PdgId);
         status = particles::NameProvider<particles::Status>::Convert(ntupleGenParticle.Status);
         momentum.SetXYZT(ntupleGenParticle.Px, ntupleGenParticle.Py,ntupleGenParticle.Pz,ntupleGenParticle.E);
     }
 
 
-    void Initialize(const ntuple::GenParticleVector& genParticles, const GenParticleMap& particles)
+    void Initialize(const ntuple::GenParticleVector& ntupleGenParticles, GenParticleVector& particles)
     {
-        const ntuple::GenParticle& ntupleGenParticle = genParticles.at(index);
-        mothers.clear();
-        daughters.clear();
+        const ntuple::GenParticle& ntupleGenParticle = ntupleGenParticles.at(index);
         mothers.reserve(ntupleGenParticle.Mother_Indexes.size());
         daughters.reserve(ntupleGenParticle.Daughter_Indexes.size());
         for (unsigned motherIndex : ntupleGenParticle.Mother_Indexes){
-            GenParticle* mother = particles.at(motherIndex).get();
+            GenParticle* mother = &particles.at(motherIndex);
             mothers.push_back(mother);
             mother->daughters.push_back(this);
         }
     }
-
 };
 
 class GenEvent {
 public:
-    GenParticleMap genParticles;
+    GenParticleVector genParticles;
     ParticleCodeMap particleCodeMap;
     GenParticleSet primaryParticles;
 
 public:
-
-    GenEvent(const ntuple::GenParticleVector& ntupleGenParticles)
+    void Initialize(const ntuple::GenParticleVector& ntupleGenParticles)
     {
+        genParticles.clear();
+        particleCodeMap.clear();
+        primaryParticles.clear();
+        genParticles.reserve(ntupleGenParticles.size());
+
         for(size_t n = 0; n < ntupleGenParticles.size(); ++n){
-            auto particle = boost::shared_ptr<GenParticle>(new GenParticle(n, ntupleGenParticles));
-            genParticles[particle->index]=particle;
+            const GenParticle particle(n, ntupleGenParticles);
+            genParticles.push_back(particle);
         }
-        for(GenParticleMap::value_type& particle : genParticles){
-            particle.second->Initialize(ntupleGenParticles, genParticles);
-            if (particle.second->mothers.size() == 0){
-                GenParticle* primaryParticle = particle.second.get();
-                primaryParticles.insert(primaryParticle);
-            }
-            if (particle.second->status == particles::Decayed_or_fragmented ||
-                    particle.second->status == particles::FinalStateParticle)
-                particleCodeMap[particle.second->pdg.Code].insert(particle.second.get());
-        }    
+        for(auto& particle : genParticles){
+            particle.Initialize(ntupleGenParticles, genParticles);
+            if (!particle.mothers.size())
+                primaryParticles.insert(&particle);
+
+            if (particle.status == particles::Decayed_or_fragmented ||
+                    particle.status == particles::FinalStateParticle)
+                particleCodeMap[particle.pdg.Code].insert(&particle);
+        }
     }
 
     GenParticleSet GetParticles(const ParticleCodes& particleCodes) const
@@ -105,9 +103,8 @@ public:
             const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(code);
             if (code_iter == particleCodeMap.end())
                 continue;
-            for (GenParticle* particle : code_iter->second){
+            for (const GenParticle* particle : code_iter->second)
                 results.insert(particle);
-            }
         }
         return results;
     }
@@ -136,13 +133,13 @@ public:
 };
 
 inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCodes& particleCodes,
-                              GenParticleVector& decayProducts)
+                              GenParticlePtrVector& decayProducts)
 {
     if (genParticle.status != particles::Decayed_or_fragmented)
         throw std::runtime_error("particle type not supported");
 
     decayProducts.clear();
-    const GenParticleVector* daughters = &genParticle.daughters;
+    const GenParticlePtrVector* daughters = &genParticle.daughters;
     size_t expected_nDaughters = particleCodes.size();
     if (daughters->size() == 0){
         if(genParticle.mothers.size() != 1)
@@ -163,10 +160,10 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCode
                 continue;
             if (code != daughters->at(n)->pdg.Code)
                 continue;
-            GenParticle* daughter = daughters->at(n);
+            const GenParticle* daughter = daughters->at(n);
             if (daughter->status == particles::HardInteractionProduct){
                 bool grandDaughter_found = false;
-                for (GenParticle* grandDaughter : daughter->daughters){
+                for (const GenParticle* grandDaughter : daughter->daughters){
                     if (grandDaughter->pdg == daughter->pdg &&
                             grandDaughter->status == particles::Decayed_or_fragmented){
                         grandDaughter_found = true;
@@ -188,7 +185,7 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCode
     return true;
 }
 
-inline bool FindDecayProducts2D(const GenParticleVector& genParticles, const ParticleCodes2D& particleCodes2D,
+inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const ParticleCodes2D& particleCodes2D,
                                 GenParticleVector2D& decayProducts2D, GenParticleIndexVector& indexes)
 {
     std::set<size_t> taken_genParticles;
@@ -200,7 +197,7 @@ inline bool FindDecayProducts2D(const GenParticleVector& genParticles, const Par
         for (size_t n = 0; n < genParticles.size(); ++n ){
             if (taken_genParticles.count(n)) continue;
             const GenParticle& genParticle = *genParticles.at(n);
-            GenParticleVector decayProducts;
+            GenParticlePtrVector decayProducts;
             if (!FindDecayProducts(genParticle,codes,decayProducts)) continue;
             particleFound = true;
             decayProducts2D.push_back(decayProducts);

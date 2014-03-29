@@ -1,6 +1,5 @@
 #include <iostream>
 #include <algorithm>
-#include <boost/shared_ptr.hpp>
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -61,18 +60,18 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     jetTree.EventId() = iEvent.id().event();
 
-    boost::shared_ptr<JetCorrectionUncertainty> jecUnc;
-    boost::shared_ptr<JetCorrectorParameters> ResJetCorPar;
-    boost::shared_ptr<FactorizedJetCorrector> JEC;
+    std::shared_ptr<JetCorrectionUncertainty> jecUnc;
+    std::shared_ptr<JetCorrectorParameters> ResJetCorPar;
+    std::shared_ptr<FactorizedJetCorrector> JEC;
     if (_applyResJEC) {
         edm::FileInPath fipUnc(_jecUncPath);
-        jecUnc = boost::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(fipUnc.fullPath()));
+        jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(fipUnc.fullPath()));
 
         edm::FileInPath fipRes(_resJEC);
-        ResJetCorPar = boost::shared_ptr<JetCorrectorParameters>(new JetCorrectorParameters(fipRes.fullPath()));
+        ResJetCorPar = std::shared_ptr<JetCorrectorParameters>(new JetCorrectorParameters(fipRes.fullPath()));
         std::vector<JetCorrectorParameters> vParam;
         vParam.push_back(*ResJetCorPar);
-        JEC = boost::shared_ptr<FactorizedJetCorrector>(new FactorizedJetCorrector(vParam));
+        JEC = std::shared_ptr<FactorizedJetCorrector>(new FactorizedJetCorrector(vParam));
     }
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByLabel(_inputTag, jets);

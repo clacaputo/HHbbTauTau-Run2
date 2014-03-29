@@ -19,8 +19,8 @@ struct bbTauTau{
     const GenParticle* resonance;
     const GenParticle* Higgs_TauTau;
     const GenParticle* Higgs_BB;
-    GenParticleVector b_jets;
-    GenParticleVector taus;
+    GenParticlePtrVector b_jets;
+    GenParticlePtrVector taus;
 
     bbTauTau() : resonance(nullptr), Higgs_TauTau(nullptr), Higgs_BB(nullptr){}
 

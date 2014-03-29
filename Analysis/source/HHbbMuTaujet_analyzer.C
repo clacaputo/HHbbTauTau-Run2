@@ -68,8 +68,10 @@ protected:
     virtual analysis::Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::muonID::MuTau;
+        const std::string selection_label = "";
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
         const ntuple::Muon& object = event.muons.at(id);
+
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
@@ -88,9 +90,10 @@ protected:
     virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::MuTau;
+        const std::string selection_label = "";
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
-
         const ntuple::Tau& object = event.taus.at(id);
+
         cut(true, ">0 tau cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
@@ -105,9 +108,10 @@ protected:
     virtual analysis::Candidate SelectBackgroundElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::electronID::veto;
+        const std::string selection_label = "bkg";
         cuts::Cutter cut(anaData.Counter(), anaData.ElectronSelection(), enabled);
-
         const ntuple::Electron& object = event.electrons.at(id);
+
         cut(true, ">0 ele cand");
         cut(X(pt) > pt, "pt");
         const double eta = std::abs( X(eta) );
@@ -131,7 +135,7 @@ protected:
 
         finalState.muon = finalState.tau_jet = nullptr;
         for (const analysis::GenParticle* tau_MC : finalState.taus) {
-            analysis::GenParticleVector TauProducts;
+            analysis::GenParticlePtrVector TauProducts;
             if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts))
                 finalState.muon = TauProducts.at(0);
             else if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts))

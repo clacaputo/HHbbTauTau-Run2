@@ -16,6 +16,8 @@
 #include "../include/MCfinalState.h"
 #include "../include/Candidate.h"
 #include <chrono>
+#include <iomanip>
+#include <functional>
 
 #define SELECTION_ENTRY(name, n_bins, ...) \
     template<typename ...Args> \
@@ -30,8 +32,8 @@
     TH1D_ENTRY_FIX(name##_effAbs, 1, n_bins, -0.5) \
     /**/
 
-#define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, ##__VA_ARGS__) )
+#define X(name) \
+    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
 
 namespace analysis {
 
@@ -78,10 +80,37 @@ protected:
     std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
 };
 
+class Timer {
+public:
+    typedef std::chrono::high_resolution_clock clock;
+    Timer(unsigned _report_interval)
+        : start(clock::now()), block_start(start), report_interval(_report_interval) {}
+
+    void Report(size_t event_id, bool final_report = false)
+    {
+        using namespace std::chrono;
+        const auto now = clock::now();
+        const auto since_last_report = duration_cast<seconds>(now - block_start).count();
+        if(!final_report && since_last_report < report_interval) return;
+
+        const auto since_start = duration_cast<seconds>(now - start).count();
+        const double speed = ((double) event_id) / since_start;
+        if(final_report)
+            std::cout << "Total: ";
+        std::cout << "time = " << since_start << " seconds, events processed = " << event_id
+                  << ", average speed = " << std::setprecision(1) << std::fixed << speed << " events/s\n";
+        block_start = now;
+    }
+
+private:
+    clock::time_point start, block_start;
+    unsigned report_interval;
+};
+
 class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
-                        Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
+                        size_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
         : treeExtractor(inputFileName, _useMCtruth), outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"),anaDataAfterCut(*outputFile, "after_cut"),
           maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth)
@@ -93,30 +122,26 @@ public:
 
     void Run()
     {
-        auto start = std::chrono::high_resolution_clock::now();
-        unsigned n = 0;
+        Timer timer(10);
+        size_t n = 0;
         for(; !maxNumberOfEvents || n < maxNumberOfEvents; ++n) {
             if(!treeExtractor.ExtractNext(event))
                 break;
-
-            auto now = std::chrono::high_resolution_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(now - start).count() >= 10 ){
-                std::cout << "event n = " << n << std::endl;
-                start = std::chrono::high_resolution_clock::now();
-            }
+            timer.Report(n);
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&) {}
         }
-
+        timer.Report(n, true);
     }
 
 protected:
+    typedef std::function< Candidate (size_t, bool, root_ext::AnalyzerData&) > BaseSelector;
+
     virtual SignalAnalyzerData& GetAnaData() = 0;
     virtual void ProcessEvent() = 0;
 
-    template<typename BaseSelector>
-    CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, const BaseSelector base_selector)
+    CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, const BaseSelector& base_selector)
     {
         const auto selector = [&](size_t id) -> analysis::Candidate
             { return base_selector(id, true, anaDataBeforeCut); };
@@ -127,48 +152,43 @@ protected:
         return selected;
     }
 
+    template<typename BaseSelectorMethod, typename ...Args>
+    CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, bool signal,
+                                   BaseSelectorMethod signal_selector_method,
+                                   BaseSelectorMethod bkg_selector_method, Args ...args)
+    {
+        const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Candidate { return (this->*signal_selector_method)(id, enabled, _anaData, args...); };
+        const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Candidate { return (this->*bkg_selector_method)(id, enabled, _anaData, args...); };
+        const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
+
+        return CollectObjects(selection_histogram, n_objects, base_selector);
+
+    }
+
     CandidateVector CollectMuons(bool signal = true)
     {
-        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectMuon(id, enabled, _anaData); };
-        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectBackgroundMuon(id, enabled, _anaData); };
-        if (signal)
-            return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), base_selector_signal);
-        else return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), base_selector_bkg);
+        return CollectObjects(GetAnaData().MuonSelection(), event.muons.size(), signal,
+                              &BaseAnalyzer::SelectMuon, &BaseAnalyzer::SelectBackgroundMuon);
     }
 
     CandidateVector CollectTaus(bool signal = true)
     {
-        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectTau(id, enabled, _anaData); };
-        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectBackgroundTau(id, enabled, _anaData); };
-        if (signal)
-            return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), base_selector_signal);
-        else return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), base_selector_bkg);
+        return CollectObjects(GetAnaData().TauSelection(), event.taus.size(), signal,
+                              &BaseAnalyzer::SelectTau, &BaseAnalyzer::SelectBackgroundTau);
     }
 
     CandidateVector CollectElectrons(bool signal = true)
     {
-        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectElectron(id, enabled, _anaData); };
-        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectBackgroundElectron(id, enabled, _anaData); };
-        if (signal)
-            return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), base_selector_signal);
-        else return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), base_selector_bkg);
+        return CollectObjects(GetAnaData().ElectronSelection(), event.electrons.size(), signal,
+                              &BaseAnalyzer::SelectElectron, &BaseAnalyzer::SelectBackgroundElectron);
     }
 
     CandidateVector CollectBJets(double csv, const std::string& selection_label, bool signal = true)
     {
-        const auto base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectBJet(id, csv, selection_label, enabled, _anaData); };
-        const auto base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData) -> Candidate
-            { return SelectBackgroundBJet(id, csv, selection_label, enabled, _anaData); };
-        if (signal)
-            return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), base_selector_signal);
-        else return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), base_selector_bkg);
+        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets.size(), signal,
+                              &BaseAnalyzer::SelectBJet, &BaseAnalyzer::SelectBackgroundBJet, csv, selection_label);
     }
 
     virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
@@ -190,33 +210,34 @@ protected:
         throw std::runtime_error("Electron selection for background not implemented");
     }
 
-    Candidate SelectBJet(size_t id, double csv, const std::string& selection_label, bool enabled,
-                         root_ext::AnalyzerData& _anaData)
+    Candidate SelectBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData,
+                         double csv, const std::string& selection_label)
     {
         using namespace cuts::Htautau_Summer13::btag::signal;
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
 
         const ntuple::Jet& object = event.jets.at(id);
         cut(true, ">0 b-jet cand");
-        cut(X(pt, selection_label) > pt, "pt");
-        cut(std::abs( X(eta, selection_label) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags, selection_label) > CSV, "CSV");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
 
-    Candidate SelectBackgroundBJet(size_t id, double csv, const std::string& selection_label, bool enabled,
-                         root_ext::AnalyzerData& _anaData)
+    Candidate SelectBackgroundBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData,
+                                   double csv, const std::string& _selection_label)
     {
         using namespace cuts::Htautau_Summer13::btag::veto;
+        const std::string selection_label = _selection_label + "_bkg";
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
 
         const ntuple::Jet& object = event.jets.at(id);
         cut(true, ">0 b-jet cand");
-        cut(X(pt, selection_label) > pt, "pt");
-        cut(std::abs( X(eta, selection_label) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags, selection_label) > CSV, "CSV");
-        cut(X(passLooseID, selection_label) == passLooseID, "passLooseID");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
+        cut(X(passLooseID) == passLooseID, "passLooseID");
         //DeltaR with leptons is missing
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
@@ -246,15 +267,15 @@ protected:
         static const ParticleCodes2D HiggsDecays = { { particles::b, particles::b },
                                                      { particles::tau, particles::tau } };
 
-        genEvent = boost::shared_ptr<GenEvent>(new GenEvent(event.genParticles));
+        genEvent.Initialize(event.genParticles);
 
-        const GenParticleSet resonances = genEvent->GetParticles(resonanceCodes);
+        const GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
         if (resonances.size() != 1)
             throw std::runtime_error("not one resonance per event");
 
         final_state.resonance = *resonances.begin();
 
-        GenParticleVector HiggsBosons;
+        GenParticlePtrVector HiggsBosons;
         if(!FindDecayProducts(*final_state.resonance, resonanceDecay,HiggsBosons))
             throw std::runtime_error("Resonance does not decay into 2 Higgs");
 
@@ -287,11 +308,11 @@ protected:
 protected:
     EventDescriptor event;
     TreeExtractor treeExtractor;
-    boost::shared_ptr<TFile> outputFile;
+    std::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut;
-    Long64_t maxNumberOfEvents;
+    size_t maxNumberOfEvents;
     bool useMCtruth;
-    boost::shared_ptr<GenEvent> genEvent;
+    GenEvent genEvent;
 };
 
 } // analysis
