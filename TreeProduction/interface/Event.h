@@ -11,39 +11,39 @@
 #include "SmartTree.h"
 
 #define EVENT_DATA() \
-    SIMPLE_VAR(UInt_t, run, 0) \
-    SIMPLE_VAR(UInt_t, EventId, 0) \
-    SIMPLE_VAR(UInt_t, lumis, 0) \
-    SIMPLE_VAR(Int_t, bunch, 0) \
-    SIMPLE_VAR(Int_t, orbit, 0) \
-    SIMPLE_VAR(UInt_t, unixTime, 0) \
-    SIMPLE_VAR(UInt_t, microsecondOffset, 0) \
-    SIMPLE_VAR(Bool_t, isdata, false) \
-    SIMPLE_VAR(Bool_t, isPhysDeclared, false)  \
-    SIMPLE_VAR(Bool_t, isBPTX0, false) \
-    SIMPLE_VAR(Bool_t, isBSCMinBias, false) \
-    SIMPLE_VAR(Bool_t, isBSCBeamHalo, false) \
-    SIMPLE_VAR(Bool_t, isPrimaryVertex, false) \
-    SIMPLE_VAR(Bool_t, isBeamScraping, false) \
+    SIMPLE_VAR(UInt_t, run) \
+    SIMPLE_VAR(UInt_t, EventId) \
+    SIMPLE_VAR(UInt_t, lumis) \
+    SIMPLE_VAR(Int_t, bunch) \
+    SIMPLE_VAR(Int_t, orbit) \
+    SIMPLE_VAR(UInt_t, unixTime) \
+    SIMPLE_VAR(UInt_t, microsecondOffset) \
+    SIMPLE_VAR(Bool_t, isdata) \
+    SIMPLE_VAR(Bool_t, isPhysDeclared)  \
+    SIMPLE_VAR(Bool_t, isBPTX0) \
+    SIMPLE_VAR(Bool_t, isBSCMinBias) \
+    SIMPLE_VAR(Bool_t, isBSCBeamHalo) \
+    SIMPLE_VAR(Bool_t, isPrimaryVertex) \
+    SIMPLE_VAR(Bool_t, isBeamScraping) \
     VECTOR_VAR(Int_t, nPU) \
     VECTOR_VAR(Int_t, bunchCrossing) \
     VECTOR_VAR(Float_t, trueNInt) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) type name;
-#define VECTOR_VAR(type, name) std::vector< type > name;
+#define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
+#define VECTOR_VAR(type, name) DECLARE_VECTOR_BRANCH_VARIABLE(type, name)
 DATA_CLASS(ntuple, Event, EVENT_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_DATA_TREE_BRANCH(type, name, default_value)
+#define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
 #define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
 TREE_CLASS(ntuple, EventTree, EVENT_DATA, Event, "events")
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) AddSimpleBranch(#name, data.name);
-#define VECTOR_VAR(type, name) AddVectorBranch(#name, data.name);
+#define SIMPLE_VAR(type, name) ADD_SIMPLE_DATA_TREE_BRANCH(name)
+#define VECTOR_VAR(type, name) ADD_VECTOR_DATA_TREE_BRANCH(name)
 TREE_CLASS_INITIALIZE(ntuple, EventTree, EVENT_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR

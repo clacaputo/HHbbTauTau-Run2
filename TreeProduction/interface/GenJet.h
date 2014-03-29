@@ -11,58 +11,29 @@
 #include "SmartTree.h"
 
 #define GENJET_DATA() \
-    SIMPLE_VAR(Float_t, pt, 0.0) \
-    SIMPLE_VAR(Float_t, eta, 0.0) \
-    SIMPLE_VAR(Float_t, phi, 0.0) \
-    SIMPLE_VAR(Float_t, energy, 0.0) \
-    SIMPLE_VAR(Float_t, emEnergy, 0.0) \
-    SIMPLE_VAR(Float_t, hadEnergy, 0.0) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, eta) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, energy) \
+    SIMPLE_VAR(Float_t, emEnergy) \
+    SIMPLE_VAR(Float_t, hadEnergy) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
-#define VECTOR_VAR(type, name) VECTOR_TREE_BRANCH(type, name)
-
-namespace ntuple {
-class GenJetTree : public root_ext::SmartTree {
-public:
-    static const std::string& Name() { static const std::string name = "genJets"; return name; }
-    GenJetTree() : SmartTree(Name(), "/", false) {}
-    GenJetTree(TFile& file)
-        : SmartTree(Name(), file) {}
-
-    SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
-    GENJET_DATA()
-};
-} // ntuple
-
-
+#define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
+#define VECTOR_VAR(type, name) DECLARE_VECTOR_BRANCH_VARIABLE(type, name)
+DATA_CLASS(ntuple, GenJet, GENJET_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) type name;
-#define VECTOR_VAR(type, name) std::vector< type > name;
-
-namespace ntuple {
-struct GenJet {
-    GENJET_DATA()
-    GenJet() {}
-    inline GenJet(GenJetTree& tree);
-};
-} // ntuple
-
+#define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
+#define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
+TREE_CLASS_WITH_EVENT_ID(ntuple, GenJetTree, GENJET_DATA, GenJet, "genJets")
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) name = tree.name();
-#define VECTOR_VAR(type, name) name = tree.name();
-
-namespace ntuple {
-inline GenJet::GenJet(GenJetTree& tree)
-{
-    GENJET_DATA()
-}
-} // ntuple
-
+#define SIMPLE_VAR(type, name) ADD_SIMPLE_DATA_TREE_BRANCH(name)
+#define VECTOR_VAR(type, name) ADD_VECTOR_DATA_TREE_BRANCH(name)
+TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, GenJetTree, GENJET_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef GENJET_DATA

@@ -18,7 +18,7 @@
 
 #include "TTree.h"
 
-#define SIMPLE_TREE_BRANCH(type, name, default_value) \
+#define SIMPLE_TREE_BRANCH(type, name) \
 private: type _##name; \
 public:  type& name() { return _##name; }
 
@@ -26,11 +26,14 @@ public:  type& name() { return _##name; }
 private: std::vector< type > _##name; \
 public:  std::vector< type >& name() { return _##name; }
 
-#define SIMPLE_DATA_TREE_BRANCH(type, name, default_value) \
+#define SIMPLE_DATA_TREE_BRANCH(type, name) \
     type& name() { return data.name; }
 
 #define VECTOR_DATA_TREE_BRANCH(type, name) \
     std::vector< type >& name() { return data.name; }
+
+#define DECLARE_SIMPLE_BRANCH_VARIABLE(type, name) type name;
+#define DECLARE_VECTOR_BRANCH_VARIABLE(type, name) std::vector< type > name;
 
 #define ADD_SIMPLE_TREE_BRANCH(name) AddSimpleBranch(#name, _##name);
 #define ADD_SIMPLE_DATA_TREE_BRANCH(name) AddSimpleBranch(#name, data.name);
@@ -49,7 +52,7 @@ public:  std::vector< type >& name() { return _##name; }
     class tree_class_name : public root_ext::SmartTree { \
     public: \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
-        inline tree_class_name() : SmartTree(Name(), "/", false) { Initialize(); } \
+        inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
         data_class_name data; \
         data_macro() \
@@ -64,10 +67,10 @@ public:  std::vector< type >& name() { return _##name; }
     class tree_class_name : public root_ext::SmartTree { \
     public: \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
-        inline tree_class_name() : SmartTree(Name(), "/", false) { Initialize(); } \
+        inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
         data_class_name data; \
-        SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
+        SIMPLE_TREE_BRANCH(UInt_t, EventId) \
         data_macro() \
     private: \
         inline void Initialize(); \
@@ -136,7 +139,7 @@ public:
         if(!tree)
             throw std::runtime_error("Tree not found.");
         if(tree->GetNbranches())
-            tree->SetBranchStatus("*", 0);
+            tree->SetBranchStatus("*");
     }
     virtual ~SmartTree()
     {

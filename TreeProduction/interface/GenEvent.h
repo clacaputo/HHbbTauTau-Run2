@@ -11,55 +11,26 @@
 #include "SmartTree.h"
 
 #define GENEVENT_DATA() \
-    SIMPLE_VAR(UInt_t, processID, 0) \
-    SIMPLE_VAR(Float_t, ptHat, 0.0) \
+    SIMPLE_VAR(UInt_t, processID) \
+    SIMPLE_VAR(Float_t, ptHat) \
     VECTOR_VAR(Double_t, pdfWeights) \
     /**/
 
-#define SIMPLE_VAR(type, name, default_value) SIMPLE_TREE_BRANCH(type, name, default_value)
-#define VECTOR_VAR(type, name) VECTOR_TREE_BRANCH(type, name)
-
-namespace ntuple {
-class GenEventTree : public root_ext::SmartTree {
-public:
-    static const std::string& Name() { static const std::string name = "genEvents"; return name; }
-    GenEventTree() : SmartTree(Name(), "/", false) {}
-    GenEventTree(TFile& file)
-        : SmartTree(Name(), file) {}
-
-    SIMPLE_TREE_BRANCH(UInt_t, EventId, 0) \
-    GENEVENT_DATA()
-};
-} // ntuple
-
-
+#define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
+#define VECTOR_VAR(type, name) DECLARE_VECTOR_BRANCH_VARIABLE(type, name)
+DATA_CLASS(ntuple, GenEvent, GENEVENT_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) type name;
-#define VECTOR_VAR(type, name) std::vector< type > name;
-
-namespace ntuple {
-struct GenEvent {
-    GENEVENT_DATA()
-    GenEvent() {}
-    inline GenEvent(GenEventTree& tree);
-};
-} // ntuple
-
+#define SIMPLE_VAR(type, name) SIMPLE_DATA_TREE_BRANCH(type, name)
+#define VECTOR_VAR(type, name) VECTOR_DATA_TREE_BRANCH(type, name)
+TREE_CLASS_WITH_EVENT_ID(ntuple, GenEventTree, GENEVENT_DATA, GenEvent, "genEvents")
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 
-#define SIMPLE_VAR(type, name, default_value) name = tree.name();
-#define VECTOR_VAR(type, name) name = tree.name();
-
-namespace ntuple {
-inline GenEvent::GenEvent(GenEventTree& tree)
-{
-    GENEVENT_DATA()
-}
-} // ntuple
-
+#define SIMPLE_VAR(type, name) ADD_SIMPLE_DATA_TREE_BRANCH(name)
+#define VECTOR_VAR(type, name) ADD_VECTOR_DATA_TREE_BRANCH(name)
+TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, GenEventTree, GENEVENT_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef GENEVENT_DATA
