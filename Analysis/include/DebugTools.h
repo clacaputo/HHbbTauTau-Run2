@@ -22,6 +22,7 @@ inline void PrintCommonTypeSizes()
     PRINT_SIZEOF(Int_t);
     PRINT_SIZEOF(UInt_t);
     PRINT_SIZEOF(Bool_t);
+    PRINT_SIZEOF(Long64_t);
     PRINT_SIZEOF(int);
     PRINT_SIZEOF(unsigned);
     PRINT_SIZEOF(float);
