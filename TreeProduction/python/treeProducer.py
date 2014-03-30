@@ -4,7 +4,7 @@ process = cms.Process("HTauTauTree")
 # Message Logger Settings
 #------------------------
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 10
+process.MessageLogger.cerr.FwkReport.reportEvery = 500
 
 
 from FWCore.ParameterSet.VarParsing import VarParsing
