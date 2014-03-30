@@ -152,15 +152,15 @@ protected:
         return selected;
     }
 
-    template<typename BaseSelectorMethod, typename ...Args>
+    template<typename BaseSelectorMethod>
     CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, bool signal,
                                    BaseSelectorMethod signal_selector_method,
-                                   BaseSelectorMethod bkg_selector_method, Args ...args)
+                                   BaseSelectorMethod bkg_selector_method)
     {
         const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return (this->*signal_selector_method)(id, enabled, _anaData, args...); };
+                -> Candidate { return (this->*signal_selector_method)(id, enabled, _anaData); };
         const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return (this->*bkg_selector_method)(id, enabled, _anaData, args...); };
+                -> Candidate { return (this->*bkg_selector_method)(id, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
 
         return CollectObjects(selection_histogram, n_objects, base_selector);
@@ -187,8 +187,13 @@ protected:
 
     CandidateVector CollectBJets(double csv, const std::string& selection_label, bool signal = true)
     {
-        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets().size(), signal,
-                              &BaseAnalyzer::SelectBJet, &BaseAnalyzer::SelectBackgroundBJet, csv, selection_label);
+        const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Candidate { return SelectBJet(id, enabled, _anaData, csv, selection_label); };
+        const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Candidate { return SelectBackgroundBJet(id, enabled, _anaData, csv, selection_label); };
+        const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
+
+        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets().size(), base_selector);
     }
 
     virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){

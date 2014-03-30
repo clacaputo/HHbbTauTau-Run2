@@ -12,6 +12,7 @@
 #include <string>
 #include <limits>
 #include <stdexcept>
+#include <memory>
 
 #include <TObject.h>
 #include <TH1D.h>

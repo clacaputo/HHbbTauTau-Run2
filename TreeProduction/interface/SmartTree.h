@@ -8,6 +8,7 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <memory>
 
 #ifdef SMART_TREE_FOR_CMSSW
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -117,7 +118,7 @@ namespace detail {
 
 class SmartTree {
 public:
-    explicit SmartTree(const std::string& name, const std::string& _directory = "", bool detachFromFile = true)
+    explicit SmartTree(const std::string& name, const std::string& _directory = "", Long64_t maxVirtualSize = 10000000)
         : readMode(false), directory(_directory)
     {
 #ifdef SMART_TREE_FOR_CMSSW
@@ -131,8 +132,9 @@ public:
 #else
         tree = new TTree(name.c_str(), name.c_str());
 #endif
-        if(detachFromFile)
-            tree->SetDirectory(0);
+        if(maxVirtualSize < 0)
+            tree->SetDirectory(0); // detach tree from directory making it "in memory".
+		tree->SetMaxVirtualSize(maxVirtualSize);
     }
     SmartTree(const std::string& name, TFile& file)
         : readMode(true)

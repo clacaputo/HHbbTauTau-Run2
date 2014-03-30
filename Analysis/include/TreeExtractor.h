@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <limits>
+
 #include "EventDescriptor.h"
 
 namespace analysis {
