@@ -21,9 +21,7 @@
     SIMPLE_VAR(Float_t, X) \
     SIMPLE_VAR(Float_t, Y) \
     SIMPLE_VAR(Float_t, Z) \
-    SIMPLE_VAR(UInt_t, Index) \
     VECTOR_VAR(UInt_t, Mother_Indexes) \
-    VECTOR_VAR(UInt_t, Daughter_Indexes) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
