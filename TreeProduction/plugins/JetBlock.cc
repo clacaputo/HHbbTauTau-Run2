@@ -25,7 +25,7 @@
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Jet.h"
 
-#define SIMPLE_VAR(type, name, default_value) jetTree.name() = jet.bDiscriminator(#name);
+#define SIMPLE_VAR(type, name) jetTree.name() = jet.bDiscriminator(#name);
 
 namespace {
 PFJetIDSelectionFunctor pfjetIDLoose(PFJetIDSelectionFunctor::FIRSTDATA, PFJetIDSelectionFunctor::LOOSE);

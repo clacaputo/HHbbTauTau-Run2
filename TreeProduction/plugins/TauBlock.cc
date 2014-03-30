@@ -30,7 +30,7 @@
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Tau.h"
 
-#define SIMPLE_VAR(type, name, default_value) tauTree.name() = patTau.tauID(#name);
+#define SIMPLE_VAR(type, name) tauTree.name() = patTau.tauID(#name);
 
 class TauBlock : public edm::EDAnalyzer {
 public:
