@@ -46,19 +46,18 @@ public:
         if(n >= genParticles.size())
             throw std::runtime_error("GenParticles index is out of range.");
         const ntuple::GenParticle& ntupleGenParticle = genParticles.at(n);
-        if(ntupleGenParticle.Index != index)
-            throw std::runtime_error("bad index");
+//        if(ntupleGenParticle.Index != index)
+//            throw std::runtime_error("bad index");
         pdg = particles::PdgParticle(ntupleGenParticle.PdgId);
         status = particles::NameProvider<particles::Status>::Convert(ntupleGenParticle.Status);
         momentum.SetXYZT(ntupleGenParticle.Px, ntupleGenParticle.Py,ntupleGenParticle.Pz,ntupleGenParticle.E);
     }
 
-
     void Initialize(const ntuple::GenParticleVector& ntupleGenParticles, GenParticleVector& particles)
     {
         const ntuple::GenParticle& ntupleGenParticle = ntupleGenParticles.at(index);
         mothers.reserve(ntupleGenParticle.Mother_Indexes.size());
-        daughters.reserve(ntupleGenParticle.Daughter_Indexes.size());
+        //daughters.reserve(ntupleGenParticle.Daughter_Indexes.size());
         for (unsigned motherIndex : ntupleGenParticle.Mother_Indexes){
             GenParticle* mother = &particles.at(motherIndex);
             mothers.push_back(mother);
