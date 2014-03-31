@@ -7,3 +7,4 @@ PatProduction/python/crab.history
 PatProduction/python/*.log
 *~
 /TreeData
+cmsenv.sh
