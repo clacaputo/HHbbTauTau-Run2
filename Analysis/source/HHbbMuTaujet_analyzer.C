@@ -53,16 +53,8 @@ protected:
         cut(!electrons.size(), "no_electron");
 
         const CandidateVector b_jets_loose = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
-        const CandidateVector b_jets_medium = CollectBJets(cuts::Htautau_Summer13::btag::CSVM, "medium");
-        cut.test(b_jets_loose.size() == 2, "2b_loose");
-        cut.test(b_jets_loose.size() == 2 && b_jets_medium.size() >= 1, "1b_loose+1b_medium");
-        if (cut.test(b_jets_medium.size() == 2, "2b_medium")){
-            const Candidate Higgs_bb(Candidate::Higgs, b_jets_medium.at(0), b_jets_medium.at(1));
-            anaData.BB_mass().Fill(Higgs_bb.momentum.M());
-        }
-        cut.test(b_jets_loose.size() >= 2, ">=2b_loose");
-        cut.test(b_jets_loose.size() >= 2 && b_jets_medium.size() >= 1, ">=1b_loose+>=1b_medium");
-        cut.test(b_jets_medium.size() >= 2, ">=2b_medium");
+        cut(b_jets_loose.size() >= 2, ">=2b_loose");
+
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)

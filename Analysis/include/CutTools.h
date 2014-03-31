@@ -66,15 +66,15 @@ void fill_selection_histogram(TH1D& selection_histogram, const TH1D& counter_his
     }
 }
 
-template<typename Selector>
-analysis::CandidateVector collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, size_t n_objects,
+template<typename ObjectType, typename Selector>
+std::vector<ObjectType> collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, size_t n_objects,
                            const Selector& selector)
 {
-    analysis::CandidateVector selected;
+    std::vector<ObjectType> selected;
     counter_histogram.Reset();
     for (size_t n = 0; n < n_objects; ++n) {
         try {
-            const analysis::Candidate selectedCandidate = selector(n);
+            const ObjectType selectedCandidate = selector(n);
             selected.push_back(selectedCandidate);
         } catch(cuts::cut_failed&) {}
     }

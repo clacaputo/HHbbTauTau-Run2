@@ -35,6 +35,9 @@
 #define X(name) \
     cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
 
+#define Y(name) \
+    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label) )
+
 namespace analysis {
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
@@ -60,6 +63,7 @@ public:
         }
     }
 
+    SELECTION_ENTRY(VertexSelection, 15)
     SELECTION_ENTRY(MuonSelection, 15)
     SELECTION_ENTRY(TauSelection, 15)
     SELECTION_ENTRY(ElectronSelection, 15)
@@ -141,13 +145,15 @@ protected:
     virtual SignalAnalyzerData& GetAnaData() = 0;
     virtual void ProcessEvent() = 0;
 
-    CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, const BaseSelector& base_selector)
+    template<typename ObjectType, typename BaseSelectorType>
+    std::vector<ObjectType> CollectObjects(TH1D& selection_histogram, size_t n_objects,
+                                           const BaseSelectorType& base_selector)
     {
-        const auto selector = [&](size_t id) -> analysis::Candidate
+        const auto selector = [&](size_t id) -> ObjectType
             { return base_selector(id, true, anaDataBeforeCut); };
 
-        const auto selected = cuts::collect_objects(GetAnaData().Counter(), selection_histogram, n_objects, selector);
-        for(const Candidate& candidate : selected)
+        const auto selected = cuts::collect_objects<ObjectType>(GetAnaData().Counter(), selection_histogram, n_objects, selector);
+        for(const ObjectType& candidate : selected)
             base_selector(candidate.index, false, anaDataAfterCut);
         return selected;
     }
@@ -163,7 +169,7 @@ protected:
                 -> Candidate { return (this->*bkg_selector_method)(id, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
 
-        return CollectObjects(selection_histogram, n_objects, base_selector);
+        return CollectObjects<Candidate>(selection_histogram, n_objects, base_selector);
 
     }
 
@@ -193,7 +199,15 @@ protected:
                 -> Candidate { return SelectBackgroundBJet(id, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
 
-        return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets().size(), base_selector);
+        return CollectObjects<Candidate>(GetAnaData().BJetSelection(selection_label), event.jets().size(), base_selector);
+    }
+
+    VertexVector CollectVertices()
+    {
+        const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Vertex { return SelectVertex(id, enabled, _anaData); };
+
+        return CollectObjects<Vertex>(GetAnaData().VertexSelection(), event.vertices().size(), base_selector);
     }
 
     virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
@@ -215,6 +229,24 @@ protected:
         throw std::runtime_error("Electron selection for background not implemented");
     }
 
+
+    Vertex SelectVertex(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    {
+        using namespace cuts::Htautau_Summer13::vertex;
+        const std::string selection_label = "";
+        cuts::Cutter cut(anaData.Counter(), anaData.VertexSelection(), enabled);
+        const ntuple::Vertex& object = event.vertices().at(id);
+
+        cut(true, ">0 vertex");
+        cut(X(ndf) >= ndf, "ndf");
+        cut(std::abs( X(z) ) < z, "z");
+        const double r_vertex = std::sqrt(object.x*object.x+object.y*object.y);
+        cut(std::abs( Y(r_vertex) ) < r, "r");
+
+
+        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+    }
+
     Candidate SelectBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData,
                          double csv, const std::string& selection_label)
     {
@@ -225,7 +257,7 @@ protected:
         cut(true, ">0 b-jet cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
+        cut(X(combinedSecondaryVertexBJetTags) > csv, "CSV");
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
@@ -242,7 +274,6 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
         cut(X(passLooseID) == passLooseID, "passLooseID");
-        //DeltaR with leptons is missing
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }

@@ -13,6 +13,16 @@
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Vertex.h"
 
+//double sum=0;
+//020   for (reco::Vertex::trackRef_iterator i=v.tracks_begin(); i!=v.tracks_end(); ++i) {
+//021     double pt = (*i)->pt();
+//022     if (pt > 2.5) { // Don't count tracks below 2.5 GeV
+//023       if (pt > 10.0) pt = 10.0;
+//024       sum += pt*pt;
+//025     }
+//026   }
+//027   return sum;
+
 class VertexBlock : public edm::EDAnalyzer {
 public:
     explicit VertexBlock(const edm::ParameterSet& iConfig) :

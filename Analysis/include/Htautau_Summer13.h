@@ -141,7 +141,7 @@ namespace btag {
 }
 
 namespace vertex {
-    const double ndof = 4; // >= twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
+    const double ndf = 4; // >= twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const double z = 24.0; // < cm, twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const double r = 2.0; // < cm, twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const bool chooseHighestSumPt2 = true; // = AN-13-188
