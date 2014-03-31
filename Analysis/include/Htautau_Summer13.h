@@ -117,6 +117,7 @@ namespace electronID{
         const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
         const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
                                                   // loose HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double deltaR_signalLeptons = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
     }
 }
 

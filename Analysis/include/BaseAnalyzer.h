@@ -190,7 +190,7 @@ protected:
         const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
                 -> Candidate { return SelectBJet(id, enabled, _anaData, csv, selection_label); };
         const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return SelectBackgroundBJet(id, enabled, _anaData, csv, selection_label); };
+                -> Candidate { return SelectBackgroundBJet(id, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
 
         return CollectObjects(GetAnaData().BJetSelection(selection_label), event.jets().size(), base_selector);
@@ -230,11 +230,10 @@ protected:
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
 
-    Candidate SelectBackgroundBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData,
-                                   double csv, const std::string& _selection_label)
+    Candidate SelectBackgroundBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::btag::veto;
-        const std::string selection_label = _selection_label + "_bkg";
+        const std::string selection_label = "_bkg";
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
 
         const ntuple::Jet& object = event.jets().at(id);
