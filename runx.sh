@@ -63,7 +63,7 @@ g++ -std=c++0x -Wall -O3 \
 
 RESULT=$?
 if [[ $RESULT -eq 0 ]] ; then
-        /usr/bin/time -v $EXE_NAME
+        $EXE_NAME
 	rm -f "$EXE_NAME"
 fi
 rm -f "$CODE_OUT"

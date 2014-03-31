@@ -103,15 +103,6 @@ public:
         detail::CreateForest(*forest, *inputFile, extractMCtruth);
     }
 
-    ~TreeExtractor()
-    {
-        forest = std::shared_ptr<detail::Forest>();
-//        inputFile = std::shared_ptr<TFile>();
-        std::cout << "~TreeExtractor";
-        int x;
-        std::cin >> x;
-    }
-
     bool ExtractNext(EventDescriptor& descriptor)
     {
         descriptor.Clear();
