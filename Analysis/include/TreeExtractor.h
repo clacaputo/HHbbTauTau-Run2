@@ -10,7 +10,8 @@
 
 #include <limits>
 #include <iostream>
-
+#include <queue>
+#include <fstream>
 #include "EventDescriptor.h"
 
 namespace analysis {
@@ -93,26 +94,59 @@ ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
 
 class TreeExtractor{
 public:
-    TreeExtractor(const std::string& inputFileName, bool extractMCtruth)
-        : inputFile(new TFile(inputFileName.c_str(), "READ")), forest(new detail::Forest()),
-          current_entry(-1)
-    {
-        if(inputFile->IsZombie())
-            throw std::runtime_error("Input file not found.");
+    TreeExtractor(const std::string& input, bool _extractMCtruth)
+        :  extractMCtruth(_extractMCtruth)
 
-        detail::CreateForest(*forest, *inputFile, extractMCtruth);
+    {
+        if (input.find(".root") != std::string::npos)
+            inputFileNames.push(input);
+        else if (input.find(".txt") != std::string::npos){
+            std::ifstream inputStream(input);
+            while (inputStream.good()) {
+                std::string inputFileName;
+                std::getline(inputStream,inputFileName);
+                inputFileNames.push(inputFileName);
+              }
+        }
+        else throw std::runtime_error("Unrecognized input");
+        if (!OpenNextFile())
+            throw std::runtime_error("No inputFile found");
     }
 
     bool ExtractNext(EventDescriptor& descriptor)
     {
         descriptor.Clear();
-        return detail::ReadForest(*forest, descriptor.data(), current_entry);
+        do {
+            if (detail::ReadForest(*forest, descriptor.data(), current_entry))
+                return true;
+        } while (OpenNextFile());
+        return false;
     }
 
 private:
     std::shared_ptr<TFile> inputFile;
+    std::queue<std::string> inputFileNames;
     std::shared_ptr<detail::Forest> forest;
     Long64_t current_entry;
+    bool extractMCtruth;
+
+    bool OpenNextFile()
+    {
+        if (inputFileNames.empty()) return false;
+        const std::string fileName = inputFileNames.front();
+        inputFileNames.pop();
+        forest = std::shared_ptr<detail::Forest>(new detail::Forest());
+        inputFile = std::shared_ptr<TFile>(new TFile(fileName.c_str(), "READ"));
+        if(inputFile->IsZombie()){
+            std::ostringstream ss;
+            ss << "Input file " << fileName << " not found." ;
+            throw std::runtime_error(ss.str());
+        }
+        std::cout << "File " << fileName << " open" << std::endl;
+        current_entry = -1;
+        detail::CreateForest(*forest, *inputFile, extractMCtruth);
+        return true;
+    }
 };
 
 } // analysis
