@@ -1,14 +1,16 @@
 #!/bin/bash
 
-if [ $# -ne 4 ] ; then
-    echo "Usage: file_list_path output_path global_tag include_sim"
+if [ $# -ne 6 ] ; then
+    echo "Usage: queue max_n_parallel_jobs file_list_path output_path global_tag include_sim"
     exit
 fi
 
-FILE_LIST_PATH=$1
-OUTPUT_PATH=$2
-GLOBAL_TAG=$3
-INCLUDE_SIM=$4
+QUEUE=$1
+MAX_N_PARALLEL_JOBS=$2
+FILE_LIST_PATH=$3
+OUTPUT_PATH=$4
+GLOBAL_TAG=$5
+INCLUDE_SIM=$6
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runTreeProducer.sh
@@ -51,9 +53,24 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
 	exit
 fi
 
-for NAME in $JOBS ; do
-    bsub -q local -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
-                                            $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
-done
+i=0
 
-echo "$N_JOBS have been submited."
+if [ "$QUEUE" = "local" ] ; then
+    for NAME in $JOBS ; do
+        bsub -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+                                            $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
+    done
+    echo "$N_JOBS have been submited in local"
+elif [ "$QUEUE" = "fai5" -o "$QUEUE" = "fai" ] ; then
+    for NAME in $JOBS ; do
+        bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+                                                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
+        i=$(($i + 1))
+        if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
+                wait
+                i=0
+        fi
+    done
+    wait
+    echo "$MAX_N_PARALLEL_JOBS finished on fai"
+fi
