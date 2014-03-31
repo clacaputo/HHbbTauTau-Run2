@@ -9,6 +9,7 @@
 #pragma once
 
 #include <limits>
+#include <iostream>
 
 #include "EventDescriptor.h"
 
@@ -93,23 +94,33 @@ ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
 class TreeExtractor{
 public:
     TreeExtractor(const std::string& inputFileName, bool extractMCtruth)
-        : inputFile(new TFile(inputFileName.c_str(), "READ")), current_entry(-1)
+        : inputFile(new TFile(inputFileName.c_str(), "READ")), forest(new detail::Forest()),
+          current_entry(-1)
     {
         if(inputFile->IsZombie())
             throw std::runtime_error("Input file not found.");
 
-        detail::CreateForest(forest, *inputFile, extractMCtruth);
+        detail::CreateForest(*forest, *inputFile, extractMCtruth);
+    }
+
+    ~TreeExtractor()
+    {
+        forest = std::shared_ptr<detail::Forest>();
+//        inputFile = std::shared_ptr<TFile>();
+        std::cout << "~TreeExtractor";
+        int x;
+        std::cin >> x;
     }
 
     bool ExtractNext(EventDescriptor& descriptor)
     {
         descriptor.Clear();
-        return detail::ReadForest(forest, descriptor.data(), current_entry);
+        return detail::ReadForest(*forest, descriptor.data(), current_entry);
     }
 
 private:
     std::shared_ptr<TFile> inputFile;
-    detail::Forest forest;
+    std::shared_ptr<detail::Forest> forest;
     Long64_t current_entry;
 };
 

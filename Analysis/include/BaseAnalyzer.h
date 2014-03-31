@@ -84,7 +84,10 @@ class Timer {
 public:
     typedef std::chrono::high_resolution_clock clock;
     Timer(unsigned _report_interval)
-        : start(clock::now()), block_start(start), report_interval(_report_interval) {}
+        : start(clock::now()), block_start(start), report_interval(_report_interval)
+    {
+        std::cout << "Starting analyzer...\n";
+    }
 
     void Report(size_t event_id, bool final_report = false)
     {
@@ -111,18 +114,15 @@ class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
                         size_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
-        : treeExtractor(inputFileName, _useMCtruth), outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
-          anaDataBeforeCut(*outputFile, "before_cut"),anaDataAfterCut(*outputFile, "after_cut"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth)
-    {
-        std::cout << "Starting analyzer...\n";
-    }
+        : timer(10), treeExtractor(inputFileName, _useMCtruth),
+          outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
+          anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth) {}
 
     virtual ~BaseAnalyzer() {}
 
     void Run()
     {
-        Timer timer(10);
         size_t n = 0;
         for(; !maxNumberOfEvents || n < maxNumberOfEvents; ++n) {
             if(!treeExtractor.ExtractNext(event))
@@ -311,6 +311,7 @@ protected:
     }
 
 protected:
+    Timer timer;
     EventDescriptor event;
     TreeExtractor treeExtractor;
     std::shared_ptr<TFile> outputFile;
