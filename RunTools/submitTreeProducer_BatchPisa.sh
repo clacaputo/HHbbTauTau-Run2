@@ -64,7 +64,7 @@ if [ "$QUEUE" = "local" ] ; then
 elif [ "$QUEUE" = "fai5" -o "$QUEUE" = "fai" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
-                                                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
+                                                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
         i=$(($i + 1))
         if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
                 wait
