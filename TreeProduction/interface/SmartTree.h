@@ -134,7 +134,8 @@ public:
 #endif
         if(maxVirtualSize < 0)
             tree->SetDirectory(0); // detach tree from directory making it "in memory".
-		tree->SetMaxVirtualSize(maxVirtualSize);
+        else
+            tree->SetMaxVirtualSize(maxVirtualSize);
     }
     SmartTree(const std::string& _name, TFile& _file)
         : name(_name), file(&_file), readMode(true)
