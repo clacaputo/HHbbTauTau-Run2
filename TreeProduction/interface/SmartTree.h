@@ -118,8 +118,8 @@ namespace detail {
 
 class SmartTree {
 public:
-    explicit SmartTree(const std::string& name, const std::string& _directory = "", Long64_t maxVirtualSize = 10000000)
-        : readMode(false), directory(_directory)
+    explicit SmartTree(const std::string& _name, const std::string& _directory = "", Long64_t maxVirtualSize = 10000000)
+        : name(_name), file(nullptr), readMode(false), directory(_directory)
     {
 #ifdef SMART_TREE_FOR_CMSSW
         edm::Service<TFileService> tfserv;
@@ -136,14 +136,14 @@ public:
             tree->SetDirectory(0); // detach tree from directory making it "in memory".
 		tree->SetMaxVirtualSize(maxVirtualSize);
     }
-    SmartTree(const std::string& name, TFile& file)
-        : readMode(true)
+    SmartTree(const std::string& _name, TFile& _file)
+        : name(_name), file(&_file), readMode(true)
     {
-        tree = static_cast<TTree*>(file.Get(name.c_str()));
+        tree = static_cast<TTree*>(file->Get(name.c_str()));
         if(!tree)
             throw std::runtime_error("Tree not found.");
         if(tree->GetNbranches())
-            tree->SetBranchStatus("*");
+            tree->SetBranchStatus("*", 0);
     }
     SmartTree(const SmartTree& other)
     {
@@ -160,10 +160,8 @@ public:
 
     virtual ~SmartTree()
     {
-//#ifndef SMART_TREE_FOR_CMSSW
-        if(!readMode)
-            delete tree;
-//#endif
+        if(readMode) file->Delete(name.c_str());
+        else delete tree;
     }
 
     void Fill()
@@ -236,6 +234,8 @@ protected:
     }
 
 private:
+    std::string name;
+    TFile* file;
     std::map< std::string, std::shared_ptr<detail::BaseSmartTreeEntry> > entries;
     bool readMode;
     TTree* tree;
