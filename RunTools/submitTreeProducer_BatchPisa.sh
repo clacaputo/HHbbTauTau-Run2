@@ -61,7 +61,7 @@ if [ "$QUEUE" = "local" ] ; then
                                             $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
     done
     echo "$N_JOBS have been submited in local"
-elif [ "$QUEUE" = "fai5" -o "$QUEUE" = "fai" ] ; then
+elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
                                                 $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
@@ -72,5 +72,19 @@ elif [ "$QUEUE" = "fai5" -o "$QUEUE" = "fai" ] ; then
         fi
     done
     wait
+    echo "$MAX_N_PARALLEL_JOBS finished on fai5"
+elif [ "$QUEUE" = "fai" ] ; then
+    for NAME in $JOBS ; do
+        bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH \
+                                                        $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
+        i=$(($i + 1))
+        if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
+                wait
+                i=0
+        fi
+    done
+    wait
     echo "$MAX_N_PARALLEL_JOBS finished on fai"
+else
+    echo "unknow queue"
 fi
