@@ -17,6 +17,7 @@ public:
 
     ENTRY_1D(float, LeadTau_Pt_MC)
     ENTRY_1D(float, SubleadingTau_Pt_MC)
+    ENTRY_1D(float, DR_tauJets_MC)
     ENTRY_1D(float, PV_sumPtSquared)
     ENTRY_1D(float, ResonanceDeltaZ_PV)
     ENTRY_1D(float, ResonanceDeltaR_PV)
@@ -85,12 +86,12 @@ protected:
     virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::TauTau;
-        const std::string selection_label = "";
+        const std::string selection_label = "tau";
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt) > pt, "pt");
+        cut(X(pt) > pt_sublead, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_tight");
@@ -118,7 +119,8 @@ protected:
                 subleading_tau = higgs.daughters.at(0);
             }
             const ntuple::Tau& ntuple_subleadingTau = event.taus().at(subleading_tau->index);
-            if(ntuple_subleadingTau.againstElectronLooseMVA5 == againstElectronLooseMVA5)
+            if(ntuple_subleadingTau.againstElectronLooseMVA5 > againstElectronLooseMVA5
+                    && leading_tau->momentum.Pt() > pt_lead)
                 result.push_back(higgs);
         }
         return result;
@@ -154,6 +156,8 @@ protected:
 
         anaData.LeadTau_Pt_MC().Fill(finalState.leading_tau_jet->momentum.Pt());
         anaData.SubleadingTau_Pt_MC().Fill(finalState.subleading_tau_jet->momentum.Pt());
+        const double deltaR = finalState.leading_tau_jet->momentum.DeltaR(finalState.subleading_tau_jet->momentum);
+        anaData.DR_tauJets_MC().Fill(deltaR);
         return true;
     }
 

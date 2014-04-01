@@ -36,7 +36,9 @@ namespace tauID {
                                                       // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
     }
     namespace TauTau {
-        const double pt = 45; // > AN-13-189
+        //const double pt = 45; // > AN-13-189
+        const double pt_lead = 25; // > AN-2013-187
+        const double pt_sublead = 20; // > AN-2013-187
         const double eta = 2.1; // < AN-13-189
         const double decayModeFinding = 0.5; // > AN-10-82
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation

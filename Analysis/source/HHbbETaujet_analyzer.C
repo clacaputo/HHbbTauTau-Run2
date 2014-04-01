@@ -88,7 +88,7 @@ protected:
     virtual analysis::Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::electronID::ETau;
-        const std::string selection_label = "";
+        const std::string selection_label = "electron";
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
         const ntuple::Electron& object = event.electrons().at(id);
 
@@ -114,7 +114,7 @@ protected:
     virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::ETau;
-        const std::string selection_label = "";
+        const std::string selection_label = "tau";
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
         const ntuple::Tau& object = event.taus().at(id);
 
