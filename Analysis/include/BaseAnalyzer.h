@@ -234,7 +234,7 @@ protected:
     Vertex SelectVertex(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::vertex;
-        const std::string selection_label = "";
+        const std::string selection_label = "vertex";
         cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().VertexSelection(), enabled);
         const ntuple::Vertex& object = event.vertices().at(id);
 
@@ -400,7 +400,7 @@ protected:
         return true;
     }
 
-    CandidateVector ApplyVetos(const CandidateVector& Resonances)
+    CandidateVector ApplyVetos(const CandidateVector& Resonances, cuts::Cutter& cut)
     {
         const auto electrons_bkg = CollectElectrons(false);
         const auto resonances_noEle = FilterBackground(Resonances,electrons_bkg,

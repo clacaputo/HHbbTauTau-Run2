@@ -67,7 +67,7 @@ public:
     double sumPtSquared;
     unsigned ndf;
 
-    Vertex() : index(0), sumPt(0), ndf(0) {}
+    Vertex() : index(0), sumPtSquared(0), ndf(0) {}
 
     template <typename NtupleObject>
     Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPtSquared(ntupleObject.sumPtSquare),

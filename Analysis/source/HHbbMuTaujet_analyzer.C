@@ -68,7 +68,7 @@ protected:
                    cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_mu_tau");
         cut(Higgses_mu_tau.size(), "H_mu_tau");
 
-        const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
+        const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "bjets_loose");
         cut(b_jets.size() >= 2, ">=2b_loose");
 
         const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
@@ -81,7 +81,7 @@ protected:
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        ApplyVetos(Resonances);
+        ApplyVetos(Resonances, cut);
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)

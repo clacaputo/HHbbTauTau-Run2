@@ -64,9 +64,9 @@ protected:
         const auto taus = CollectTaus(true);
         cut(taus.size(), "tau");
 
-        const auto Higgses_mu_tau = FindCompatibleObjects(muons, taus,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_mu_tau");
-        cut(Higgses_mu_tau.size(), "H_mu_tau");
+        const auto Higgses_e_tau = FindCompatibleObjects(electrons, taus,
+                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_e_tau");
+        cut(Higgses_e_tau.size(), "H_e_tau");
 
         const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
         cut(b_jets.size() >= 2, ">=2b_loose");
@@ -76,42 +76,44 @@ protected:
         cut(Higgses_bb.size(), "H_bb");
 
         const auto Resonances =
-                FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, 1,analysis::Candidate::Resonance, "resonance");
+                FindCompatibleObjects(Higgses_e_tau, Higgses_bb, cuts::minDeltaR_betweenHiggses,
+                                      analysis::Candidate::Resonance, "resonance");
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        ApplyVetos(Resonances);
+        ApplyVetos(Resonances,cut);
 
     }
 
     virtual analysis::Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::Htautau_Summer13::muonID::MuTau;
+        using namespace cuts::Htautau_Summer13::electronID::ETau;
         const std::string selection_label = "";
         cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
-        const ntuple::Muon& object = event.muons().at(id);
+        const ntuple::Electron& object = event.electrons().at(id);
 
-        cut(true, ">0 mu cand");
+        cut(true, ">0 ele cand");
         cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon) == isPFMuon, "PF");
-        cut(X(nMatchedStations) > nMatched_Stations, "stations");
-        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
-        cut(X(pixHits) > pixHits, "pix_hits");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
+                               eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
-        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (mu_vertex - primaryVertex.position).Perp();
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
+        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
+        const double dB_PV = (ele_vertex - primaryVertex.position).Perp();
         cut(std::abs( Y(dB_PV) ) < dB, "dB");
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::Htautau_Summer13::tauID::MuTau;
+        using namespace cuts::Htautau_Summer13::tauID::ETau;
         const std::string selection_label = "";
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
         const ntuple::Tau& object = event.taus().at(id);
@@ -121,8 +123,8 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
-        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
-        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
+        cut(X(againstElectronMediumMVA5) > againstElectronMediumMVA5, "vs_e_mediumMVA");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
