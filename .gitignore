@@ -8,3 +8,4 @@ PatProduction/python/*.log
 *~
 /TreeData
 cmsenv.sh
+.DS_Store

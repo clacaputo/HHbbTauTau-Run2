@@ -73,6 +73,9 @@ public:
     SELECTION_ENTRY(ElectronSelectionBkg, 15)
     SELECTION_ENTRY(BJetSelectionBkg, 15)
 
+    ENTRY_1D(unsigned, N_objects)
+    ENTRY_1D(float, Mass)
+
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
     ENTRY_1D(float, Resonance_Mass)
     ENTRY_1D(float, Resonance_Pt)
@@ -151,7 +154,7 @@ protected:
 
     template<typename ObjectType, typename BaseSelectorType>
     std::vector<ObjectType> CollectObjects(TH1D& selection_histogram, size_t n_objects,
-                                           const BaseSelectorType& base_selector)
+                                           const BaseSelectorType& base_selector, const std::string& hist_name)
     {
         const auto selector = [&](size_t id) -> ObjectType
             { return base_selector(id, true, anaDataBeforeCut); };
@@ -159,40 +162,41 @@ protected:
         const auto selected = cuts::collect_objects<ObjectType>(GetAnaData().Counter(), selection_histogram, n_objects, selector);
         for(const ObjectType& candidate : selected)
             base_selector(candidate.index, false, anaDataAfterCut);
+        GetAnaData().N_objects(hist_name).Fill(selected.size());
         return selected;
     }
 
     template<typename BaseSelectorMethod>
     CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, bool signal,
                                    BaseSelectorMethod signal_selector_method,
-                                   BaseSelectorMethod bkg_selector_method)
+                                   BaseSelectorMethod bkg_selector_method, const std::string& hist_name)
     {
         const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
                 -> Candidate { return (this->*signal_selector_method)(id, enabled, _anaData); };
         const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
                 -> Candidate { return (this->*bkg_selector_method)(id, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
-
-        return CollectObjects<Candidate>(selection_histogram, n_objects, base_selector);
+        const std::string real_hist_name = signal ? hist_name : hist_name + "_bkg";
+        return CollectObjects<Candidate>(selection_histogram, n_objects, base_selector, real_hist_name);
 
     }
 
     CandidateVector CollectMuons(bool signal = true)
     {
         return CollectObjects(GetAnaData().MuonSelection(), event.muons().size(), signal,
-                              &BaseAnalyzer::SelectMuon, &BaseAnalyzer::SelectBackgroundMuon);
+                              &BaseAnalyzer::SelectMuon, &BaseAnalyzer::SelectBackgroundMuon, "muons");
     }
 
     CandidateVector CollectTaus(bool signal = true)
     {
         return CollectObjects(GetAnaData().TauSelection(), event.taus().size(), signal,
-                              &BaseAnalyzer::SelectTau, &BaseAnalyzer::SelectBackgroundTau);
+                              &BaseAnalyzer::SelectTau, &BaseAnalyzer::SelectBackgroundTau, "taus");
     }
 
     CandidateVector CollectElectrons(bool signal = true)
     {
         return CollectObjects(GetAnaData().ElectronSelection(), event.electrons().size(), signal,
-                              &BaseAnalyzer::SelectElectron, &BaseAnalyzer::SelectBackgroundElectron);
+                              &BaseAnalyzer::SelectElectron, &BaseAnalyzer::SelectBackgroundElectron, "electrons");
     }
 
     CandidateVector CollectBJets(double csv, const std::string& selection_label, bool signal = true)
@@ -203,7 +207,8 @@ protected:
                 -> Candidate { return SelectBackgroundBJet(id, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
 
-        return CollectObjects<Candidate>(GetAnaData().BJetSelection(selection_label), event.jets().size(), base_selector);
+        return CollectObjects<Candidate>(GetAnaData().BJetSelection(selection_label), event.jets().size(), base_selector
+                                         , "bjets");
     }
 
     VertexVector CollectVertices()
@@ -211,7 +216,7 @@ protected:
         const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
                 -> Vertex { return SelectVertex(id, enabled, _anaData); };
 
-        return CollectObjects<Vertex>(GetAnaData().VertexSelection(), event.vertices().size(), base_selector);
+        return CollectObjects<Vertex>(GetAnaData().VertexSelection(), event.vertices().size(), base_selector, "vertices");
     }
 
     virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
@@ -222,15 +227,6 @@ protected:
     }
     virtual Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
         throw std::runtime_error("Electron selection for signal not implemented");
-    }
-    virtual Candidate SelectBackgroundMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
-        throw std::runtime_error("Muon selection for background not implemented");
-    }
-    virtual Candidate SelectBackgroundTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
-        throw std::runtime_error("Tau selection for background not implemented");
-    }
-    virtual Candidate SelectBackgroundElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
-        throw std::runtime_error("Electron selection for background not implemented");
     }
 
 
@@ -281,9 +277,67 @@ protected:
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
 
-    template<typename Histogram>
-    static CandidateVector FindCompatibleObjects(const CandidateVector& objects1, const CandidateVector& objects2,
-                                                 double minDeltaR, Candidate::Type type, Histogram& mass)
+    virtual analysis::Candidate SelectBackgroundElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    {
+        using namespace cuts::Htautau_Summer13::electronID::veto;
+        const std::string selection_label = "bkg";
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().ElectronSelectionBkg(), enabled);
+        const ntuple::Electron& object = event.electrons().at(id);
+
+        cut(true, ">0 ele cand");
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
+                               eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
+        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+
+        return analysis::Candidate(analysis::Candidate::Electron, id, object);
+    }
+
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    {
+        using namespace cuts::Htautau_Summer13::muonID::veto;
+        const std::string selection_label = "bkg";
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().MuonSelectionBkg(), enabled);
+        const ntuple::Muon& object = event.muons().at(id);
+
+        cut(true, ">0 mu cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(isTightMuon) == isTightMuon, "tight");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+
+        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+    }
+
+    virtual analysis::Candidate SelectBackgroundTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    {
+        using namespace cuts::Htautau_Summer13::tauID::veto;
+        const std::string selection_label = "bkg";
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().TauSelectionBkg(), enabled);
+        const ntuple::Tau& object = event.taus().at(id);
+
+        cut(true, ">0 tau cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+
+        return analysis::Candidate(analysis::Candidate::Tau, id, object);
+    }
+
+
+    CandidateVector FindCompatibleObjects(const CandidateVector& objects1, const CandidateVector& objects2,
+                                                 double minDeltaR, Candidate::Type type, const std::string& hist_name)
     {
         CandidateVector result;
         for(const Candidate& object1 : objects1) {
@@ -291,16 +345,17 @@ protected:
                 if(object2.momentum.DeltaR(object1.momentum) > minDeltaR) {
                     const Candidate candidate(type, object1, object2);
                     result.push_back(candidate);
-                    mass.Fill(candidate.momentum.M());
+                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
                 }
             }
         }
+        GetAnaData().N_objects(hist_name).Fill(result.size());
         return result;
     }
 
-    template<typename Histogram>
-    static CandidateVector FindCompatibleObjects(const CandidateVector& objects,
-                                                 double minDeltaR, Candidate::Type type, Histogram& mass)
+
+    CandidateVector FindCompatibleObjects(const CandidateVector& objects,
+                                                 double minDeltaR, Candidate::Type type, const std::string& hist_name)
     {
         CandidateVector result;
         for (unsigned n = 0; n < objects.size(); ++n){
@@ -308,21 +363,23 @@ protected:
                 if(objects.at(n).momentum.DeltaR(objects.at(k).momentum) > minDeltaR) {
                     const Candidate candidate(type, objects.at(n), objects.at(k));
                     result.push_back(candidate);
-                    mass.Fill(candidate.momentum.M());
+                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
                 }
             }
         }
+        GetAnaData().N_objects(hist_name).Fill(result.size());
         return result;
     }
 
-    static CandidateVector FilterBackground(const CandidateVector& candidates, const CandidateVector& backgroundCandidates,
-                                            double minDeltaR)
+    CandidateVector FilterBackground(const CandidateVector& candidates, const CandidateVector& backgroundCandidates,
+                                            double minDeltaR, const std::string& hist_name)
     {
         CandidateVector result;
         for (const Candidate& candidate : candidates){
             if (FilterBackground(candidate, backgroundCandidates,minDeltaR))
                 result.push_back(candidate);
         }
+        GetAnaData().N_objects(hist_name).Fill(result.size());
         return result;
     }
 

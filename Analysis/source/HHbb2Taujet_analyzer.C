@@ -1,9 +1,9 @@
 /*!
- * \file HHbbMuTaujet_analyzer.C
- * \brief X->HH->bbTauTau->b_jet,b_jet,mu,tau_jet analysis.
+ * \file HHbb2Taujet_analyzer.C
+ * \brief X->HH->bbTauTau->b_jet,b_jet,tau_jet,tau_jet analysis.
  * \author Konstantin Androsov (INFN Pisa, Siena University)
  * \author Maria Teresa Grippo (INFN Pisa, Siena University)
- * \date 2014-02-12 created
+ * \date 2014-04-01 created
  */
 
 #include "../include/BaseAnalyzer.h"
@@ -172,3 +172,4 @@ protected:
 private:
     MuTauSignalAnalyzerData anaData;
 };
+
