@@ -15,17 +15,17 @@ public:
     SELECTION_ENTRY(EventSelection, 15, 5)
 
 
-    ENTRY_1D(float, Tau_Pt_MC)
-    ENTRY_1D(float, Mu_Pt_MC)
-    ENTRY_1D(float, PV_sumPt)
+    ENTRY_1D(float, LeadTau_Pt_MC)
+    ENTRY_1D(float, SubleadingTau_Pt_MC)
+    ENTRY_1D(float, PV_sumPtSquared)
     ENTRY_1D(float, ResonanceDeltaZ_PV)
     ENTRY_1D(float, ResonanceDeltaR_PV)
 
 };
 
-class HHbbMuTaujet_analyzer : public analysis::BaseAnalyzer {
+class HHbb2Taujet_analyzer : public analysis::BaseAnalyzer {
 public:
-    HHbbMuTaujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
+    HHbb2Taujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
         : BaseAnalyzer(inputFileName,outputFileName,_maxNumberOfEvents,_useMCtruth), anaData(*outputFile)
     {
@@ -38,98 +38,53 @@ protected:
     virtual void ProcessEvent()
     {
         using namespace analysis;
-        finalState::bbMuTaujet muTauJet;
-        if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
+        finalState::bbTaujetTaujet mc_truth;
+        if (useMCtruth && !FindAnalysisFinalState(mc_truth)) return;
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
         cut(true, "total");
 
         const VertexVector vertices = CollectVertices();
-
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
-        anaData.PV_sumPt().Fill(primaryVertex.sumPt);
+        anaData.PV_sumPtSquared().Fill(primaryVertex.sumPtSquared);
         if(useMCtruth) {
-            const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
+            const double DeltaZ_PV = mc_truth.resonance->vertex.Z() - primaryVertex.position.Z();
             anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);
-            const double DeltaR_PV = (muTauJet.resonance->vertex - primaryVertex.position).Perp();
+            const double DeltaR_PV = (mc_truth.resonance->vertex - primaryVertex.position).Perp();
             anaData.ResonanceDeltaR_PV().Fill(DeltaR_PV);
         }
 
         //SIGNAL OBJECTS
-        const auto muons = CollectMuons(true);
-        cut(muons.size(), "muon");
-
         const auto taus = CollectTaus(true);
-        cut(taus.size(), "tau");
+        cut(taus.size() >= 2, ">=2_tau");
 
-        const auto Higgses_mu_tau = FindCompatibleObjects(muons, taus,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_mu_tau");
-        cut(Higgses_mu_tau.size(), "H_mu_tau");
+        const auto Higgses_tautau = FindCompatibleObjects(taus, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
+                                                           analysis::Candidate::Higgs, "H_2tau");
+        cut(Higgses_tautau.size(), "H_2tau");
+
+        const auto Higgses_tautau_full = ApplyTauFullSelection(Higgses_tautau);
+        cut(Higgses_tautau_full.size(), "H_2tau_full_selection");
 
         const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
         cut(b_jets.size() >= 2, ">=2b_loose");
 
         const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
-                                      analysis::Candidate::Higgs, "H_bb");
+                                                     analysis::Candidate::Higgs, "H_bb");
         cut(Higgses_bb.size(), "H_bb");
 
-        const auto Resonances =
-                FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, 1,analysis::Candidate::Resonance, "resonance");
+        const auto Resonances = FindCompatibleObjects(Higgses_tautau_full, Higgses_bb, cuts::minDeltaR_betweenHiggses,
+                                                      analysis::Candidate::Resonance, "resonance");
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        const auto electrons_bkg = CollectElectrons(false);
-        const auto resonances_noEle = FilterBackground(Resonances,electrons_bkg,
-                              cuts::Htautau_Summer13::electronID::veto::deltaR_signalObjects,"resonances_noEle");
-        cut(resonances_noEle.size(), "no_electrons");
-
-        const auto muons_bkg = CollectMuons(false);
-        const auto resonances_noMu = FilterBackground(resonances_noEle,muons_bkg,
-                                 cuts::Htautau_Summer13::muonID::veto::deltaR_signalObjects,"resonances_noMu");
-        cut(resonances_noMu.size(), "no_muons");
-
-        const auto bjets_bkg = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose",false);
-        const auto resonances_noBjets = FilterBackground(resonances_noMu,bjets_bkg,
-                              cuts::Htautau_Summer13::btag::veto::deltaR_signalObjects,"resonances_noBjets");
-        cut(resonances_noBjets.size(), "no_bjets");
-
-        const auto taus_bkg = CollectTaus(false);
-        const auto resonances_noTau = FilterBackground(resonances_noBjets,taus_bkg,
-                                 cuts::Htautau_Summer13::tauID::veto::deltaR_signalObjects,"resonances_noTau");
-        cut(resonances_noTau.size(), "no_taus");
-
-    }
-
-    virtual analysis::Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
-    {
-        using namespace cuts::Htautau_Summer13::muonID::MuTau;
-        const std::string selection_label = "";
-        cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
-        const ntuple::Muon& object = event.muons().at(id);
-
-        cut(true, ">0 mu cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon) == isPFMuon, "PF");
-        cut(X(nMatchedStations) > nMatched_Stations, "stations");
-        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
-        cut(X(pixHits) > pixHits, "pix_hits");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV) ) < dB, "dB");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
-
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        ApplyVetos(Resonances, cut);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
     {
-        using namespace cuts::Htautau_Summer13::tauID::MuTau;
+        using namespace cuts::Htautau_Summer13::tauID::TauTau;
         const std::string selection_label = "";
         cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
         const ntuple::Tau& object = event.taus().at(id);
@@ -138,34 +93,67 @@ protected:
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
-        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
+        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_tight");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits) > MediumCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
 
+    analysis::CandidateVector ApplyTauFullSelection(const analysis::CandidateVector& higgses)
+    {
+        using namespace analysis;
+        using namespace cuts::Htautau_Summer13::tauID::TauTau;
+        CandidateVector result;
+        for(const Candidate& higgs : higgses) {
+            const Candidate *leading_tau = nullptr, *subleading_tau = nullptr;
+            if(higgs.daughters.size() != 2 || higgs.daughters.at(0)->type != Candidate::Tau
+                    || higgs.daughters.at(1)->type != Candidate::Tau)
+                throw std::runtime_error("bad higgs to tautau");
+            if(higgs.daughters.at(0)->momentum.Pt() > higgs.daughters.at(1)->momentum.Pt()) {
+                leading_tau = higgs.daughters.at(0);
+                subleading_tau = higgs.daughters.at(1);
+            } else {
+                leading_tau = higgs.daughters.at(1);
+                subleading_tau = higgs.daughters.at(0);
+            }
+            const ntuple::Tau& ntuple_subleadingTau = event.taus().at(subleading_tau->index);
+            if(ntuple_subleadingTau.againstElectronLooseMVA5 == againstElectronLooseMVA5)
+                result.push_back(higgs);
+        }
+        return result;
+    }
 
-    bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& finalState)
+    bool FindAnalysisFinalState(analysis::finalState::bbTaujetTaujet& finalState)
     {
         BaseAnalyzer::FindAnalysisFinalState(finalState);
 
         static const analysis::ParticleCodes TauMuonicDecay = { particles::mu, particles::nu_mu, particles::nu_tau };
         static const analysis::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
-        finalState.muon = finalState.tau_jet = nullptr;
+        unsigned n_hadronic_taus = 0;
+
+        if(finalState.taus.size() != 2)
+            throw std::runtime_error("bad bbtautau MC final state");
+
         for (const analysis::GenParticle* tau_MC : finalState.taus) {
             analysis::GenParticlePtrVector TauProducts;
-            if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts))
-                finalState.muon = TauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts))
-                finalState.tau_jet = tau_MC;
+            if (!analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts)
+                    && !analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts))
+                ++n_hadronic_taus;
         }
 
-        if (!finalState.muon || !finalState.tau_jet) return false;
+        if (n_hadronic_taus != 2) return false;
+        if(finalState.taus.at(0)->momentum.Pt() > finalState.taus.at(1)->momentum.Pt()) {
+            finalState.leading_tau_jet = finalState.taus.at(0);
+            finalState.subleading_tau_jet = finalState.taus.at(1);
+        } else {
+            finalState.leading_tau_jet = finalState.taus.at(1);
+            finalState.subleading_tau_jet = finalState.taus.at(0);
+        }
 
-        anaData.Tau_Pt_MC().Fill(finalState.tau_jet->momentum.Pt());
-        anaData.Mu_Pt_MC().Fill(finalState.muon->momentum.Pt());
+        anaData.LeadTau_Pt_MC().Fill(finalState.leading_tau_jet->momentum.Pt());
+        anaData.SubleadingTau_Pt_MC().Fill(finalState.subleading_tau_jet->momentum.Pt());
         return true;
     }
 

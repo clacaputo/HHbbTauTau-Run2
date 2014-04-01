@@ -41,7 +41,12 @@ struct bbMuTaujet : public bbTauTau{
     bbMuTaujet() : muon(nullptr), tau_jet(nullptr) {}
 };
 
-struct bbTaujetTaujet : public bbTauTau {};
+struct bbTaujetTaujet : public bbTauTau {
+    const GenParticle* leading_tau_jet;
+    const GenParticle* subleading_tau_jet;
+
+    bbTaujetTaujet() : leading_tau_jet(nullptr), subleading_tau_jet(nullptr) {}
+};
 
 } // finalState
 } // analysis
