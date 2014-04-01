@@ -22,7 +22,7 @@ eval $( scramv1 runtime -sh )
 
 echo "$NAME $( date )" >> $OUTPUT_PATH/job_cmsRun_start.log
 
-cmsRun TreeProduction/python/treeProducer.py globalTag=$GLOBAL_TAG includeSim=$INCLUDE_SIM \
+nohup cmsRun TreeProduction/python/treeProducer.py globalTag=$GLOBAL_TAG includeSim=$INCLUDE_SIM \
        fileList=$FILE_LIST_PATH/${NAME}.txt maxEvents=$N_EVENTS outputFile=$OUTPUT_PATH/${NAME}_Tree.root \
        > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
 RESULT=$?
