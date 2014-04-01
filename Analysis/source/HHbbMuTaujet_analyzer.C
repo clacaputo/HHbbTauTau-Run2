@@ -80,26 +80,7 @@ protected:
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        const auto electrons_bkg = CollectElectrons(false);
-        const auto resonances_noEle = FilterBackground(Resonances,electrons_bkg,
-                              cuts::Htautau_Summer13::electronID::veto::deltaR_signalObjects,"resonances_noEle");
-        cut(resonances_noEle.size(), "no_electrons");
-
-        const auto muons_bkg = CollectMuons(false);
-        const auto resonances_noMu = FilterBackground(resonances_noEle,muons_bkg,
-                                 cuts::Htautau_Summer13::muonID::veto::deltaR_signalObjects,"resonances_noMu");
-        cut(resonances_noMu.size(), "no_muons");
-
-        const auto bjets_bkg = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose",false);
-        const auto resonances_noBjets = FilterBackground(resonances_noMu,bjets_bkg,
-                              cuts::Htautau_Summer13::btag::veto::deltaR_signalObjects,"resonances_noBjets");
-        cut(resonances_noBjets.size(), "no_bjets");
-
-        const auto taus_bkg = CollectTaus(false);
-        const auto resonances_noTau = FilterBackground(resonances_noBjets,taus_bkg,
-                                 cuts::Htautau_Summer13::tauID::veto::deltaR_signalObjects,"resonances_noTau");
-        cut(resonances_noTau.size(), "no_taus");
-
+        ApplyVetos(Resonances);
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)

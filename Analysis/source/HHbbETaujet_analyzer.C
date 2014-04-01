@@ -38,8 +38,8 @@ protected:
     virtual void ProcessEvent()
     {
         using namespace analysis;
-        finalState::bbMuTaujet muTauJet;
-        if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
+        finalState::bbETaujet eTauJet;
+        if (useMCtruth && !FindAnalysisFinalState(eTauJet)) return;
 
         cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
 
@@ -49,11 +49,11 @@ protected:
 
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
-        anaData.PV_sumPt().Fill(primaryVertex.sumPt);
+        anaData.PV_sumPt().Fill(primaryVertex.sumPtSquared);
         if(useMCtruth) {
-            const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
+            const double DeltaZ_PV = eTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
             anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);
-            const double DeltaR_PV = (muTauJet.resonance->vertex - primaryVertex.position).Perp();
+            const double DeltaR_PV = (eTauJet.resonance->vertex - primaryVertex.position).Perp();
             anaData.ResonanceDeltaR_PV().Fill(DeltaR_PV);
         }
 
@@ -146,26 +146,26 @@ protected:
     }
 
 
-    bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& finalState)
+    bool FindAnalysisFinalState(analysis::finalState::bbETaujet& finalState)
     {
         BaseAnalyzer::FindAnalysisFinalState(finalState);
 
         static const analysis::ParticleCodes TauMuonicDecay = { particles::mu, particles::nu_mu, particles::nu_tau };
         static const analysis::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
-        finalState.muon = finalState.tau_jet = nullptr;
+        finalState.electron = finalState.tau_jet = nullptr;
         for (const analysis::GenParticle* tau_MC : finalState.taus) {
             analysis::GenParticlePtrVector TauProducts;
-            if (analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts))
-                finalState.muon = TauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts))
+            if (analysis::FindDecayProducts(*tau_MC,TauElectronDecay,TauProducts))
+                finalState.electron = TauProducts.at(0);
+            else if (!analysis::FindDecayProducts(*tau_MC,TauMuonicDecay,TauProducts))
                 finalState.tau_jet = tau_MC;
         }
 
-        if (!finalState.muon || !finalState.tau_jet) return false;
+        if (!finalState.electron || !finalState.tau_jet) return false;
 
         anaData.Tau_Pt_MC().Fill(finalState.tau_jet->momentum.Pt());
-        anaData.E_Pt_MC().Fill(finalState.muon->momentum.Pt());
+        anaData.E_Pt_MC().Fill(finalState.electron->momentum.Pt());
         return true;
     }
 
