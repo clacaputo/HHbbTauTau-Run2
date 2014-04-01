@@ -25,6 +25,7 @@
     SIMPLE_VAR(Bool_t, isfake) \
     SIMPLE_VAR(Bool_t, isvalid) \
     SIMPLE_VAR(Float_t, sumPt) \
+    SIMPLE_VAR(Float_t, sumPtSquare) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
