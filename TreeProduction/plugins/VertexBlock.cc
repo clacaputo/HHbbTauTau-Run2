@@ -13,15 +13,35 @@
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Vertex.h"
 
-//double sum=0;
-//020   for (reco::Vertex::trackRef_iterator i=v.tracks_begin(); i!=v.tracks_end(); ++i) {
-//021     double pt = (*i)->pt();
-//022     if (pt > 2.5) { // Don't count tracks below 2.5 GeV
-//023       if (pt > 10.0) pt = 10.0;
-//024       sum += pt*pt;
-//025     }
-//026   }
-//027   return sum;
+namespace  {
+
+double GetVertexSumPtSquare(const reco::Vertex& vertex, float minWeight = 0.5)
+{
+    double sum=0;
+    if(vertex.hasRefittedTracks()) {
+        for(std::vector<Track>::const_iterator iter = vertex.refittedTracks().begin();
+         iter != vertex.refittedTracks().end(); ++iter) {
+            if (vertex.trackWeight(vertex.originalTrack(*iter)) >=minWeight) {
+                double pt = (*iter)->pt();
+                sum += pt*pt;
+            }
+        }
+    }
+    else
+    {
+        for(std::vector<reco::TrackBaseRef>::const_iterator iter = vertex.tracks_begin();
+                iter != vertex.tracks_end(); iter++) {
+            if (vertex.trackWeight(*iter) >=minWeight) {
+                double pt = (*iter)->pt();
+                sum += pt*pt;
+            }
+        }
+    }
+    return sum;
+
+}
+}
+
 
 class VertexBlock : public edm::EDAnalyzer {
 public:
@@ -68,6 +88,7 @@ void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         vertexTree.isfake() = vertex.isFake();
         vertexTree.isvalid() = vertex.isValid();
         vertexTree.sumPt() = vertex.p4().pt();
+        vertexTree.sumPtSquare() = GetVertexSumPtSquare(vertex);
 
         vertexTree.Fill();
     }
