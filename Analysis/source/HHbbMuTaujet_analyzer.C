@@ -50,11 +50,12 @@ protected:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
         anaData.PV_sumPt().Fill(primaryVertex.sumPt);
-        const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
-        anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);
-        const double DeltaR_PV = (muTauJet.resonance->vertex - primaryVertex.position).Perp();
-        anaData.ResonanceDeltaR_PV().Fill(DeltaR_PV);
-
+        if(useMCtruth) {
+            const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
+            anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);
+            const double DeltaR_PV = (muTauJet.resonance->vertex - primaryVertex.position).Perp();
+            anaData.ResonanceDeltaR_PV().Fill(DeltaR_PV);
+        }
         const CandidateVector muons = CollectMuons(true);
         anaData.N_objects("muons").Fill(muons.size());
         cut(muons.size(), "muon");
