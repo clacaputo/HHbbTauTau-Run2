@@ -1,0 +1,10 @@
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_1225_2_xez.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_1563_2_LqI.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_3298_1_r1Q.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_979_2_sQo.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_2215_1_h9h.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_2312_1_p91.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_960_2_4eF.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_1898_1_0T3.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_2295_1_tck.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/PAT/patTuple_3383_1_cg0.root

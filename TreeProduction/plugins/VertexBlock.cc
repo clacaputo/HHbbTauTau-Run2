@@ -9,6 +9,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/TrackReco/interface/Track.h"
 
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Vertex.h"
@@ -19,10 +20,10 @@ double GetVertexSumPtSquare(const reco::Vertex& vertex, float minWeight = 0.5)
 {
     double sum=0;
     if(vertex.hasRefittedTracks()) {
-        for(std::vector<Track>::const_iterator iter = vertex.refittedTracks().begin();
+        for(std::vector<reco::Track>::const_iterator iter = vertex.refittedTracks().begin();
          iter != vertex.refittedTracks().end(); ++iter) {
             if (vertex.trackWeight(vertex.originalTrack(*iter)) >=minWeight) {
-                double pt = (*iter)->pt();
+                double pt = iter->pt();
                 sum += pt*pt;
             }
         }
