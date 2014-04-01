@@ -58,13 +58,13 @@ n=0
 
 if [ "$QUEUE" = "local" ] ; then
     for NAME in $JOBS ; do
-        bsub -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+        bsub -q $QUEUE -J $NAME /bin/bash nohup $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
                                             $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
     done
     echo "$N_JOBS have been submited in local"
 elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
-        bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+        bsub -Is -q $QUEUE -J $NAME /bin/bash nohup $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
                                                 $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
         i=$(($i + 1))
 		n=$(($n + 1))
@@ -78,7 +78,8 @@ elif [ "$QUEUE" = "fai5" ] ; then
     echo "$N_JOBS finished on fai5"
 elif [ "$QUEUE" = "fai" ] ; then
     for NAME in $JOBS ; do
-        bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH \
+        bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME /bin/bash nohup \
+                                                        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH \
                                                         $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
         i=$(($i + 1))
 		n=$(($n + 1))
