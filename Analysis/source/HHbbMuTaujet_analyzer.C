@@ -76,7 +76,8 @@ protected:
         cut(Higgses_bb.size(), "H_bb");
 
         const auto Resonances =
-                FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, 1,analysis::Candidate::Resonance, "resonance");
+                FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, cuts::minDeltaR_betweenHiggses,
+                                      analysis::Candidate::Resonance, "resonance");
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO

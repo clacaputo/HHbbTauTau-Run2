@@ -15,6 +15,7 @@
 #include "../include/GenParticle.h"
 #include "../include/MCfinalState.h"
 #include "../include/Candidate.h"
+#include "../include/custom_cuts.h"
 #include <chrono>
 #include <iomanip>
 #include <functional>
