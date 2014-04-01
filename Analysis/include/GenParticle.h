@@ -37,6 +37,7 @@ public:
     TLorentzVector momentum;
     GenParticlePtrVector mothers;
     GenParticlePtrVector daughters;
+    TVector3 vertex;
 
 public:
     GenParticle() {}
@@ -51,6 +52,7 @@ public:
         pdg = particles::PdgParticle(ntupleGenParticle.PdgId);
         status = particles::NameProvider<particles::Status>::Convert(ntupleGenParticle.Status);
         momentum.SetXYZT(ntupleGenParticle.Px, ntupleGenParticle.Py,ntupleGenParticle.Pz,ntupleGenParticle.E);
+        vertex = TVector3(ntupleGenParticle.X, ntupleGenParticle.Y, ntupleGenParticle.Z);
     }
 
     void Initialize(const ntuple::GenParticleVector& ntupleGenParticles, GenParticleVector& particles)

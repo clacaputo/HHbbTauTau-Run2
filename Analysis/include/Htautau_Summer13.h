@@ -12,7 +12,7 @@
 namespace cuts {
 namespace Htautau_Summer13 {
 
-const double DeltaR_betweenSignalLeptons = 0.5; // >
+const double DeltaR_betweenSignalObjects = 0.5; // >
 
 namespace tauID {
     namespace ETau {
@@ -50,13 +50,13 @@ namespace tauID {
     }
 
     namespace veto {
-        const double pt = 25; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double eta = 2.5; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double decayModeFinding = 0.5;  // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double LooseCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                       // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double deltaZ = 0.2; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double DeltaR_signalLeptons = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double dz = 0.2; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double deltaR_signalObjects = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
     }
 }
 
@@ -65,7 +65,7 @@ namespace muonID {
         const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
         const double eta = 2.1; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
 
-        const bool isTightMoun = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
+        const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
 
         //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
         const bool isGlobalMuonPromptTight = true;
@@ -84,11 +84,10 @@ namespace muonID {
     namespace veto {
         const double pt = 5; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const bool isTightMoun = true; // = HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const bool isPFMuon = true; // = HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double pFRelIso = 0.15; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double deltaZ = 0.2; // < cm, see HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double DeltaR_signalLeptons = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double dz = 0.2; // < cm, see HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double deltaR_signalObjects = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
     }
 }
 
@@ -117,7 +116,7 @@ namespace electronID{
         const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
         const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
                                                   // loose HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double deltaR_signalLeptons = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double deltaR_signalObjects = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
     }
 }
 
@@ -136,7 +135,7 @@ namespace btag {
         const double eta = 2.4; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double CSV = CSVT; // twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
         const double passLooseID = true; // = twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double deltaR_signalLeptons = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
+        const double deltaR_signalObjects = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
     }
 }
 

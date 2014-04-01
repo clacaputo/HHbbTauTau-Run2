@@ -115,7 +115,7 @@ private:
 } // namespace detail
 
 template<typename ValueType>
-class SmartHistogram{};
+class SmartHistogram;
 
 template<>
 class SmartHistogram<double> : public detail::Base1DHistogram<double> {
@@ -133,6 +133,12 @@ template<>
 class SmartHistogram<int> : public detail::Base1DHistogram<int> {
 public:
     SmartHistogram(const std::string& name) : Base1DHistogram<int>(name) {}
+};
+
+template<>
+class SmartHistogram<unsigned> : public detail::Base1DHistogram<unsigned> {
+public:
+    SmartHistogram(const std::string& name) : Base1DHistogram<unsigned>(name) {}
 };
 
 template<>

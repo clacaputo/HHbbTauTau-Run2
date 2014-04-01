@@ -28,12 +28,13 @@ public:
     TLorentzVector momentum;
     CandidatePtrVector daughters;
 
+
     Candidate() : type(Unknown), index(0){}
 
     template<typename NtupleObject>
-    Candidate(Type _type, int _index, const NtupleObject& ntupleObject) :
+    Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject) :
         type(_type), index(_index) {
-        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
+        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);     
     }
 
     Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type), index(-1) {
@@ -46,18 +47,39 @@ public:
     {
         return momentum.Pt() < other.momentum.Pt();
     }
+
+    bool operator == (const Candidate& other) const
+    {
+        return type == other.type && index == other.index;
+    }
+
+    bool operator != (const Candidate& other) const
+    {
+        return type != other.type || index != other.index;
+    }
 };
 
 class Vertex{
 public:
 
     TVector3 position;
+    size_t index;
     double sumPt;
     unsigned ndf;
 
-    Vertex() : sumPt(0), ndf(0) {}
+    Vertex() : index(0), sumPt(0), ndf(0) {}
 
-    Vertex(const TVector3& _position, double _sumPt, unsigned _ndf) : position(_position), sumPt(_sumPt), ndf(_ndf) {}
+    template <typename NtupleObject>
+    Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPt(ntupleObject.sumPt),
+        ndf(ntupleObject.ndf)
+    {
+       position = TVector3(ntupleObject.x,ntupleObject.y,ntupleObject.z);
+    }
+
+    bool operator < (const Vertex& other) const
+    {
+        return sumPt < other.sumPt;
+    }
 
 };
 

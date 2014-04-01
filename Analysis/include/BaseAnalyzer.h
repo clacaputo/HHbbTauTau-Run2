@@ -68,6 +68,10 @@ public:
     SELECTION_ENTRY(TauSelection, 15)
     SELECTION_ENTRY(ElectronSelection, 15)
     SELECTION_ENTRY(BJetSelection, 15)
+    SELECTION_ENTRY(MuonSelectionBkg, 15)
+    SELECTION_ENTRY(TauSelectionBkg, 15)
+    SELECTION_ENTRY(ElectronSelectionBkg, 15)
+    SELECTION_ENTRY(BJetSelectionBkg, 15)
 
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
     ENTRY_1D(float, Resonance_Mass)
@@ -234,7 +238,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::vertex;
         const std::string selection_label = "";
-        cuts::Cutter cut(anaData.Counter(), anaData.VertexSelection(), enabled);
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().VertexSelection(), enabled);
         const ntuple::Vertex& object = event.vertices().at(id);
 
         cut(true, ">0 vertex");
@@ -243,8 +247,7 @@ protected:
         const double r_vertex = std::sqrt(object.x*object.x+object.y*object.y);
         cut(std::abs( Y(r_vertex) ) < r, "r");
 
-
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        return analysis::Vertex(id, object);
     }
 
     Candidate SelectBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData,
@@ -266,7 +269,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::btag::veto;
         const std::string selection_label = "_bkg";
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(selection_label), enabled);
+        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelectionBkg(selection_label), enabled);
 
         const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
@@ -285,14 +288,58 @@ protected:
         CandidateVector result;
         for(const Candidate& object1 : objects1) {
             for(const Candidate& object2 : objects2) {
-                const Candidate candidate(type, object1, object2);
                 if(object2.momentum.DeltaR(object1.momentum) > minDeltaR) {
+                    const Candidate candidate(type, object1, object2);
                     result.push_back(candidate);
                     mass.Fill(candidate.momentum.M());
                 }
             }
         }
         return result;
+    }
+
+    template<typename Histogram>
+    static CandidateVector FindCompatibleObjects(const CandidateVector& objects,
+                                                 double minDeltaR, Candidate::Type type, Histogram& mass)
+    {
+        CandidateVector result;
+        for (unsigned n = 0; n < objects.size(); ++n){
+            for (unsigned k = n+1; k < objects.size(); ++k){
+                if(objects.at(n).momentum.DeltaR(objects.at(k).momentum) > minDeltaR) {
+                    const Candidate candidate(type, objects.at(n), objects.at(k));
+                    result.push_back(candidate);
+                    mass.Fill(candidate.momentum.M());
+                }
+            }
+        }
+        return result;
+    }
+
+    static CandidateVector FilterBackground(const CandidateVector& candidates, const CandidateVector& backgroundCandidates,
+                                            double minDeltaR)
+    {
+        CandidateVector result;
+        for (const Candidate& candidate : candidates){
+            if (FilterBackground(candidate, backgroundCandidates,minDeltaR))
+                result.push_back(candidate);
+        }
+        return result;
+    }
+
+    static bool FilterBackground(const Candidate& candidate, const CandidateVector& backgroundCandidates,
+                                            double minDeltaR)
+    {
+        if (candidate.daughters.size()){
+            for (const Candidate* daughter : candidate.daughters){
+                if (!FilterBackground(*daughter,backgroundCandidates,minDeltaR)) return false;
+            }
+            return true;
+        }
+        for (const Candidate& bkg_candidate : backgroundCandidates){
+            if (candidate != bkg_candidate && bkg_candidate.momentum.DeltaR(candidate.momentum) <= minDeltaR)
+                return false;
+        }
+        return true;
     }
 
     void FindAnalysisFinalState(finalState::bbTauTau& final_state)
@@ -349,6 +396,7 @@ protected:
     size_t maxNumberOfEvents;
     bool useMCtruth;
     GenEvent genEvent;
+    Vertex primaryVertex;
 };
 
 } // analysis
