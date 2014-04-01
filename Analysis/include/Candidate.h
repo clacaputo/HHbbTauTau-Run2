@@ -64,13 +64,13 @@ public:
 
     TVector3 position;
     size_t index;
-    double sumPt;
+    double sumPtSquared;
     unsigned ndf;
 
     Vertex() : index(0), sumPt(0), ndf(0) {}
 
     template <typename NtupleObject>
-    Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPt(ntupleObject.sumPt),
+    Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPtSquared(ntupleObject.sumPtSquare),
         ndf(ntupleObject.ndf)
     {
        position = TVector3(ntupleObject.x,ntupleObject.y,ntupleObject.z);
@@ -78,7 +78,7 @@ public:
 
     bool operator < (const Vertex& other) const
     {
-        return sumPt < other.sumPt;
+        return sumPtSquared < other.sumPtSquared;
     }
 
 };

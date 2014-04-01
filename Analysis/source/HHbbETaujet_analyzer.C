@@ -8,24 +8,24 @@
 
 #include "../include/BaseAnalyzer.h"
 
-class MuTauSignalAnalyzerData : public analysis::SignalAnalyzerData {
+class ETauSignalAnalyzerData : public analysis::SignalAnalyzerData {
 public:
-    MuTauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
+    ETauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
 
     SELECTION_ENTRY(EventSelection, 15, 5)
 
 
     ENTRY_1D(float, Tau_Pt_MC)
-    ENTRY_1D(float, Mu_Pt_MC)
+    ENTRY_1D(float, E_Pt_MC)
     ENTRY_1D(float, PV_sumPt)
     ENTRY_1D(float, ResonanceDeltaZ_PV)
     ENTRY_1D(float, ResonanceDeltaR_PV)
 
 };
 
-class HHbbMuTaujet_analyzer : public analysis::BaseAnalyzer {
+class HHbbETaujet_analyzer : public analysis::BaseAnalyzer {
 public:
-    HHbbMuTaujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
+    HHbbETaujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                         Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
         : BaseAnalyzer(inputFileName,outputFileName,_maxNumberOfEvents,_useMCtruth), anaData(*outputFile)
     {
@@ -165,7 +165,7 @@ protected:
         if (!finalState.muon || !finalState.tau_jet) return false;
 
         anaData.Tau_Pt_MC().Fill(finalState.tau_jet->momentum.Pt());
-        anaData.Mu_Pt_MC().Fill(finalState.muon->momentum.Pt());
+        anaData.E_Pt_MC().Fill(finalState.muon->momentum.Pt());
         return true;
     }
 
