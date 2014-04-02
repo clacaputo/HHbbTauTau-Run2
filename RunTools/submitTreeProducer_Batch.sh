@@ -9,7 +9,7 @@ QUEUE=$1
 STORAGE=$2
 MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
-OUTPUT_PATH=$5
+OUTPUT_PATH=$( cd "$5" ; pwd )
 GLOBAL_TAG=$6
 INCLUDE_SIM=$7
 
@@ -27,7 +27,7 @@ if [ ! -d "$WORKING_PATH/$FILE_LIST_PATH" ] ; then
 	exit
 fi
 
-if [ ! -d "$WORKING_PATH/$OUTPUT_PATH" ] ; then
+if [ ! -d "$OUTPUT_PATH" ] ; then
 	echo "ERROR: output path '$WORKING_PATH/$OUTPUT_PATH' does not exist."
 	exit
 fi
@@ -66,12 +66,8 @@ if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
     echo "$N_JOBS have been submited in local in Pisa"
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
-	SCRIPT_SUBMIT="$WORKING_PATH/$NAME.sh"
-	echo \#!/bin/bash > $SCRIPT_SUBMIT
-	echo $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM \
-             $N_EVENTS >> $SCRIPT_SUBMIT
-	chmod a+x $SCRIPT_SUBMIT
-        qsub -q $QUEUE -N $NAME $SCRIPT_SUBMIT
+        echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS" | \
+            qsub -q $QUEUE -N $NAME -
     done
     echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then
