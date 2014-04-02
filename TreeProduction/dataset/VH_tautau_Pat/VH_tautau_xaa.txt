@@ -1,0 +1,11 @@
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_21_1_XkY.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_18_1_zIW.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_14_1_ZOE.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_15_1_Irz.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_2_1_XTO.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_13_1_mdl.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_17_1_dmv.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_11_1_RR5.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_10_1_UmO.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_9_1_6Eo.root
+/store/user/ferrico/WH_ZH_TTH_HToTauTau_M-125_8TeV/patTuple_8_1_vjF.root
