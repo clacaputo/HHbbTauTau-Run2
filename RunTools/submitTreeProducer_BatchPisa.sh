@@ -58,8 +58,9 @@ n=0
 
 if [ "$QUEUE" = "local" ] ; then
     for NAME in $JOBS ; do
-        bsub -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
-                                            $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
+        bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq_pre-cms.bash \
+             -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
     done
     echo "$N_JOBS have been submited in local"
 elif [ "$QUEUE" = "fai5" ] ; then
