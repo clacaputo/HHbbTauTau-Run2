@@ -67,7 +67,7 @@ if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
         echo $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM \
-             $N_EVENTS | qsub -q $QUEUE -
+             $N_EVENTS | qsub -q $QUEUE -N $NAME -
     done
     echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then

@@ -85,7 +85,7 @@ Analysis/include/Candidate.h
 Analysis/include/BaseAnalyzer.h
 Analysis/source/HHbbETaujet_analyzer.C
 RunTools/runTreeProducer.sh
-RunTools/submitTreeProducer_BatchPisa.sh
+RunTools/submitTreeProducer_Batch.sh
 TreeProduction/interface/SmartTree.h
 TreeProduction/interface/Electron.h
 TreeProduction/interface/Event.h
