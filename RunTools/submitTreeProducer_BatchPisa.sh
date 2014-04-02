@@ -1,16 +1,17 @@
 #!/bin/bash
 
-if [ $# -ne 6 ] ; then
-    echo "Usage: queue max_n_parallel_jobs file_list_path output_path global_tag include_sim"
+if [ $# -ne 7 ] ; then
+    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path global_tag include_sim"
     exit
 fi
 
 QUEUE=$1
-MAX_N_PARALLEL_JOBS=$2
-FILE_LIST_PATH=$3
-OUTPUT_PATH=$4
-GLOBAL_TAG=$5
-INCLUDE_SIM=$6
+STORAGE=$2
+MAX_N_PARALLEL_JOBS=$3
+FILE_LIST_PATH=$4
+OUTPUT_PATH=$5
+GLOBAL_TAG=$6
+INCLUDE_SIM=$7
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runTreeProducer.sh
@@ -56,13 +57,19 @@ fi
 i=0
 n=0
 
-if [ "$QUEUE" = "local" ] ; then
+if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa"] ; then
     for NAME in $JOBS ; do
         bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq_pre-cms.bash \
              -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
                 $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
     done
-    echo "$N_JOBS have been submited in local"
+    echo "$N_JOBS have been submited in local in Pisa"
+elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari"] ; then
+    for NAME in $JOBS ; do
+        qsub -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
+                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
+    done
+    echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
