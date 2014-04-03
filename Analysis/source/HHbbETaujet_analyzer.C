@@ -26,8 +26,9 @@ public:
 class HHbbETaujet_analyzer : public analysis::BaseAnalyzer {
 public:
     HHbbETaujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
-                        Long64_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
-        : BaseAnalyzer(inputFileName,outputFileName,_maxNumberOfEvents,_useMCtruth), anaData(*outputFile)
+                         const std::string& _prefix = "none", Long64_t _maxNumberOfEvents = 0,
+                         bool _useMCtruth = false)
+       : BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth), anaData(*outputFile)
     {
         anaData.getOutputFile().cd();
     }
