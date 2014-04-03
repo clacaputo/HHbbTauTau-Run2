@@ -28,7 +28,7 @@ LCG_OPTIONS_COMMON = "  "
 ###for lcg-utils>=1.7
 LCG_OPTIONS_17 = LCG_OPTIONS_COMMON
 LCG_OPTIONS_17 += "--srm-timeout=6000 "
-LCG_OPTIONS_17+= "-n 1 "
+LCG_OPTIONS_17+= "-n 10 "
 LCG_OPTIONS_17+= "--connect-timeout=6000 "
 ###for lcg-utisl <1.7
 LCG_OPTIONS = LCG_OPTIONS_COMMON
