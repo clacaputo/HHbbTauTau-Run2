@@ -1,0 +1,8 @@
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_4796_1_qUp.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_2597_1_gNF.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_23_2_bAB.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_4483_1_Pbu.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_2680_1_Cfb.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_2641_1_Gbb.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_1699_1_7Gl.root
+/store/user/kandroso/DYToMuMu_M20_8TeV/PAT/patTuple_957_1_AgD.root

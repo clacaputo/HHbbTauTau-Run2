@@ -1,0 +1,7 @@
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_942_1_sgT.root
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_902_1_Rvy.root
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_1516_1_fP9.root
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_546_1_WFV.root
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_769_1_0Ru.root
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_1433_1_MDF.root
+/store/user/kandroso/TauPlusX/Run2012B-22Jan2013-v1/PAT/patTuple_907_1_91z.root

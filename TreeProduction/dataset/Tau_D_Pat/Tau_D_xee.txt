@@ -1,0 +1,14 @@
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_1481_1_0Bz.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_1320_1_QQI.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_664_3_2mr.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_1423_1_GQa.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_2003_3_Vjj.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_1639_1_vDM.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_1258_1_ypz.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_278_1_uE9.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_37_2_glY.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_1079_1_Jkt.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_457_1_c7k.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_2481_1_0Gf.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_469_1_SKO.root
+/store/user/kandroso/Tau/Run2012D-22Jan2013-v1/PAT/patTuple_2485_1_W8Y.root
