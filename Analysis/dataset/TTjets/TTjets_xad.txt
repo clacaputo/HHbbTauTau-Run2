@@ -1,0 +1,5 @@
+/store/user/kandroso/TTJets_8TeV/TREE/TTjets_xav_Tree.root
+/store/user/kandroso/TTJets_8TeV/TREE/TTjets_xan_Tree.root
+/store/user/kandroso/TTJets_8TeV/TREE/TTjets_xaw_Tree.root
+/store/user/kandroso/TTJets_8TeV/TREE/TTjets_xad_Tree.root
+/store/user/kandroso/TTJets_8TeV/TREE/TTjets_xax_Tree.root
