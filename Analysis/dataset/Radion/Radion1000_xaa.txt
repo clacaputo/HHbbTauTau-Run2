@@ -1,1 +1,1 @@
-/store/user/kandroso/Radion/Radion_HH_TauTauBB_LHC8_M1000/TREE/RadionTree_1000.root
+/store/user/kandroso/Radion/Radion_HH_TauTauBB_LHC8_M1000/TREE/Radion1000_Tree.root

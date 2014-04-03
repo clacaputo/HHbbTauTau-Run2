@@ -105,7 +105,8 @@ public:
             while (inputStream.good()) {
                 std::string inputFileName;
                 std::getline(inputStream,inputFileName);
-                inputFileNames.push(prefix+inputFileName);
+                if (inputFileName.size())
+                    inputFileNames.push(prefix+inputFileName);
               }
         }
         else throw std::runtime_error("Unrecognized input");
