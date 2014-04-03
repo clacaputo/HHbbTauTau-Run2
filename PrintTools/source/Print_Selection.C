@@ -6,6 +6,8 @@
  * \date 2014-02-24 created
  */
 
+#include <iostream>
+
 #include "../include/RootPrintToPdf.h"
 
 class Print_Selection {
@@ -39,8 +41,12 @@ public:
         PrintAll("MuonSelection", "Muon selection");
         PrintAll("TauSelection", "Tau selection");
         PrintAll("ElectronSelection", "Electron selection");
-        PrintAll("BJetSelection", "b-jet selection", "loose");
-        PrintAll("BJetSelection", "b-jet selection", "medium");
+        PrintAll("BJetSelection", "b-jet selection", "bjets_loose");
+
+        PrintAll("MuonSelectionBkg", "Background muon selection");
+        PrintAll("TauSelectionBkg", "Background tau selection");
+        PrintAll("ElectronSelectionBkg", "Background electron selection");
+        PrintAll("BJetSelectionBkg", "Background b-jet selection", "bjet_bkg");
     }
 
 private:
@@ -58,9 +64,13 @@ private:
 
     void PrintAll(const std::string& name, const std::string& title, std::string second_suffix = "")
     {
-        Print(name, title, AddSuffix("event", second_suffix), "Number of entries");
-        Print(name, title, AddSuffix("effRel", second_suffix), "Relative efficiency");
-        Print(name, title, AddSuffix("effAbs", second_suffix), "Absolute efficiency");
+        try {
+            Print(name, title, AddSuffix("event", second_suffix), "Number of entries");
+            Print(name, title, AddSuffix("effRel", second_suffix), "Relative efficiency");
+            Print(name, title, AddSuffix("effAbs", second_suffix), "Absolute efficiency");
+        } catch(std::runtime_error& e) {
+            std::cerr << "ERROR: " << e.what() << std::endl;
+        }
     }
 
     void Print(const std::string& name, const std::string& title,

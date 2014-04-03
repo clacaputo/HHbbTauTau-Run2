@@ -143,7 +143,7 @@ private:
             ss << "Input file " << fileName << " not found." ;
             throw std::runtime_error(ss.str());
         }
-        std::cout << "File " << fileName << " open" << std::endl;
+        std::cout << "File " << fileName << " is opened.\n";
         current_entry = -1;
         detail::CreateForest(*forest, *inputFile, extractMCtruth);
         return true;

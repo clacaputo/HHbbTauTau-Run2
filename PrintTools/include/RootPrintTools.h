@@ -47,12 +47,23 @@ public:
     static ValueType FindMinLimitY(const Histogram& h)
     {
         ValueType min = std::numeric_limits<ValueType>::max();
-        for(Int_t i = 0; i < h.GetNbinsX(); ++i) {
+        for(Int_t i = 0; i <= h.GetNbinsX() + 1; ++i) {
             if(h.GetBinContent(i))
                 min = std::min(min, h.GetBinContent(i));
         }
         return min;
     }
+
+    static ValueType FindMaxLimitY(const Histogram& h)
+    {
+        ValueType max = std::numeric_limits<ValueType>::lowest();
+        for(Int_t i = 0; i <= h.GetNbinsX() + 1; ++i) {
+            if(h.GetBinContent(i))
+                max = std::max(max, h.GetBinContent(i));
+        }
+        return max;
+    }
+
 
     template<typename Container>
     static void SetRanges(const Container& hists, bool fitX, bool fitY, Range xRange, Range yRange, bool isLogY)
@@ -76,7 +87,7 @@ public:
             for(auto h : hists) {
                 if(!h) continue;
                 yRange.min = std::min(yRange.min, FindMinLimitY(*h));
-                yRange.max = std::max(yRange.max, h->GetMaximum());
+                yRange.max = std::max(yRange.max, FindMaxLimitY(*h));
             }
             const double factor = isLogY ? 2.0 : 1.1;
             yRange.min /= factor;

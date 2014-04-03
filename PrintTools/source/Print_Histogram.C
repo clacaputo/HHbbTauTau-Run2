@@ -6,18 +6,43 @@
  * \date 2014-02-25 created
  */
 
+#include <TTree.h>
+
 #include "../include/RootPrintToPdf.h"
+
+class MyHistogramSource : public root_ext::HistogramSource<TH1D, Double_t, TTree> {
+public:
+    MyHistogramSource(const root_ext::Range& _xRange, unsigned _nBins)
+        : xRange(_xRange), nBins(_nBins) {}
+protected:
+    virtual TH1D* Convert(TTree* tree) const
+    {
+        std::ostringstream s_name;
+        s_name << tree->GetName() << "_hist";
+        const std::string name = s_name.str();
+        const std::string command = "values>>+" + name;
+
+        TH1D* histogram = new TH1D(name.c_str(), name.c_str(), nBins, xRange.min, xRange.max);
+        tree->Draw(command.c_str(), "");
+        return histogram;
+    }
+
+private:
+    root_ext::Range xRange;
+    unsigned nBins;
+};
 
 class Print_Histogram {
 public:
     typedef std::pair< std::string, std::string > FileTagPair;
     typedef root_ext::PdfPrinter Printer;
-    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
+//    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
 
     template<typename ...Args>
     Print_Histogram(const std::string& outputFileName, const std::string& _histogramName, const std::string& _title,
-                    bool _useLogY, const Args& ...args):
-       printer(outputFileName), histogramName(_histogramName), title(_title), useLogY(_useLogY)
+                    double _xMin, double _xMax, unsigned _nBins,  bool _useLogX, bool _useLogY, const Args& ...args)
+       : printer(outputFileName), histogramName(_histogramName), title(_title), xRange(_xMin, _xMax), nBins(_nBins),
+         useLogX(_useLogX), useLogY(_useLogY), source(xRange, nBins)
     {
         Initialize(args...);
         for(const FileTagPair& fileTag : inputs) {
@@ -33,9 +58,11 @@ public:
 
     void Run()
     {
+        page.side.use_log_scaleX = useLogX;
         page.side.use_log_scaleY = useLogY;
+        page.side.xRange = xRange;
+        page.side.fit_range_x = false;
         page.side.layout.has_legend = false;
-
 
         Print(histogramName, title);
     }
@@ -72,9 +99,11 @@ private:
 
 private:
     std::vector<FileTagPair> inputs;
-    MyHistogramSource source;
     root_ext::SingleSidedPage page;
     Printer printer;
     std::string histogramName, title;
-    bool useLogY;
+    root_ext::Range xRange;
+    unsigned nBins;
+    bool useLogX, useLogY;
+    MyHistogramSource source;
 };
