@@ -94,7 +94,7 @@ ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
 
 class TreeExtractor{
 public:
-    TreeExtractor(const std::string& input, bool _extractMCtruth)
+    TreeExtractor(const std::string& prefix, const std::string& input, bool _extractMCtruth)
         :  extractMCtruth(_extractMCtruth)
 
     {
@@ -105,7 +105,7 @@ public:
             while (inputStream.good()) {
                 std::string inputFileName;
                 std::getline(inputStream,inputFileName);
-                inputFileNames.push(inputFileName);
+                inputFileNames.push(prefix+inputFileName);
               }
         }
         else throw std::runtime_error("Unrecognized input");
@@ -128,6 +128,7 @@ private:
     std::queue<std::string> inputFileNames;
     std::shared_ptr<detail::Forest> forest;
     Long64_t current_entry;
+    std::string prefix;
     bool extractMCtruth;
 
     bool OpenNextFile()

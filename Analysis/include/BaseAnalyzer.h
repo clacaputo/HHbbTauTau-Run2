@@ -125,8 +125,9 @@ private:
 class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
+                 const std::string& _prefix = "none",
                         size_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
-        : timer(10), treeExtractor(inputFileName, _useMCtruth),
+        : timer(10), treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, _useMCtruth),
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth) {}
