@@ -33,13 +33,13 @@
     TH1D_ENTRY_FIX(name##_effAbs, 1, n_bins, -0.5) \
     /**/
 
+/*
+#define X(name, ...) \
+    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
 
-//#define X(name, ...) \
-//    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
-
-//#define Y(name, ...) \
-//    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label) )
-
+#define Y(name, ...) \
+    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label) )
+*/
 
 #define X(name, ...) \
     cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__) )
