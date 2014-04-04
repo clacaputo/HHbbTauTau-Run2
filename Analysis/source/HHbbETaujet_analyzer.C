@@ -94,20 +94,20 @@ protected:
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 ele cand");
-        cut(X(pt) > pt, "pt");
-        const double eta = std::abs( X(eta) );
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
         cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
                                eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-        cut(X(missingHits) < missingHits, "missingHits");
-        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
+        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        cut(X(missingHits, 20, 0.0, 20.0) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion, 2, -0.5, 1.5) == hasMatchedConversion, "conversion");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
         const double dB_PV = (ele_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV) ) < dB, "dB");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
+        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
 
         return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
@@ -120,12 +120,13 @@ protected:
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
-        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        cut(X(againstElectronMediumMVA5) > againstElectronMediumMVA5, "vs_e_mediumMVA");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
+        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
+            > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
+        cut(X(againstElectronMediumMVA5, 2, -0.5, 1.5) > againstElectronMediumMVA5, "vs_e_mediumMVA");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }

@@ -305,7 +305,7 @@ protected:
         cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
                                eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
@@ -326,7 +326,7 @@ protected:
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
         cut(X(isTightMuon, 2, -0.5, 1.5) == isTightMuon, "tight");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object);
@@ -346,7 +346,7 @@ protected:
         cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5) >
             LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
