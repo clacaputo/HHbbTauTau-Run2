@@ -1,5 +1,6 @@
 #include "TStyle.h"
 
+namespace cms_tdr {
 // tdrGrid: Turns the grid lines on (true) or off (false)
 
 void tdrGrid(bool gridOn) {
@@ -156,3 +157,4 @@ void setTDRStyle() {
 
 }
 
+} // cms_tdr
