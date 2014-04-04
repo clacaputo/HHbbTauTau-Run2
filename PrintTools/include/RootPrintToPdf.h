@@ -18,6 +18,7 @@
 #include <TH2.h>
 #include <TProfile.h>
 
+
 #include "RootPrintSource.h"
 
 namespace root_ext {
@@ -51,6 +52,34 @@ public:
         {
             canvas->cd();
             DrawHistograms(*(*iter), source);
+        }
+
+        canvas->Draw();
+        std::ostringstream print_options;
+        print_options << "Title:" << page.title;
+        canvas->Print(output_file_name.c_str(), print_options.str().c_str());
+    }
+
+
+    void PrintStack(const Page& page, THStack& stack)
+    {
+        gROOT->SetStyle(page.layout.global_style.c_str());
+        gStyle->SetOptStat(page.layout.stat_options);
+        gStyle->SetOptFit(page.layout.fit_options);
+        canvas->cd();
+
+        canvas->SetTitle(page.title.c_str());
+        if(page.layout.has_title) {
+            TPaveLabel *title = Adapter::NewPaveLabel(page.layout.title_box, page.title);
+            title->SetTextFont(page.layout.title_font);
+            title->Draw();
+        }
+
+        Page::RegionCollection page_regions = page.Regions();
+        for(Page::RegionCollection::const_iterator iter = page_regions.begin(); iter != page_regions.end(); ++iter)
+        {
+            canvas->cd();
+            DrawHistograms(*(*iter), stack);
         }
 
         canvas->Draw();
@@ -96,6 +125,30 @@ private:
                           page_side.yRange, page_side.use_log_scaleY);
         plotter.Superpose(pad, stat_pad, page_side.layout.has_legend, page_side.layout.legend_pad,
                           page_side.draw_options);
+    }
+
+    void DrawStack(const PageSide& page_side, THStack& stack)
+    {
+        typedef root_ext::HistogramPlotter<typename Source::Histogram, typename Source::ValueType> Plotter;
+        typedef root_ext::HistogramFitter<typename Source::Histogram, typename Source::ValueType> Fitter;
+
+        TPad* stat_pad = 0;
+        if(page_side.layout.has_stat_pad) {
+            stat_pad = Adapter::NewPad(page_side.layout.stat_pad);
+            stat_pad->Draw();
+        }
+
+        TPad *pad = Adapter::NewPad(page_side.layout.main_pad);
+        if(page_side.use_log_scaleX)
+            pad->SetLogx();
+        if(page_side.use_log_scaleY)
+            pad->SetLogy();
+        pad->Draw();
+        pad->cd();
+        setTDRStyle();
+        stack.Draw();
+
+
     }
 
 private:

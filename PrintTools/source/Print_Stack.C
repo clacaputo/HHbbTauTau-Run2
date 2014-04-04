@@ -18,13 +18,14 @@ struct DataSource {
     std::string file_name;
     double scale_factor;
     Color_t color;
+    TFile* file;
 };
 
 struct HistogramDescriptor {
     std::string name;
     std::string title;
-    double xmin, xmax;
-    unsigned nbins;
+    root_ext::Range xRange;
+    unsigned rebinFactor;
     bool useLogY;
 };
 
@@ -37,18 +38,17 @@ std::ostream& operator<<(std::ostream& s, const DataSource& source){
 
 std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
     s << "Name: " << hist.name << ", Title: " << hist.title << ", xmin: " << hist.xmin << ", xmax: " << hist.xmax <<
-         ", nbins: " << hist.nbins << ", useLog: " << hist.useLogY  ;
+         ", rebinFactor: " << hist.rebinFactor << ", useLog: " << hist.useLogY  ;
     return s;
 }
 
 class Print_Stack {
 public:
-    typedef std::pair< std::string, std::string > FileTagPair;
+
     typedef root_ext::PdfPrinter Printer;
-//    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
 
-
-    Print_Stack(const std::string& source_cfg, const std::string& hist_cfg)
+    Print_Stack(const std::string& source_cfg, const std::string& hist_cfg, const std::string& outputFileName) :
+        printer(outputFileName)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -56,13 +56,36 @@ public:
 
     void Run()
     {
-        std::cout << "Sources: " << std::endl;
-        for (const auto& source : sources){
-            std::cout << source << std::endl;
+
+        std::cout << "Opening Sources... " << std::endl;
+        for (const DataSource& source : sources){
+            //std::cout << source << std::endl;
+            source.file = new TFile(source.file_name.c_str(),"READ");
+            if(source.file->IsZombie()) {
+                std::ostringstream ss;
+                ss << "Input file '" << source.file_name << "' not found.";
+                throw std::runtime_error(ss.str());
+            }
         }
-        std::cout << "Histograms: " << std::endl;
-        for (const auto& hist : histograms){
-            std::cout << hist << std::endl;
+
+        std::cout << "Printing Histograms ... " << std::endl;
+        for (const HistogramDescriptor& hist : histograms){
+            //std::cout << hist << std::endl;
+            page.side.use_log_scaleY = hist.useLogY;
+            page.side.xRange = hist.xRange;
+            page.side.fit_range_x = false;
+            THStack* stack = new THStack(hist.name.c_str(),hist.title.c_str());
+
+            for (const DataSource& source : sources){
+                TH1D* histogram = static_cast<TH1D*>(source.file->Get(hist.name.c_str()));
+                if (!histogram){
+                    std::ostringstream ss;
+                    ss << "histogram '" << hist.name << "' not found in " << source.file_name;
+                    throw std::runtime_error(ss.str());
+                }
+                histogram->Rebin(hist.rebinFactor);
+
+            }
         }
     }
 
@@ -96,9 +119,9 @@ private:
             HistogramDescriptor hist;
             ss >> hist.name;
             ss >> hist.title;
-            ss >> hist.xmin;
-            ss >> hist.xmax;
-            ss >> hist.nbins;
+            ss >> hist.xRange.min;
+            ss >> hist.xRange.max;
+            ss >> hist.rebinFactor;
             ss >> hist.useLogY;
             histograms.push_back(hist);
           }
@@ -108,6 +131,8 @@ private:
 private:
     std::vector<DataSource> sources;
     std::vector<HistogramDescriptor> histograms;
+    Printer printer;
+    root_ext::SingleSidedPage page;
 
 };
 
