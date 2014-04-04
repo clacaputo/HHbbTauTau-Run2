@@ -105,6 +105,7 @@ public:
         if(ss_suffix.str().size())
             full_name += "_" + ss_suffix.str();
         if(!data.count(full_name)) {
+            cd();
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
         }

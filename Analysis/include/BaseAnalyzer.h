@@ -82,8 +82,8 @@ public:
     SELECTION_ENTRY(ElectronSelectionBkg, 15)
     SELECTION_ENTRY(BJetSelectionBkg, 15)
 
-    ENTRY_1D(unsigned, N_objects)
-    ENTRY_1D(float, Mass)
+    TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
+    TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
 
     TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
     ENTRY_1D(float, Resonance_Mass)
