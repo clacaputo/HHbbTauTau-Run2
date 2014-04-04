@@ -33,11 +33,19 @@
     TH1D_ENTRY_FIX(name##_effAbs, 1, n_bins, -0.5) \
     /**/
 
-#define X(name) \
-    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
 
-#define Y(name) \
-    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label) )
+//#define X(name, ...) \
+//    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
+
+//#define Y(name, ...) \
+//    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label) )
+
+
+#define X(name, ...) \
+    cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__) )
+
+#define Y(name, ...) \
+    cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__) )
 
 namespace analysis {
 
@@ -245,10 +253,10 @@ protected:
         const ntuple::Vertex& object = event.vertices().at(id);
 
         cut(true, ">0 vertex");
-        cut(X(ndf) >= ndf, "ndf");
-        cut(std::abs( X(z) ) < z, "z");
+        cut(X(ndf, 350, 0.0, 350.0) >= ndf, "ndf");
+        cut(std::abs( X(z, 600, -30.0, 30.0) ) < z, "z");
         const double r_vertex = std::sqrt(object.x*object.x+object.y*object.y);
-        cut(std::abs( Y(r_vertex) ) < r, "r");
+        cut(std::abs( Y(r_vertex, 500, 0.0, 0.5) ) < r, "r");
 
         return analysis::Vertex(id, object);
     }
@@ -261,9 +269,9 @@ protected:
         const std::string selection_label = "bjet" + _selection_label;
         const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags) > csv, "CSV");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags, 130, -11.0, 2.0) > csv, "CSV");
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
@@ -276,10 +284,10 @@ protected:
 
         const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
-        cut(X(passLooseID) == passLooseID, "passLooseID");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags, 130, -11.0, 2.0) > CSV, "CSV");
+        cut(X(passLooseID, 2, -0.5, 1.5) == passLooseID, "passLooseID");
 
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
@@ -292,16 +300,16 @@ protected:
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 ele cand");
-        cut(X(pt) > pt, "pt");
-        const double eta = std::abs( X(eta) );
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
         cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
                                eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[pt_index][eta_index], "mva");
 
         return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
@@ -314,12 +322,12 @@ protected:
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(isTightMuon) == isTightMuon, "tight");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(isTightMuon, 2, -0.5, 1.5) == isTightMuon, "tight");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
@@ -332,12 +340,13 @@ protected:
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
+        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5) >
+            LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
+        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }

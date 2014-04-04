@@ -93,19 +93,19 @@ protected:
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon) == isPFMuon, "PF");
-        cut(X(nMatchedStations) > nMatched_Stations, "stations");
-        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
-        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
+        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
+        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
+        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
+        cut(Y(DeltaZ, 600, 0.0, 60.0)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
         const double dB_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV) ) < dB, "dB");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
@@ -118,12 +118,13 @@ protected:
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits) > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
-        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
-        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
+        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
+            > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
+        cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
