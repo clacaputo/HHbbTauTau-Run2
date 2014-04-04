@@ -92,12 +92,13 @@ protected:
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt) > pt_sublead, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_tight");
-        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
-        cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits) > MediumCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt_sublead, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
+        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_tight");
+        cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
+        cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
+            > MediumCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
@@ -165,4 +166,3 @@ protected:
 private:
     MuTauSignalAnalyzerData anaData;
 };
-
