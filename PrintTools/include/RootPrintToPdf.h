@@ -62,11 +62,11 @@ public:
     }
 
 
-    void PrintStack(const Page& page, THStack& stack)
+    void PrintStack(const Page& page, THStack& stack, TH1D& data_hist, TLegend& leg, TPaveText& pave_text)
     {
-        gROOT->SetStyle(page.layout.global_style.c_str());
-        gStyle->SetOptStat(page.layout.stat_options);
-        gStyle->SetOptFit(page.layout.fit_options);
+        TH1::SetDefaultSumw2();
+        cms_tdr::setTDRStyle();
+
         canvas->cd();
 
         canvas->SetTitle(page.title.c_str());
@@ -80,7 +80,7 @@ public:
         for(Page::RegionCollection::const_iterator iter = page_regions.begin(); iter != page_regions.end(); ++iter)
         {
             canvas->cd();
-            DrawHistograms(*(*iter), stack);
+            DrawStack(*(*iter), stack, data_hist, leg, pave_text);
         }
 
         canvas->Draw();
@@ -128,11 +128,8 @@ private:
                           page_side.draw_options);
     }
 
-    void DrawStack(const PageSide& page_side, THStack& stack)
+    void DrawStack(const PageSide& page_side, THStack& stack, TH1D& data_hist, TLegend& leg, TPaveText& pave_text)
     {
-        typedef root_ext::HistogramPlotter<typename Source::Histogram, typename Source::ValueType> Plotter;
-        typedef root_ext::HistogramFitter<typename Source::Histogram, typename Source::ValueType> Fitter;
-
         TPad* stat_pad = 0;
         if(page_side.layout.has_stat_pad) {
             stat_pad = Adapter::NewPad(page_side.layout.stat_pad);
@@ -146,8 +143,21 @@ private:
             pad->SetLogy();
         pad->Draw();
         pad->cd();
-        cms_tdr::setTDRStyle();
+
         stack.Draw();
+
+        const Int_t firstBin = stack.GetXaxis()->FindBin(page_side.xRange.min);
+        const Int_t lastBin = stack.GetXaxis()->FindBin(page_side.xRange.max);
+        stack.GetXaxis()->SetRange(firstBin,lastBin);
+        const Double_t maxY = std::max(stack.GetMaximum(),data_hist.GetMaximum());
+        stack.SetMaximum(maxY*1.1);
+
+        stack.GetXaxis()->SetTitle(page_side.axis_titleX.c_str());
+        stack.GetYaxis()->SetTitle(page_side.axis_titleY.c_str());
+
+        data_hist.Draw("samePE01");
+        leg.Draw("same");
+        pave_text.Draw("same");
     }
 
 private:

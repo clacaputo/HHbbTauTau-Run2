@@ -111,3 +111,6 @@ RunTools/check_finished_tree.sh
 Analysis/legacy/stack_upgrade.C
 PrintTools/include/TdrStyle.h
 PrintTools/source/Print_Stack.C
+PrintTools/config/hist.txt
+PrintTools/config/sources.txt
+PrintTools/source/Print_Histogram.C

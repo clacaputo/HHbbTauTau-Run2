@@ -1,48 +1,42 @@
 /*!
- * \file Print_SmartHistogram.C
- * \brief Print smart histograms with specified name superimposing several files.
+ * \file Print_Histogram.C
+ * \brief Print histograms with specified name superimposing several files.
  * \author Konstantin Androsov (INFN Pisa, Siena University)
  * \author Maria Teresa Grippo (INFN Pisa, Siena University)
- * \date 2014-04-03 created
+ * \date 2014-04-04 created
  */
 
-#include <TTree.h>
+
 
 #include "../include/RootPrintToPdf.h"
 
-class MyHistogramSource : public root_ext::HistogramSource<TH1D, Double_t, TTree> {
+class MyHistogramSource : public root_ext::SimpleHistogramSource<TH1D, Double_t> {
 public:
-    MyHistogramSource(const root_ext::Range& _xRange, unsigned _nBins)
-        : xRange(_xRange), nBins(_nBins) {}
+    MyHistogramSource(unsigned _rebin)
+        : rebinFactor(_rebin) {}
 protected:
-    virtual TH1D* Convert(TTree* tree) const
+    virtual void Prepare(TH1D* histogram, const std::string& display_name,
+                         const PlotOptions& plot_options) const
     {
-        std::ostringstream s_name;
-        s_name << tree->GetName() << "_hist";
-        const std::string name = s_name.str();
-        const std::string command = "values>>+" + name;
-
-        TH1D* histogram = new TH1D(name.c_str(), name.c_str(), nBins, xRange.min, xRange.max);
-        tree->Draw(command.c_str(), "");
-        return histogram;
+        SimpleHistogramSource::Prepare(histogram,display_name,plot_options);
+        histogram->Rebin(rebinFactor);
     }
 
 private:
-    root_ext::Range xRange;
-    unsigned nBins;
+    unsigned rebinFactor;
 };
 
-class Print_SmartHistogram {
+class Print_Histogram {
 public:
     typedef std::pair< std::string, std::string > FileTagPair;
     typedef root_ext::PdfPrinter Printer;
-//    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
+    //typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
 
     template<typename ...Args>
-    Print_SmartHistogram(const std::string& outputFileName, const std::string& _histogramName, const std::string& _title,
-                    double _xMin, double _xMax, unsigned _nBins,  bool _useLogX, bool _useLogY, const Args& ...args)
-       : printer(outputFileName), histogramName(_histogramName), title(_title), xRange(_xMin, _xMax), nBins(_nBins),
-         useLogX(_useLogX), useLogY(_useLogY), source(xRange, nBins)
+    Print_Histogram(const std::string& outputFileName, const std::string& _histogramName, const std::string& _title,
+                    double _xMin, double _xMax, unsigned _rebin, bool _useLogX, bool _useLogY, const Args& ...args)
+       : printer(outputFileName), histogramName(_histogramName), title(_title), xRange(_xMin, _xMax),
+         useLogX(_useLogX), useLogY(_useLogY), source(_rebin)
     {
         Initialize(args...);
         for(const FileTagPair& fileTag : inputs) {
@@ -103,7 +97,7 @@ private:
     Printer printer;
     std::string histogramName, title;
     root_ext::Range xRange;
-    unsigned nBins;
     bool useLogX, useLogY;
     MyHistogramSource source;
 };
+

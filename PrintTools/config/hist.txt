@@ -1,0 +1,3 @@
+after_cut/pt_tau P_{T}(#tau) P_{T}(#tau)[GeV] reweighted_N_entries 0 400 5 0
+Mass_H_mu_tau M_{#mu#tau} M_{#mu#tau}[GeV] reweighted_N_entries 0 500 5 0
+Mass_H_bb M_{bb} M_{bb}[GeV] reweighted_N_entries 0 1000 5 0

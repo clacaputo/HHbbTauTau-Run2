@@ -1,0 +1,4 @@
+radion300 data/anaRadion300MuTau.root 0.441 gray
+radion500 data/anaRadion500MuTau.root 0.081 teal
+radion700 data/anaRadion700MuTau.root 0.03 red
+radion1000 data/anaRadion1000MuTau.root 1 black

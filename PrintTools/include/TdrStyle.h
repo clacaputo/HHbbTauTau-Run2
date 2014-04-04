@@ -3,16 +3,16 @@
 namespace cms_tdr {
 // tdrGrid: Turns the grid lines on (true) or off (false)
 
-void tdrGrid(bool gridOn) {
-  tdrStyle->SetPadGridX(gridOn);
-  tdrStyle->SetPadGridY(gridOn);
-}
+//void tdrGrid(bool gridOn) {
+//  tdrStyle->SetPadGridX(gridOn);
+//  tdrStyle->SetPadGridY(gridOn);
+//}
 
-// fixOverlay: Redraws the axis
+//// fixOverlay: Redraws the axis
 
-void fixOverlay() {
-  gPad->RedrawAxis();
-}
+//void fixOverlay() {
+//  gPad->RedrawAxis();
+//}
 
 void setTDRStyle() {
   TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
