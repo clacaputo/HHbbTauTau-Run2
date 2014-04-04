@@ -1,0 +1,3 @@
+/store/user/kandroso/ZZ_8TeV/TREE/ZZ_xae_Tree.root
+/store/user/kandroso/ZZ_8TeV/TREE/ZZ_xaa_Tree.root
+/store/user/kandroso/ZZ_8TeV/TREE/ZZ_xai_Tree.root
