@@ -15,7 +15,7 @@ PrintTools/include/RootPrintToPdf.h
 PrintTools/source/Print_Selection.C
 PrintTools/include/RootPrintSource.h
 >>>>>>> 3de1fda2e683e1d8c8b03ad7af04fd538eb93643
-PrintTools/source/Print_Histogram.C
+PrintTools/source/Print_SmartHistogram.C
 runx.sh
 PatProduction/python/patTuple.py
 TreeProduction/BuildFile.xml

@@ -32,14 +32,14 @@ private:
     unsigned nBins;
 };
 
-class Print_Histogram {
+class Print_SmartHistogram {
 public:
     typedef std::pair< std::string, std::string > FileTagPair;
     typedef root_ext::PdfPrinter Printer;
 //    typedef root_ext::SimpleHistogramSource<TH1D, Double_t> MyHistogramSource;
 
     template<typename ...Args>
-    Print_Histogram(const std::string& outputFileName, const std::string& _histogramName, const std::string& _title,
+    Print_SmartHistogram(const std::string& outputFileName, const std::string& _histogramName, const std::string& _title,
                     double _xMin, double _xMax, unsigned _nBins,  bool _useLogX, bool _useLogY, const Args& ...args)
        : printer(outputFileName), histogramName(_histogramName), title(_title), xRange(_xMin, _xMax), nBins(_nBins),
          useLogX(_useLogX), useLogY(_useLogY), source(xRange, nBins)
