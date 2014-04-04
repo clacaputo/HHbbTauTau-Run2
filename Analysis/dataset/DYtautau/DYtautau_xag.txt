@@ -1,0 +1,3 @@
+/store/user/kandroso/DYToTauTau_M20_8TeV/TREE/DYtautau_xbl_Tree.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/TREE/DYtautau_xei_Tree.root
+/store/user/kandroso/DYToTauTau_M20_8TeV/TREE/DYtautau_xaf_Tree.root

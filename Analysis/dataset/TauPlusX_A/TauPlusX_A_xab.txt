@@ -1,0 +1,4 @@
+/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/TREE/TauPlusX_A_xak_Tree.root
+/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/TREE/TauPlusX_A_xad_Tree.root
+/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/TREE/TauPlusX_A_xam_Tree.root
+/store/user/kandroso/TauPlusX/Run2012A-22Jan2013-v1/TREE/TauPlusX_A_xaq_Tree.root
