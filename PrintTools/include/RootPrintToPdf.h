@@ -17,9 +17,10 @@
 #include <TH1.h>
 #include <TH2.h>
 #include <TProfile.h>
-
+#include <THStack.h>
 
 #include "RootPrintSource.h"
+#include "TdrStyle.h"
 
 namespace root_ext {
 
@@ -145,10 +146,8 @@ private:
             pad->SetLogy();
         pad->Draw();
         pad->cd();
-        setTDRStyle();
+        cms_tdr::setTDRStyle();
         stack.Draw();
-
-
     }
 
 private:

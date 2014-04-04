@@ -56,7 +56,6 @@ public:
 
     void Run()
     {
-
         std::cout << "Opening Sources... " << std::endl;
         for (const DataSource& source : sources){
             //std::cout << source << std::endl;
@@ -74,7 +73,7 @@ public:
             page.side.use_log_scaleY = hist.useLogY;
             page.side.xRange = hist.xRange;
             page.side.fit_range_x = false;
-            THStack* stack = new THStack(hist.name.c_str(),hist.title.c_str());
+            std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
             for (const DataSource& source : sources){
                 TH1D* histogram = static_cast<TH1D*>(source.file->Get(hist.name.c_str()));
@@ -84,8 +83,8 @@ public:
                     throw std::runtime_error(ss.str());
                 }
                 histogram->Rebin(hist.rebinFactor);
-
             }
+            printer.PrintStack(page, *stack);
         }
     }
 

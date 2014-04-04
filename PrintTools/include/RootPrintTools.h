@@ -14,7 +14,6 @@
 #include <TPad.h>
 #include <TCanvas.h>
 #include <TLegend.h>
-#include <THStack.h>
 
 namespace root_ext {
 
