@@ -42,48 +42,7 @@ private:
     std::string message;
 };
 
-void apply_cut(bool expected_condition, TH1D& histogram, int param_id)
-{
-    if(!expected_condition)
-        throw cut_failed(param_id);
-    histogram.Fill(param_id);
-}
 
-void apply_cut(bool expected_condition, TH1D& counter_histogram, int param_id, TH1D& selection_histogram,
-               const std::string& param_label)
-{
-    apply_cut(expected_condition, counter_histogram, param_id);
-    selection_histogram.GetXaxis()->SetBinLabel(param_id + 1, param_label.c_str());
-}
-
-void fill_selection_histogram(TH1D& selection_histogram, const TH1D& counter_histogram)
-{
-    if(selection_histogram.GetNbinsX() > counter_histogram.GetNbinsX())
-        throw std::runtime_error("Selection histogram has more number of bins then counter histogram.");
-    for(Int_t n = 1; n <= selection_histogram.GetNbinsX(); ++n) {
-        if(counter_histogram.GetBinContent(n) > 0.5)
-            selection_histogram.AddBinContent(n);
-    }
-}
-
-template<typename ObjectType, typename Selector>
-std::vector<ObjectType> collect_objects(TH1D& counter_histogram, TH1D& selection_histogram, size_t n_objects,
-                           const Selector& selector)
-{
-    std::vector<ObjectType> selected;
-    counter_histogram.Reset();
-    for (size_t n = 0; n < n_objects; ++n) {
-        try {
-            const ObjectType selectedCandidate = selector(n);
-            selected.push_back(selectedCandidate);
-        } catch(cuts::cut_failed&) {}
-    }
-
-    fill_selection_histogram(selection_histogram, counter_histogram);
-    std::sort(selected.begin(), selected.end());
-
-    return selected;
-}
 
 template<typename ValueType, typename Histogram>
 ValueType fill_histogram(ValueType value, Histogram& histogram)
@@ -92,32 +51,64 @@ ValueType fill_histogram(ValueType value, Histogram& histogram)
     return value;
 }
 
-void fill_relative_selection_histogram(const TH1D& selection_histogram, TH1D& relative_selection_histogram,
-                                       Int_t fixedBin = std::numeric_limits<Int_t>::max())
-{
-    if(selection_histogram.GetNbinsX() > relative_selection_histogram.GetNbinsX())
-        throw std::runtime_error("Selection histogram has more number of bins then relative selection histogram.");
-    for(Int_t n = 1; n <= selection_histogram.GetNbinsX(); ++n) {
-        const char* label = selection_histogram.GetXaxis()->GetBinLabel(n);
-        relative_selection_histogram.GetXaxis()->SetBinLabel(n, label);
-        if(selection_histogram.GetBinContent(n) < 0.5)
-            break;
-        const Int_t refBin = n == 1 ? 1 : ( n > fixedBin ? fixedBin : n - 1 );
-        const Double_t ratio = selection_histogram.GetBinContent(n) / selection_histogram.GetBinContent(refBin);
-        relative_selection_histogram.SetBinContent(n, ratio);
-    }
-}
 
-void fill_absolute_selection_histogram(const TH1D& selection_histogram, TH1D& absolute_selection_histogram)
-{
-    fill_relative_selection_histogram(selection_histogram, absolute_selection_histogram,1);
-}
+class ObjectSelector{
+public:
+
+    virtual ~ObjectSelector(){}
+
+    void apply_cut(bool expected_condition, int param_id, const std::string& param_label)
+    {
+        if (counters.size() < param_id)
+            throw std::runtime_error("counters out of range");
+        if(!expected_condition)
+            throw cut_failed(param_id);
+        if (counters.size() == param_id){  //counters and selections filled at least once
+            counters.push_back(0);
+            selections.push_back(0);
+            labels.push_back(param_label);
+        }
+        counters.at(param_id)++;
+    }
+
+    void fill_selection(double weight = 1){
+        for (unsigned n = 0; n < counters.size(); ++n){
+            unsigned alpha = counters.at(n) > 0 ? 1 : 0 ;
+            selections.at(n) += alpha * weight;
+            counters.at(n) = 0;
+        }
+    }
+
+    template<typename ObjectType, typename Selector>
+    std::vector<ObjectType> collect_objects(double weight, size_t n_objects, const Selector& selector)
+    {
+        std::vector<ObjectType> selected;
+        for (size_t n = 0; n < n_objects; ++n) {
+            try {
+                const ObjectType selectedCandidate = selector(n);
+                selected.push_back(selectedCandidate);
+            } catch(cuts::cut_failed&) {}
+        }
+
+        fill_selection(weight);
+        std::sort(selected.begin(), selected.end());
+
+        return selected;
+    }
+
+
+protected:
+    std::vector<unsigned> counters;
+    std::vector<double> selections;
+    std::vector<std::string> labels;
+
+
+};
 
 class Cutter {
 public:
-    Cutter(TH1D& _counter_histogram, TH1D& _selection_histogram, bool _enabled = true)
-        : enabled(_enabled), param_id(-1), counter_histogram(&_counter_histogram),
-          selection_histogram(&_selection_histogram) {}
+    Cutter(ObjectSelector& _objectSelector, bool _enabled = true)
+        : objectSelector(&_objectSelector), enabled(_enabled), param_id(-1) {}
 
     bool Enabled() const { return enabled; }
     int CurrentParamId() const { return param_id; }
@@ -125,7 +116,7 @@ public:
     void operator()(bool expected, const std::string& label)
     {
         if(enabled)
-            apply_cut(expected, *counter_histogram, ++param_id, *selection_histogram, label);
+            objectSelector->apply_cut(expected, ++param_id, label);
     }
 
     bool test(bool expected, const std::string& label)
@@ -138,9 +129,62 @@ public:
     }
 
 private:
+    ObjectSelector* objectSelector;
     bool enabled;
     int param_id;
-    TH1D *counter_histogram, *selection_histogram;
+
+
 };
 
 } // cuts
+
+namespace root_ext {
+
+template<>
+class SmartHistogram<cuts::ObjectSelector> : public cuts::ObjectSelector, public AbstractHistogram {
+public:
+    SmartHistogram(const std::string& name) : AbstractHistogram(name) {}
+
+    virtual void WriteRootObject()
+    {
+        std::unique_ptr<TH1D> selection_histogram(
+                    new TH1D(Name().c_str(), Name().c_str(),selections.size(),-0.5,-0.5+selections.size()));
+        for (unsigned n = 0; n < selections.size(); ++n){
+            const std::string label = labels.at(n);
+            selection_histogram->GetXaxis()->SetBinLabel(n+1, label.c_str());
+            selection_histogram->SetBinContent(n+1,selections.at(n));
+        }
+        selection_histogram->Write();
+
+        std::string effAbs_name = Name() + "_effAbs";
+        std::unique_ptr<TH1D> effAbs_histogram(
+                    new TH1D(effAbs_name.c_str(), effAbs_name.c_str(),selections.size(),-0.5,-0.5+selections.size()));
+
+        fill_relative_selection_histogram(*effAbs_histogram,0);
+        effAbs_histogram->Write();
+
+        std::string effRel_name = Name() + "_effRel";
+        std::unique_ptr<TH1D> effRel_histogram(
+                    new TH1D(effRel_name.c_str(), effRel_name.c_str(),selections.size(),-0.5,-0.5+selections.size()));
+
+        fill_relative_selection_histogram(*effRel_histogram);
+        effRel_histogram->Write();
+    }
+
+private:
+    void fill_relative_selection_histogram(TH1D& relative_selection_histogram,
+                                           size_t fixedIndex = std::numeric_limits<size_t>::max())
+    {
+        for(size_t n = 0; n < selections.size(); ++n) {
+            const std::string label = labels.at(n);
+            relative_selection_histogram.GetXaxis()->SetBinLabel(n+1, label.c_str());
+            const size_t refIndex = n == 0 ? 0 : ( n > fixedIndex ? fixedIndex : n-1 );
+            const Double_t ratio = selections.at(n) / selections.at(refIndex);
+            relative_selection_histogram.SetBinContent(n+1, ratio);
+        }
+    }
+
+
+};
+
+}

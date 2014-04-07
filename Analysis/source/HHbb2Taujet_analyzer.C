@@ -12,7 +12,7 @@ class MuTauSignalAnalyzerData : public analysis::SignalAnalyzerData {
 public:
     MuTauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
 
-    SELECTION_ENTRY(EventSelection, 15, 5)
+    SELECTION_ENTRY(EventSelection)
 
 
     ENTRY_1D(float, LeadTau_Pt_MC)
@@ -84,11 +84,12 @@ protected:
         ApplyVetos(Resonances, cut);
     }
 
-    virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                          root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::TauTau;
         const std::string selection_label = "tau";
-        cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");

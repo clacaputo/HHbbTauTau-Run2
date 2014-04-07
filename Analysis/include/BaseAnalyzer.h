@@ -20,17 +20,8 @@
 #include <iomanip>
 #include <functional>
 
-#define SELECTION_ENTRY(name, n_bins, ...) \
-    template<typename ...Args> \
-    root_ext::SmartHistogram< TH1D >& name(const Args& ...args) { \
-        auto event = &name##_event(args...); \
-        auto eff_rel = &name##_effRel(args...); \
-        auto eff_abs = &name##_effAbs(args...); \
-        selectionDescriptors[event] = SelectionDescriptor(event, eff_rel, eff_abs, ##__VA_ARGS__); \
-        return *event; } \
-    TH1D_ENTRY_FIX(name##_event, 1, n_bins, -0.5) \
-    TH1D_ENTRY_FIX(name##_effRel, 1, n_bins, -0.5) \
-    TH1D_ENTRY_FIX(name##_effAbs, 1, n_bins, -0.5) \
+#define SELECTION_ENTRY(name) \
+    ENTRY_1D(cuts::ObjectSelector, name) \
     /**/
 
 /*
@@ -50,42 +41,24 @@
 namespace analysis {
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
-public:
-    struct SelectionDescriptor {
-        root_ext::SmartHistogram<TH1D> *event, *eff_relative, *eff_absolute;
-        Int_t fix_bin;
-        SelectionDescriptor(root_ext::SmartHistogram<TH1D> *_event = nullptr,
-                            root_ext::SmartHistogram<TH1D> *eff_rel = nullptr,
-                            root_ext::SmartHistogram<TH1D> *eff_abs = nullptr,
-                            Int_t fix = std::numeric_limits<Int_t>::max())
-            : event(_event), eff_relative(eff_rel), eff_absolute(eff_abs), fix_bin(fix) {}
-    };
 
 public:
     SignalAnalyzerData(TFile& outputFile) : AnalyzerData(outputFile) {}
-    virtual ~SignalAnalyzerData()
-    {
-        Erase(Counter().Name());
-        for(const auto& desc : selectionDescriptors) {
-            cuts::fill_relative_selection_histogram(*desc.second.event, *desc.second.eff_relative, desc.second.fix_bin);
-            cuts::fill_absolute_selection_histogram(*desc.second.event, *desc.second.eff_absolute);
-        }
-    }
 
-    SELECTION_ENTRY(VertexSelection, 15)
-    SELECTION_ENTRY(MuonSelection, 15)
-    SELECTION_ENTRY(TauSelection, 15)
-    SELECTION_ENTRY(ElectronSelection, 15)
-    SELECTION_ENTRY(BJetSelection, 15)
-    SELECTION_ENTRY(MuonSelectionBkg, 15)
-    SELECTION_ENTRY(TauSelectionBkg, 15)
-    SELECTION_ENTRY(ElectronSelectionBkg, 15)
-    SELECTION_ENTRY(BJetSelectionBkg, 15)
+
+    SELECTION_ENTRY(VertexSelection)
+    SELECTION_ENTRY(MuonSelection)
+    SELECTION_ENTRY(TauSelection)
+    SELECTION_ENTRY(ElectronSelection)
+    SELECTION_ENTRY(BJetSelection)
+    SELECTION_ENTRY(MuonSelectionBkg)
+    SELECTION_ENTRY(TauSelectionBkg)
+    SELECTION_ENTRY(ElectronSelectionBkg)
+    SELECTION_ENTRY(BJetSelectionBkg)
 
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
 
-    TH1D_ENTRY_FIX(Counter, 1, 100, -0.5)
     ENTRY_1D(float, Resonance_Mass)
     ENTRY_1D(float, Resonance_Pt)
     ENTRY_1D(float, Resonance_Eta)
@@ -96,8 +69,7 @@ public:
     ENTRY_2D(float, DR_bjets_vs_HiggsPt_MC)
     ENTRY_2D(float, DR_Higgs_vs_ResonancePt_MC)
 
-protected:
-    std::map<root_ext::SmartHistogram<TH1D>*, SelectionDescriptor> selectionDescriptors;
+
 };
 
 class Timer {
@@ -138,7 +110,7 @@ public:
         : timer(10), treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, _useMCtruth),
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth) {}
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1) {}
 
     virtual ~BaseAnalyzer() {}
 
@@ -157,99 +129,106 @@ public:
     }
 
 protected:
-    typedef std::function< Candidate (size_t, bool, root_ext::AnalyzerData&) > BaseSelector;
+    typedef std::function< Candidate (size_t, cuts::ObjectSelector&, bool, root_ext::AnalyzerData&) > BaseSelector;
 
     virtual SignalAnalyzerData& GetAnaData() = 0;
     virtual void ProcessEvent() = 0;
 
     template<typename ObjectType, typename BaseSelectorType>
-    std::vector<ObjectType> CollectObjects(TH1D& selection_histogram, size_t n_objects,
+    std::vector<ObjectType> CollectObjects(cuts::ObjectSelector& objectSelector, size_t n_objects,
                                            const BaseSelectorType& base_selector, const std::string& hist_name)
     {
         const auto selector = [&](size_t id) -> ObjectType
-            { return base_selector(id, true, anaDataBeforeCut); };
+            { return base_selector(id, objectSelector, true, anaDataBeforeCut); };
 
-        const auto selected = cuts::collect_objects<ObjectType>(GetAnaData().Counter(), selection_histogram, n_objects,
-                                                                selector);
+        const auto selected = objectSelector.collect_objects<ObjectType>(weight, n_objects,selector);
         for(const ObjectType& candidate : selected)
-            base_selector(candidate.index, false, anaDataAfterCut);
+            base_selector(candidate.index, objectSelector, false, anaDataAfterCut);
         GetAnaData().N_objects(hist_name).Fill(selected.size());
         GetAnaData().N_objects(hist_name + "_ntuple").Fill(n_objects);
         return selected;
     }
 
     template<typename BaseSelectorMethod>
-    CandidateVector CollectObjects(TH1D& selection_histogram, size_t n_objects, bool signal,
+    CandidateVector CollectObjects(cuts::ObjectSelector& objectSelector, size_t n_objects, bool signal,
                                    BaseSelectorMethod signal_selector_method,
                                    BaseSelectorMethod bkg_selector_method, const std::string& hist_name)
     {
-        const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return (this->*signal_selector_method)(id, enabled, _anaData); };
-        const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return (this->*bkg_selector_method)(id, enabled, _anaData); };
+        const BaseSelector base_selector_signal = [&](unsigned id, cuts::ObjectSelector& _objectSelector, bool enabled,
+                root_ext::AnalyzerData& _anaData)
+                -> Candidate { return (this->*signal_selector_method)(id, _objectSelector, enabled, _anaData); };
+        const BaseSelector base_selector_bkg = [&](unsigned id, cuts::ObjectSelector& _objectSelector, bool enabled,
+                root_ext::AnalyzerData& _anaData)
+                -> Candidate { return (this->*bkg_selector_method)(id, _objectSelector, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
         const std::string real_hist_name = signal ? hist_name : hist_name + "_bkg";
-        return CollectObjects<Candidate>(selection_histogram, n_objects, base_selector, real_hist_name);
+        return CollectObjects<Candidate>(objectSelector, n_objects, base_selector, real_hist_name);
 
     }
 
     CandidateVector CollectMuons(bool signal = true)
     {
-        auto& selection_histogram = signal ? GetAnaData().MuonSelection() : GetAnaData().MuonSelectionBkg();
-        return CollectObjects(selection_histogram, event.muons().size(), signal,
+        auto& objectSelector = signal ? GetAnaData().MuonSelection() : GetAnaData().MuonSelectionBkg();
+        return CollectObjects(objectSelector, event.muons().size(), signal,
                               &BaseAnalyzer::SelectMuon, &BaseAnalyzer::SelectBackgroundMuon, "muons");
     }
 
     CandidateVector CollectTaus(bool signal = true)
     {
-        auto& selection_histogram = signal ? GetAnaData().TauSelection() : GetAnaData().TauSelectionBkg();
-        return CollectObjects(selection_histogram, event.taus().size(), signal,
+        auto& objectSelector = signal ? GetAnaData().TauSelection() : GetAnaData().TauSelectionBkg();
+        return CollectObjects(objectSelector, event.taus().size(), signal,
                               &BaseAnalyzer::SelectTau, &BaseAnalyzer::SelectBackgroundTau, "taus");
     }
 
     CandidateVector CollectElectrons(bool signal = true)
     {
-        auto& selection_histogram = signal ? GetAnaData().ElectronSelection() : GetAnaData().ElectronSelectionBkg();
-        return CollectObjects(selection_histogram, event.electrons().size(), signal,
+        auto& objectSelector = signal ? GetAnaData().ElectronSelection() : GetAnaData().ElectronSelectionBkg();
+        return CollectObjects(objectSelector, event.electrons().size(), signal,
                               &BaseAnalyzer::SelectElectron, &BaseAnalyzer::SelectBackgroundElectron, "electrons");
     }
 
     CandidateVector CollectBJets(double csv, const std::string& selection_label, bool signal = true)
     {
-        const BaseSelector base_selector_signal = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return SelectBJet(id, enabled, _anaData, csv, selection_label); };
-        const BaseSelector base_selector_bkg = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Candidate { return SelectBackgroundBJet(id, enabled, _anaData); };
+        const BaseSelector base_selector_signal = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
+                bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Candidate { return SelectBJet(id, _objectSelector, enabled, _anaData, csv, selection_label); };
+        const BaseSelector base_selector_bkg = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
+                bool enabled, root_ext::AnalyzerData& _anaData)
+                -> Candidate { return SelectBackgroundBJet(id, _objectSelector, enabled, _anaData); };
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
-        auto& selection_histogram = signal ? GetAnaData().BJetSelection(selection_label)
+        auto& objectSelector = signal ? GetAnaData().BJetSelection(selection_label)
                                           : GetAnaData().BJetSelectionBkg(selection_label);
-        return CollectObjects<Candidate>(selection_histogram, event.jets().size(), base_selector, "bjets");
+        return CollectObjects<Candidate>(objectSelector, event.jets().size(), base_selector, "bjets");
     }
 
     VertexVector CollectVertices()
     {
-        const auto base_selector = [&](unsigned id, bool enabled, root_ext::AnalyzerData& _anaData)
-                -> Vertex { return SelectVertex(id, enabled, _anaData); };
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector, bool enabled,
+                root_ext::AnalyzerData& _anaData)
+                -> Vertex { return SelectVertex(id, _objectSelector, enabled, _anaData); };
 
         return CollectObjects<Vertex>(GetAnaData().VertexSelection(), event.vertices().size(), base_selector, "vertices");
     }
 
-    virtual Candidate SelectMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+    virtual Candidate SelectMuon(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                 root_ext::AnalyzerData& _anaData){
         throw std::runtime_error("Muon selection for signal not implemented");
     }
-    virtual Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData) {
+    virtual Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                root_ext::AnalyzerData& _anaData) {
         throw std::runtime_error("Tau selection for signal not implemented");
     }
-    virtual Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData){
+    virtual Candidate SelectElectron(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                     root_ext::AnalyzerData& _anaData){
         throw std::runtime_error("Electron selection for signal not implemented");
     }
 
 
-    Vertex SelectVertex(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    Vertex SelectVertex(size_t id, cuts::ObjectSelector& objectSelector, bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::vertex;
         const std::string selection_label = "vertex";
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().VertexSelection(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Vertex& object = event.vertices().at(id);
 
         cut(true, ">0 vertex");
@@ -261,11 +240,11 @@ protected:
         return analysis::Vertex(id, object);
     }
 
-    Candidate SelectBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData,
+    Candidate SelectBJet(size_t id, cuts::ObjectSelector& objectSelector, bool enabled, root_ext::AnalyzerData& _anaData,
                          double csv, const std::string& _selection_label)
     {
         using namespace cuts::Htautau_Summer13::btag::signal;
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelection(_selection_label), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const std::string selection_label = "bjet" + _selection_label;
         const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
@@ -276,11 +255,12 @@ protected:
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
 
-    Candidate SelectBackgroundBJet(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    Candidate SelectBackgroundBJet(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                   root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::btag::veto;
         const std::string selection_label = "bjet_bkg";
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().BJetSelectionBkg(selection_label), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
 
         const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
@@ -292,11 +272,12 @@ protected:
         return analysis::Candidate(analysis::Candidate::Bjet, id, object);
     }
 
-    virtual analysis::Candidate SelectBackgroundElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                                         root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::electronID::veto;
         const std::string selection_label = "electron_bkg";
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().ElectronSelectionBkg(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 ele cand");
@@ -314,11 +295,12 @@ protected:
         return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
-    virtual analysis::Candidate SelectBackgroundMuon(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                                     root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::muonID::veto;
         const std::string selection_label = "muon_bkg";
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().MuonSelectionBkg(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
@@ -332,11 +314,12 @@ protected:
         return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
 
-    virtual analysis::Candidate SelectBackgroundTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectBackgroundTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
+                                                    root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::veto;
         const std::string selection_label = "tau_bkg";
-        cuts::Cutter cut(GetAnaData().Counter(), GetAnaData().TauSelectionBkg(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
@@ -494,6 +477,7 @@ protected:
     bool useMCtruth;
     GenEvent genEvent;
     Vertex primaryVertex;
+    double weight;
 };
 
 } // analysis
