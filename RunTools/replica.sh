@@ -9,6 +9,7 @@ SOURCE_NAME=$1
 DESTINATION_NAME=$2
 DIRECTORY_NAME=$3
 
+BARI_LOCAL_PATH=/lustre
 MIN_SPEED=5000000 # B/s
 NUMBER_OF_STREAMS=4
 
@@ -42,7 +43,12 @@ fi
 while read FILE_DESC ; do
 	if [ "$FILE_DESC" = "" ] ; then continue ; fi
 	echo $FILE_DESC
-    FILE_SIZE=$( echo $FILE_DESC | awk '{print $5}' )
+    FILE_NAME=$( echo $FILE_DESC | awk '{print $7}' )
+    if [ "$SOURCE_NAME" = "T2_IT_Bari" ] ; then
+        FILE_SIZE=$( stat -c%s "$BARI_LOCAL_PATH/$FILE_NAME" )
+    else
+        FILE_SIZE=$( echo $FILE_DESC | awk '{print $5}' )
+    fi
     FILE_NAME=$( echo $FILE_DESC | awk '{print $7}' )
     TIMEOUT=$(( $FILE_SIZE / $MIN_SPEED ))
     WATCHDOG_KILLED=1
@@ -58,7 +64,11 @@ while read FILE_DESC ; do
 			if [ ! "$FILE_DESC_DST" = "" ] ; then
 				echo $FILE_DESC_DST
 				ITERATION=$(($ITERATION + 1))
-				FILE_SIZE_DST=$( echo $FILE_DESC_DST | awk '{print $5}' )
+                if [ "$SOURCE_NAME" = "T2_IT_Bari" ] ; then
+                    FILE_SIZE_DST=$( stat -c%s "$BARI_LOCAL_PATH/$FILE_NAME" )
+                else
+                    FILE_SIZE_DST=$( echo $FILE_DESC_DST | awk '{print $5}' )
+                fi
 				if [ $FILE_SIZE -eq $FILE_SIZE_DST ] ; then
 					echo "File $FILE_NAME is already transfered."
 					NEED_COPY=0
