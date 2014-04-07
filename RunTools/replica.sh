@@ -39,37 +39,53 @@ if [ $RESULT -ne 0 ] ; then
     echo "ERROR: directory '$DIRECTORY_NAME' not found in '$SOURCE_NAME'."
 fi
 
-echo "$LS_RESULT" | while read FILE_DESC ; do
+while read FILE_DESC ; do
+	if [ "$FILE_DESC" = "" ] ; then continue ; fi
+	echo $FILE_DESC
     FILE_SIZE=$( echo $FILE_DESC | awk '{print $5}' )
     FILE_NAME=$( echo $FILE_DESC | awk '{print $7}' )
     TIMEOUT=$(( $FILE_SIZE / $MIN_SPEED ))
-
     WATCHDOG_KILLED=1
     while [ $WATCHDOG_KILLED -ne 0 ] ; do
-        LS_RESULT_DST=$( lcg-ls --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -l $DESTINATION_PREFIX/$FILE_NAME )
+        LS_RESULT_DST=$( lcg-ls --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -l $DESTINATION_PREFIX/$DIRECTORY_NAME | grep $FILE_NAME )
         NEED_COPY=1
         ITERATION=0
-        echo "$LS_RESULT_DST" | while read FILE_DESC_DST ; do
+        while read FILE_DESC_DST ; do
             if [ $ITERATION -ne 0 ] ; then
                 echo "ERROR: more than one file in destination for input 'FILE_NAME'"
                 exit
             fi
-            ITERATION=$(($ITERATION + 1))
-            FILE_SIZE_DST=$( echo $FILE_DESC_DST | awk '{print $5}' )
-            if [ $FILE_SIZE -eq $FILE_SIZE_DST ] ; then
-                echo "File $FILE_NAME is already transfered."
-                NEED_COPY=0
-                continue
-            fi
-            lcg-del --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT $DESTINATION_PREFIX/$FILE_NAME
-        done
-        if [ $NEED_COPY -ne 1 ] ; then continue ; fi
-
-        ( lcg-cp --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -b -D srmv2 -v -n $NUMBER_OF_STREAMS \
-            $SOURCE_PREFIX/$FILE_NAME $DESTINATION_PREFIX/$FILE_NAME ) & LCG_PID=$!
-        ( sleep $TIMEOUT && kill -9 $LCG_PID ) & WATCHDOG_PID=$!
-        wait $LCG_PID
-        kill -9 $WATCHDOG_PID &> /dev/null
-        WATCHDOG_KILLED=$?
+			if [ ! "$FILE_DESC_DST" = "" ] ; then
+				echo $FILE_DESC_DST
+				ITERATION=$(($ITERATION + 1))
+				FILE_SIZE_DST=$( echo $FILE_DESC_DST | awk '{print $5}' )
+				if [ $FILE_SIZE -eq $FILE_SIZE_DST ] ; then
+					echo "File $FILE_NAME is already transfered."
+					NEED_COPY=0
+				else
+					echo "Removing partially transfered file $FILE_NAME..."
+					srmrm -2 $DESTINATION_PREFIX/$FILE_NAME
+					if [ $? -ne 0 ] ; then
+						echo "ERROR: can't remove file."
+						exit
+					fi
+				fi
+			fi
+        done <<EOT
+$LS_RESULT_DST
+EOT
+        if [ $NEED_COPY -ne 1 ] ; then
+			WATCHDOG_KILLED=0
+		else
+			( lcg-cp -b -D srmv2 -v -n $NUMBER_OF_STREAMS \
+				$SOURCE_PREFIX/$FILE_NAME $DESTINATION_PREFIX/$FILE_NAME ) & LCG_PID=$!
+	        ( sleep $TIMEOUT && kill -9 $LCG_PID ) & WATCHDOG_PID=$!
+		    wait $LCG_PID
+			kill -9 $WATCHDOG_PID &> /dev/null
+	        WATCHDOG_KILLED=$?
+		fi
     done
-done
+	exit
+done <<EOT
+$LS_RESULT
+EOT
