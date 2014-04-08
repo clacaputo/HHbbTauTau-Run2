@@ -115,3 +115,6 @@ PrintTools/config/hist.txt
 PrintTools/config/sources.txt
 PrintTools/source/Print_Histogram.C
 RunTools/replica.sh
+Analysis/legacy/Fit_nPU.C
+Analysis/legacy/Print_PU.C
+Analysis/source/PileUp.C
