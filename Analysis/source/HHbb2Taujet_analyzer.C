@@ -12,9 +12,6 @@ class MuTauSignalAnalyzerData : public analysis::SignalAnalyzerData {
 public:
     MuTauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
 
-    SELECTION_ENTRY(EventSelection)
-
-
     ENTRY_1D(float, LeadTau_Pt_MC)
     ENTRY_1D(float, SubleadingTau_Pt_MC)
     ENTRY_1D(float, DR_tauJets_MC)
@@ -43,7 +40,7 @@ protected:
         finalState::bbTaujetTaujet mc_truth;
         if (useMCtruth && !FindAnalysisFinalState(mc_truth)) return;
 
-        cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
+        cuts::Cutter cut(anaData.EventSelection());
 
         cut(true, "total");
 

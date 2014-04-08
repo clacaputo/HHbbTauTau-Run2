@@ -45,7 +45,7 @@ class SignalAnalyzerData : public root_ext::AnalyzerData {
 public:
     SignalAnalyzerData(TFile& outputFile) : AnalyzerData(outputFile) {}
 
-
+    SELECTION_ENTRY(EventSelection)
     SELECTION_ENTRY(VertexSelection)
     SELECTION_ENTRY(MuonSelection)
     SELECTION_ENTRY(TauSelection)
@@ -123,7 +123,8 @@ public:
             timer.Report(n);
             try {
                 ProcessEvent();
-            } catch(cuts::cut_failed&) {}
+            } catch(cuts::cut_failed&){}
+            GetAnaData().EventSelection().fill_selection(weight);
         }
         timer.Report(n, true);
     }
@@ -245,7 +246,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::btag::signal;
         cuts::Cutter cut(objectSelector, enabled);
-        const std::string selection_label = "bjet" + _selection_label;
+        const std::string selection_label = "bjet_" + _selection_label;
         const ntuple::Jet& object = event.jets().at(id);
         cut(true, ">0 b-jet cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");

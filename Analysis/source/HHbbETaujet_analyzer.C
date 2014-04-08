@@ -12,8 +12,6 @@ class ETauSignalAnalyzerData : public analysis::SignalAnalyzerData {
 public:
     ETauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
 
-    SELECTION_ENTRY(EventSelection)
-
 
     ENTRY_1D(float, Tau_Pt_MC)
     ENTRY_1D(float, E_Pt_MC)
@@ -42,7 +40,7 @@ protected:
         finalState::bbETaujet eTauJet;
         if (useMCtruth && !FindAnalysisFinalState(eTauJet)) return;
 
-        cuts::Cutter cut(anaData.EventSelection(), anaData.EventSelection());
+        cuts::Cutter cut(anaData.EventSelection());
 
         cut(true, "total");
 

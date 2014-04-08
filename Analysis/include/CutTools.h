@@ -13,7 +13,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-
+#include <iostream>
 #include <TH1D.h>
 #include <Rtypes.h>
 
@@ -24,7 +24,7 @@ namespace cuts {
 
 class cut_failed : public std::exception {
 public:
-    cut_failed(int parameter_id) noexcept
+    cut_failed(size_t parameter_id) noexcept
         : _param_id(parameter_id)
     {
         std::ostringstream ss;
@@ -35,10 +35,10 @@ public:
     ~cut_failed() noexcept {}
 
     virtual const char* what() const noexcept { return message.c_str(); }
-    int param_id() const noexcept { return _param_id; }
+    size_t param_id() const noexcept { return _param_id; }
 
 private:
-    int _param_id;
+    size_t _param_id;
     std::string message;
 };
 
@@ -57,12 +57,10 @@ public:
 
     virtual ~ObjectSelector(){}
 
-    void apply_cut(bool expected_condition, int param_id, const std::string& param_label)
+    void incrementCounter(size_t param_id, const std::string& param_label)
     {
         if (counters.size() < param_id)
             throw std::runtime_error("counters out of range");
-        if(!expected_condition)
-            throw cut_failed(param_id);
         if (counters.size() == param_id){  //counters and selections filled at least once
             counters.push_back(0);
             selections.push_back(0);
@@ -108,15 +106,19 @@ protected:
 class Cutter {
 public:
     Cutter(ObjectSelector& _objectSelector, bool _enabled = true)
-        : objectSelector(&_objectSelector), enabled(_enabled), param_id(-1) {}
+        : objectSelector(&_objectSelector), enabled(_enabled), param_id(0) {}
 
     bool Enabled() const { return enabled; }
     int CurrentParamId() const { return param_id; }
 
     void operator()(bool expected, const std::string& label)
     {
-        if(enabled)
-            objectSelector->apply_cut(expected, ++param_id, label);
+        if(enabled){
+            ++param_id;
+            if(!expected)
+                throw cut_failed(param_id -1);
+            objectSelector->incrementCounter(param_id - 1, label);
+        }
     }
 
     bool test(bool expected, const std::string& label)
@@ -131,7 +133,7 @@ public:
 private:
     ObjectSelector* objectSelector;
     bool enabled;
-    int param_id;
+    size_t param_id;
 
 
 };
