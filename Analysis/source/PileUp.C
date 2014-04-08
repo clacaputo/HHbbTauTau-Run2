@@ -37,7 +37,7 @@ public:
         Data_distr->Scale( 1.0/ Data_distr->Integral() );
         Data_File->Close();
         outputFile->cd();
-        nPU_MCdistr = new TH1D("MC_pileup","MC nPU distribution",50,0,50);
+        nPU_MCdistr = new TH1D("MC_pileup","MC nPU distribution",Data_distr->GetNbinsX(),0,Data_distr->GetNbinsX());
     }
 
 
@@ -50,8 +50,10 @@ public:
                 break;
             const ntuple::Event& eventInfo = event.eventInfo();
             for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
-                if (eventInfo.bunchCrossing.at(n) == 0)
+                if (eventInfo.bunchCrossing.at(n) == 0){
                     nPU_MCdistr->Fill(eventInfo.nPU.at(n));
+                    break;
+                }
             }
         }
 

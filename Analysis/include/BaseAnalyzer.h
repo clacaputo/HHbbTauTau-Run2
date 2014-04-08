@@ -105,12 +105,28 @@ private:
 class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
-                 const std::string& _prefix = "none",
-                        size_t _maxNumberOfEvents = 0, bool _useMCtruth = false)
+                 const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0, bool _useMCtruth = false,
+                 const std::string& reweightFileName = "none")
         : timer(10), treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, _useMCtruth),
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1) {}
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1)
+    {
+        if (reweightFileName != "none"){
+            std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
+            if(reweightFile->IsZombie()){
+                std::ostringstream ss;
+                ss << "reweight file " << reweightFileName << " not found." ;
+                throw std::runtime_error(ss.str());
+            }
+            TObject* originalWeights = reweightFile->Get("weights");
+            if (!originalWeights)
+                throw std::runtime_error("histograms with weights not found");
+            outputFile->cd();
+            weights = std::shared_ptr<TH1D>(static_cast<TH1D*>(originalWeights->Clone("PUweights")));
+        }
+
+    }
 
     virtual ~BaseAnalyzer() {}
 
@@ -133,7 +149,31 @@ protected:
     typedef std::function< Candidate (size_t, cuts::ObjectSelector&, bool, root_ext::AnalyzerData&) > BaseSelector;
 
     virtual SignalAnalyzerData& GetAnaData() = 0;
-    virtual void ProcessEvent() = 0;
+    virtual void ProcessEvent(){
+        const ntuple::Event& eventInfo = event.eventInfo();
+        bool foundBX = false;
+        for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
+            if (eventInfo.bunchCrossing.at(n) == 0){
+                SetWeight(eventInfo.nPU.at(n));
+                foundBX = true;
+                break;
+            }
+        }
+        if (!foundBX)
+            throw std::runtime_error("in-time BX not found");
+    }
+
+    void SetWeight(Int_t nPU)
+    {
+        if (!weights) return;
+        const Int_t bin = weights->FindBin(nPU);
+        if (bin < 1 || bin > weights->GetNbinsX()){
+            std::ostringstream ss;
+            ss << "no weight for this nPU " << nPU;
+            throw std::runtime_error(ss.str());
+        }
+        weight = weights->GetBinContent(bin);
+    }
 
     template<typename ObjectType, typename BaseSelectorType>
     std::vector<ObjectType> CollectObjects(cuts::ObjectSelector& objectSelector, size_t n_objects,
@@ -479,6 +519,7 @@ protected:
     GenEvent genEvent;
     Vertex primaryVertex;
     double weight;
+    std::shared_ptr<TH1D> weights;
 };
 
 } // analysis

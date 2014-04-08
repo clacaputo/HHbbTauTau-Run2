@@ -25,8 +25,9 @@ class HHbb2Taujet_analyzer : public analysis::BaseAnalyzer {
 public:
     HHbb2Taujet_analyzer(const std::string& inputFileName, const std::string& outputFileName,
                          const std::string& _prefix = "none", Long64_t _maxNumberOfEvents = 0,
-                         bool _useMCtruth = false)
-       : BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth), anaData(*outputFile)
+                         bool _useMCtruth = false, const std::string& reweightFileName = "none")
+       : BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth, reweightFileName),
+         anaData(*outputFile)
     {
         anaData.getOutputFile().cd();
     }
@@ -36,6 +37,7 @@ protected:
 
     virtual void ProcessEvent()
     {
+        BaseAnalyzer::ProcessEvent();
         using namespace analysis;
         finalState::bbTaujetTaujet mc_truth;
         if (useMCtruth && !FindAnalysisFinalState(mc_truth)) return;
