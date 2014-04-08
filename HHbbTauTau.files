@@ -118,3 +118,4 @@ RunTools/replica.sh
 Analysis/legacy/Fit_nPU.C
 Analysis/legacy/Print_PU.C
 Analysis/source/PileUp.C
+RunTools/make.sh
