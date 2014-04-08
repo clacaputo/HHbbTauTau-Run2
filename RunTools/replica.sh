@@ -44,11 +44,11 @@ while read FILE_DESC ; do
 	if [ "$FILE_DESC" = "" ] ; then continue ; fi
 	echo $FILE_DESC
     FILE_NAME=$( echo $FILE_DESC | awk '{print $7}' )
-    if [ "$SOURCE_NAME" = "T2_IT_Bari" ] ; then
-        FILE_SIZE=$( stat -c%s "$BARI_LOCAL_PATH/$FILE_NAME" )
-    else
+#    if [ "$SOURCE_NAME" = "T2_IT_Bari" ] ; then
+#        FILE_SIZE=$( stat -c%s "$BARI_LOCAL_PATH/$FILE_NAME" )
+#    else
         FILE_SIZE=$( echo $FILE_DESC | awk '{print $5}' )
-    fi
+#    fi
     FILE_NAME=$( echo $FILE_DESC | awk '{print $7}' )
     TIMEOUT=$(( $FILE_SIZE / $MIN_SPEED ))
     WATCHDOG_KILLED=1
@@ -64,11 +64,12 @@ while read FILE_DESC ; do
 			if [ ! "$FILE_DESC_DST" = "" ] ; then
 				echo $FILE_DESC_DST
 				ITERATION=$(($ITERATION + 1))
-                if [ "$SOURCE_NAME" = "T2_IT_Bari" ] ; then
-                    FILE_SIZE_DST=$( stat -c%s "$BARI_LOCAL_PATH/$FILE_NAME" )
-                else
+                #if [ "$DESTINATION_NAME" = "T2_IT_Bari" ] ; then
+                #    FILE_SIZE_DST=$( stat -c%s "$BARI_LOCAL_PATH/$FILE_NAME" )
+                #else
                     FILE_SIZE_DST=$( echo $FILE_DESC_DST | awk '{print $5}' )
-                fi
+                #fi
+				echo "$FILE_SIZE $FILE_SIZE_DST"
 				if [ $FILE_SIZE -eq $FILE_SIZE_DST ] ; then
 					echo "File $FILE_NAME is already transfered."
 					NEED_COPY=0
@@ -87,7 +88,8 @@ EOT
         if [ $NEED_COPY -ne 1 ] ; then
 			WATCHDOG_KILLED=0
 		else
-			( lcg-cp -b -D srmv2 -v -n $NUMBER_OF_STREAMS \
+			echo "Timeout: $TIMEOUT"
+			( lcg-cp -b -D srmv2 -v --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -n $NUMBER_OF_STREAMS \
 				$SOURCE_PREFIX/$FILE_NAME $DESTINATION_PREFIX/$FILE_NAME ) & LCG_PID=$!
 	        ( sleep $TIMEOUT && kill -9 $LCG_PID ) & WATCHDOG_PID=$!
 		    wait $LCG_PID
@@ -95,7 +97,7 @@ EOT
 	        WATCHDOG_KILLED=$?
 		fi
     done
-	exit
+#	exit
 done <<EOT
 $LS_RESULT
 EOT
