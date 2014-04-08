@@ -12,7 +12,7 @@ class ETauSignalAnalyzerData : public analysis::SignalAnalyzerData {
 public:
     ETauSignalAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
 
-    SELECTION_ENTRY(EventSelection, 15, 5)
+    SELECTION_ENTRY(EventSelection)
 
 
     ENTRY_1D(float, Tau_Pt_MC)
@@ -86,11 +86,12 @@ protected:
 
     }
 
-    virtual analysis::Candidate SelectElectron(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector& objectSelector,
+                                               bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::electronID::ETau;
         const std::string selection_label = "electron";
-        cuts::Cutter cut(anaData.Counter(), anaData.MuonSelection(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 ele cand");
@@ -112,11 +113,12 @@ protected:
         return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
-    virtual analysis::Candidate SelectTau(size_t id, bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector,
+                                          bool enabled, root_ext::AnalyzerData& _anaData)
     {
         using namespace cuts::Htautau_Summer13::tauID::ETau;
         const std::string selection_label = "tau";
-        cuts::Cutter cut(anaData.Counter(), anaData.TauSelection(), enabled);
+        cuts::Cutter cut(objectSelector, enabled);
         const ntuple::Tau& object = event.taus().at(id);
 
         cut(true, ">0 tau cand");
