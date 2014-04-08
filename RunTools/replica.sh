@@ -51,10 +51,9 @@ while read FILE_DESC ; do
 #    fi
     FILE_NAME=$( echo $FILE_DESC | awk '{print $7}' )
     TIMEOUT=$(( $FILE_SIZE / $MIN_SPEED ))
-    WATCHDOG_KILLED=1
-    while [ $WATCHDOG_KILLED -ne 0 ] ; do
+    NEED_COPY=1
+    while [ $NEED_COPY -ne 0 ] ; do
         LS_RESULT_DST=$( lcg-ls --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -l $DESTINATION_PREFIX/$DIRECTORY_NAME | grep $FILE_NAME )
-        NEED_COPY=1
         ITERATION=0
         while read FILE_DESC_DST ; do
             if [ $ITERATION -ne 0 ] ; then
@@ -85,16 +84,16 @@ while read FILE_DESC ; do
         done <<EOT
 $LS_RESULT_DST
 EOT
-        if [ $NEED_COPY -ne 1 ] ; then
-			WATCHDOG_KILLED=0
-		else
+        if [ $NEED_COPY -ne 0 ] ; then
 			echo "Timeout: $TIMEOUT"
 			( lcg-cp -b -D srmv2 -v --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -n $NUMBER_OF_STREAMS \
 				$SOURCE_PREFIX/$FILE_NAME $DESTINATION_PREFIX/$FILE_NAME ) & LCG_PID=$!
 	        ( sleep $TIMEOUT && kill -9 $LCG_PID ) & WATCHDOG_PID=$!
 		    wait $LCG_PID
+            LCG_RESULT=$?
 			kill -9 $WATCHDOG_PID &> /dev/null
 	        WATCHDOG_KILLED=$?
+            if [ $WATCHDOG_KILLED -eq 0 -a $LCG_RESULT -eq 0 ] ; then NEED_COPY=0 ; fi
 		fi
     done
 #	exit
