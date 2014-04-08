@@ -88,13 +88,15 @@ EOT
 			echo "Timeout: $TIMEOUT"
 			( lcg-cp -b -D srmv2 -v --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -n $NUMBER_OF_STREAMS \
 				$SOURCE_PREFIX/$FILE_NAME $DESTINATION_PREFIX/$FILE_NAME ) & LCG_PID=$!
-	        ( sleep $TIMEOUT && kill -9 $LCG_PID ) & WATCHDOG_PID=$!
+	        ( trap 'kill $(jobs -p)' EXIT && sleep $TIMEOUT && kill -9 $LCG_PID ) & WATCHDOG_PID=$!
 		    wait $LCG_PID
             LCG_RESULT=$?
-			kill -9 $WATCHDOG_PID &> /dev/null
+			#echo $( jobs -p )
+			kill $WATCHDOG_PID &> /dev/null
 	        WATCHDOG_KILLED=$?
             if [ $WATCHDOG_KILLED -eq 0 -a $LCG_RESULT -eq 0 ] ; then NEED_COPY=0 ; fi
 		fi
+#		exit
     done
 #	exit
 done <<EOT
