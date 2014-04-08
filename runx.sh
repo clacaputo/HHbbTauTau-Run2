@@ -13,9 +13,10 @@ mkdir -p $SCRIPT_RUN_PATH
 
 
 SUFFIX=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
-EXE_NAME="$SCRIPT_RUN_PATH/${NAME}_${SUFFIX}"
+JOB_NAME=${NAME}_${SUFFIX}
+EXE_NAME="$SCRIPT_RUN_PATH/$JOB_NAME"
 
-$SCRIPT_PATH/RunTools/make.sh $SCRIPT_RUN_PATH $SUFFIX $*
+$SCRIPT_PATH/RunTools/make.sh $SCRIPT_RUN_PATH $JOB_NAME $*
 
 RESULT=$?
 if [[ $RESULT -eq 0 ]] ; then

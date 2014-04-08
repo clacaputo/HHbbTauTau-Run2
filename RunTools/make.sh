@@ -11,7 +11,7 @@ function get_arg_value {
 
 
 SCRIPT_RUN_PATH=$1
-SUFFIX=$2
+JOB_NAME=$2
 NAME=$3
 ARGS=($*)
 
@@ -38,8 +38,8 @@ if (( n > 3 )) ; then
         done
 fi
 
-CODE_OUT="$SCRIPT_RUN_PATH/${NAME}_${SUFFIX}.cpp"
-EXE_NAME="$SCRIPT_RUN_PATH/${NAME}_${SUFFIX}"
+CODE_OUT="$SCRIPT_RUN_PATH/${JOB_NAME}.cpp"
+EXE_NAME="$SCRIPT_RUN_PATH/${JOB_NAME}"
 rm -f "$EXE_NAME"
 
 printf \
