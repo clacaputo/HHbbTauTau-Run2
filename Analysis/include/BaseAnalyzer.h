@@ -150,17 +150,19 @@ protected:
 
     virtual SignalAnalyzerData& GetAnaData() = 0;
     virtual void ProcessEvent(){
-        const ntuple::Event& eventInfo = event.eventInfo();
-        bool foundBX = false;
-        for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
-            if (eventInfo.bunchCrossing.at(n) == 0){
-                SetWeight(eventInfo.nPU.at(n));
-                foundBX = true;
-                break;
+        if (weights){
+            const ntuple::Event& eventInfo = event.eventInfo();
+            bool foundBX = false;
+            for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
+                if (eventInfo.bunchCrossing.at(n) == 0){
+                    SetWeight(eventInfo.nPU.at(n));
+                    foundBX = true;
+                    break;
+                }
             }
+            if (!foundBX)
+                throw std::runtime_error("in-time BX not found");
         }
-        if (!foundBX)
-            throw std::runtime_error("in-time BX not found");
     }
 
     void SetWeight(Int_t nPU)

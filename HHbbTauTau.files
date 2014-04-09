@@ -121,3 +121,4 @@ Analysis/source/PileUp.C
 RunTools/make.sh
 RunTools/runAnalysis.sh
 RunTools/submitAnalysis_Batch.sh
+RunTools/hadd_analysis.sh
