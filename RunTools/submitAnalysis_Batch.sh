@@ -68,6 +68,7 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
 fi
 
 for NAME in $JOBS ; do
+	echo "Compiling $NAME ..."
     $MAKE_PATH $OUTPUT_PATH $NAME $ANALYZER_NAME $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root \
                $PREFIX @0 "${@:7}"
     MAKE_RESULT=$?
@@ -95,7 +96,7 @@ if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
         echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME" | \
-            qsub -q $QUEUE -N $NAME -
+            qsub -q $QUEUE -N $NAME -o $OUTPUT_PATH -
     done
     echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then
