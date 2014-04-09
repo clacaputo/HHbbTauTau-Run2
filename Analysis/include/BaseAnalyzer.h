@@ -165,14 +165,18 @@ protected:
 
     void SetWeight(Int_t nPU)
     {
+        static const Int_t maxAvailablePU = 70;
+        static const double defaultWeight = 1.0;
         if (!weights) return;
         const Int_t bin = weights->FindBin(nPU);
-        if (bin < 1 || bin > weights->GetNbinsX()){
-            std::ostringstream ss;
-            ss << "no weight for this nPU " << nPU;
-            throw std::runtime_error(ss.str());
+        if (bin < 1 || bin > maxAvailablePU){
+//            std::ostringstream ss;
+//            ss << "no weight for this nPU " << nPU;
+            //throw std::runtime_error(ss.str());
+            weight = defaultWeight;
         }
-        weight = weights->GetBinContent(bin);
+        else
+            weight = weights->GetBinContent(bin);
     }
 
     template<typename ObjectType, typename BaseSelectorType>
