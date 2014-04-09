@@ -24,7 +24,12 @@ for FOLDER in $FOLDER_PATH ; do
 		if [ $SUB_FOLDER = $FOLDER ] ; then
 			continue
 		fi
-		hadd $OUTPUT_DIR/${FOLDER}_${SUB_FOLDER}.root $FOLDER/$SUB_FOLDER/*.root
+        mkdir -p $OUTPUT_DIR/$FOLDER
+        if [ $SUB_FOLDER = "Radion" ] ; then
+            cp $FOLDER/$SUB_FOLDER/*.root $OUTPUT_DIR/$FOLDER/
+        else
+            hadd $OUTPUT_DIR/$FOLDER/${SUB_FOLDER}.root $FOLDER/$SUB_FOLDER/*.root
+        fi
 	done
 done
 
