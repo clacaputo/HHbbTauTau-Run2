@@ -11,11 +11,9 @@ MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
 OUTPUT_PATH=$( cd "$5" ; pwd )
 
-
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
 MAKE_PATH=$WORKING_PATH/RunTools/make.sh
-N_EVENTS=-1
 
 if [ ! -d "$WORKING_PATH" ] ; then
 	echo "ERROR: working path '$WORKING_PATH' does not exist."
@@ -28,7 +26,7 @@ if [ ! -d "$WORKING_PATH/$FILE_LIST_PATH" ] ; then
 fi
 
 if [ ! -d "$OUTPUT_PATH" ] ; then
-	echo "ERROR: output path '$WORKING_PATH/$OUTPUT_PATH' does not exist."
+    echo "ERROR: output path '$OUTPUT_PATH' does not exist."
 	exit
 fi
 
@@ -53,6 +51,21 @@ N_JOBS=$( echo "$JOBS" | wc -l )
 echo "Following jobs will be submited:" $JOBS
 echo "Total number of jobs to submit: $N_JOBS"
 
+read -p "Compile these jobs (yes/no)? " -r REPLAY
+if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
+    echo "No jobs have been compiled."
+    exit
+fi
+
+for NAME in $JOBS ; do
+    $MAKE_PATH $OUTPUT_PATH $NAME $FILE_LIST_PATH/${NAME}.txt "${@:6}"
+    MAKE_RESULT=$?
+    if [ $MAKE_RESULT -ne 0 ] ; then
+        echo "ERROR: failed to make job $NAME"
+        exit
+    fi
+done
+echo "All jobs compiled."
 read -p "Submit these jobs (yes/no)? " -r REPLAY
 if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then 
 	echo "No jobs have been submited."
@@ -65,20 +78,18 @@ n=0
 if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
         bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq_pre-cms.bash \
-             -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
-                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS
+             -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME
     done
     echo "$N_JOBS have been submited in local in Pisa"
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
-        echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS" | \
+        echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME" | \
             qsub -q $QUEUE -N $NAME -
     done
     echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
-        bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
-                                                $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
+        bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -92,8 +103,8 @@ elif [ "$QUEUE" = "fai5" ] ; then
 elif [ "$QUEUE" = "fai" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME \
-                                                        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH \
-                                                        $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $N_EVENTS &
+                                                        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
+                                                        $OUTPUT_PATH/$NAME &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"

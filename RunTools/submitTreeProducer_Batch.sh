@@ -28,7 +28,7 @@ if [ ! -d "$WORKING_PATH/$FILE_LIST_PATH" ] ; then
 fi
 
 if [ ! -d "$OUTPUT_PATH" ] ; then
-	echo "ERROR: output path '$WORKING_PATH/$OUTPUT_PATH' does not exist."
+    echo "ERROR: output path '$OUTPUT_PATH' does not exist."
 	exit
 fi
 
