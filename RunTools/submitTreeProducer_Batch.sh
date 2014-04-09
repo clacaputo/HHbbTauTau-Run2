@@ -9,7 +9,7 @@ QUEUE=$1
 STORAGE=$2
 MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
-OUTPUT_PATH=$( cd "$5" ; pwd )
+OUTPUT_PATH=$5
 GLOBAL_TAG=$6
 INCLUDE_SIM=$7
 
@@ -31,11 +31,13 @@ if [ ! -d "$OUTPUT_PATH" ] ; then
     echo "ERROR: output path '$OUTPUT_PATH' does not exist."
 	exit
 fi
+OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
 
 if [ ! -f "$RUN_SCRIPT_PATH" ] ; then
 	echo "ERROR: script '$RUN_SCRIPT_PATH' does not exist."
 	exit
 fi
+
 
 JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" )
 
