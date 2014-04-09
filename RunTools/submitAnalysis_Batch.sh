@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -lt 5 ] ; then
-    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path args_for_make"
+if [ $# -lt 6 ] ; then
+    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path analyzer_name args_for_make"
     exit
 fi
 
@@ -10,10 +10,20 @@ STORAGE=$2
 MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
 OUTPUT_PATH=$( cd "$5" ; pwd )
+ANALYZER_NAME=$6
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
 MAKE_PATH=$WORKING_PATH/RunTools/make.sh
+
+if [ $STORAGE = "Pisa" ] ; then
+    PREFIX="/gpfs/ddn/srm/cms"
+elif [ $STORAGE = "Bari" ] ; then
+    PREFIX="/lustre/cms"
+else
+    echo "ERROR: unknown storage"
+    exit
+fi
 
 if [ ! -d "$WORKING_PATH" ] ; then
 	echo "ERROR: working path '$WORKING_PATH' does not exist."
@@ -58,7 +68,8 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
 fi
 
 for NAME in $JOBS ; do
-    $MAKE_PATH $OUTPUT_PATH $NAME $FILE_LIST_PATH/${NAME}.txt "${@:6}"
+    $MAKE_PATH $OUTPUT_PATH $NAME $ANALYZER_NAME $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root \
+               $PREFIX @0 "${@:7}"
     MAKE_RESULT=$?
     if [ $MAKE_RESULT -ne 0 ] ; then
         echo "ERROR: failed to make job $NAME"
