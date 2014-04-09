@@ -62,9 +62,9 @@ N_JOBS=$( echo "$JOBS" | wc -l )
 echo "Following jobs will be submited:" $JOBS
 echo "Total number of jobs to submit: $N_JOBS"
 
-read -p "Compile these jobs (yes/no)? " -r REPLAY
+read -p "Compile these jobs and then submit (yes/no)? " -r REPLAY
 if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
-    echo "No jobs have been compiled."
+    echo "No jobs have been compiled or submitted."
     exit
 fi
 
@@ -79,11 +79,6 @@ for NAME in $JOBS ; do
     fi
 done
 echo "All jobs compiled."
-read -p "Submit these jobs (yes/no)? " -r REPLAY
-if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then 
-	echo "No jobs have been submited."
-	exit
-fi
 
 i=0
 n=0
