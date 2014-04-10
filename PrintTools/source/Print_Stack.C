@@ -101,7 +101,7 @@ public:
             TLegend* leg = new TLegend( 0.57, 0.65, 0.77, 0.92);
             leg->SetFillColor(0);
             leg->SetTextSize(0.035);
-            TString lumist="19.6 fb^{-1}";
+            TString lumist="0.88 fb^{-1}";
             TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
             ll->SetTextSize(0.03);
             ll->SetTextFont(42);

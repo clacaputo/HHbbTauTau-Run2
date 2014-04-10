@@ -4,8 +4,8 @@ Radion300 Radion300_xaa.root 0.0198 violet
 #Radion700 Radion700_xaa.root 0.00136 violet
 #Radion1000 Radion1000_xaa.root 0.000438 violet
 TTjets TTjets.root 0.0285 red
-W2jets W2jets.root 0.0450 blue
-#W2jets* W2jets.root 0.0466 blue
+#W2jets W2jets.root 0.0450 blue
+W2jets* W2jets.root 0.0466 blue
 DYtautau DYTauTau.root 0.0354 yellow
 WW WW.root 0.00500 gray
 WZ WZ.root 0.00283 orange

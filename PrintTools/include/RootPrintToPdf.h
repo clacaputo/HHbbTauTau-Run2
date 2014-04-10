@@ -151,11 +151,13 @@ private:
         stack.GetXaxis()->SetRange(firstBin,lastBin);
         const Double_t maxY = std::max(stack.GetMaximum(),data_hist.GetMaximum());
         stack.SetMaximum(maxY*1.1);
+        stack.SetMinimum(1);
 
         stack.GetXaxis()->SetTitle(page_side.axis_titleX.c_str());
         stack.GetYaxis()->SetTitle(page_side.axis_titleY.c_str());
 
-        data_hist.Draw("samePE01");
+        data_hist.SetMarkerStyle(7);
+        data_hist.Draw("same P");
         leg.Draw("same");
         pave_text.Draw("same");
     }
