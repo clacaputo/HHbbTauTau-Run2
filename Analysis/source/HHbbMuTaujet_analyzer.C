@@ -15,7 +15,7 @@ public:
 
     ENTRY_1D(float, Tau_Pt_MC)
     ENTRY_1D(float, Mu_Pt_MC)
-    ENTRY_1D(float, PV_sumPt)
+//    ENTRY_1D(float, PV_sumPt)
     ENTRY_1D(float, ResonanceDeltaZ_PV)
     ENTRY_1D(float, ResonanceDeltaR_PV)
 
@@ -50,7 +50,7 @@ protected:
 
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
-        anaData.PV_sumPt().Fill(primaryVertex.sumPtSquared);
+//        anaData.PV_sumPt().Fill(primaryVertex.sumPtSquared);
         if(useMCtruth) {
             const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
             anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);

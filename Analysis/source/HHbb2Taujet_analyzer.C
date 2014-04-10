@@ -15,7 +15,7 @@ public:
     ENTRY_1D(float, LeadTau_Pt_MC)
     ENTRY_1D(float, SubleadingTau_Pt_MC)
     ENTRY_1D(float, DR_tauJets_MC)
-    ENTRY_1D(float, PV_sumPtSquared)
+//    ENTRY_1D(float, PV_sumPtSquared)
     ENTRY_1D(float, ResonanceDeltaZ_PV)
     ENTRY_1D(float, ResonanceDeltaR_PV)
 
@@ -49,7 +49,7 @@ protected:
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
-        anaData.PV_sumPtSquared().Fill(primaryVertex.sumPtSquared);
+//        anaData.PV_sumPtSquared().Fill(primaryVertex.sumPtSquared);
         if(useMCtruth) {
             const double DeltaZ_PV = mc_truth.resonance->vertex.Z() - primaryVertex.position.Z();
             anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);

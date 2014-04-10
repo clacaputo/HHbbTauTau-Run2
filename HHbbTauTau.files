@@ -112,7 +112,7 @@ Analysis/legacy/stack_upgrade.C
 PrintTools/include/TdrStyle.h
 PrintTools/source/Print_Stack.C
 PrintTools/config/hist.txt
-PrintTools/config/sources.txt
+PrintTools/config/sources_Tau.txt
 PrintTools/source/Print_Histogram.C
 RunTools/replica.sh
 Analysis/legacy/Fit_nPU.C
@@ -122,3 +122,4 @@ RunTools/make.sh
 RunTools/runAnalysis.sh
 RunTools/submitAnalysis_Batch.sh
 RunTools/hadd_analysis.sh
+PrintTools/config/sources_TauPlusX.txt

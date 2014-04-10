@@ -1,3 +1,14 @@
+# histo_name title x_axis_title y_axis_title x_low x_high rebin_factor use_logY
+EventSelection EventSelection cuts n_entries -0.5 15.5 1 0
+VertexSelection VertexSelection cuts n_entries -0.5 15.5 1 0
+#ElectronSelection ElectronSelection cuts n_entries -0.5 15.5 1 0
+MuonSelection MuonSelection cuts n_entries -0.5 15.5 1 0
+TauSelection TauSelection cuts n_entries -0.5 15.5 1 0
+BJetSelection_loose BJetSelection_loose cuts n_entries -0.5 15.5 1 0
+ElectronSelectionBkg ElectronSelectionBkg cuts n_entries -0.5 15.5 1 0
+MuonSelectionBkg MuonSelectionBkg cuts n_entries -0.5 15.5 1 0
+TauSelectionBkg TauSelectionBkg cuts n_entries -0.5 15.5 1 0
+BJetSelectionBkg_loose BJetSelectionBkg_loose cuts n_entries -0.5 15.5 1 0
 after_cut/pt_tau P_{T}(#tau) P_{T}(#tau)[GeV] reweighted_N_entries 0 400 5 0
 Mass_H_mu_tau M_{#mu#tau} M_{#mu#tau}[GeV] reweighted_N_entries 0 500 5 0
 Mass_H_bb M_{bb} M_{bb}[GeV] reweighted_N_entries 0 1000 5 0
