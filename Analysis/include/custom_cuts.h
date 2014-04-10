@@ -9,5 +9,5 @@
 #pragma once
 
 namespace cuts {
-    const double minDeltaR_betweenHiggses = 1;
+    const double minDeltaR_betweenHiggses = 1; // >
 }
