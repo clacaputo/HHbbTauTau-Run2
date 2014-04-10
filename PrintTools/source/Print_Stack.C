@@ -96,11 +96,12 @@ public:
             page.title = hist.title;
             page.side.axis_titleX = hist.Xaxis_title;
             page.side.axis_titleY = hist.Yaxis_title;
+            page.side.layout.has_stat_pad = true;
             std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
-            TLegend* leg = new TLegend( 0.57, 0.65, 0.77, 0.92);
+            TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
             leg->SetFillColor(0);
-            leg->SetTextSize(0.035);
+            leg->SetTextSize(0.125);
             TString lumist="0.88 fb^{-1}";
             TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
             ll->SetTextSize(0.03);

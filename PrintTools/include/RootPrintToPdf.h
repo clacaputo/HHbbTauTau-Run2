@@ -158,8 +158,10 @@ private:
 
         data_hist.SetMarkerStyle(7);
         data_hist.Draw("same P");
-        leg.Draw("same");
         pave_text.Draw("same");
+        if(stat_pad)
+            stat_pad->cd();
+        leg.Draw("same");
     }
 
 private:
