@@ -144,6 +144,7 @@ void TriggerBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                   << ", fired: " << fired
                   << std::endl;
     }
+    triggerTree.Fill();
 
 }
 #include "FWCore/Framework/interface/MakerMacros.h"

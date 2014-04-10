@@ -1,7 +1,7 @@
 # histo_name title x_axis_title y_axis_title x_low x_high rebin_factor use_logY
 EventSelection EventSelection cuts n_entries -0.5 15.5 1 1
 #VertexSelection VertexSelection cuts n_entries -0.5 15.5 1 1
-#ElectronSelection ElectronSelection cuts n_entries -0.5 15.5 1 0
+#ElectronSelection ElectronSelection cuts n_entries -0.5 15.5 1 1
 MuonSelection MuonSelection cuts n_entries -0.5 15.5 1 1
 TauSelection TauSelection cuts n_entries -0.5 15.5 1 1
 BJetSelection_loose BJetSelection_loose cuts n_entries -0.5 15.5 1 1

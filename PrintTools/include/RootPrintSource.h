@@ -153,10 +153,12 @@ public:
         static std::vector<PlotOptions> options;
         if(!options.size())
         {
-            options.push_back( PlotOptions(kBlack, 1, root_ext::Box(0.01, 0.71, 0.99, 0.9), 0.1, kBlack, 2) );
-            options.push_back( PlotOptions(kRed, 1, root_ext::Box(0.01, 0.51, 0.99, 0.7), 0.1, kRed, 2) );
-            options.push_back( PlotOptions(kGreen, 1, root_ext::Box(0.01, 0.31, 0.99, 0.5), 0.1, kGreen, 2) );
+            options.push_back( PlotOptions(kGreen, 1, root_ext::Box(0.01, 0.71, 0.99, 0.9), 0.1, kGreen, 2) );
+            options.push_back( PlotOptions(kViolet, 1, root_ext::Box(0.01, 0.51, 0.99, 0.7), 0.1, kViolet, 2) );
+            options.push_back( PlotOptions(kOrange, 1, root_ext::Box(0.01, 0.31, 0.99, 0.5), 0.1, kOrange, 2) );
+            options.push_back( PlotOptions(kRed, 1, root_ext::Box(0.01, 0.11, 0.99, 0.3), 0.1, kRed, 2) );
             options.push_back( PlotOptions(kBlue, 1, root_ext::Box(0.01, 0.11, 0.99, 0.3), 0.1, kBlue, 2) );
+            options.push_back( PlotOptions(kBlack, 1, root_ext::Box(0.01, 0.11, 0.99, 0.3), 0.1, kBlack, 2) );
         }
         return n < options.size() ? options[n] : options[options.size() - 1];
     }
