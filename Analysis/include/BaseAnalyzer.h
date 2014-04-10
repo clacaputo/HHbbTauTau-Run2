@@ -150,29 +150,35 @@ protected:
 
     virtual SignalAnalyzerData& GetAnaData() = 0;
     virtual void ProcessEvent(){
-        const ntuple::Event& eventInfo = event.eventInfo();
-        bool foundBX = false;
-        for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
-            if (eventInfo.bunchCrossing.at(n) == 0){
-                SetWeight(eventInfo.nPU.at(n));
-                foundBX = true;
-                break;
+        if (weights){
+            const ntuple::Event& eventInfo = event.eventInfo();
+            bool foundBX = false;
+            for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
+                if (eventInfo.bunchCrossing.at(n) == 0){
+                    SetWeight(eventInfo.nPU.at(n));
+                    foundBX = true;
+                    break;
+                }
             }
+            if (!foundBX)
+                throw std::runtime_error("in-time BX not found");
         }
-        if (!foundBX)
-            throw std::runtime_error("in-time BX not found");
     }
 
     void SetWeight(Int_t nPU)
     {
+        static const Int_t maxAvailablePU = 70;
+        static const double defaultWeight = 1.0;
         if (!weights) return;
         const Int_t bin = weights->FindBin(nPU);
-        if (bin < 1 || bin > weights->GetNbinsX()){
-            std::ostringstream ss;
-            ss << "no weight for this nPU " << nPU;
-            throw std::runtime_error(ss.str());
+        if (bin < 1 || bin > maxAvailablePU){
+//            std::ostringstream ss;
+//            ss << "no weight for this nPU " << nPU;
+            //throw std::runtime_error(ss.str());
+            weight = defaultWeight;
         }
-        weight = weights->GetBinContent(bin);
+        else
+            weight = weights->GetBinContent(bin);
     }
 
     template<typename ObjectType, typename BaseSelectorType>

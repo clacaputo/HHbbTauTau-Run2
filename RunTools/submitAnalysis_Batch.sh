@@ -9,7 +9,7 @@ QUEUE=$1
 STORAGE=$2
 MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
-OUTPUT_PATH=$( cd "$5" ; pwd )
+OUTPUT_PATH=$5
 ANALYZER_NAME=$6
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
@@ -39,6 +39,7 @@ if [ ! -d "$OUTPUT_PATH" ] ; then
     echo "ERROR: output path '$OUTPUT_PATH' does not exist."
 	exit
 fi
+OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
 
 if [ ! -f "$RUN_SCRIPT_PATH" ] ; then
 	echo "ERROR: script '$RUN_SCRIPT_PATH' does not exist."
@@ -61,13 +62,14 @@ N_JOBS=$( echo "$JOBS" | wc -l )
 echo "Following jobs will be submited:" $JOBS
 echo "Total number of jobs to submit: $N_JOBS"
 
-read -p "Compile these jobs (yes/no)? " -r REPLAY
+read -p "Compile these jobs and then submit (yes/no)? " -r REPLAY
 if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
-    echo "No jobs have been compiled."
+    echo "No jobs have been compiled or submitted."
     exit
 fi
 
 for NAME in $JOBS ; do
+	echo "Compiling $NAME ..."
     $MAKE_PATH $OUTPUT_PATH $NAME $ANALYZER_NAME $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root \
                $PREFIX @0 "${@:7}"
     MAKE_RESULT=$?
@@ -77,11 +79,6 @@ for NAME in $JOBS ; do
     fi
 done
 echo "All jobs compiled."
-read -p "Submit these jobs (yes/no)? " -r REPLAY
-if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then 
-	echo "No jobs have been submited."
-	exit
-fi
 
 i=0
 n=0
@@ -95,7 +92,7 @@ if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
         echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME" | \
-            qsub -q $QUEUE -N $NAME -
+            qsub -q $QUEUE -N $NAME -o $OUTPUT_PATH -e $OUTPUT_PATH -
     done
     echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then
