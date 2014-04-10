@@ -63,11 +63,11 @@ std::istream&operator>>(std::istream& s, EColor& color){
 
 class Print_Stack {
 public:
-
     typedef root_ext::PdfPrinter Printer;
 
-    Print_Stack(const std::string& source_cfg, const std::string& hist_cfg, const std::string& outputFileName) :
-        printer(outputFileName)
+    Print_Stack(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
+                const std::string& outputFileName)
+        : inputPath(_inputPath), printer(outputFileName)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -78,7 +78,8 @@ public:
         std::cout << "Opening Sources... " << std::endl;
         for (DataSource& source : sources){
             //std::cout << source << std::endl;
-            source.file = new TFile(source.file_name.c_str(),"READ");
+            const std::string fullFileName = inputPath + "/" + source.file_name;
+            source.file = new TFile(fullFileName.c_str(), "READ");
             if(source.file->IsZombie()) {
                 std::ostringstream ss;
                 ss << "Input file '" << source.file_name << "' not found.";
@@ -143,7 +144,6 @@ public:
     }
 
 private:
-
     void ReadSourceCfg(const std::string& cfg_name)
     {
         std::ifstream cfg(cfg_name);
@@ -184,12 +184,10 @@ private:
           }
     }
 
-
 private:
+    std::string inputPath;
     std::vector<DataSource> sources;
     std::vector<HistogramDescriptor> histograms;
     Printer printer;
     root_ext::SingleSidedPage page;
-
 };
-
