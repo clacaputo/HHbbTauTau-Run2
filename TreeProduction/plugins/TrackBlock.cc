@@ -38,6 +38,8 @@ private:
 
 void TrackBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    trackTree.RunId() = iEvent.id().run();
+    trackTree.LumiBlock() = iEvent.id().luminosityBlock();
     trackTree.EventId() = iEvent.id().event();
 
     // read the beam spot

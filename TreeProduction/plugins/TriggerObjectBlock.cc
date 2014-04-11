@@ -77,6 +77,8 @@ void TriggerObjectBlock::beginRun(edm::Run const& iRun, edm::EventSetup const& i
 
 void TriggerObjectBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    triggerObjectTree.RunId() = iEvent.id().run();
+    triggerObjectTree.LumiBlock() = iEvent.id().luminosityBlock();
     triggerObjectTree.EventId() = iEvent.id().event();
 
     if (_verbosity) {

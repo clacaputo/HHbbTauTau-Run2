@@ -37,6 +37,8 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     if (iEvent.isRealData()) return;
 
+    METTree.RunId() = iEvent.id().run();
+    METTree.LumiBlock() = iEvent.id().luminosityBlock();
     METTree.EventId() = iEvent.id().event();
 
     edm::Handle<std::vector<pat::MET> > mets;

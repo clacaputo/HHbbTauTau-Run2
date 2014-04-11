@@ -51,6 +51,8 @@ private:
 
 void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
+  muonTree.RunId() = iEvent.id().run();
+  muonTree.LumiBlock() = iEvent.id().luminosityBlock();
   muonTree.EventId() = iEvent.id().event();
 
   edm::Handle<std::vector<pat::Muon> > muons;

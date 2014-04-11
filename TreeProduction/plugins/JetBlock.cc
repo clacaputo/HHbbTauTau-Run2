@@ -58,6 +58,8 @@ private:
 
 void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    jetTree.RunId() = iEvent.id().run();
+    jetTree.LumiBlock() = iEvent.id().luminosityBlock();
     jetTree.EventId() = iEvent.id().event();
 
     std::shared_ptr<JetCorrectionUncertainty> jecUnc;

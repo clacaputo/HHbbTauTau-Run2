@@ -39,6 +39,8 @@ void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 {
     if (iEvent.isRealData()) return;
 
+    genEventTree.RunId() = iEvent.id().run();
+    genEventTree.LumiBlock() = iEvent.id().luminosityBlock();
     genEventTree.EventId() = iEvent.id().event();
 
     // GenEventInfo Part

@@ -33,6 +33,8 @@ void GenMETBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 {
     if (iEvent.isRealData()) return;
 
+    genMETTree.RunId() = iEvent.id().run();
+    genMETTree.LumiBlock() = iEvent.id().luminosityBlock();
     genMETTree.EventId() = iEvent.id().event();
 
     edm::Handle<reco::GenMETCollection> mets;

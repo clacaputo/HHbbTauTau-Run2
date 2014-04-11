@@ -52,6 +52,8 @@ private:
 
 void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    electronTree.RunId() = iEvent.id().run();
+    electronTree.LumiBlock() = iEvent.id().luminosityBlock();
     electronTree.EventId() = iEvent.id().event();
 
     edm::Handle<reco::BeamSpot> beamSpot;

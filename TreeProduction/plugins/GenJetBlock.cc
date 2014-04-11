@@ -33,6 +33,8 @@ void GenJetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 {
     if (iEvent.isRealData()) return;
 
+    genJetTree.RunId() = iEvent.id().run();
+    genJetTree.LumiBlock() = iEvent.id().luminosityBlock();
     genJetTree.EventId() = iEvent.id().event();
 
     edm::Handle<reco::GenJetCollection> genJets;

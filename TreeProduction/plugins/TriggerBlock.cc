@@ -82,6 +82,10 @@ void TriggerBlock::beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup)
 
 void TriggerBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
+    triggerTree.RunId() = iEvent.id().run();
+    triggerTree.LumiBlock() = iEvent.id().luminosityBlock();
+    triggerTree.EventId() = iEvent.id().event();
+
 
   edm::Handle<L1GlobalTriggerReadoutRecord> l1GtReadoutRecord;
   iEvent.getByLabel(_l1InputTag, l1GtReadoutRecord);

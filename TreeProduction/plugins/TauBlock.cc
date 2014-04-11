@@ -54,6 +54,8 @@ private:
 
 void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    tauTree.RunId() = iEvent.id().run();
+    tauTree.LumiBlock() = iEvent.id().luminosityBlock();
     tauTree.EventId() = iEvent.id().event();
 
     edm::Handle<reco::VertexCollection> primaryVertices;

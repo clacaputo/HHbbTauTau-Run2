@@ -62,6 +62,8 @@ private:
 
 void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    vertexTree.RunId() = iEvent.id().run();
+    vertexTree.LumiBlock() = iEvent.id().luminosityBlock();
     vertexTree.EventId() = iEvent.id().event();
 
     edm::Handle<reco::VertexCollection> primaryVertices;

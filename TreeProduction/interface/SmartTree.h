@@ -73,6 +73,8 @@ public:  std::vector< type >& name() { return _##name; }
         inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
         data_class_name data; \
+        SIMPLE_TREE_BRANCH(UInt_t, RunId) \
+        SIMPLE_TREE_BRANCH(UInt_t, LumiBlock) \
         SIMPLE_TREE_BRANCH(UInt_t, EventId) \
         data_macro() \
     private: \
@@ -93,6 +95,8 @@ public:  std::vector< type >& name() { return _##name; }
 #define TREE_CLASS_WITH_EVENT_ID_INITIALIZE(namespace_name, tree_class_name, data_macro) \
     namespace namespace_name { \
         inline void tree_class_name::Initialize() { \
+            ADD_SIMPLE_TREE_BRANCH(RunId) \
+            ADD_SIMPLE_TREE_BRANCH(LumiBlock) \
             ADD_SIMPLE_TREE_BRANCH(EventId) \
             data_macro() \
             if (GetEntries() > 0) GetEntry(0); \
