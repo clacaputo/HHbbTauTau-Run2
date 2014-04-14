@@ -16,6 +16,7 @@
 #include "TreeProduction/interface/Jet.h"
 #include "TreeProduction/interface/Vertex.h"
 #include "TreeProduction/interface/GenParticle.h"
+#include "TreeProduction/interface/Trigger.h"
 
 namespace analysis{
 
@@ -26,7 +27,8 @@ typedef std::tuple< ntuple::Event,
                     ntuple::TauVector,
                     ntuple::JetVector,
                     ntuple::VertexVector,
-                    ntuple::GenParticleVector > EventTuple;
+                    ntuple::GenParticleVector,
+                    ntuple::TriggerVector> EventTuple;
 
 template<typename ObjectType>
 void ClearContainer(ObjectType& container) {}
@@ -58,6 +60,7 @@ public:
     const ntuple::JetVector& jets() const { return std::get<4>(_data); }
     const ntuple::VertexVector& vertices() const { return std::get<5>(_data); }
     const ntuple::GenParticleVector& genParticles() const { return std::get<6>(_data); }
+    const ntuple::TriggerVector& triggers() const { return std::get<7>(_data); }
 
     detail::EventTuple& data() { return _data; }
     void Clear() { detail::ClearEventTuple(_data); }

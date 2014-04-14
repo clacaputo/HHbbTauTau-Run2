@@ -24,7 +24,8 @@ typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::TauTree>,
                     std::shared_ptr<ntuple::JetTree>,
                     std::shared_ptr<ntuple::VertexTree>,
-                    std::shared_ptr<ntuple::GenParticleTree> > Forest;
+                    std::shared_ptr<ntuple::GenParticleTree>,
+                    std::shared_ptr<ntuple::TriggerTree> > Forest;
 
 template<typename Tree>
 inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile, bool extractMCtruth)

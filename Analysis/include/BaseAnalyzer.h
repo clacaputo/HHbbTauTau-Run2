@@ -130,7 +130,7 @@ public:
 
     virtual ~BaseAnalyzer() {}
 
-    void Run()
+    virtual void Run()
     {
         size_t n = 0;
         for(; !maxNumberOfEvents || n < maxNumberOfEvents; ++n) {

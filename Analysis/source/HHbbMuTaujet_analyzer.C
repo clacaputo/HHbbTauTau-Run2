@@ -32,6 +32,14 @@ public:
         anaData.getOutputFile().cd();
     }
 
+    virtual void Run(){
+        BaseAnalyzer::Run();
+        std::cout << "Trigger Path " << std::endl;
+        for (const std::string& path : trigger_paths){
+            std::cout << path << std::endl;
+        }
+    }
+
 protected:
     virtual analysis::SignalAnalyzerData& GetAnaData() { return anaData; }
 
@@ -42,6 +50,13 @@ protected:
         finalState::bbMuTaujet muTauJet;
         if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
 
+        std::cout << "event.triggers() size= " << event.triggers().size() << std::endl;
+        for (const ntuple::Trigger& trigger : event.triggers()){
+            std::cout << "trigger.hltpaths size = " << trigger.hltpaths.size() << std::endl;
+            for (const std::string& path : trigger.hltpaths){
+                trigger_paths.insert(path);
+            }
+        }
         cuts::Cutter cut(anaData.EventSelection());
 
         cut(true, "total");
@@ -157,4 +172,5 @@ protected:
 
 private:
     MuTauSignalAnalyzerData anaData;
+    std::set<std::string> trigger_paths;
 };
