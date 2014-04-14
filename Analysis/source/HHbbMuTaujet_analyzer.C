@@ -34,9 +34,9 @@ public:
 
     virtual void Run(){
         BaseAnalyzer::Run();
-        std::cout << "Trigger Path " << std::endl;
+        //std::cout << "Trigger Path " << std::endl;
         for (const std::string& path : trigger_paths){
-            std::cout << path << std::endl;
+            //std::cout << path << std::endl;
         }
     }
 
@@ -50,9 +50,9 @@ protected:
         finalState::bbMuTaujet muTauJet;
         if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
 
-        std::cout << "event.triggers() size= " << event.triggers().size() << std::endl;
+        //std::cout << "event.triggers() size= " << event.triggers().size() << std::endl;
         for (const ntuple::Trigger& trigger : event.triggers()){
-            std::cout << "trigger.hltpaths size = " << trigger.hltpaths.size() << std::endl;
+            //std::cout << "trigger.hltpaths size = " << trigger.hltpaths.size() << std::endl;
             for (const std::string& path : trigger.hltpaths){
                 trigger_paths.insert(path);
             }

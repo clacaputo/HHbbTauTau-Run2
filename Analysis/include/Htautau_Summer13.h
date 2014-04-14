@@ -8,6 +8,8 @@
  */
 
 #pragma once
+#include <string>
+#include <vector>
 
 namespace cuts {
 namespace Htautau_Summer13 {
@@ -146,6 +148,28 @@ namespace vertex {
     const double z = 24.0; // < cm, twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const double r = 2.0; // < cm, twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const bool chooseHighestSumPt2 = true; // = AN-13-188
+}
+
+namespace trigger {
+    namespace MuTau {
+        const std::vector<std::string> hltPaths =
+                {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20","HLT_IsoMu18_eta2p1_LooseIsoPFTau20"};
+
+    }
+    namespace ETau {
+        const std::vector<std::string> hltPaths =
+            {"HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
+             "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20"};
+    }
+
+    namespace TauTau {
+        const std::vector<std::string> hltPaths =
+                {"HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30",
+                 "HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30",
+                 "HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30",
+                 "HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1",
+                 "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1" };
+    }
 }
 
 } // Htautau_Summer13

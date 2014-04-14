@@ -16,6 +16,32 @@
 
 namespace analysis {
 
+struct EventId{
+    UInt_t runId;
+    UInt_t lumiBlock;
+    UInt_t eventId;
+    static const EventId& Undef_event() {
+        static const EventId undef_event;
+        return undef_event;
+    }
+
+    EventId() : runId(std::numeric_limits<UInt_t>::max()), lumiBlock(std::numeric_limits<UInt_t>::max()),
+                eventId(std::numeric_limits<UInt_t>::max()){}
+
+    EventId(UInt_t _runId, UInt_t _lumiBlock, UInt_t _eventId) : runId(_runId), lumiBlock(_lumiBlock),
+                eventId(_eventId){}
+
+    bool operator == (const EventId& other) const
+    {
+        return runId == other.runId && lumiBlock == other.lumiBlock && eventId == other.eventId;
+    }
+
+    bool operator != (const EventId& other) const
+    {
+        return runId != other.runId || lumiBlock != other.lumiBlock || eventId != other.eventId;
+    }
+};
+
 namespace detail {
 
 typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
@@ -47,28 +73,30 @@ CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth)
 }
 
 template<typename Tree, typename ObjectType>
-void ReadTree(std::shared_ptr<Tree>& tree, ObjectType& container, Long64_t& current_entry, UInt_t& currentEventId)
+void ReadTree(std::shared_ptr<Tree>& tree, ObjectType& container, Long64_t& current_entry, EventId& currentEventId)
 {
     if (!tree || tree->GetEntries() <= 0 || current_entry + 1 >= tree->GetEntries()) return;
 
-    if(currentEventId == std::numeric_limits<UInt_t>::max())
+    if(currentEventId == EventId::Undef_event())
         ++current_entry;
     if(tree->GetEntry(current_entry) < 0)
         throw std::runtime_error("An I/O error while reading tree.");
-    if(currentEventId != std::numeric_limits<UInt_t>::max() && tree->data.EventId != currentEventId)
+    const EventId treeEventId(tree->data.run,tree->data.lumis,tree->data.EventId);
+    if(currentEventId != EventId::Undef_event() && treeEventId != currentEventId)
         throw std::runtime_error("Inconsistent tree structure.");
-    currentEventId = tree->data.EventId;
+    currentEventId = treeEventId;
     container = tree->data;
 }
 
 template<typename Tree, typename ObjectType>
 void ReadTree(std::shared_ptr<Tree>& tree, std::vector<ObjectType>& container, Long64_t current_entry,
-              UInt_t currentEventId)
+              EventId currentEventId)
 {
     if (!tree || tree->GetEntries() <= 0) return;
 
     for(Long64_t n = tree->GetReadEntry(); n < tree->GetEntries();) {
-        if (currentEventId != tree->EventId()) break;
+        const EventId treeEventId(tree->RunId(),tree->LumiBlock(),tree->EventId());
+        if (currentEventId != treeEventId) break;
         container.push_back(tree->data);
         if(tree->GetEntry(++n) < 0)
             throw std::runtime_error("An I/O error while reading tree.");
@@ -78,15 +106,15 @@ void ReadTree(std::shared_ptr<Tree>& tree, std::vector<ObjectType>& container, L
 template<size_t N = 0>
 inline typename std::enable_if< N == std::tuple_size<Forest>::value, bool >::type
 ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
-           UInt_t currentEventId = std::numeric_limits<UInt_t>::max()) { return false; }
+           EventId currentEventId = EventId::Undef_event()) { return false; }
 
 template<size_t N = 0>
 inline typename std::enable_if< (N < std::tuple_size<Forest>::value), bool >::type
 ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
-           UInt_t currentEventId = std::numeric_limits<UInt_t>::max())
+           EventId currentEventId = EventId::Undef_event())
 {
     ReadTree(std::get<N>(forest), std::get<N>(data), current_entry, currentEventId);
-    if(currentEventId == std::numeric_limits<UInt_t>::max()) return false;
+    if(currentEventId == EventId::Undef_event()) return false;
     ReadForest<N + 1>(forest, data, current_entry, currentEventId);
     return true;
 }
