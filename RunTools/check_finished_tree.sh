@@ -9,12 +9,10 @@ FILE_LIST_PATH=$1
 FILE_JOB_RESULT=$2
 NEW_FILE_LIST_PATH=$3
 
-
 if [ ! -d "$FILE_LIST_PATH" ] ; then
         echo "ERROR: file list path '$FILE_LIST_PATH' does not exist."
         exit
 fi
-
 
 JOBS=$( find $FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" | sort )
 
@@ -23,16 +21,7 @@ if [ "x$JOBS" = "x" ] ; then
         exit
 fi
 
-#N_JOBS=$( echo "$JOBS" | wc -l )
-#echo "Following jobs will be submited:" $JOBS
-#echo "Total number of jobs to submit: $N_JOBS"
-
 SUCCESSFULL_JOBS=$( cat $FILE_JOB_RESULT | sed -n "s/\(^0 \)\([^ ]*\)\(.*\)/\2/p" | sort )
 
 echo -e "$JOBS"\\n"$SUCCESSFULL_JOBS" | sort | uniq -u | xargs -n 1 printf "$FILE_LIST_PATH/%b.txt $NEW_FILE_LIST_PATH/\n" \
      | xargs -n 2 cp 
-
-
-
-
-
