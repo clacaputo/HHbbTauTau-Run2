@@ -45,9 +45,9 @@ private:
 
 
 template<typename ValueType, typename Histogram>
-ValueType fill_histogram(ValueType value, Histogram& histogram)
+ValueType fill_histogram(ValueType value, Histogram& histogram, double weight)
 {
-    histogram.Fill(value);
+    histogram.Fill(value,weight);
     return value;
 }
 
@@ -64,6 +64,7 @@ public:
         if (counters.size() == param_id){  //counters and selections filled at least once
             counters.push_back(0);
             selections.push_back(0);
+            selectionsSquaredErros.push_back(0);
             labels.push_back(param_label);
         }
         counters.at(param_id)++;
@@ -73,6 +74,7 @@ public:
         for (unsigned n = 0; n < counters.size(); ++n){
             unsigned alpha = counters.at(n) > 0 ? 1 : 0 ;
             selections.at(n) += alpha * weight;
+            selectionsSquaredErros.at(n) += weight * weight;
             counters.at(n) = 0;
         }
     }
@@ -98,6 +100,7 @@ public:
 protected:
     std::vector<unsigned> counters;
     std::vector<double> selections;
+    std::vector<double> selectionsSquaredErros;
     std::vector<std::string> labels;
 
 
@@ -155,6 +158,7 @@ public:
             const std::string label = labels.at(n);
             selection_histogram->GetXaxis()->SetBinLabel(n+1, label.c_str());
             selection_histogram->SetBinContent(n+1,selections.at(n));
+            selection_histogram->SetBinError(n+1,std::sqrt(selectionsSquaredErros.at(n)));
         }
         selection_histogram->Write();
 

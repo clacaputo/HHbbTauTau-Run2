@@ -46,6 +46,8 @@ protected:
 
         cut(true, "total");
 
+        cut(HaveTriggerFired(cuts::Htautau_Summer13::trigger::TauTau::hltPaths), "trigger");
+
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
@@ -62,7 +64,7 @@ protected:
         cut(taus.size() >= 2, ">=2_tau");
 
         const auto Higgses_tautau = FindCompatibleObjects(taus, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
-                                                           analysis::Candidate::Higgs, "H_2tau");
+                                                           analysis::Candidate::Higgs, "H_2tau", 0);
         cut(Higgses_tautau.size(), "H_2tau");
 
         const auto Higgses_tautau_full = ApplyTauFullSelection(Higgses_tautau);
@@ -72,15 +74,18 @@ protected:
         cut(b_jets.size() >= 2, ">=2b_loose");
 
         const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
-                                                     analysis::Candidate::Higgs, "H_bb");
+                                                     analysis::Candidate::Higgs, "H_bb", Candidate::UnknownCharge());
         cut(Higgses_bb.size(), "H_bb");
 
         const auto Resonances = FindCompatibleObjects(Higgses_tautau_full, Higgses_bb, cuts::minDeltaR_betweenHiggses,
-                                                      analysis::Candidate::Resonance, "resonance");
+                                                      analysis::Candidate::Resonance, "resonance",
+                                                      Candidate::UnknownCharge());
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        ApplyVetos(Resonances, cut);
+        const auto finalSelectionResonances = ApplyVetos(Resonances, cut);
+
+        HistogramAfterFinalSelection(finalSelectionResonances);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
@@ -100,7 +105,7 @@ protected:
         cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
             > MediumCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object);
+        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
     analysis::CandidateVector ApplyTauFullSelection(const analysis::CandidateVector& higgses)
