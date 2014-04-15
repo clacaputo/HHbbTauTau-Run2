@@ -124,3 +124,4 @@ RunTools/submitAnalysis_Batch.sh
 RunTools/hadd_analysis.sh
 PrintTools/config/sources_TauPlusX.txt
 RunTools/resubmit_jobs.sh
+RunTools/replica_xrd.sh
