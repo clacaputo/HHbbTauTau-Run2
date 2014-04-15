@@ -46,6 +46,8 @@ protected:
 
         cut(true, "total");
 
+        cut(HaveTriggerFired(cuts::Htautau_Summer13::trigger::ETau::hltPaths), "trigger");
+
         const VertexVector vertices = CollectVertices();
 
         cut(vertices.size(), "vertex");
@@ -66,19 +68,19 @@ protected:
         cut(taus.size(), "tau");
 
         const auto Higgses_e_tau = FindCompatibleObjects(electrons, taus,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_e_tau");
+                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_e_tau", 0);
         cut(Higgses_e_tau.size(), "H_e_tau");
 
         const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
         cut(b_jets.size() >= 2, ">=2b_loose");
 
         const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
-                                      analysis::Candidate::Higgs, "H_bb");
+                                      analysis::Candidate::Higgs, "H_bb", Candidate::UnknownCharge());
         cut(Higgses_bb.size(), "H_bb");
 
         const auto Resonances =
                 FindCompatibleObjects(Higgses_e_tau, Higgses_bb, cuts::minDeltaR_betweenHiggses,
-                                      analysis::Candidate::Resonance, "resonance");
+                                      analysis::Candidate::Resonance, "resonance", Candidate::UnknownCharge());
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
@@ -110,7 +112,7 @@ protected:
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
 
-        return analysis::Candidate(analysis::Candidate::Electron, id, object);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector,
@@ -130,7 +132,7 @@ protected:
         cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronMediumMVA5, 2, -0.5, 1.5) > againstElectronMediumMVA5, "vs_e_mediumMVA");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object);
+        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
 

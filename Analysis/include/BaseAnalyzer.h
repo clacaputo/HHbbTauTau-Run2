@@ -26,17 +26,17 @@
 
 /*
 #define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label) )
+    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label), weight)
 
 #define Y(name, ...) \
-    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label) )
+    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label), weight)
 */
 
 #define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__) )
+    cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), weight)
 
 #define Y(name, ...) \
-    cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__) )
+    cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), weight)
 
 namespace analysis {
 
@@ -112,6 +112,7 @@ public:
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1)
     {
+        TH1::SetDefaultSumw2();
         if (reweightFileName != "none"){
             std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
             if(reweightFile->IsZombie()){
@@ -207,8 +208,8 @@ protected:
         const auto selected = objectSelector.collect_objects<ObjectType>(weight, n_objects,selector);
         for(const ObjectType& candidate : selected)
             base_selector(candidate.index, objectSelector, false, anaDataAfterCut);
-        GetAnaData().N_objects(hist_name).Fill(selected.size());
-        GetAnaData().N_objects(hist_name + "_ntuple").Fill(n_objects);
+        GetAnaData().N_objects(hist_name).Fill(selected.size(),weight);
+        GetAnaData().N_objects(hist_name + "_ntuple").Fill(n_objects,weight);
         return selected;
     }
 
@@ -409,11 +410,11 @@ protected:
                     const Candidate candidate(type, object1, object2);
                     if (candidate.charge != expectedCharge) continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
+                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
                 }
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size());
+        GetAnaData().N_objects(hist_name).Fill(result.size(),weight);
         return result;
     }
 
@@ -428,11 +429,11 @@ protected:
                     const Candidate candidate(type, objects.at(n), objects.at(k));
                     if (candidate.charge != expectedCharge) continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
+                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
                 }
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size());
+        GetAnaData().N_objects(hist_name).Fill(result.size(),weight);
         return result;
     }
 
@@ -443,10 +444,10 @@ protected:
         for (const Candidate& candidate : candidates){
             if (FilterBackground(candidate, backgroundCandidates,minDeltaR)){
                 result.push_back(candidate);
-                GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
+                GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size());
+        GetAnaData().N_objects(hist_name).Fill(result.size(),weight);
         return result;
     }
 
@@ -544,7 +545,7 @@ protected:
     EventDescriptor event;
     TreeExtractor treeExtractor;
     std::shared_ptr<TFile> outputFile;
-    root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut;
+    root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
     size_t maxNumberOfEvents;
     bool useMCtruth;
     GenEvent genEvent;
