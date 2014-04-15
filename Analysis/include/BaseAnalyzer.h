@@ -181,6 +181,22 @@ protected:
             weight = weights->GetBinContent(bin);
     }
 
+    bool HaveTriggerFired(const std::vector<std::string>& interestingPaths) const
+    {
+        for (const ntuple::Trigger& trigger : event.triggers()){
+            for (unsigned n = 0; n < trigger.hltpaths.size(); ++n){
+                for (unsigned k = 0; k < interestingPaths.size(); ++k){
+                    const std::string& triggerPath = trigger.hltpaths.at(n);
+                    const std::string& interestingPath = interestingPaths.at(k);
+                    std::size_t found = triggerPath.find(interestingPath);
+                    if (found != std::string::npos && trigger.hltresults.at(n) == 1 &&
+                            trigger.hltprescales.at(n) == 1) return true;
+                }
+            }
+        }
+        return false;
+    }
+
     template<typename ObjectType, typename BaseSelectorType>
     std::vector<ObjectType> CollectObjects(cuts::ObjectSelector& objectSelector, size_t n_objects,
                                            const BaseSelectorType& base_selector, const std::string& hist_name)
@@ -339,7 +355,7 @@ protected:
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[pt_index][eta_index], "mva");
 
-        return analysis::Candidate(analysis::Candidate::Electron, id, object);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
 
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
@@ -358,7 +374,7 @@ protected:
         cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
     virtual analysis::Candidate SelectBackgroundTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
@@ -378,18 +394,20 @@ protected:
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object);
+        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
 
     CandidateVector FindCompatibleObjects(const CandidateVector& objects1, const CandidateVector& objects2,
-                                                 double minDeltaR, Candidate::Type type, const std::string& hist_name)
+                                          double minDeltaR, Candidate::Type type, const std::string& hist_name,
+                                          int expectedCharge = Candidate::UnknownCharge())
     {
         CandidateVector result;
         for(const Candidate& object1 : objects1) {
             for(const Candidate& object2 : objects2) {
                 if(object2.momentum.DeltaR(object1.momentum) > minDeltaR) {
                     const Candidate candidate(type, object1, object2);
+                    if (candidate.charge != expectedCharge) continue;
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
                 }
@@ -400,14 +418,15 @@ protected:
     }
 
 
-    CandidateVector FindCompatibleObjects(const CandidateVector& objects,
-                                                 double minDeltaR, Candidate::Type type, const std::string& hist_name)
+    CandidateVector FindCompatibleObjects(const CandidateVector& objects, double minDeltaR, Candidate::Type type,
+                                          const std::string& hist_name, int expectedCharge = Candidate::UnknownCharge())
     {
         CandidateVector result;
         for (unsigned n = 0; n < objects.size(); ++n){
             for (unsigned k = n+1; k < objects.size(); ++k){
                 if(objects.at(n).momentum.DeltaR(objects.at(k).momentum) > minDeltaR) {
                     const Candidate candidate(type, objects.at(n), objects.at(k));
+                    if (candidate.charge != expectedCharge) continue;
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
                 }
@@ -422,8 +441,10 @@ protected:
     {
         CandidateVector result;
         for (const Candidate& candidate : candidates){
-            if (FilterBackground(candidate, backgroundCandidates,minDeltaR))
+            if (FilterBackground(candidate, backgroundCandidates,minDeltaR)){
                 result.push_back(candidate);
+                GetAnaData().Mass(hist_name).Fill(candidate.momentum.M());
+            }
         }
         GetAnaData().N_objects(hist_name).Fill(result.size());
         return result;
@@ -452,20 +473,24 @@ protected:
                               cuts::Htautau_Summer13::electronID::veto::deltaR_signalObjects,"resonances_noEle");
         cut(resonances_noEle.size(), "no_electrons");
 
+
         const auto muons_bkg = CollectMuons(false);
         const auto resonances_noMu = FilterBackground(resonances_noEle,muons_bkg,
                                  cuts::Htautau_Summer13::muonID::veto::deltaR_signalObjects,"resonances_noMu");
         cut(resonances_noMu.size(), "no_muons");
+
 
         const auto bjets_bkg = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose",false);
         const auto resonances_noBjets = FilterBackground(resonances_noMu,bjets_bkg,
                               cuts::Htautau_Summer13::btag::veto::deltaR_signalObjects,"resonances_noBjets");
         cut(resonances_noBjets.size(), "no_bjets");
 
+
         const auto taus_bkg = CollectTaus(false);
         const auto resonances_noTau = FilterBackground(resonances_noBjets,taus_bkg,
                                  cuts::Htautau_Summer13::tauID::veto::deltaR_signalObjects,"resonances_noTau");
         cut(resonances_noTau.size(), "no_taus");
+
         return resonances_noTau;
     }
 

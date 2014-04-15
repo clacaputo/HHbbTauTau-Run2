@@ -27,20 +27,27 @@ public:
     size_t index;
     TLorentzVector momentum;
     CandidatePtrVector daughters;
+    int charge;
+    static int UnknownCharge(){
+        return std::numeric_limits<int>::max();
+    }
 
 
-    Candidate() : type(Unknown), index(0){}
+    Candidate() : type(Unknown), index(0), charge(UnknownCharge()){}
 
     template<typename NtupleObject>
-    Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject) :
-        type(_type), index(_index) {
-        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);     
+    Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject, int _charge = UnknownCharge()) :
+        type(_type), index(_index), charge(_charge) {
+        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
     }
 
     Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type), index(-1) {
         daughters.push_back(&daughter1);
         daughters.push_back(&daughter2);
         momentum = daughter1.momentum + daughter2.momentum;
+        if (daughter1.charge == UnknownCharge() || daughter2.charge == UnknownCharge())
+            charge = UnknownCharge();
+        else charge = daughter1.charge + daughter2.charge;
     }
 
     bool operator < (const Candidate& other) const
@@ -50,12 +57,17 @@ public:
 
     bool operator == (const Candidate& other) const
     {
-        return type == other.type && index == other.index;
+        return !(*this != other);
     }
 
     bool operator != (const Candidate& other) const
     {
-        return type != other.type || index != other.index;
+        if(type != other.type || index != other.index || charge != other.charge ||
+                daughters.size() != other.daughters.size()) return true;
+        for (unsigned n = 0; n < daughters.size(); ++n){
+            if (daughters.at(n) != other.daughters.at(n)) return true;
+        }
+        return false;
     }
 };
 

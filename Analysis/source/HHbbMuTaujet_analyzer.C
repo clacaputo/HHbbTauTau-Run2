@@ -34,10 +34,10 @@ public:
 
     virtual void Run(){
         BaseAnalyzer::Run();
-        //std::cout << "Trigger Path " << std::endl;
-        for (const std::string& path : trigger_paths){
-            //std::cout << path << std::endl;
-        }
+//        std::cout << "Trigger Path " << std::endl;
+//        for (const std::string& path : trigger_paths){
+//            std::cout << path << std::endl;
+//        }
     }
 
 protected:
@@ -51,15 +51,12 @@ protected:
         if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
 
         //std::cout << "event.triggers() size= " << event.triggers().size() << std::endl;
-        for (const ntuple::Trigger& trigger : event.triggers()){
-            //std::cout << "trigger.hltpaths size = " << trigger.hltpaths.size() << std::endl;
-            for (const std::string& path : trigger.hltpaths){
-                trigger_paths.insert(path);
-            }
-        }
+
         cuts::Cutter cut(anaData.EventSelection());
 
         cut(true, "total");
+
+        cut(HaveTriggerFired(cuts::Htautau_Summer13::trigger::MuTau::hltPaths), "trigger");
 
         const VertexVector vertices = CollectVertices();
 
@@ -81,19 +78,20 @@ protected:
         cut(taus.size(), "tau");
 
         const auto Higgses_mu_tau = FindCompatibleObjects(muons, taus,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_mu_tau");
+                                                          cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
+                                                          analysis::Candidate::Higgs, "H_mu_tau", 0);
         cut(Higgses_mu_tau.size(), "H_mu_tau");
 
         const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
         cut(b_jets.size() >= 2, ">=2b_loose");
 
         const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
-                                      analysis::Candidate::Higgs, "H_bb");
+                                                     analysis::Candidate::Higgs, "H_bb", Candidate::UnknownCharge());
         cut(Higgses_bb.size(), "H_bb");
 
         const auto Resonances =
                 FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, cuts::minDeltaR_betweenHiggses,
-                                      analysis::Candidate::Resonance, "resonance");
+                                      analysis::Candidate::Resonance, "resonance", Candidate::UnknownCharge());
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
@@ -123,7 +121,7 @@ protected:
         cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector,
@@ -143,7 +141,7 @@ protected:
         cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
         cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object);
+        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
 
