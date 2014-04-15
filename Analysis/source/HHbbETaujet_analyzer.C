@@ -84,7 +84,9 @@ protected:
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        ApplyVetos(Resonances,cut);
+        const auto finalSelectionResonances = ApplyVetos(Resonances, cut);
+
+        HistogramAfterFinalSelection(finalSelectionResonances);
 
     }
 

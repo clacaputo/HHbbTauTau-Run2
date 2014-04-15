@@ -495,6 +495,15 @@ protected:
         return resonances_noTau;
     }
 
+    void HistogramAfterFinalSelection(const CandidateVector& finalSelectionResonances)
+    {
+        for (auto resonance : finalSelectionResonances){
+            for (auto finalSta){
+
+            }
+        }
+    }
+
     void FindAnalysisFinalState(finalState::bbTauTau& final_state)
     {
         static const ParticleCodes resonanceCodes = { particles::Radion };

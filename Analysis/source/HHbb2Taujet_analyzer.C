@@ -83,7 +83,9 @@ protected:
         cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        ApplyVetos(Resonances, cut);
+        const auto finalSelectionResonances = ApplyVetos(Resonances, cut);
+
+        HistogramAfterFinalSelection(finalSelectionResonances);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
