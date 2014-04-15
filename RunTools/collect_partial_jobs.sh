@@ -23,11 +23,23 @@ if [ $# -ge 3 ] ; then
     fi
 fi
 
-JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" )
+FILE_JOB_RESULT="$INPUT_PATH/job_result.log"
+if [ -f $FILE_JOB_RESULT ] ; then
+    echo "ERROR: job_result.log not found."
+    exit
+fi
 
-find  $INPUT_PATH -name "*.root" -printf "${PREFIX}%p\n" > $TMP_OUT_FILE
+SUCCESSFULL_JOBS=$( cat $FILE_JOB_RESULT | sed -n "s/\(^0 \)\([^ ]*\)\(.*\)/\2/p" | sort )
+N_SUCCESSFULL_JOBS=$( echo "$SUCCESSFULL_JOBS" | sed '/^\s*$/d' | wc -l )
+if [ $N_SUCCESSFULL_JOBS -eq 0 ] ; then
+    echo "There are no successfull jobs found. Exiting..."
+    exit
+fi
+echo "Number of successfull jobs: $N_SUCCESSFULL_JOBS"
 
+echo "$SUCCESSFULL_JOBS" | xargs -n 1 printf "${PREFIX}$INPUT_PATH/%b_Tree.root" > $TMP_OUT_FILE
 
+mkdir -p $OUTPUT_DIR
 
 cd $TMP_DIR
 N_FILES=$( cat $TMP_OUT_FILE | wc -l )
