@@ -35,9 +35,9 @@ for JOB_FILE in $JOB_FILES ; do
         exit
     fi
     for FILE in $FILES_TO_TRANSFER ; do
-        RESULT=1
+        echo "Starting transfering file '$FILE'..."
         while [ 1 ] ; do
-            xrdcp -force -R "${SERVER}${FILE}" $OUTPUT_PATH
+            xrdcp -force "${SERVER}${FILE}" $OUTPUT_PATH
             RESULT=$?
             if [ $RESULT -eq 0 ] ; then
                 break
