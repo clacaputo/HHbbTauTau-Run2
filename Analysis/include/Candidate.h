@@ -27,6 +27,7 @@ public:
     size_t index;
     TLorentzVector momentum;
     CandidatePtrVector daughters;
+    CandidatePtrVector finalStateDaughters;
     int charge;
     static int UnknownCharge(){
         return std::numeric_limits<int>::max();
@@ -48,6 +49,13 @@ public:
         if (daughter1.charge == UnknownCharge() || daughter2.charge == UnknownCharge())
             charge = UnknownCharge();
         else charge = daughter1.charge + daughter2.charge;
+        for(const Candidate* daughter : daughters) {
+            if(daughter->finalStateDaughters.size()) {
+                for(const Candidate* finalStateDaughter : daughter->finalStateDaughters)
+                    finalStateDaughters.push_back(finalStateDaughter);
+            } else
+                finalStateDaughters.push_back(daughter);
+        }
     }
 
     bool operator < (const Candidate& other) const

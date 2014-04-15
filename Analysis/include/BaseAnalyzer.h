@@ -453,9 +453,17 @@ protected:
     static bool FilterBackground(const Candidate& candidate, const CandidateVector& backgroundCandidates,
                                             double minDeltaR)
     {
-        if (candidate.daughters.size()){
-            for (const Candidate* daughter : candidate.daughters){
-                if (!FilterBackground(*daughter,backgroundCandidates,minDeltaR)) return false;
+        if(candidate.finalStateDaughters.size()) {
+            for (const Candidate& bkg_candidate : backgroundCandidates) {
+                bool hasMatchedDaughter = false;
+                for(const Candidate* daughter : candidate.finalStateDaughters) {
+                    if (bkg_candidate.momentum.DeltaR(daughter->momentum) <= minDeltaR) {
+                        hasMatchedDaughter = true;
+                        break;
+                    }
+                }
+                if(!hasMatchedDaughter)
+                    return false;
             }
             return true;
         }
