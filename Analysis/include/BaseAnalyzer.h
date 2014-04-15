@@ -460,7 +460,7 @@ protected:
             return true;
         }
         for (const Candidate& bkg_candidate : backgroundCandidates){
-            if (candidate != bkg_candidate && bkg_candidate.momentum.DeltaR(candidate.momentum) <= minDeltaR)
+            if (bkg_candidate.momentum.DeltaR(candidate.momentum) > minDeltaR)
                 return false;
         }
         return true;
