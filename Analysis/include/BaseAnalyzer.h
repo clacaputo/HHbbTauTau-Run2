@@ -110,7 +110,8 @@ public:
         : timer(10), treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, _useMCtruth),
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1)
+          anaDataFinalSelection(*outputFile, "final_selection"),maxNumberOfEvents(_maxNumberOfEvents),
+          useMCtruth(_useMCtruth), weight(1)
     {
         TH1::SetDefaultSumw2();
         if (reweightFileName != "none"){
@@ -505,10 +506,20 @@ protected:
 
     void HistogramAfterFinalSelection(const CandidateVector& finalSelectionResonances)
     {
-        for (auto resonance : finalSelectionResonances){
-            for (auto finalSta){
-
+        for (const Candidate& resonance : finalSelectionResonances){
+            for (const Candidate* finalStateDaughter : resonance.finalStateDaughters){
+                if (finalStateDaughter->type == Candidate::Mu)
+                    SelectMuon(finalStateDaughter->index,GetAnaData().MuonSelection(), false, anaDataFinalSelection);
+                if (finalStateDaughter->type == Candidate::Tau)
+                    SelectTau(finalStateDaughter->index,GetAnaData().TauSelection(), false, anaDataFinalSelection);
+                if (finalStateDaughter->type == Candidate::Bjet)
+                    SelectBJet(finalStateDaughter->index,GetAnaData().BJetSelection(), false, anaDataFinalSelection,
+                               cuts::Htautau_Summer13::btag::CSVL, "loose");
+                if (finalStateDaughter->type == Candidate::Electron)
+                    SelectElectron(finalStateDaughter->index,GetAnaData().ElectronSelection(), false, anaDataFinalSelection);
             }
+            GetAnaData().Mass("Final_H_tautau").Fill(resonance.daughters.at(0)->momentum.M(),weight);
+            GetAnaData().Mass("Final_H_bb").Fill(resonance.daughters.at(1)->momentum.M(),weight);
         }
     }
 
