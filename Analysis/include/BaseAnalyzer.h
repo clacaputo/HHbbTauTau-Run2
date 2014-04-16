@@ -519,7 +519,7 @@ protected:
                 if (finalStateDaughter->type == Candidate::Tau)
                     SelectTau(finalStateDaughter->index,GetAnaData().TauSelection(), false, anaDataFinalSelection);
                 if (finalStateDaughter->type == Candidate::Bjet)
-                    SelectBJet(finalStateDaughter->index,GetAnaData().BJetSelection(), false, anaDataFinalSelection,
+                    SelectBJet(finalStateDaughter->index,GetAnaData().BJetSelection("loose"), false, anaDataFinalSelection,
                                cuts::Htautau_Summer13::btag::CSVL, "loose");
                 if (finalStateDaughter->type == Candidate::Electron)
                     SelectElectron(finalStateDaughter->index,GetAnaData().ElectronSelection(), false, anaDataFinalSelection);
