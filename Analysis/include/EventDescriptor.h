@@ -17,6 +17,7 @@
 #include "TreeProduction/interface/Vertex.h"
 #include "TreeProduction/interface/GenParticle.h"
 #include "TreeProduction/interface/Trigger.h"
+#include "EventId.h"
 
 namespace analysis{
 
@@ -52,7 +53,7 @@ ClearEventTuple(EventTuple& data)
 
 class EventDescriptor{
 public:
-    UInt_t eventId() const { return eventInfo().EventId; }
+    EventId eventId() const { return EventId(eventInfo().run, eventInfo().lumis, eventInfo().EventId); }
     const ntuple::Event& eventInfo() const { return std::get<0>(_data); }
     const ntuple::ElectronVector& electrons() const { return std::get<1>(_data); }
     const ntuple::MuonVector& muons() const { return std::get<2>(_data); }

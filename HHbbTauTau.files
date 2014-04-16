@@ -127,3 +127,5 @@ RunTools/resubmit_jobs.sh
 RunTools/replica_xrd.sh
 RunTools/collect_partial_jobs.sh
 RunTools/submitAllAnalysis.sh
+Analysis/include/RunReport.h
+Analysis/include/EventId.h

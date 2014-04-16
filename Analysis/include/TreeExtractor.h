@@ -16,32 +16,6 @@
 
 namespace analysis {
 
-struct EventId{
-    UInt_t runId;
-    UInt_t lumiBlock;
-    UInt_t eventId;
-    static const EventId& Undef_event() {
-        static const EventId undef_event;
-        return undef_event;
-    }
-
-    EventId() : runId(std::numeric_limits<UInt_t>::max()), lumiBlock(std::numeric_limits<UInt_t>::max()),
-                eventId(std::numeric_limits<UInt_t>::max()){}
-
-    EventId(UInt_t _runId, UInt_t _lumiBlock, UInt_t _eventId) : runId(_runId), lumiBlock(_lumiBlock),
-                eventId(_eventId){}
-
-    bool operator == (const EventId& other) const
-    {
-        return runId == other.runId && lumiBlock == other.lumiBlock && eventId == other.eventId;
-    }
-
-    bool operator != (const EventId& other) const
-    {
-        return runId != other.runId || lumiBlock != other.lumiBlock || eventId != other.eventId;
-    }
-};
-
 namespace detail {
 
 typedef std::tuple< std::shared_ptr<ntuple::EventTree>,

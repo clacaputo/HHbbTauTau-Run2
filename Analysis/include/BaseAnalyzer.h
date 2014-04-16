@@ -20,6 +20,8 @@
 #include <iomanip>
 #include <functional>
 
+#include "RunReport.h"
+
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \
     /**/
@@ -110,8 +112,8 @@ public:
         : timer(10), treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, _useMCtruth),
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          anaDataFinalSelection(*outputFile, "final_selection"),maxNumberOfEvents(_maxNumberOfEvents),
-          useMCtruth(_useMCtruth), weight(1)
+          anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1)
     {
         TH1::SetDefaultSumw2();
         if (reweightFileName != "none"){
@@ -145,13 +147,17 @@ public:
             GetAnaData().EventSelection().fill_selection(weight);
         }
         timer.Report(n, true);
+        runReport.Report();
     }
 
 protected:
     typedef std::function< Candidate (size_t, cuts::ObjectSelector&, bool, root_ext::AnalyzerData&) > BaseSelector;
 
     virtual SignalAnalyzerData& GetAnaData() = 0;
-    virtual void ProcessEvent(){
+
+    virtual void ProcessEvent()
+    {
+        runReport.AddEvent(event.eventId());
         if (weights){
             const ntuple::Event& eventInfo = event.eventInfo();
             bool foundBX = false;
@@ -574,6 +580,7 @@ protected:
     TreeExtractor treeExtractor;
     std::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
+    RunReport runReport;
     size_t maxNumberOfEvents;
     bool useMCtruth;
     GenEvent genEvent;

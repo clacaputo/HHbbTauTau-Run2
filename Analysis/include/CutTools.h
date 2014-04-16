@@ -70,11 +70,12 @@ public:
         counters.at(param_id)++;
     }
 
-    void fill_selection(double weight = 1){
+    void fill_selection(double weight = 1.0){
         for (unsigned n = 0; n < counters.size(); ++n){
-            unsigned alpha = counters.at(n) > 0 ? 1 : 0 ;
-            selections.at(n) += alpha * weight;
-            selectionsSquaredErros.at(n) += weight * weight;
+            if(counters.at(n) > 0) {
+                selections.at(n) += weight;
+                selectionsSquaredErros.at(n) += weight * weight;
+            }
             counters.at(n) = 0;
         }
     }
