@@ -129,3 +129,5 @@ RunTools/collect_partial_jobs.sh
 RunTools/submitAllAnalysis.sh
 Analysis/include/RunReport.h
 Analysis/include/EventId.h
+Analysis/legacy/compareSync.C
+TreeProduction/legacy/compareSync.C
