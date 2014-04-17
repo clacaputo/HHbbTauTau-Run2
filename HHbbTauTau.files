@@ -129,3 +129,4 @@ RunTools/collect_partial_jobs.sh
 RunTools/submitAllAnalysis.sh
 Analysis/include/RunReport.h
 Analysis/include/EventId.h
+PatProduction/legacy/patTuple_standard_allInOne_2012_cfg_ROSMA.py
