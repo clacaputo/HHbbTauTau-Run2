@@ -2,7 +2,7 @@
 
 from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFElectronIso
 
-def applyElectronParameters(proccess, isMC):
+def applyElectronParameters(cms, process, isMC):
     process.electronIsoSequence = setupPFElectronIso(process,'gsfElectrons')
 
     process.patElectrons.isoDeposits = cms.PSet(

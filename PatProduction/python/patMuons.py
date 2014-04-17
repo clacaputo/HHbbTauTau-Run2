@@ -3,7 +3,7 @@
 from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFMuonIso
 from CommonTools.ParticleFlow.pfParticleSelection_cff import pfParticleSelectionSequence
 
-def applyMuonParameters(proccess):
+def applyMuonParameters(cms, process):
     process.muIsoSequence       = setupPFMuonIso(process,'muons')
     process.pfParticleSelectionSequence = pfParticleSelectionSequence
 

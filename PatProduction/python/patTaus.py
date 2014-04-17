@@ -1,9 +1,10 @@
 ## patTaus.py - configuration file that defines parameters related to PAT Tau objects.
 
-def applyTauParameters(proccess):
+from PhysicsTools.PatAlgos.tools.tauTools import *
+
+def applyTauParameters(cms, process):
     # Include high Pt tau reconstruction sequence.
     process.load("RecoTauTag.Configuration.RecoPFTauTag_cff")
-    from PhysicsTools.PatAlgos.tools.tauTools import *
     switchToPFTauHPS(process)
 
     process.patTaus.embedLeadPFCand = cms.bool(True)

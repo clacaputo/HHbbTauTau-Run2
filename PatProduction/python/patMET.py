@@ -2,7 +2,7 @@
 
 from PhysicsTools.PatAlgos.tools.metTools import *
 
-def applyMETParameters(proccess, isMC):
+def applyMETParameters(cms, process, isMC):
     # MET corrections.
     addPfMET(process, 'PF')
     process.patMETsPF.metSource = cms.InputTag("pfMet")

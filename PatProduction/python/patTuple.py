@@ -15,19 +15,19 @@ from HHbbTauTau.PatProduction.patOptions import *
 parseAndApplyOptions(process)
 
 from HHbbTauTau.PatProduction.patMuons import *
-applyMuonParameters(process)
+applyMuonParameters(cms, process)
 
 from HHbbTauTau.PatProduction.patTaus import *
-applyTauParameters(process)
+applyTauParameters(cms, process)
 
 from HHbbTauTau.PatProduction.patElectrons import *
-applyElectronParameters(process, options.isMC)
+applyElectronParameters(cms, process, options.isMC)
 
 from HHbbTauTau.PatProduction.patMET import *
-applyMETParameters(process, options.isMC)
+applyMETParameters(cms, process, options.isMC)
 
 from HHbbTauTau.PatProduction.patJets import *
-applyJetParameters(process, options.isMC)
+applyJetParameters(cms, process, options.isMC)
 
 ## Remove MC matching from the default sequence
 if not options.isMC:
