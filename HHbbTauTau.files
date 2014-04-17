@@ -133,3 +133,4 @@ TreeProduction/legacy/compareSync.C
 PatProduction/legacy/patTuple_standard_allInOne_2012_cfg_ROSMA.py
 ../../../test.py
 TreeProduction/legacy/test.py
+PatProduction/legacy/patTuple_standard_allInOne_2012_cfg.py
