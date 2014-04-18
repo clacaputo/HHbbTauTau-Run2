@@ -4,7 +4,7 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 process.options.wantSummary = False
 
-## Drop input reco taus
+## Drop input reco taus to ensure that the new tau collection will be used.
 process.source.dropDescendantsOfDroppedBranches = cms.untracked.bool(False)
 process.source.inputCommands = cms.untracked.vstring(
         'keep *',
@@ -31,36 +31,37 @@ applyJetParameters(cms, process, options.isMC)
 
 ## Remove MC matching from the default sequence
 if not options.isMC:
-        removeMCMatching(process, ['All'])
-        #removeMCMatching(process, ['METs'], "TC")
-        removeMCMatching(process, ['METs'], "PF")
-        process.patDefaultSequence.remove(process.patJetPartonMatch)
-        #process.patDefaultSequence.remove(process.patJetPartonMatchAK5PF)
-        #process.patDefaultSequence.remove(process.patJetGenJetMatchAK5PF)
-        process.patDefaultSequence.remove(process.patJetFlavourId)
-        process.patDefaultSequence.remove(process.patJetPartons)
-        process.patDefaultSequence.remove(process.patJetPartonAssociation)
-        #process.patDefaultSequence.remove(process.patJetPartonAssociationAK5PF)
-        process.patDefaultSequence.remove(process.patJetFlavourAssociation)
-        #process.patDefaultSequence.remove(process.patJetFlavourAssociationAK5PF)
-        runOnData(process)
+    removeMCMatching(process, ['All'])
+    #removeMCMatching(process, ['METs'], "TC")
+    removeMCMatching(process, ['METs'], "PF")
+    process.patDefaultSequence.remove(process.patJetPartonMatch)
+    #process.patDefaultSequence.remove(process.patJetPartonMatchAK5PF)
+    #process.patDefaultSequence.remove(process.patJetGenJetMatchAK5PF)
+    process.patDefaultSequence.remove(process.patJetFlavourId)
+    process.patDefaultSequence.remove(process.patJetPartons)
+    process.patDefaultSequence.remove(process.patJetPartonAssociation)
+    #process.patDefaultSequence.remove(process.patJetPartonAssociationAK5PF)
+    process.patDefaultSequence.remove(process.patJetFlavourAssociation)
+    #process.patDefaultSequence.remove(process.patJetFlavourAssociationAK5PF)
+    runOnData(process)
 
 
 ## Define process path.
 process.p = cms.Path(
-    process.PFTau
-  * process.pfParticleSelectionSequence
-  * process.muIsoSequence
-  * process.electronIsoSequence
-  * process.mvaTrigV0
-  * process.mvaNonTrigV0
-  * process.type0PFMEtCorrection
-  * process.producePFMETCorrections
-  * process.patPFMETsTypeIcorrected
-  * process.patDefaultSequence
-  * process.patMuonsWithEmbeddedVariables
-  * process.patElectronsWithEmbeddedVariables
-  )
+#    process.PFTau *
+    process.recoTauClassicHPSSequence *
+    process.pfParticleSelectionSequence *
+    process.muIsoSequence *
+    process.electronIsoSequence *
+    process.mvaTrigV0 *
+    process.mvaNonTrigV0 *
+    process.type0PFMEtCorrection *
+    process.producePFMETCorrections *
+    process.patPFMETsTypeIcorrected *
+    process.patDefaultSequence *
+    process.patMuonsWithEmbeddedVariables *
+    process.patElectronsWithEmbeddedVariables
+    )
 
 ## Output selection.
 process.out.outputCommands = [
@@ -75,10 +76,10 @@ process.out.outputCommands = [
     'keep *_offlineBeamSpot_*_*',
     'keep *_TriggerResults_*_HLT',
     'keep *_genMetTrue_*_*',
-    'keep recoTracks_generalTracks_*_*',
+#    'keep recoTracks_generalTracks_*_*',
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
     'keep GenFilterInfo_*_*_*',
                              ]
 
 if options.includeSim:
-        process.out.outputCommands.extend(['keep recoGenParticles_genParticles_*_*'])
+    process.out.outputCommands.extend(['keep recoGenParticles_genParticles_*_*'])
