@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -lt 2 || $# -gt 3 ] ; then
+if [ $# -lt 2 -o $# -gt 3 ] ; then
     echo "Usage: file_list_path output_path [max_n_files]"
     exit
 fi
@@ -54,8 +54,8 @@ for JOB_FILE in $JOB_FILES ; do
             sleep 60
         done
         n=$(($n + 1))
-        if [[ $MAX_N_FILES != 0 && $n >= $MAX_N_FILES ]] ; then
-            "Max number of files was transfered. Exiting...
+        if [[ $MAX_N_FILES -ne 0 && $n -ge $MAX_N_FILES ]] ; then
+            echo "Max number of files was transfered. Exiting..."
             exit
         fi
     done
