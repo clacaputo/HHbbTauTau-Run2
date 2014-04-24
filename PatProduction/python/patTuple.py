@@ -25,6 +25,7 @@ applyElectronParameters(cms, process, options.isMC)
 
 from HHbbTauTau.PatProduction.patMET import *
 applyMETParameters(cms, process, options.isMC)
+applyMVAMETParamteres(cms, process, options.isMC)
 
 from HHbbTauTau.PatProduction.patJets import *
 applyJetParameters(cms, process, options.isMC)
@@ -60,7 +61,9 @@ process.p = cms.Path(
     process.patPFMETsTypeIcorrected *
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
-    process.patElectronsWithEmbeddedVariables
+    process.patElectronsWithEmbeddedVariables *
+    process.pfMEtMVAsequence *
+    process.patPFMetMVA
     )
 
 ## Output selection.
@@ -69,6 +72,7 @@ process.out.outputCommands = [
     'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
     'keep patJets_patJets_*_*',
     'keep patMETs_patPFMETsTypeIcorrected_*_*',
+    'keep patMETs_patPFMetMVA_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
     'keep patTaus_patTaus_*_*',
     'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
@@ -79,6 +83,7 @@ process.out.outputCommands = [
 #    'keep recoTracks_generalTracks_*_*',
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
     'keep GenFilterInfo_*_*_*',
+    'keep patTriggerEvent_*_*_*'
                              ]
 
 if options.includeSim:

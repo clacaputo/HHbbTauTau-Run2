@@ -29,3 +29,20 @@ def applyMETParameters(cms, process, isMC):
     )
 
     return
+
+#MVA MET recommended
+def applyMVAMETParamteres(cms, process, isMC):
+    process.load('RecoMET.METPUSubtraction.mvaPFMET_leptons_cff')
+    if isMC:
+            process.calibratedAK5PFJetsForPFMEtMVA.correctors = cms.vstring("ak5PFL1FastL2L3")
+    else:
+            process.calibratedAK5PFJetsForPFMEtMVA.correctors = cms.vstring("ak5PFL1FastL2L3Residual")
+
+    process.patPFMetMVA = process.patMETs.clone(
+            metSource = cms.InputTag('pfMEtMVA'),
+            addMuonCorrections = cms.bool(False),
+            addGenMET = cms.bool(False),
+            genMETSource = cms.InputTag('genMetTrue')
+    )
+
+    return
