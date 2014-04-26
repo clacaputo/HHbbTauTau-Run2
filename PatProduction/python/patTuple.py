@@ -23,12 +23,12 @@ applyTauParameters(cms, process)
 from HHbbTauTau.PatProduction.patElectrons import *
 applyElectronParameters(cms, process, options.isMC)
 
+from HHbbTauTau.PatProduction.patJets import *
+applyJetParameters(cms, process, options.isMC)
+
 from HHbbTauTau.PatProduction.patMET import *
 applyMETParameters(cms, process, options.isMC)
 applyMVAMETParamteres(cms, process, options.isMC)
-
-from HHbbTauTau.PatProduction.patJets import *
-applyJetParameters(cms, process, options.isMC)
 
 ## Remove MC matching from the default sequence
 if not options.isMC:
@@ -49,8 +49,8 @@ if not options.isMC:
 
 ## Define process path.
 process.p = cms.Path(
-#    process.PFTau *
-    process.recoTauClassicHPSSequence *
+    process.PFTau *
+#    process.recoTauClassicHPSSequence *
     process.pfParticleSelectionSequence *
     process.muIsoSequence *
     process.electronIsoSequence *
@@ -62,8 +62,8 @@ process.p = cms.Path(
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
-    process.pfMEtMVAsequence *
-    process.patPFMetMVA
+    process.pfMEtMVAsequence #*
+#    process.patPFMetMVA
     )
 
 ## Output selection.
