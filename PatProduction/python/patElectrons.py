@@ -1,8 +1,10 @@
 ## patElectrons.py - configuration file that defines parameters related to PAT Electron objects.
 
+import FWCore.ParameterSet.Config as cms
+
 from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFElectronIso
 
-def applyElectronParameters(cms, process, isMC):
+def applyElectronParameters(process, isMC):
     process.electronIsoSequence = setupPFElectronIso(process,'gsfElectrons')
 
     process.patElectrons.isoDeposits = cms.PSet(

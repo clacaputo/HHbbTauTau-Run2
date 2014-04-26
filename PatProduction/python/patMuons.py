@@ -1,9 +1,11 @@
 ## patMuons.py - configuration file that defines parameters related to PAT Muon objects.
 
+import FWCore.ParameterSet.Config as cms
+
 from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFMuonIso
 from CommonTools.ParticleFlow.pfParticleSelection_cff import pfParticleSelectionSequence
 
-def applyMuonParameters(cms, process):
+def applyMuonParameters(process):
     process.muIsoSequence       = setupPFMuonIso(process,'muons')
     process.pfParticleSelectionSequence = pfParticleSelectionSequence
 

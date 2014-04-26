@@ -15,20 +15,20 @@ from HHbbTauTau.PatProduction.patOptions import *
 parseAndApplyOptions(process)
 
 from HHbbTauTau.PatProduction.patMuons import *
-applyMuonParameters(cms, process)
+applyMuonParameters(process)
 
 from HHbbTauTau.PatProduction.patTaus import *
-applyTauParameters(cms, process)
+applyTauParameters(process)
 
 from HHbbTauTau.PatProduction.patElectrons import *
-applyElectronParameters(cms, process, options.isMC)
+applyElectronParameters(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patJets import *
-applyJetParameters(cms, process, options.isMC)
+applyJetParameters(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patMET import *
-applyMETParameters(cms, process, options.isMC)
-applyMVAMETParamteres(cms, process, options.isMC)
+applyMETParameters(process, options.isMC)
+applyMVAMETParamteres(process, options.isMC)
 
 ## Remove MC matching from the default sequence
 if not options.isMC:
@@ -50,7 +50,6 @@ if not options.isMC:
 ## Define process path.
 process.p = cms.Path(
     process.PFTau *
-#    process.recoTauClassicHPSSequence *
     process.pfParticleSelectionSequence *
     process.muIsoSequence *
     process.electronIsoSequence *
@@ -62,9 +61,9 @@ process.p = cms.Path(
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
-    process.pfMEtMVAsequence #*
-#    process.patPFMetMVA
-    )
+    process.pfMEtMVAsequence *
+    process.patPFMetMVA
+)
 
 ## Output selection.
 process.out.outputCommands = [
@@ -79,8 +78,6 @@ process.out.outputCommands = [
     'keep PileupSummaryInfos_*_*_*',
     'keep *_offlineBeamSpot_*_*',
     'keep *_TriggerResults_*_HLT',
-    'keep *_genMetTrue_*_*',
-#    'keep recoTracks_generalTracks_*_*',
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
     'keep GenFilterInfo_*_*_*',
     'keep patTriggerEvent_*_*_*'
@@ -88,3 +85,6 @@ process.out.outputCommands = [
 
 if options.includeSim:
     process.out.outputCommands.extend(['keep recoGenParticles_genParticles_*_*'])
+    process.out.outputCommands.extend(['keep *_genMetTrue_*_*'])
+
+#print process.dumpPython()

@@ -1,8 +1,10 @@
 ## patElectrons.py - configuration file that defines parameters related to PAT Jet objects.
 
+import FWCore.ParameterSet.Config as cms
+
 from PhysicsTools.PatAlgos.tools.jetTools import *
 
-def applyJetParameters(cms, process, isMC):
+def applyJetParameters(process, isMC):
     # Jet corrections
     jec = [ 'L1FastJet', 'L2Relative', 'L3Absolute' ]
     if not isMC:

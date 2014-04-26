@@ -1,11 +1,10 @@
+## mvaPFMET_leptons_cff.py - adapted copy of mvaPFMET_leptons_cff.py from RecoMET/METPUSubtraction package.
+## Original file: https://github.com/cms-met/cmssw/blob/53X-MVaNoPuMET-20131217-01/RecoMET/METPUSubtraction/python/mvaPFMET_leptons_cff.py
 
 import FWCore.ParameterSet.Config as cms
 
-#from RecoMET.METProducers.PFMET_cfi import pfMet
-from JetMETCorrections.Configuration.JetCorrectionServicesAllAlgos_cff  import *
-from JetMETCorrections.Configuration.DefaultJEC_cff                     import *
-from HHbbTauTau.PatProduction.mvaPFMET_leptons_cfi                      import *
-from RecoJets.JetProducers.PileupJetIDParams_cfi                        import JetIdParams
+from HHbbTauTau.PatProduction.mvaPFMET_leptons_cfi import *
+from RecoJets.JetProducers.PileupJetIDParams_cfi import JetIdParams
 
 calibratedAK5PFJetsForPFMEtMVA = cms.EDProducer('PFJetCorrectionProducer',
     src = cms.InputTag('ak5PFJets'),
@@ -17,8 +16,9 @@ pfMEtMVA = cms.EDProducer("PFMETProducerMVA",
     srcUncorrJets = cms.InputTag('ak5PFJets'),
     srcPFCandidates = cms.InputTag('particleFlow'),
     srcVertices = cms.InputTag('offlinePrimaryVertices'),
-    srcLeptons = cms.VInputTag(),#"isomuons","isoelectrons","isotaus") # NOTE: you need to set this to collections of electrons, muons and tau-jets
-                                 #                                             passing the lepton reconstruction & identification criteria applied in your analysis
+    # NOTE: you need to set this to collections of electrons, muons and tau-jets passing the lepton
+    #       reconstruction & identification criteria applied in your analysis
+    srcLeptons = cms.VInputTag("isomuons","isoelectrons","isotaus"),
     minNumLeptons = cms.int32(0),
     srcRho = cms.InputTag('kt6PFJets','rho'),
     globalThreshold = cms.double(-1.),#pfMet.globalThreshold,
@@ -64,8 +64,8 @@ pfMEtMVA = cms.EDProducer("PFMETProducerMVA",
 )
 
 pfMEtMVAsequence  = cms.Sequence(
-    (isomuonseq+isotauseq+isoelectronseq)*
-    calibratedAK5PFJetsForPFMEtMVA*
+    (isomuonseq + isotauseq + isoelectronseq) *
+    calibratedAK5PFJetsForPFMEtMVA *
     pfMEtMVA
-    )
+)
 

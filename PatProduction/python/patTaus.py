@@ -1,9 +1,11 @@
 ## patTaus.py - configuration file that defines parameters related to PAT Tau objects.
 
+import FWCore.ParameterSet.Config as cms
+
 from PhysicsTools.PatAlgos.tools.tauTools import *
 
 ## Should work for both standard and high pt taus
-def applyTauParameters(cms, process):
+def applyTauParameters(process):
     # Include tau reconstruction sequence.
     process.load("RecoTauTag.Configuration.RecoPFTauTag_cff")
     switchToPFTauHPS(process)
