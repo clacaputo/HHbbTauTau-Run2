@@ -54,8 +54,10 @@ public:  std::vector< type >& name() { return _##name; }
     public: \
         static bool IsMCtruth() { return is_mc_truth; } \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
-        inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
-        inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
+        tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
+        tree_class_name(const std::string& name) : SmartTree(name, "/") { Initialize(); } \
+        tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
+        tree_class_name(TFile& file, const std::string& name) : SmartTree(name, file) { Initialize(); } \
         data_class_name data; \
         data_macro() \
     private: \
@@ -70,8 +72,10 @@ public:  std::vector< type >& name() { return _##name; }
     public: \
         static bool IsMCtruth() { return is_mc_truth; } \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
-        inline tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
-        inline tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
+        tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
+        tree_class_name(const std::string& name) : SmartTree(name, "/") { Initialize(); } \
+        tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
+        tree_class_name(TFile& file, const std::string& name) : SmartTree(name, file) { Initialize(); } \
         data_class_name data; \
         SIMPLE_TREE_BRANCH(UInt_t, RunId) \
         SIMPLE_TREE_BRANCH(UInt_t, LumiBlock) \

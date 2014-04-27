@@ -24,7 +24,6 @@
     SIMPLE_VAR(Bool_t, isBSCMinBias) \
     SIMPLE_VAR(Bool_t, isBSCBeamHalo) \
     SIMPLE_VAR(Bool_t, isPrimaryVertex) \
-    SIMPLE_VAR(Bool_t, isBeamScraping) \
     VECTOR_VAR(Int_t, nPU) \
     VECTOR_VAR(Int_t, bunchCrossing) \
     VECTOR_VAR(Float_t, trueNInt) \

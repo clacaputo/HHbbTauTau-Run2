@@ -26,6 +26,7 @@
 <use name="RecoTauTag/RecoTau" />
 <use name="RecoMET/METAlgorithms" />
 <use name="RecoMuon/MuonIsolation" />
+<use name="HHbbTauTau/PatProduction" />
 <export>
   <lib name="1"/>
 </export>

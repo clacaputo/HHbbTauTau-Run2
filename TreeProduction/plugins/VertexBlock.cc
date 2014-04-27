@@ -5,44 +5,11 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include "DataFormats/TrackReco/interface/Track.h"
+#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Vertex.h"
-
-namespace  {
-
-double GetVertexSumPtSquare(const reco::Vertex& vertex, float minWeight = 0.5)
-{
-    double sum=0;
-    if(vertex.hasRefittedTracks()) {
-        for(std::vector<reco::Track>::const_iterator iter = vertex.refittedTracks().begin();
-         iter != vertex.refittedTracks().end(); ++iter) {
-            if (vertex.trackWeight(vertex.originalTrack(*iter)) >=minWeight) {
-                double pt = iter->pt();
-                sum += pt*pt;
-            }
-        }
-    }
-    else
-    {
-        for(std::vector<reco::TrackBaseRef>::const_iterator iter = vertex.tracks_begin();
-                iter != vertex.tracks_end(); iter++) {
-            if (vertex.trackWeight(*iter) >=minWeight) {
-                double pt = (*iter)->pt();
-                sum += pt*pt;
-            }
-        }
-    }
-    return sum;
-
-}
-}
-
 
 class VertexBlock : public edm::EDAnalyzer {
 public:
@@ -51,7 +18,10 @@ public:
         _inputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")) {}
 
 private:
-    virtual void endJob() { vertexTree.Write(); }
+    virtual void endJob()
+    {
+        vertexTree.Write();
+    }
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:
@@ -66,7 +36,7 @@ void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     vertexTree.LumiBlock() = iEvent.id().luminosityBlock();
     vertexTree.EventId() = iEvent.id().event();
 
-    edm::Handle<reco::VertexCollection> primaryVertices;
+    edm::Handle<pat::VertexCollection> primaryVertices;
     iEvent.getByLabel(_inputTag, primaryVertices);
 
     if (!primaryVertices.isValid()) {
@@ -76,7 +46,7 @@ void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     }
     edm::LogInfo("VertexBlock") << "Total # Primary Vertices: " << primaryVertices->size();
 
-    for (const reco::Vertex& vertex : *primaryVertices) {
+    for (const pat::Vertex& vertex : *primaryVertices) {
         vertexTree.x() = vertex.x();
         vertexTree.y() = vertex.y();
         vertexTree.z() = vertex.z();
@@ -90,8 +60,12 @@ void VertexBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         vertexTree.ntracksw05() = vertex.nTracks(0.5); // number of tracks in the vertex with weight above 0.5
         vertexTree.isfake() = vertex.isFake();
         vertexTree.isvalid() = vertex.isValid();
-        vertexTree.sumPt() = vertex.p4().pt();
-        vertexTree.sumPtSquare() = GetVertexSumPtSquare(vertex);
+        vertexTree.sumPt() = vertex.sumPt();
+        vertexTree.sumPtSquared() = vertex.sumPtSquared();
+
+//        edm::LogError("VertexBlock") << vertex.hasRefittedTracks() << " " << vertex.nTracks(0.5) << "\n"
+//                                     << vertex.sumPt() << " " << vertex.sumPtSquared() << "\n"
+//                                     << vertex.numberOfTracks() << " " << vertex.numberOfWeights();
 
         vertexTree.Fill();
     }

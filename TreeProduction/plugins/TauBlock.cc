@@ -62,83 +62,76 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
     edm::Handle<pat::TauCollection> tausHandle;
-    iEvent.getByLabel(_inputTag,tausHandle);
+    iEvent.getByLabel(_inputTag, tausHandle);
     const pat::TauCollection* taus = tausHandle.product();
     if(!taus)
         throw std::runtime_error("Tau collection not found.");
 
     edm::LogInfo("TauBlock") << "Total # PAT Taus: " << taus->size();
-    
+
     for (const pat::Tau& patTau : *taus) {
-      // Store Tau variables
-      tauTree.eta()    = patTau.eta();
-      tauTree.phi()    = patTau.phi();
-      tauTree.pt()     = patTau.pt();
-      tauTree.energy() = patTau.energy();
-      tauTree.charge() = patTau.charge();
-      
-      
+        // Store Tau variables
+        tauTree.eta()    = patTau.eta();
+        tauTree.phi()    = patTau.phi();
+        tauTree.pt()     = patTau.pt();
+        tauTree.energy() = patTau.energy();
+        tauTree.charge() = patTau.charge();
 
-      // Leading particle pT
-      tauTree.leadChargedParticlePt() = patTau.leadPFChargedHadrCand().isNonnull()
-                                  ? patTau.leadPFChargedHadrCand()->pt() : 0.;
-      tauTree.leadNeutralParticleEt() = patTau.leadPFNeutralCand().isNonnull()
-                                  ? patTau.leadPFNeutralCand()->et(): 0.;
-      tauTree.leadParticleEt()        = patTau.leadPFCand().isNonnull()
-                                  ? patTau.leadPFCand()->et(): 0.;
-      
-      // Number of charged/neutral candidates and photons in different cones
-      tauTree.numChargedHadronsSignalCone() = patTau.signalPFChargedHadrCands().size();
-      tauTree.numNeutralHadronsSignalCone() = patTau.signalPFNeutrHadrCands().size();
-      tauTree.numPhotonsSignalCone()        = patTau.signalPFGammaCands().size();
-      tauTree.numParticlesSignalCone()      = patTau.signalPFCands().size();
-      
-      tauTree.numChargedHadronsIsoCone() = patTau.isolationPFChargedHadrCands().size();
-      tauTree.numNeutralHadronsIsoCone() = patTau.isolationPFNeutrHadrCands().size();
-      tauTree.numPhotonsIsoCone()        = patTau.isolationPFGammaCands().size();
-      tauTree.numParticlesIsoCone()      = patTau.isolationPFCands().size();
-      
-      tauTree.ptSumPFChargedHadronsIsoCone() = patTau.isolationPFChargedHadrCandsPtSum();
-      tauTree.etSumPhotonsIsoCone()          = patTau.isolationPFGammaCandsEtSum();
+        // Leading particle pT
+        tauTree.leadChargedParticlePt() = patTau.leadPFChargedHadrCand().isNonnull()
+                                          ? patTau.leadPFChargedHadrCand()->pt() : 0.;
+        tauTree.leadNeutralParticleEt() = patTau.leadPFNeutralCand().isNonnull()
+                                          ? patTau.leadPFNeutralCand()->et() : 0.;
+        tauTree.leadParticleEt()        = patTau.leadPFCand().isNonnull()
+                                          ? patTau.leadPFCand()->et() : 0.;
 
-      // tau id. discriminators
-      // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
-      // for discriminator names see PhysicsTools/PatAlgos/python/producersLayer1/tauProducer_cfi.py
-      TAU_DISCRIMINATOR_DATA()
+        // Number of charged/neutral candidates and photons in different cones
+        tauTree.numChargedHadronsSignalCone() = patTau.signalPFChargedHadrCands().size();
+        tauTree.numNeutralHadronsSignalCone() = patTau.signalPFNeutrHadrCands().size();
+        tauTree.numPhotonsSignalCone()        = patTau.signalPFGammaCands().size();
+        tauTree.numParticlesSignalCone()      = patTau.signalPFCands().size();
 
-      tauTree.leadPFCand_mva_e_pi() = patTau.leadPFCand().isNonnull() ? patTau.leadPFCand()->mva_e_pi() : 1.;
+        tauTree.numChargedHadronsIsoCone() = patTau.isolationPFChargedHadrCands().size();
+        tauTree.numNeutralHadronsIsoCone() = patTau.isolationPFNeutrHadrCands().size();
+        tauTree.numPhotonsIsoCone()        = patTau.isolationPFGammaCands().size();
+        tauTree.numParticlesIsoCone()      = patTau.isolationPFCands().size();
 
-      // NEW quantities
-      tauTree.emFraction()              = patTau.emFraction();
-      tauTree.maximumHCALPFClusterEt()  = patTau.maximumHCALPFClusterEt();
-      tauTree.ecalStripSumEOverPLead()  = patTau.ecalStripSumEOverPLead();
-      tauTree.bremsRecoveryEOverPLead() = patTau.bremsRecoveryEOverPLead();
-      tauTree.hcalTotOverPLead()        = patTau.hcalTotOverPLead();
-      tauTree.hcalMaxOverPLead()        = patTau.hcalMaxOverPLead();
-      tauTree.hcal3x3OverPLead()        = patTau.hcal3x3OverPLead();
+        tauTree.ptSumPFChargedHadronsIsoCone() = patTau.isolationPFChargedHadrCandsPtSum();
+        tauTree.etSumPhotonsIsoCone()          = patTau.isolationPFGammaCandsEtSum();
 
-      tauTree.etaetaMoment() = patTau.etaetaMoment();
-      tauTree.phiphiMoment() = patTau.phiphiMoment();
-      tauTree.etaphiMoment() = patTau.etaphiMoment();
-      
-      // Vertex information
-      const reco::Candidate::Point& vertex = patTau.vertex();
-      tauTree.vx() = vertex.x();
-      tauTree.vy() = vertex.y();
-      tauTree.vz() = vertex.z();
+        // tau id. discriminators
+        // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
+        // for discriminator names see PhysicsTools/PatAlgos/python/producersLayer1/tauProducer_cfi.py
+        TAU_DISCRIMINATOR_DATA()
 
-      edm::ESHandle<TransientTrackBuilder> trackBuilderHandle;
-       iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", trackBuilderHandle);
-        
-      for(size_t n = 0; n < patTau.signalPFChargedHadrCands().size(); ++n) {
-          if(patTau.signalPFChargedHadrCands()[n]->trackRef().isNonnull()) {
-            tauTree.ChHadCand_Pt().push_back(patTau.signalPFChargedHadrCands()[n]->trackRef()->pt());
-            tauTree.ChHadCand_Eta().push_back(patTau.signalPFChargedHadrCands()[n]->trackRef()->eta());
-            tauTree.ChHadCand_Phi().push_back(patTau.signalPFChargedHadrCands()[n]->trackRef()->phi());
-          }
-      }
+        tauTree.leadPFCand_mva_e_pi() = patTau.leadPFCand().isNonnull() ? patTau.leadPFCand()->mva_e_pi() : 1.;
 
-      tauTree.Fill();
+        // NEW quantities
+        tauTree.emFraction()              = patTau.emFraction();
+        tauTree.maximumHCALPFClusterEt()  = patTau.maximumHCALPFClusterEt();
+        tauTree.ecalStripSumEOverPLead()  = patTau.ecalStripSumEOverPLead();
+        tauTree.bremsRecoveryEOverPLead() = patTau.bremsRecoveryEOverPLead();
+        tauTree.hcalTotOverPLead()        = patTau.hcalTotOverPLead();
+        tauTree.hcalMaxOverPLead()        = patTau.hcalMaxOverPLead();
+        tauTree.hcal3x3OverPLead()        = patTau.hcal3x3OverPLead();
+
+        tauTree.etaetaMoment() = patTau.etaetaMoment();
+        tauTree.phiphiMoment() = patTau.phiphiMoment();
+        tauTree.etaphiMoment() = patTau.etaphiMoment();
+
+        // Vertex information
+        const reco::Candidate::Point& vertex = patTau.vertex();
+        tauTree.vx() = vertex.x();
+        tauTree.vy() = vertex.y();
+        tauTree.vz() = vertex.z();
+
+        for(size_t n = 0; n < patTau.signalPFChargedHadrCands().size(); ++n) {
+            tauTree.ChHadCand_Pt().push_back(patTau.signalPFChargedHadrCands()[n]->pt());
+            tauTree.ChHadCand_Eta().push_back(patTau.signalPFChargedHadrCands()[n]->eta());
+            tauTree.ChHadCand_Phi().push_back(patTau.signalPFChargedHadrCands()[n]->phi());
+        }
+
+        tauTree.Fill();
     }
 }
 

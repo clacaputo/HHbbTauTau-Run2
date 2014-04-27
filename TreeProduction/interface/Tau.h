@@ -60,7 +60,8 @@
     TAU_DISCRIMINATOR_DATA() \
     /**/
 
-#define TAU_DISCRIMINATOR_DATA() \
+// new TauID
+#define NEW_TAU_DISCRIMINATOR_DATA() \
     /* Discriminator by decay mode */ \
     SIMPLE_VAR(Float_t, decayModeFinding) \
     /* Discriminators agains electron */ \
@@ -117,7 +118,50 @@
     SIMPLE_VAR(Float_t, byTightIsolationMVA3newDMwLT) \
     SIMPLE_VAR(Float_t, byVTightIsolationMVA3newDMwLT) \
     SIMPLE_VAR(Float_t, byVVTightIsolationMVA3newDMwLT) \
+//    /**/
+
+// old TauID
+#define TAU_DISCRIMINATOR_DATA() \
+    /* Discriminator by decay mode */ \
+    SIMPLE_VAR(Float_t, decayModeFinding) \
+    /* Discriminators agains electron */ \
+    SIMPLE_VAR(Float_t, againstElectronLoose) \
+    SIMPLE_VAR(Float_t, againstElectronMedium) \
+    SIMPLE_VAR(Float_t, againstElectronTight) \
+    SIMPLE_VAR(Float_t, againstElectronMVA3raw) \
+    SIMPLE_VAR(Float_t, againstElectronMVA3category) \
+    SIMPLE_VAR(Float_t, againstElectronLooseMVA3) \
+    SIMPLE_VAR(Float_t, againstElectronMediumMVA3) \
+    SIMPLE_VAR(Float_t, againstElectronTightMVA3) \
+    SIMPLE_VAR(Float_t, againstElectronVTightMVA3) \
+    SIMPLE_VAR(Float_t, againstElectronDeadECAL) \
+    /* Discriminators agains muon */ \
+    SIMPLE_VAR(Float_t, againstMuonLoose) \
+    SIMPLE_VAR(Float_t, againstMuonMedium) \
+    SIMPLE_VAR(Float_t, againstMuonTight) \
+    SIMPLE_VAR(Float_t, againstMuonLoose2) \
+    SIMPLE_VAR(Float_t, againstMuonMedium2) \
+    SIMPLE_VAR(Float_t, againstMuonTight2) \
+    /* Discriminators for isolation */ \
+    SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw) \
+    SIMPLE_VAR(Float_t, byVLooseCombinedIsolationDeltaBetaCorr) \
+    SIMPLE_VAR(Float_t, byLooseCombinedIsolationDeltaBetaCorr) \
+    SIMPLE_VAR(Float_t, byMediumCombinedIsolationDeltaBetaCorr) \
+    SIMPLE_VAR(Float_t, byTightCombinedIsolationDeltaBetaCorr) \
+    SIMPLE_VAR(Float_t, byIsolationMVAraw) \
+    SIMPLE_VAR(Float_t, byLooseIsolationMVA) \
+    SIMPLE_VAR(Float_t, byMediumIsolationMVA) \
+    SIMPLE_VAR(Float_t, byTightIsolationMVA) \
+    SIMPLE_VAR(Float_t, byIsolationMVA2raw) \
+    SIMPLE_VAR(Float_t, byLooseIsolationMVA2) \
+    SIMPLE_VAR(Float_t, byMediumIsolationMVA2) \
+    SIMPLE_VAR(Float_t, byTightIsolationMVA2) \
+    SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits) \
+    SIMPLE_VAR(Float_t, byLooseCombinedIsolationDeltaBetaCorr3Hits) \
+    SIMPLE_VAR(Float_t, byMediumCombinedIsolationDeltaBetaCorr3Hits) \
+    SIMPLE_VAR(Float_t, byTightCombinedIsolationDeltaBetaCorr3Hits) \
     /**/
+
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
 #define VECTOR_VAR(type, name) DECLARE_VECTOR_BRANCH_VARIABLE(type, name)

@@ -2,6 +2,7 @@
 
 ## Import skeleton process.
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.options.wantSummary = False
 
 ## Drop input reco taus to ensure that the new tau collection will be used.
@@ -30,11 +31,14 @@ from HHbbTauTau.PatProduction.patMET import *
 applyMETParameters(process, options.isMC)
 applyMVAMETParamteres(process, options.isMC)
 
+from HHbbTauTau.PatProduction.patVertices import *
+applyVertexParameters(process)
+
 ## Remove MC matching from the default sequence
 if not options.isMC:
     removeMCMatching(process, ['All'])
-    #removeMCMatching(process, ['METs'], "TC")
-    removeMCMatching(process, ['METs'], "PF")
+#    removeMCMatching(process, ['METs'], "TC")
+#    removeMCMatching(process, ['METs'], "PF")
     process.patDefaultSequence.remove(process.patJetPartonMatch)
     #process.patDefaultSequence.remove(process.patJetPartonMatchAK5PF)
     #process.patDefaultSequence.remove(process.patJetGenJetMatchAK5PF)
@@ -61,8 +65,8 @@ process.p = cms.Path(
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
-#    process.patMETsType1Corrected *
-    process.patMETsMVA
+    process.patMETsMVA *
+    process.patVertices
 )
 
 ## Output selection.
@@ -73,6 +77,7 @@ process.out.outputCommands = [
     'keep patMETs_*_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
     'keep patTaus_patTaus_*_*',
+    'keep patVertexs_patVertices_*_*',
     'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
     'keep PileupSummaryInfos_*_*_*',
     'keep *_offlineBeamSpot_*_*',

@@ -142,3 +142,9 @@ PatProduction/python/patMET.py
 PatProduction/python/patJets.py
 PatProduction/python/mvaPFMET_leptons_cff.py
 PatProduction/python/mvaPFMET_leptons_cfi.py
+PatProduction/interface/PatVertex.h
+PatProduction/plugins/PatVertexProducer.cc
+PatProduction/python/patVertices.py
+PatProduction/src/classes.h
+PatProduction/src/classes_def.xml
+PatProduction/BuildFile.xml
