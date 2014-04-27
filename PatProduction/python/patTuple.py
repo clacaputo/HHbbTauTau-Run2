@@ -57,12 +57,12 @@ process.p = cms.Path(
     process.mvaNonTrigV0 *
     process.type0PFMEtCorrection *
     process.producePFMETCorrections *
-    process.patPFMETsTypeIcorrected *
+    process.pfMEtMVAsequence *
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
-    process.pfMEtMVAsequence *
-    process.patPFMetMVA
+#    process.patMETsType1Corrected *
+    process.patMETsMVA
 )
 
 ## Output selection.
@@ -70,8 +70,7 @@ process.out.outputCommands = [
     'drop *',
     'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
     'keep patJets_patJets_*_*',
-    'keep patMETs_patPFMETsTypeIcorrected_*_*',
-    'keep patMETs_patPFMetMVA_*_*',
+    'keep patMETs_*_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
     'keep patTaus_patTaus_*_*',
     'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
