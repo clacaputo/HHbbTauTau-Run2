@@ -150,3 +150,5 @@ PatProduction/src/classes_def.xml
 PatProduction/BuildFile.xml
 PatProduction/python/patTrigger.py
 PatProduction/python/treeProduction.py
+RunTools/runPatProducer.sh
+RunTools/submitPatProducer_Batch.sh
