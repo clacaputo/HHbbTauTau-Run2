@@ -93,6 +93,7 @@ process.mainTreeContentSequence = cms.Sequence(
   + process.muonBlock
   + process.tauBlock
   + process.triggerBlock
+  + process.triggerObjectBlock
 )
 
 process.simTreeContentSequence = cms.Sequence()
