@@ -17,7 +17,7 @@
     SIMPLE_VAR(Float_t, metuncorr) \
     SIMPLE_VAR(Float_t, metphiuncorr) \
     SIMPLE_VAR(Float_t, sumetuncorr) \
-    VECTOR_VAR(Float_t, significanceMatrixMet) \
+    VECTOR_VAR(Float_t, significanceMatrix) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
