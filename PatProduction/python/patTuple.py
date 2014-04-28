@@ -95,4 +95,10 @@ if options.includeSim:
     process.out.outputCommands.extend(['keep recoGenParticles_genParticles_*_*'])
     process.out.outputCommands.extend(['keep *_genMetTrue_*_*'])
 
+from HHbbTauTau.PatProduction.treeProduction import *
+process.treeSequence = cms.Path(
+  process.mainTreeContentSequence +
+  process.simTreeContentSequence
+)
+
 #print process.dumpPython()

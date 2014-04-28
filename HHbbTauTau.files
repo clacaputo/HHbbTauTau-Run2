@@ -149,3 +149,4 @@ PatProduction/src/classes.h
 PatProduction/src/classes_def.xml
 PatProduction/BuildFile.xml
 PatProduction/python/patTrigger.py
+PatProduction/python/treeProduction.py
