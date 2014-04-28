@@ -25,13 +25,13 @@ eval $( scramv1 runtime -sh )
 echo "$NAME $( date )" >> $OUTPUT_PATH/job_cmsRun_start.log
 
 if [ $PREFIX = "none" ] ; then
-    nohup cmsRun PatProduction/python/patTuple.py globalTag=$GLOBAL_TAG isMC=$IS_MC includeSim=$INCLUDE_SIM \
+    cmsRun PatProduction/python/patTuple.py globalTag=$GLOBAL_TAG isMC=$IS_MC includeSim=$INCLUDE_SIM \
            fileList=$FILE_LIST_PATH/${NAME}.txt maxEvents=$N_EVENTS outputFile=$OUTPUT_PATH/${NAME}_Pat.root \
            treeOutput=$OUTPUT_PATH/${NAME}_Tree.root \
            > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
     RESULT=$?
 else
-    nohup cmsRun PatProduction/python/patTuple.py globalTag=$GLOBAL_TAG isMC=$IS_MC includeSim=$INCLUDE_SIM \
+    cmsRun PatProduction/python/patTuple.py globalTag=$GLOBAL_TAG isMC=$IS_MC includeSim=$INCLUDE_SIM \
            fileList=$FILE_LIST_PATH/${NAME}.txt maxEvents=$N_EVENTS outputFile=$OUTPUT_PATH/${NAME}_Pat.root \
            treeOutput=$OUTPUT_PATH/${NAME}_Tree.root \
            fileNamePrefix=$PREFIX > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
