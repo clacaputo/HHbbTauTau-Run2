@@ -34,6 +34,9 @@ applyMVAMETParamteres(process, options.isMC)
 from HHbbTauTau.PatProduction.patVertices import *
 applyVertexParameters(process)
 
+from HHbbTauTau.PatProduction.patTrigger import *
+applyTriggerParameters(process)
+
 ## Remove MC matching from the default sequence
 if not options.isMC:
     removeMCMatching(process, ['All'])
@@ -84,7 +87,8 @@ process.out.outputCommands = [
     'keep *_TriggerResults_*_HLT',
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
     'keep GenFilterInfo_*_*_*',
-    'keep *TriggerEvent_*_*_*'
+    'keep *_patTrigger_*_*',
+    'keep patTriggerEvent_*_*_*'
                              ]
 
 if options.includeSim:

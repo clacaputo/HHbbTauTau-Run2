@@ -148,3 +148,4 @@ PatProduction/python/patVertices.py
 PatProduction/src/classes.h
 PatProduction/src/classes_def.xml
 PatProduction/BuildFile.xml
+PatProduction/python/patTrigger.py
