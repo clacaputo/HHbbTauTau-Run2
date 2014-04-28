@@ -96,9 +96,6 @@ if options.includeSim:
     process.out.outputCommands.extend(['keep *_genMetTrue_*_*'])
 
 from HHbbTauTau.PatProduction.treeProduction import *
-process.treeSequence = cms.Path(
-  process.mainTreeContentSequence +
-  process.simTreeContentSequence
-)
+runTree(process, options.includeSim, options.treeOutput)
 
 #print process.dumpPython()

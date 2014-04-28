@@ -17,9 +17,11 @@ def parseAndApplyOptions(process) :
     options.register ('fileList', 'fileList.txt', VarParsing.multiplicity.singleton,
                       VarParsing.varType.string, "List of root files to process.")
     options.register ('fileNamePrefix', '', VarParsing.multiplicity.singleton,
-                       VarParsing.varType.string, "Prefix to add to input file names.")
+                      VarParsing.varType.string, "Prefix to add to input file names.")
     options.register ('includeSim', False, VarParsing.multiplicity.singleton,
                       VarParsing.varType.bool, "Include Sim information.")
+    options.register ('treeOutput', 'Tree.root', VarParsing.multiplicity.singleton,
+                      VarParsing.varType.string, "Tree root file.")
 
     if len(sys.argv) > 0:
         last = sys.argv.pop()
