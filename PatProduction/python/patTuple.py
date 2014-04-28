@@ -37,6 +37,9 @@ applyVertexParameters(process)
 from HHbbTauTau.PatProduction.patTrigger import *
 applyTriggerParameters(process)
 
+from HHbbTauTau.PatProduction.treeProduction import *
+addTreeSequence(process, options.includeSim, options.treeOutput)
+
 ## Remove MC matching from the default sequence
 if not options.isMC:
     removeMCMatching(process, ['All'])
@@ -69,7 +72,9 @@ process.p = cms.Path(
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
     process.patMETsMVA *
-    process.patVertices
+    process.patVertices *
+    process.mainTreeContentSequence *
+    process.simTreeContentSequence
 )
 
 ## Output selection.
@@ -94,8 +99,5 @@ process.out.outputCommands = [
 if options.includeSim:
     process.out.outputCommands.extend(['keep recoGenParticles_genParticles_*_*'])
     process.out.outputCommands.extend(['keep *_genMetTrue_*_*'])
-
-from HHbbTauTau.PatProduction.treeProduction import *
-runTree(process, options.includeSim, options.treeOutput)
 
 #print process.dumpPython()

@@ -2,7 +2,7 @@
 
 import FWCore.ParameterSet.Config as cms
 
-def runTree(process, includeSim, treeOutput):
+def addTreeSequence(process, includeSim, treeOutput):
     #-------------
     # Output ROOT file
     #-------------
@@ -27,10 +27,5 @@ def runTree(process, includeSim, treeOutput):
     process.simTreeContentSequence = cms.Sequence()
     if includeSim:
         process.simTreeContentSequence = cms.Sequence(process.genParticleBlock)
-
-    process.p = cms.Path(
-      process.mainTreeContentSequence +
-      process.simTreeContentSequence
-    )
 
     return
