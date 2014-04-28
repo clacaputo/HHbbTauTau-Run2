@@ -84,7 +84,7 @@ process.out.outputCommands = [
     'keep *_TriggerResults_*_HLT',
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
     'keep GenFilterInfo_*_*_*',
-    'keep patTriggerEvent_*_*_*'
+    'keep *TriggerEvent_*_*_*'
                              ]
 
 if options.includeSim:
