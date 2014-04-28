@@ -152,3 +152,4 @@ PatProduction/python/patTrigger.py
 PatProduction/python/treeProduction.py
 RunTools/runPatProducer.sh
 RunTools/submitPatProducer_Batch.sh
+PrintTools/source/Print_SyncPlots.C
