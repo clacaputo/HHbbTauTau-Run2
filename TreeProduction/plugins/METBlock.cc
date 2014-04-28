@@ -69,7 +69,11 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             METTree.metuncorr() = MET.uncorrectedPt(pat::MET::uncorrALL);
             METTree.metphiuncorr() = MET.uncorrectedPhi(pat::MET::uncorrALL);
             METTree.sumetuncorr() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
-
+            TMatrixD significanceMET = MET.getSignificanceMatrix();
+            METTree.significanceMatrixMet().push_back(significanceMET[0][0]);
+            METTree.significanceMatrixMet().push_back(significanceMET[0][1]);
+            METTree.significanceMatrixMet().push_back(significanceMET[1][0]);
+            METTree.significanceMatrixMet().push_back(significanceMET[1][1]);
             METTree.Fill();
         }
     }
