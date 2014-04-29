@@ -10,7 +10,8 @@
 
 #include "DataFormats/PatCandidates/interface/PATObject.h"
 
-inline std::vector<std::string> CollectMatchedTriggerPaths(const pat::PATObject& patObject)
+template<typename PatObject>
+std::vector<std::string> CollectMatchedTriggerPaths(const PatObject& patObject)
 {
     const pat::TriggerObjectStandAloneCollection& matchedTriggers = patObject.triggerObjectMatches();
     std::set<std::string> pathNames;
