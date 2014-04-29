@@ -1,15 +1,16 @@
 #!/bin/bash
 
-if [ $# -ne 5 ] ; then
-    echo "Usage: dataset_name output_path global_tag include_sim prefix"
+if [ $# -ne 6 ] ; then
+    echo "Usage: dataset_name output_path global_tag is_mc include_sim prefix"
     exit
 fi
 
 DATASET=$1
 OUTPUT_PATH=$2
 GLOBAL_TAG=$3
-INCLUDE_SIM=$4
-PREFIX=$5
+IS_MC=$4
+INCLUDE_SIM=$5
+PREFIX=$6
 
 if [ ! -d "$OUTPUT_PATH" ] ; then
     echo "ERROR: output path '$OUTPUT_PATH' does not exist."
@@ -18,7 +19,8 @@ fi
 OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
 
 
-FILE_LIST_PATH="TreeProduction/dataset/${DATASET}_Pat"
+#FILE_LIST_PATH="TreeProduction/dataset/${DATASET}_Pat"
+FILE_LIST_PATH="PatProduction/dataset/${DATASET}_AOD"
 if [ ! -d $FILE_LIST_PATH ] ; then
     echo "ERROR: file list path '$FILE_LIST_PATH' does not exists."
     exit
@@ -31,11 +33,11 @@ fi
 N_JOBS=$( echo "$JOBS" | wc -l )
 echo "Total number of jobs: $N_JOBS"
 
-NEW_FILE_LIST_PATH="TreeProduction/dataset/retry/${DATASET}"
+NEW_FILE_LIST_PATH="PatProduction/dataset/retry/${DATASET}"
 n=1
 while [ -d $NEW_FILE_LIST_PATH ] ; do
     n=$(($n + 1))
-    NEW_FILE_LIST_PATH="TreeProduction/dataset/retry/${DATASET}_${n}"
+    NEW_FILE_LIST_PATH="PatProduction/dataset/retry/${DATASET}_${n}"
 done
 
 FILE_JOB_RESULT="$OUTPUT_PATH/job_result.log"
@@ -74,4 +76,5 @@ echo "Resubmit number $n"
 mkdir -p $NEW_FILE_LIST_PATH
 echo "$JOBS_TO_RESUBMIT" | xargs -n 1 printf "$FILE_LIST_PATH/%b.txt $NEW_FILE_LIST_PATH/\n" | xargs -n 2 cp
 
-RunTools/submitTreeProducer_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $PREFIX
+#RunTools/submitTreeProducer_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $PREFIX
+RunTools/submitPatProducer_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $IS_MC $INCLUDE_SIM $PREFIX
