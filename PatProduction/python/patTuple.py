@@ -68,6 +68,9 @@ process.p = cms.Path(
     process.type0PFMEtCorrection *
     process.producePFMETCorrections *
     process.pfMEtMVAsequence *
+    process.patMuonsTriggerMatch *
+    process.patElectronsTriggerMatch *
+    process.patTausTriggerMatch *
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
