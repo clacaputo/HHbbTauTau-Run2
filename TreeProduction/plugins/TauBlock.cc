@@ -29,6 +29,7 @@
 
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Tau.h"
+#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
 #define SIMPLE_VAR(type, name) tauTree.name() = patTau.tauID(#name);
 
@@ -130,6 +131,8 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             tauTree.ChHadCand_Eta().push_back(patTau.signalPFChargedHadrCands()[n]->eta());
             tauTree.ChHadCand_Phi().push_back(patTau.signalPFChargedHadrCands()[n]->phi());
         }
+
+        tauTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patTau);
 
         tauTree.Fill();
     }

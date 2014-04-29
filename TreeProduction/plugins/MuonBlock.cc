@@ -24,6 +24,7 @@
 #define SMART_TREE_FOR_CMSSW
 
 #include "HHbbTauTau/TreeProduction/interface/Muon.h"
+#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
 class MuonBlock : public edm::EDAnalyzer {
 public:
@@ -214,6 +215,8 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       muonTree.pfRelIso04v2() = patMuon.userFloat("PFRelIso04v2");
       muonTree.pfRelIsoDB04v1() = patMuon.userFloat("PFRelIsoDB04v1");
       muonTree.pfRelIsoDB04v2() = patMuon.userFloat("PFRelIsoDB04v2");
+
+      muonTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patMuon);
 
       muonTree.Fill();
     }

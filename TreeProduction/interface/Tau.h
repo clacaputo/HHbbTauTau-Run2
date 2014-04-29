@@ -56,6 +56,8 @@
     SIMPLE_VAR(Float_t, vx) \
     SIMPLE_VAR(Float_t, vy) \
     SIMPLE_VAR(Float_t, vz) \
+    /* Trigger match information */ \
+    VECTOR_VAR(std::string, matchedTriggerPaths) \
     /* tau discriminators */ \
     TAU_DISCRIMINATOR_DATA() \
     /**/

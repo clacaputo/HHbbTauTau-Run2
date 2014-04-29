@@ -79,6 +79,8 @@
     SIMPLE_VAR(Float_t, pfRelIso04v2) \
     SIMPLE_VAR(Float_t, pfRelIsoDB04v1) \
     SIMPLE_VAR(Float_t, pfRelIsoDB04v2) \
+    /* Trigger match information */ \
+    VECTOR_VAR(std::string, matchedTriggerPaths)
     /**/
 
 

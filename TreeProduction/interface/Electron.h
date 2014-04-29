@@ -103,6 +103,8 @@
     SIMPLE_VAR(Float_t, pfRelIsoDB03) \
     SIMPLE_VAR(Float_t, pfRelIsoDB04) \
     SIMPLE_VAR(UInt_t, fidFlag) \
+    /* Trigger match information */ \
+    VECTOR_VAR(std::string, matchedTriggerPaths)
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

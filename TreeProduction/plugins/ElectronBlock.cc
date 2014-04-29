@@ -27,6 +27,7 @@
 #define SMART_TREE_FOR_CMSSW
 
 #include "HHbbTauTau/TreeProduction/interface/Electron.h"
+#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
 class ElectronBlock : public edm::EDAnalyzer {
 public:
@@ -233,6 +234,8 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       electronTree.pfRelIso04() = patElectron.userFloat("PFRelIso04");
       electronTree.pfRelIsoDB03() = patElectron.userFloat("PFRelIsoDB03");
       electronTree.pfRelIsoDB04() = patElectron.userFloat("PFRelIsoDB04");
+
+      electronTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patElectron);
 
       electronTree.Fill();
     }
