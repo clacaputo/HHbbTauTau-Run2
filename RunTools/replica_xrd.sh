@@ -16,7 +16,11 @@ fi
 
 SERVER="root://xrootd.ba.infn.it/"
 
-if [ ! -d $FILE_LIST_PATH ] ; then
+if [ -d $FILE_LIST_PATH ] ; then
+    JOB_FILES=$( find $FILE_LIST_PATH -maxdepth 1 -name "*.txt" )
+elif [ -f $FILE_LIST_PATH ] ; then
+    JOB_FILES=$FILE_LIST_PATH
+else
     echo "ERROR: file list path '$FILE_LIST_PATH' does not exists."
     exit
 fi
@@ -26,7 +30,6 @@ if [ ! -d "$OUTPUT_PATH" ] ; then
     exit
 fi
 
-JOB_FILES=$( find $FILE_LIST_PATH -maxdepth 1 -name "*.txt" )
 N_JOB_FILES=$( echo "$JOB_FILES" | wc -l )
 if [ $N_JOB_FILES -eq 0 ] ; then
     echo "ERROR: no job files found in '$FILE_LIST_PATH'"
@@ -43,6 +46,11 @@ for JOB_FILE in $JOB_FILES ; do
         exit
     fi
     for FILE in $FILES_TO_TRANSFER ; do
+        FILE_NAME=$( basename $FILE )
+        if [ -f $OUTPUT_PATH/$FILE_NAME ] ; then
+            echo "File '$FILE' is already exists. Skipping it."
+            continue
+        fi
         echo "Starting transfering file '$FILE'..."
         while [ 1 ] ; do
             xrdcp -force "${SERVER}${FILE}" $OUTPUT_PATH
@@ -60,3 +68,5 @@ for JOB_FILE in $JOB_FILES ; do
         fi
     done
 done
+
+echo "Output path size: " $( du -s $OUTPUT_PATH )
