@@ -21,6 +21,8 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Provenance/interface/EventID.h"
 
+#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
+
 #define SMART_TREE_FOR_CMSSW
 
 #include "HHbbTauTau/TreeProduction/interface/Muon.h"
@@ -29,7 +31,6 @@
 class MuonBlock : public edm::EDAnalyzer {
 public:
     explicit MuonBlock(const edm::ParameterSet& iConfig) :
-        _verbosity(iConfig.getParameter<int>("verbosity")),
         _muonInputTag(iConfig.getParameter<edm::InputTag>("muonSrc")),
         _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")),
         _beamSpotInputTag(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")),
@@ -41,7 +42,6 @@ private:
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:
-    int _verbosity;
     edm::InputTag _muonInputTag;
     edm::InputTag _vtxInputTag;
     edm::InputTag _beamSpotInputTag;
@@ -173,17 +173,6 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       muonTree.dB3d()  = patMuon.dB(pat::Muon::PV3D);
       muonTree.edB3d() = patMuon.edB(pat::Muon::PV3D);
 
-      //Iso Info
-      //      const reco::MuonPFIsolation pfIsolationR03() ;
-      //      std::cout<<" pfiso  "<<patMuon.pfIsolationR03().sumChargedHadronPt()<<std::endl;
-      const reco::MuonPFIsolation& pfIsolationR03() ;
-      //std::cout<<" sumChHad "<<patMuon.pfIsolationR03().sumChargedHadronPt<<std::endl;
-      //std::cout<<" sumChPart "<<patMuon.pfIsolationR03().sumChargedParticlePt<<std::endl;
-      //std::cout<<" sumNeHad "<<patMuon.pfIsolationR03().sumNeutralHadronEt<<std::endl;
-      //std::cout<<" sumPU "<<patMuon.pfIsolationR03().sumPUPt<<std::endl;
-
-
-
       // UW recommendation
       muonTree.isGlobalMuonPromptTight() = muon::isGoodMuon(patMuon, muon::GlobalMuonPromptTight);
       muonTree.isAllArbitrated()         = muon::isGoodMuon(patMuon, muon::AllArbitrated);
@@ -220,8 +209,6 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       muonTree.Fill();
     }
-
 }
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_FWK_MODULE(MuonBlock);
-

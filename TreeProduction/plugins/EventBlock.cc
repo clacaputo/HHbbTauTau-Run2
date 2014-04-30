@@ -15,6 +15,8 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
+#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
+
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Event.h"
 
@@ -89,14 +91,13 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
     }
 
     // Good Primary Vertex Part
-    edm::Handle<reco::VertexCollection> primaryVertices;
+    edm::Handle<pat::VertexCollection> primaryVertices;
     iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
     eventTree.isPrimaryVertex() = false;
     if (primaryVertices.isValid()) {
         edm::LogInfo("EventBlock") << "Total # Primary Vertices: " << primaryVertices->size();
-        for (reco::VertexCollection::const_iterator it = primaryVertices->begin();
-                it != primaryVertices->end(); ++it) {
+        for (auto it = primaryVertices->begin(); it != primaryVertices->end(); ++it) {
             if (!(it->isFake()) && it->ndof() > _vtxMinNDOF &&
                     fabs(it->z()) <= _vtxMaxAbsZ && fabs(it->position().rho()) <= _vtxMaxd0
                ) {

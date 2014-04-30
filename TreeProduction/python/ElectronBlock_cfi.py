@@ -4,6 +4,6 @@ electronBlock = cms.EDAnalyzer("ElectronBlock",
   verbosity       = cms.int32(0),
   offlineBeamSpot = cms.InputTag('offlineBeamSpot'),
   trackSrc        = cms.InputTag('generalTracks'),
-  vertexSrc       = cms.InputTag('offlinePrimaryVerticesWithBS'),
+  vertexSrc       = cms.InputTag('patVertices'),
   electronSrc     = cms.InputTag('patElectronsWithEmbeddedVariables')
 )

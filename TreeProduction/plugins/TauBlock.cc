@@ -36,20 +36,14 @@
 class TauBlock : public edm::EDAnalyzer {
 public:
     explicit TauBlock(const edm::ParameterSet& iConfig) :
-        _verbosity(iConfig.getParameter<int>("verbosity")),
-        _inputTag(iConfig.getParameter<edm::InputTag>("patTauSrc")),
-        _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("patTauSrc")) {}
 
 private:
     virtual void endJob() { tauTree.Write(); }
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:
-    int _verbosity;
     edm::InputTag _inputTag;
-    edm::InputTag _vtxInputTag;
-
-    const TransientTrackBuilder* trackBuilder_;
     ntuple::TauTree tauTree;
 };
 
@@ -58,9 +52,6 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     tauTree.RunId() = iEvent.id().run();
     tauTree.LumiBlock() = iEvent.id().luminosityBlock();
     tauTree.EventId() = iEvent.id().event();
-
-    edm::Handle<reco::VertexCollection> primaryVertices;
-    iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
     edm::Handle<pat::TauCollection> tausHandle;
     iEvent.getByLabel(_inputTag, tausHandle);
@@ -133,7 +124,6 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
 
         tauTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patTau);
-		//std::cout << "matched trigger paths size = " << tauTree.matchedTriggerPaths().size() << std::endl;
         tauTree.Fill();
     }
 }

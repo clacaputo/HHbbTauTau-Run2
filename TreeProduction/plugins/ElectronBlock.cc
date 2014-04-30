@@ -24,6 +24,8 @@
 #include "DataFormats/Provenance/interface/EventID.h"
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
+#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
+
 #define SMART_TREE_FOR_CMSSW
 
 #include "HHbbTauTau/TreeProduction/interface/Electron.h"
@@ -60,7 +62,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle<reco::BeamSpot> beamSpot;
     iEvent.getByLabel(_bsInputTag, beamSpot);
 
-    edm::Handle<reco::VertexCollection> primaryVertices;
+    edm::Handle<pat::VertexCollection> primaryVertices;
     iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
     edm::Handle<std::vector<pat::Electron> > electrons;
@@ -146,8 +148,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if (hasGsfTrack) {
         if (primaryVertices.isValid()) {
       edm::LogInfo("ElectronBlock") << "Total # Primary Vertices: " << primaryVertices->size();
-          for (reco::VertexCollection::const_iterator vit  = primaryVertices->begin();
-                                                      vit != primaryVertices->end(); ++vit) {
+          for (auto vit  = primaryVertices->begin(); vit != primaryVertices->end(); ++vit) {
             double dxy = tk->dxy(vit->position());
             double dz  = tk->dz(vit->position());
             double dist3D = std::sqrt(pow(dxy, 2) + pow(dz, 2));

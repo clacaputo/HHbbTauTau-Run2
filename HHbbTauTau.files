@@ -120,14 +120,10 @@ TreeProduction/python/GenParticleBlock_cfi.py
 TreeProduction/python/JetBlock_cfi.py
 TreeProduction/python/METBlock_cfi.py
 TreeProduction/python/MuonBlock_cfi.py
-TreeProduction/python/SwitchToData.py
-TreeProduction/python/SwitchToDataV2.py
 TreeProduction/python/TauBlock_cfi.py
 TreeProduction/python/TrackBlock_cfi.py
 TreeProduction/python/TreeContentConfig_cff.py
-TreeProduction/python/TreeContentConfig_data_cff.py
 TreeProduction/python/TriggerBlock_cfi.py
-TreeProduction/python/TriggerMatchProducer_cfi.py
 TreeProduction/python/TriggerObjectBlock_cfi.py
 TreeProduction/python/VertexBlock_cfi.py
 TreeProduction/python/treeProducer.py

@@ -36,23 +36,14 @@ pat::strbitset retpf = pfjetIDLoose.getBitTemplate();
 class JetBlock : public edm::EDAnalyzer {
 public:
     explicit JetBlock(const edm::ParameterSet& iConfig) :
-        _verbosity(iConfig.getParameter<int>("verbosity")),
-        _inputTag(iConfig.getParameter<edm::InputTag>("jetSrc")),
-        _jecUncPath(iConfig.getParameter<std::string>("jecUncertainty")),
-        _applyResJEC (iConfig.getParameter<bool>     ("applyResidualJEC")),
-        _resJEC (iConfig.getParameter<std::string>   ("residualJEC")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("jetSrc")) {}
 
 private:
     virtual void endJob() { jetTree.Write(); }
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:
-    int _verbosity;
     edm::InputTag _inputTag;
-    std::string _jecUncPath;
-    bool _applyResJEC;
-    std::string _resJEC;
-
     ntuple::JetTree jetTree;
 };
 
@@ -62,22 +53,8 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     jetTree.LumiBlock() = iEvent.id().luminosityBlock();
     jetTree.EventId() = iEvent.id().event();
 
-    std::shared_ptr<JetCorrectionUncertainty> jecUnc;
-    std::shared_ptr<JetCorrectorParameters> ResJetCorPar;
-    std::shared_ptr<FactorizedJetCorrector> JEC;
-    if (_applyResJEC) {
-        edm::FileInPath fipUnc(_jecUncPath);
-        jecUnc = std::shared_ptr<JetCorrectionUncertainty>(new JetCorrectionUncertainty(fipUnc.fullPath()));
-
-        edm::FileInPath fipRes(_resJEC);
-        ResJetCorPar = std::shared_ptr<JetCorrectorParameters>(new JetCorrectorParameters(fipRes.fullPath()));
-        std::vector<JetCorrectorParameters> vParam;
-        vParam.push_back(*ResJetCorPar);
-        JEC = std::shared_ptr<FactorizedJetCorrector>(new FactorizedJetCorrector(vParam));
-    }
     edm::Handle<edm::View<pat::Jet> > jets;
     iEvent.getByLabel(_inputTag, jets);
-
     if (!jets.isValid()) {
         edm::LogError("JetBlock") << "Error >> Failed to get pat::Jet collection for label: "
                                   << _inputTag;
@@ -95,32 +72,17 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       retpf.set(false);
       jetTree.passTightID() = pfjetIDTight(jet, retpf);
 
-      double corr = 1.;
-      if (_applyResJEC && iEvent.isRealData() ) {
-        JEC->setJetEta(jet.eta());
-        JEC->setJetPt(jet.pt()); // here you put the L2L3 Corrected jet pt
-        corr = JEC->getCorrection();
-      }
-
-      if (jecUnc) {
-        jecUnc->setJetEta(jet.eta());
-        jecUnc->setJetPt(jet.pt()*corr); // the uncertainty is a function of the corrected pt
-      }
-
       // fill in all the vectors
       jetTree.eta()        = jet.eta();
       jetTree.phi()        = jet.phi();
-      jetTree.pt()         = jet.pt()*corr;
+      jetTree.pt()         = jet.pt();
       jetTree.pt_raw()     = jet.correctedJet("Uncorrected").pt();
-      jetTree.energy()     = jet.energy()*corr;
+      jetTree.energy()     = jet.energy();
       jetTree.energy_raw() = jet.correctedJet("Uncorrected").energy();
-      jetTree.jecUnc()     = (jecUnc) ? jecUnc->getUncertainty(true) : -1;
-      jetTree.resJEC()     = corr;
       jetTree.partonFlavour() = jet.partonFlavour();
 
       // Jet identification in high pile-up environment
-      float mvaValue = jet.userFloat("pileupJetIdProducer:fullDiscriminant");
-      jetTree.puIdMVA() = mvaValue;
+      jetTree.puIdMVA() = jet.userFloat("pileupJetIdProducer:fullDiscriminant");
       jetTree.puIdBits() = jet.userInt("pileupJetIdProducer:fullId"); // Bits: 0:Tight,1:Medium,2:Loose
 
       jetTree.chargedEmEnergyFraction()     = jet.chargedEmEnergyFraction();

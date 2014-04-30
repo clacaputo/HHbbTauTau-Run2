@@ -19,8 +19,6 @@
     SIMPLE_VAR(Float_t, energy) \
     SIMPLE_VAR(Float_t, energy_raw) \
     /* Jet energy correction */ \
-    SIMPLE_VAR(Float_t, jecUnc) \
-    SIMPLE_VAR(Float_t, resJEC) \
     SIMPLE_VAR(Int_t, partonFlavour) \
     /* Jet identification in high PU environment */ \
     SIMPLE_VAR(Float_t, puIdMVA) \
