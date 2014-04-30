@@ -152,3 +152,17 @@ PrintTools/source/Print_SyncPlots.C
 TreeProduction/interface/TriggerTools.h
 PatProduction/plugins/SkimFilter.cc
 PatProduction/python/skimFilter.py
+SVfit_standalone/bin/BuildFile.xml
+SVfit_standalone/bin/testSVfitStandalone.cc
+SVfit_standalone/interface/LikelihoodFunctions.h
+SVfit_standalone/interface/SVfitStandaloneAlgorithm.h
+SVfit_standalone/interface/svFitStandaloneAuxFunctions.h
+SVfit_standalone/interface/SVfitStandaloneLikelihood.h
+SVfit_standalone/interface/SVfitStandaloneMarkovChainIntegrator.h
+SVfit_standalone/src/LikelihoodFunctions.cc
+SVfit_standalone/src/SVfitStandaloneAlgorithm.cc
+SVfit_standalone/src/svFitStandaloneAuxFunctions.cc
+SVfit_standalone/src/SVfitStandaloneLikelihood.cc
+SVfit_standalone/src/SVfitStandaloneMarkovChainIntegrator.cc
+SVfit_standalone/BuildFile.xml
+SVfit_standalone/README.md
