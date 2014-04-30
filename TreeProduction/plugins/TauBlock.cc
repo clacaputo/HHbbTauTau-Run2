@@ -117,10 +117,43 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         tauTree.vy() = vertex.y();
         tauTree.vz() = vertex.z();
 
+        // Charged Hadrons Candidates
         for(size_t n = 0; n < patTau.signalPFChargedHadrCands().size(); ++n) {
-            tauTree.ChHadCand_Pt().push_back(patTau.signalPFChargedHadrCands()[n]->pt());
-            tauTree.ChHadCand_Eta().push_back(patTau.signalPFChargedHadrCands()[n]->eta());
-            tauTree.ChHadCand_Phi().push_back(patTau.signalPFChargedHadrCands()[n]->phi());
+            tauTree.signalChHadCand_Pt().push_back(patTau.signalPFChargedHadrCands()[n]->pt());
+            tauTree.signalChHadCand_Eta().push_back(patTau.signalPFChargedHadrCands()[n]->eta());
+            tauTree.signalChHadCand_Phi().push_back(patTau.signalPFChargedHadrCands()[n]->phi());
+        }
+
+        for(size_t n = 0; n < patTau.isolationPFChargedHadrCands().size(); ++n) {
+            tauTree.isoChHadCand_Pt().push_back(patTau.isolationPFChargedHadrCands()[n]->pt());
+            tauTree.isoChHadCand_Eta().push_back(patTau.isolationPFChargedHadrCands()[n]->eta());
+            tauTree.isoChHadCand_Phi().push_back(patTau.isolationPFChargedHadrCands()[n]->phi());
+        }
+
+        // Neutral Hadrons Candidates
+        for(size_t n = 0; n < patTau.signalPFNeutrHadrCands().size(); ++n) {
+            tauTree.signalNeutrHadCand_Pt().push_back(patTau.signalPFNeutrHadrCands()[n]->pt());
+            tauTree.signalNeutrHadCand_Eta().push_back(patTau.signalPFNeutrHadrCands()[n]->eta());
+            tauTree.signalNeutrHadCand_Phi().push_back(patTau.signalPFNeutrHadrCands()[n]->phi());
+        }
+
+        for(size_t n = 0; n < patTau.isolationPFNeutrHadrCands().size(); ++n) {
+            tauTree.isoNeutrHadCand_Pt().push_back(patTau.isolationPFNeutrHadrCands()[n]->pt());
+            tauTree.isoNeutrHadCand_Eta().push_back(patTau.isolationPFNeutrHadrCands()[n]->eta());
+            tauTree.isoNeutrHadCand_Phi().push_back(patTau.isolationPFNeutrHadrCands()[n]->phi());
+        }
+
+        // Gamma Candidates
+        for(size_t n = 0; n < patTau.signalPFGammaCands().size(); ++n) {
+            tauTree.signalGammaCand_Pt().push_back(patTau.signalPFGammaCands()[n]->pt());
+            tauTree.signalGammaCand_Eta().push_back(patTau.signalPFGammaCands()[n]->eta());
+            tauTree.signalGammaCand_Phi().push_back(patTau.signalPFGammaCands()[n]->phi());
+        }
+
+        for(size_t n = 0; n < patTau.isolationPFGammaCands().size(); ++n) {
+            tauTree.isoGammaCand_Pt().push_back(patTau.isolationPFGammaCands()[n]->pt());
+            tauTree.isoGammaCand_Eta().push_back(patTau.isolationPFGammaCands()[n]->eta());
+            tauTree.isoGammaCand_Phi().push_back(patTau.isolationPFGammaCands()[n]->phi());
         }
 
         tauTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patTau);
