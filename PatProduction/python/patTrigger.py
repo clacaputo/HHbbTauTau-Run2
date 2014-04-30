@@ -82,5 +82,6 @@ def applyTriggerParameters(process):
                   'patTausTriggerMatch',
           ])
 
+    removeCleaningFromTriggerMatching(process)
 
     return
