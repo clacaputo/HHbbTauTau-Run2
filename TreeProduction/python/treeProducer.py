@@ -98,7 +98,7 @@ process.mainTreeContentSequence = cms.Sequence(
 
 process.simTreeContentSequence = cms.Sequence()
 if options.includeSim:
-    process.simTreeContentSequence = cms.Sequence(process.genParticleBlock)
+    process.simTreeContentSequence = cms.Sequence(process.genParticleBlock + process.genMETBlock)
 
 
 process.p = cms.Path(

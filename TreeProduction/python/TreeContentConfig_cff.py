@@ -9,17 +9,7 @@ from HHbbTauTau.TreeProduction.MuonBlock_cfi import muonBlock
 from HHbbTauTau.TreeProduction.TauBlock_cfi import tauBlock
 from HHbbTauTau.TreeProduction.GenParticleBlock_cfi import genParticleBlock
 from HHbbTauTau.TreeProduction.GenJetBlock_cfi import genJetBlock
+from HHbbTauTau.TreeProduction.GenMETBlock_cfi import genMETBlock
 from HHbbTauTau.TreeProduction.TriggerBlock_cfi import triggerBlock
 from HHbbTauTau.TreeProduction.TriggerObjectBlock_cfi import triggerObjectBlock
 
-treeContentSequence = cms.Sequence(
-    eventBlock
-  + vertexBlock
-  + electronBlock
-  + genParticleBlock
-  + jetBlock
-  + metBlock
-  + muonBlock
-  + tauBlock
-  + triggerBlock
-)
