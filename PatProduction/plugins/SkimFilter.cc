@@ -13,11 +13,13 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
+#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 
 class SkimFilter : public edm::EDFilter {
 public:
     explicit SkimFilter(const edm::ParameterSet& iConfig)
-        : muonTag(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc")),
+        : vertexTag(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc")),
+          muonTag(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc")),
           electronTag(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc")),
           tauTag(iConfig.getUntrackedParameter<edm::InputTag>("tauSrc")) {}
 
@@ -25,6 +27,7 @@ private:
     virtual bool filter(edm::Event&, const edm::EventSetup&);
 
 private:
+    edm::InputTag vertexTag;
     edm::InputTag muonTag;
     edm::InputTag electronTag;
     edm::InputTag tauTag;
@@ -32,6 +35,10 @@ private:
 
 bool SkimFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+    edm::Handle<pat::VertexCollection> hVertices;
+    iEvent.getByLabel(vertexTag, hVertices);
+    const pat::TauCollection& vertices = *hVertices.product();
+
     edm::Handle<pat::MuonCollection> hMuons;
     iEvent.getByLabel(muonTag, hMuons);
     const pat::MuonCollection& muons = *hMuons.product();
@@ -44,7 +51,16 @@ bool SkimFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByLabel(tauTag, hTaus);
     const pat::TauCollection& taus = *hTaus.product();
 
+    bool haveGoodVertex = false;
     unsigned nGoodTaus = 0;
+
+    for (const pat::Vertex& vertex : vertices){
+        if(!vertex.isFake() && vertex.ndof() > 4 && std::abs(vertex.z()) <= 24 && vertex.position().rho() <= 2){
+            haveGoodVertex = true;
+            break;
+        }
+    }
+    if (!haveGoodVertex) return false;
 
     for(const pat::Tau& tau : taus) {
         if(tau.pt() > 15.0 && std::abs(tau.eta()) < 2.3  && tau.decayMode() > 0.5)

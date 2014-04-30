@@ -37,6 +37,9 @@ applyVertexParameters(process)
 from HHbbTauTau.PatProduction.patTrigger import *
 applyTriggerParameters(process)
 
+from HHbbTauTau.PatProduction.skimFilter import *
+applySkim(process)
+
 from HHbbTauTau.PatProduction.treeProduction import *
 addTreeSequence(process, options.includeSim, options.treeOutput)
 
@@ -73,6 +76,7 @@ process.p = cms.Path(
     process.patElectronsWithEmbeddedVariables *
     process.patMETsMVA *
     process.patVertices *
+    process.bbttSkim *
     process.mainTreeContentSequence *
     process.simTreeContentSequence
 )

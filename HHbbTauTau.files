@@ -155,3 +155,4 @@ RunTools/submitPatProducer_Batch.sh
 PrintTools/source/Print_SyncPlots.C
 TreeProduction/interface/TriggerTools.h
 PatProduction/plugins/SkimFilter.cc
+PatProduction/python/skimFilter.py
