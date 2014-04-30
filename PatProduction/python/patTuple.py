@@ -88,7 +88,7 @@ process.out.outputCommands = [
     'keep patJets_patJets_*_*',
     'keep patMETs_*_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
-    'keep patTaus_patTausTriggerMatch_*_*',
+    'keep patTaus_*_*_*',
     'keep patVertexs_patVertices_*_*',
     'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
     'keep PileupSummaryInfos_*_*_*',
