@@ -59,7 +59,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<std::vector<pat::Muon> > muons;
   iEvent.getByLabel(_muonInputTag, muons);
 
-  edm::Handle<reco::VertexCollection> primaryVertices;
+  edm::Handle<pat::VertexCollection> primaryVertices;
   iEvent.getByLabel(_vtxInputTag, primaryVertices);
 
   edm::Handle<reco::BeamSpot> beamSpot;
@@ -119,8 +119,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       if (primaryVertices.isValid()) {
 	edm::LogInfo("MuonBlock") << "Total # Primary Vertices: " << primaryVertices->size();
 
-        for (reco::VertexCollection::const_iterator vit  = primaryVertices->begin(); 
-                                                    vit != primaryVertices->end(); ++vit) {
+        for (auto vit  = primaryVertices->begin(); vit != primaryVertices->end(); ++vit) {
           double dxy = tk->dxy(vit->position());
           double dz  = tk->dz(vit->position());
           double dist3D = std::sqrt(pow(dxy,2) + pow(dz,2));
