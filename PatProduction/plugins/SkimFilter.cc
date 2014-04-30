@@ -37,7 +37,7 @@ bool SkimFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     edm::Handle<pat::VertexCollection> hVertices;
     iEvent.getByLabel(vertexTag, hVertices);
-    const pat::TauCollection& vertices = *hVertices.product();
+    const pat::VertexCollection& vertices = *hVertices.product();
 
     edm::Handle<pat::MuonCollection> hMuons;
     iEvent.getByLabel(muonTag, hMuons);
@@ -70,7 +70,7 @@ bool SkimFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
     if(!nGoodTaus) return false;
 
     for(const pat::Electron& electron : electrons) {
-        if(electron.pt() > 15.0 && std::abs(electron->eta()) < 2.5) return true;
+        if(electron.pt() > 15.0 && std::abs(electron.eta()) < 2.5) return true;
     }
 
     for(const pat::Muon& muon : muons) {
