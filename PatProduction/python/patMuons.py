@@ -28,7 +28,7 @@ def applyMuonParameters(process):
     process.patMuons.embedTrack = cms.bool(True)
 
     process.patMuonsWithEmbeddedVariables = cms.EDProducer('MuonsUserEmbedded',
-        muonTag = cms.InputTag("patMuons"),
+        muonTag = cms.InputTag("patMuonsTriggerMatch"),
         vertexTag = cms.InputTag("offlinePrimaryVerticesWithBS")
         )
 

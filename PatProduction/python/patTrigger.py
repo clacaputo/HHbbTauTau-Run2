@@ -10,7 +10,7 @@ def applyTriggerParameters(process):
 
     ## PAT trigger matching
     ## muons
-    process.patMuonsTriggerMatch = cms.EDProducer(
+    process.patMuonsHLTMatch = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -30,7 +30,7 @@ def applyTriggerParameters(process):
       )
 
     ## electrons
-    process.patElectronsTriggerMatch = cms.EDProducer(
+    process.patElectronsHLTMatch = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -50,7 +50,7 @@ def applyTriggerParameters(process):
     )
 
     ## taus
-    process.patTausTriggerMatch = cms.EDProducer(
+    process.patTausHLTMatch = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -76,12 +76,10 @@ def applyTriggerParameters(process):
         , resolveByMatchQuality = cms.bool( True )
       )
 
-    switchOnTriggerMatchEmbedding(process, [
-                  'patMuonsTriggerMatch',
-                  'patElectronsTriggerMatch',
-                  'patTausTriggerMatch',
+    switchOnTriggerMatchEmbedding(process, triggerMatchers = [
+                  'patMuonsHLTMatch',
+                  'patElectronsHLTMatch',
+                  'patTausHLTMatch',
           ])
-
-    removeCleaningFromTriggerMatching(process)
 
     return

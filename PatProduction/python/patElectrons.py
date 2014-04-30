@@ -31,7 +31,7 @@ def applyElectronParameters(process, isMC):
         )
 
     process.patElectronsWithEmbeddedVariables = cms.EDProducer('ElectronsUserEmbedder',
-        electronTag = cms.InputTag("patElectrons"),
+        electronTag = cms.InputTag("patElectronsTriggerMatch"),
         vertexTag = cms.InputTag("offlinePrimaryVerticesWithBS"),
         isMC = cms.bool(isMC),
         doMVAPOG = cms.bool(True),
