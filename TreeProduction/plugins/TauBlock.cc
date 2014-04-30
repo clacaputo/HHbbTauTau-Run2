@@ -133,7 +133,7 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
 
         tauTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patTau);
-
+		//std::cout << "matched trigger paths size = " << tauTree.matchedTriggerPaths().size() << std::endl;
         tauTree.Fill();
     }
 }

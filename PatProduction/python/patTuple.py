@@ -68,9 +68,6 @@ process.p = cms.Path(
     process.type0PFMEtCorrection *
     process.producePFMETCorrections *
     process.pfMEtMVAsequence *
-    process.patMuonsTriggerMatch *
-    process.patElectronsTriggerMatch *
-    process.patTausTriggerMatch *
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
@@ -87,7 +84,7 @@ process.out.outputCommands = [
     'keep patJets_patJets_*_*',
     'keep patMETs_*_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
-    'keep patTaus_patTaus_*_*',
+    'keep patTaus_patTausTriggerMatch_*_*',
     'keep patVertexs_patVertices_*_*',
     'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
     'keep PileupSummaryInfos_*_*_*',
