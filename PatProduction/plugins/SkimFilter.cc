@@ -55,7 +55,7 @@ bool SkimFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
     unsigned nGoodTaus = 0;
 
     for (const pat::Vertex& vertex : vertices){
-        if(!vertex.isFake() && vertex.ndof() > 4 && std::abs(vertex.z()) <= 24 && vertex.position().rho() <= 2){
+        if(vertex.ndof() >= 4 && std::abs(vertex.z()) < 24 && vertex.position().rho() < 2){
             haveGoodVertex = true;
             break;
         }
