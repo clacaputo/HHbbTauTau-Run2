@@ -34,9 +34,26 @@
     SIMPLE_VAR(Float_t, ptSumPFChargedHadronsIsoCone) \
     SIMPLE_VAR(Float_t, etSumPhotonsIsoCone) \
     /* Charged hadron candidates */ \
-    VECTOR_VAR(Float_t, ChHadCand_Pt) \
-    VECTOR_VAR(Float_t, ChHadCand_Eta) \
-    VECTOR_VAR(Float_t, ChHadCand_Phi) \
+    VECTOR_VAR(Float_t, signalChHadCand_Pt) \
+    VECTOR_VAR(Float_t, signalChHadCand_Eta) \
+    VECTOR_VAR(Float_t, signalChHadCand_Phi) \
+    VECTOR_VAR(Float_t, isoChHadCand_Pt) \
+    VECTOR_VAR(Float_t, isoChHadCand_Eta) \
+    VECTOR_VAR(Float_t, isoChHadCand_Phi) \
+    /* Neutral hadron candidates */ \
+    VECTOR_VAR(Float_t, signalNeutrHadCand_Pt) \
+    VECTOR_VAR(Float_t, signalNeutrHadCand_Eta) \
+    VECTOR_VAR(Float_t, signalNeutrHadCand_Phi) \
+    VECTOR_VAR(Float_t, isoNeutrHadCand_Pt) \
+    VECTOR_VAR(Float_t, isoNeutrHadCand_Eta) \
+    VECTOR_VAR(Float_t, isoNeutrHadCand_Phi) \
+    /* Gamma candidates */ \
+    VECTOR_VAR(Float_t, signalGammaCand_Pt) \
+    VECTOR_VAR(Float_t, signalGammaCand_Eta) \
+    VECTOR_VAR(Float_t, signalGammaCand_Phi) \
+    VECTOR_VAR(Float_t, isoGammaCand_Pt) \
+    VECTOR_VAR(Float_t, isoGammaCand_Eta) \
+    VECTOR_VAR(Float_t, isoGammaCand_Phi) \
    /* MVA */ \
     SIMPLE_VAR(Float_t, leadPFCand_mva_e_pi) \
     /* PFTau specific variables DataFormats/PatCandidates/interface/TauPFSpecific.h */ \
