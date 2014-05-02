@@ -528,6 +528,8 @@ protected:
             }
             GetAnaData().Mass("Final_H_tautau").Fill(resonance.daughters.at(0)->momentum.M(),weight);
             GetAnaData().Mass("Final_H_bb").Fill(resonance.daughters.at(1)->momentum.M(),weight);
+            const Candidate corrected_h_tautua = CorrectMassBySVfit(*resonance.daughters.at(0), event.metMVA());
+            GetAnaData().Mass("Final_H_tautau_corr").Fill(corrected_h_tautua.momentum.M(), weight);
         }
     }
 

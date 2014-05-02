@@ -59,4 +59,17 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
     return correctedCandidate;
 }
 
+template<typename Histogram>
+CandidateVector CorrectMassBySVfit(const CandidateVector& higgsCandidates, const ntuple::MET& met, Histogram& hist,
+                                   double weight = 1.0)
+{
+    CandidateVector result;
+    for(const auto& candidate : higgsCandidates) {
+        const Candidate& correctedCandidate = CorrectMassBySVfit(candidate, met);
+        hist.Fill(correctedCandidate.momentum.M(), weight);
+        result.push_back(correctedCandidate);
+    }
+    return result;
+}
+
 } // analysis
