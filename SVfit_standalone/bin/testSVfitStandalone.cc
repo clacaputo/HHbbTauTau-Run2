@@ -18,7 +18,7 @@ void singleEvent()
      This is a single event for testing in the integration mode.
   */
   // define MET
-  Vector MET(11.7491, -51.9172, 0.); 
+  svFitStandalone::Vector MET(11.7491, -51.9172, 0.); 
   // define MET covariance
   TMatrixD covMET(2, 2);
   covMET[0][0] = 787.352;
