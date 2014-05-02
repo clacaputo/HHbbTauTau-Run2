@@ -70,11 +70,7 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             METTree.pt_uncorrected() = MET.uncorrectedPt(pat::MET::uncorrALL);
             METTree.phi_uncorrected() = MET.uncorrectedPhi(pat::MET::uncorrALL);
             METTree.sumEt_uncorrected() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
-            const TMatrixD& significanceMET = MET.getSignificanceMatrix();
-            METTree.significanceMatrix().push_back(significanceMET[0][0]);
-            METTree.significanceMatrix().push_back(significanceMET[0][1]);
-            METTree.significanceMatrix().push_back(significanceMET[1][0]);
-            METTree.significanceMatrix().push_back(significanceMET[1][1]);
+            METTree.significanceMatrix() = ntuple::SignificanceMatrixToVector(MET.getSignificanceMatrix());
             METTree.Fill();
         }
     }
