@@ -15,6 +15,8 @@ enum { kUniform, kGaus, kNone };
 
 #define SVFIT_DEBUG 1
 
+using namespace svFitStandalone;
+
 namespace {
 
   template <typename T>
