@@ -1,4 +1,5 @@
 #include "HHbbTauTau/SVfit_standalone/interface/SVfitStandaloneMarkovChainIntegrator.h"
+#include "HHbbTauTau/SVfit_standalone/interface/svFitStandaloneAuxFunctions.h"
 
 #include <TMath.h>
 
@@ -14,12 +15,7 @@ enum { kUniform, kGaus, kNone };
 
 #define SVFIT_DEBUG 1
 
-namespace
-{
-  double square(double x)
-  {
-    return x*x;
-  }
+namespace {
 
   template <typename T>
   std::string format_vT(const std::vector<T>& vT)

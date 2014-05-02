@@ -166,3 +166,4 @@ SVfit_standalone/src/SVfitStandaloneLikelihood.cc
 SVfit_standalone/src/SVfitStandaloneMarkovChainIntegrator.cc
 SVfit_standalone/BuildFile.xml
 SVfit_standalone/README.md
+Analysis/include/SVfit.h

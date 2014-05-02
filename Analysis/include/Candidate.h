@@ -90,7 +90,7 @@ public:
     Vertex() : index(0), sumPtSquared(0), ndf(0) {}
 
     template <typename NtupleObject>
-    Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPtSquared(ntupleObject.sumPtSquare),
+    Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPtSquared(ntupleObject.sumPtSquared),
         ndf(ntupleObject.ndf)
     {
        position = TVector3(ntupleObject.x,ntupleObject.y,ntupleObject.z);
