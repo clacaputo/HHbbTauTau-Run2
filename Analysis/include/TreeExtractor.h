@@ -38,7 +38,7 @@ typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::GenMETTree> > Forest;
 
 template<typename Tree>
-inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile, std::string& treeName ,bool extractMCtruth)
+inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile, const std::string& treeName ,bool extractMCtruth)
 {
     tree = Tree::IsMCtruth() && !extractMCtruth ? std::shared_ptr<Tree>()
                                                 : std::shared_ptr<Tree>( new Tree(inputFile, treeName) );
@@ -46,14 +46,14 @@ inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile, std::strin
 
 template<size_t N = 0>
 inline typename std::enable_if< N == std::tuple_size<Forest>::value >::type
-CreateForest(Forest& forest, TFile& inputFile, std::vector<std::string>& treeNames, bool extractMCtruth) {}
+CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth) {}
 
 template<size_t N = 0>
 inline typename std::enable_if< (N < std::tuple_size<Forest>::value) >::type
-CreateForest(Forest& forest, TFile& inputFile, std::vector<std::string>& treeNames, bool extractMCtruth)
+CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth)
 {
     CreateTree(std::get<N>(forest), inputFile, treeNames.at(N), extractMCtruth);
-    CreateForest<N + 1>(forest, inputFile, treeNames, extractMCtruth);
+    CreateForest<N + 1>(forest, inputFile, extractMCtruth);
 }
 
 template<typename Tree, typename ObjectType>
