@@ -63,12 +63,13 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
         edm::LogInfo("METBlock") << "Total # METs: " << mets->size();
         for (const pat::MET& MET : *mets) {
-            METTree.met()   = MET.pt();
-            METTree.metphi() = MET.phi();
-            METTree.sumet()  = MET.sumEt();
-            METTree.metuncorr() = MET.uncorrectedPt(pat::MET::uncorrALL);
-            METTree.metphiuncorr() = MET.uncorrectedPhi(pat::MET::uncorrALL);
-            METTree.sumetuncorr() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
+            METTree.pt() = MET.pt();
+            METTree.phi() = MET.phi();
+            METTree.eta() = MET.eta();
+            METTree.sumEt()  = MET.sumEt();
+            METTree.pt_uncorrected() = MET.uncorrectedPt(pat::MET::uncorrALL);
+            METTree.phi_uncorrected() = MET.uncorrectedPhi(pat::MET::uncorrALL);
+            METTree.sumEt_uncorrected() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
             const TMatrixD& significanceMET = MET.getSignificanceMatrix();
             METTree.significanceMatrix().push_back(significanceMET[0][0]);
             METTree.significanceMatrix().push_back(significanceMET[0][1]);

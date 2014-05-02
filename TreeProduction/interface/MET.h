@@ -11,12 +11,13 @@
 #include "SmartTree.h"
 
 #define MET_DATA() \
-    SIMPLE_VAR(Float_t, met) \
-    SIMPLE_VAR(Float_t, metphi) \
-    SIMPLE_VAR(Float_t, sumet) \
-    SIMPLE_VAR(Float_t, metuncorr) \
-    SIMPLE_VAR(Float_t, metphiuncorr) \
-    SIMPLE_VAR(Float_t, sumetuncorr) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, eta) \
+    SIMPLE_VAR(Float_t, sumEt) \
+    SIMPLE_VAR(Float_t, pt_uncorrected) \
+    SIMPLE_VAR(Float_t, phi_uncorrected) \
+    SIMPLE_VAR(Float_t, sumEt_uncorrected) \
     VECTOR_VAR(Float_t, significanceMatrix) \
     /**/
 

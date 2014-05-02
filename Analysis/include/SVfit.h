@@ -13,3 +13,20 @@
 #include "HHbbTauTau/SVfit_standalone/src/svFitStandaloneAuxFunctions.cc"
 #include "HHbbTauTau/SVfit_standalone/src/SVfitStandaloneLikelihood.cc"
 #include "HHbbTauTau/SVfit_standalone/src/SVfitStandaloneMarkovChainIntegrator.cc"
+
+#include "Candidate.h"
+#include "HHbbTauTau/TreeProduction/interface/MET.h"
+
+namespace analysis {
+    Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met)
+    {
+        if(higgsCandidate.type != Candidate::Higgs)
+            throw std::runtime_error("Invalid candidate type for SVfit");
+        Candidate correctedCandidate(higgsCandidate);
+//        const TLorentzVector& momentum = higgsCandidate.momentum;
+//        met.
+//        svFitStandalone::Vector met_direction()
+//        correctedCandidate.momentum.SetPtEtaPhiM();
+        return correctedCandidate;
+    }
+}
