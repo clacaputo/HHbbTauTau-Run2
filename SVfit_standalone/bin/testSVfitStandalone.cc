@@ -7,7 +7,7 @@
    from a flat n-tuple or single event.
 */
 
-#include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
+#include "HHbbTauTau/SVfit_standalone/interface/SVfitStandaloneAlgorithm.h"
 
 #include "TTree.h"
 #include "TFile.h"
