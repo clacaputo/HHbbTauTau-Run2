@@ -11,10 +11,6 @@
 #include <TH1.h>
 #include <TBenchmark.h>
 
-using svFitStandalone::Vector;
-using svFitStandalone::LorentzVector;
-using svFitStandalone::MeasuredTauLepton;
-
 /**
    \class   ObjectFunctionAdapter SVfitStandaloneAlgorithm.h "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
    
@@ -196,7 +192,7 @@ namespace svFitStandalone
     mutable double x_mapped_[6];
     int nDim_;
   };
-}
+} // namespace svFitStandalone
 
 /**
    \class   SVfitStandaloneAlgorithm SVfitStandaloneAlgorithm.h "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
@@ -263,7 +259,7 @@ class SVfitStandaloneAlgorithm
 {
  public:
   /// constructor from a minimal set of configurables
-  SVfitStandaloneAlgorithm(const std::vector<MeasuredTauLepton>& measuredTauLeptons, const Vector& measuredMET, const TMatrixD& covMET, unsigned int verbose = 0);
+  SVfitStandaloneAlgorithm(const std::vector<svFitStandalone::MeasuredTauLepton>& measuredTauLeptons, const svFitStandalone::Vector& measuredMET, const TMatrixD& covMET, unsigned int verbose = 0);
   /// destructor
   ~SVfitStandaloneAlgorithm();
 
@@ -292,19 +288,19 @@ class SVfitStandaloneAlgorithm
       4: Reached maximum number of function calls before reaching convergence
       5: Any other failure
   */
-  int fitStatus() { return fitStatus_; };
+  int fitStatus() { return fitStatus_; }
   /// return whether this is a valid solution or not
-  bool isValidSolution() { return (nllStatus_ == 0 && fitStatus_ <= 0); };
+  bool isValidSolution() { return (nllStatus_ == 0 && fitStatus_ <= 0); }
   /// return whether this is a valid solution or not
-  bool isValidFit() { return fitStatus_ == 0; };
+  bool isValidFit() { return fitStatus_ == 0; }
   /// return whether this is a valid solution or not
-  bool isValidNLL() { return nllStatus_ == 0; };
+  bool isValidNLL() { return nllStatus_ == 0; }
   /// return mass of the di-tau system 
-  double mass() const { return mass_; };
+  double mass() const { return mass_; }
   /// return uncertainty on the mass of the fitted di-tau system
-  double massUncert() const { return massUncert_; };
+  double massUncert() const { return massUncert_; }
   /// return mass of the di-tau system (kept for legacy)
-  double getMass() const {return mass();};
+  double getMass() const {return mass();}
 
   /// return pt, eta, phi values and their uncertainties
   /*
@@ -325,17 +321,17 @@ class SVfitStandaloneAlgorithm
   /// return phi uncertainty of the di-tau system
   double phiUncert() const { return phiUncert_; }
   /// return 4-vectors of the fitted tau leptons
-  std::vector<LorentzVector> fittedTauLeptons() const { return fittedTauLeptons_; }
+  std::vector<svFitStandalone::LorentzVector> fittedTauLeptons() const { return fittedTauLeptons_; }
   /// return 4-vectors of measured tau leptons
-  std::vector<LorentzVector> measuredTauLeptons() const; 
+  std::vector<svFitStandalone::LorentzVector> measuredTauLeptons() const;
   /// return 4-vector of the fitted di-tau system
-  LorentzVector fittedDiTauSystem() const { return fittedDiTauSystem_; }
+  svFitStandalone::LorentzVector fittedDiTauSystem() const { return fittedDiTauSystem_; }
   /// return 4-vector of the measured di-tau system
-  LorentzVector measuredDiTauSystem() const { return measuredTauLeptons()[0] + measuredTauLeptons()[1]; }
+  svFitStandalone::LorentzVector measuredDiTauSystem() const { return measuredTauLeptons()[0] + measuredTauLeptons()[1]; }
   /// return spacial vector of the fitted MET
-  Vector fittedMET() const { return (fittedDiTauSystem().Vect() - measuredDiTauSystem().Vect()); }
+  svFitStandalone::Vector fittedMET() const { return (fittedDiTauSystem().Vect() - measuredDiTauSystem().Vect()); }
   // return spacial vector of the measured MET
-  Vector measuredMET() const { return nll_->measuredMET(); }
+  svFitStandalone::Vector measuredMET() const { return nll_->measuredMET(); }
 
  protected:
   /// setup the starting values for the minimization (default values for the fit parameters are taken from src/SVFitParameters.cc in the same package)

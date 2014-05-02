@@ -3,7 +3,7 @@
 #include "HHbbTauTau/SVfit_standalone/interface/svFitStandaloneAuxFunctions.h"
 #include "HHbbTauTau/SVfit_standalone/interface/LikelihoodFunctions.h"
 
-using namespace svFitStandalone;
+namespace svFitStandalone {
 
 /// global function pointer for minuit or VEGAS
 const SVfitStandaloneLikelihood* SVfitStandaloneLikelihood::gSVfitStandaloneLikelihood = 0;
@@ -389,3 +389,5 @@ SVfitStandaloneLikelihood::results(std::vector<LorentzVector>& fittedTauLeptons,
   }
   return;
 }
+
+} // namespace svFitStandalone

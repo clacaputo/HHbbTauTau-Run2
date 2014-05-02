@@ -6,8 +6,6 @@
 
 #include <iostream>
 
-using namespace svFitStandalone;
-
 double 
 probMET(double dMETX, double dMETY, double covDet, const TMatrixD& covInv, double power, bool verbose)
 {
@@ -48,12 +46,12 @@ probTauToLepMatrixElement(double decayAngle, double nunuMass, double visMass, do
   // protect against rounding errors that may lead to negative masses
   if ( nunuMass < 0. ) nunuMass = 0.; 
   double prob = 0.;
-  if ( nunuMass < TMath::Sqrt((1. - x)*tauLeptonMass2) ) { // LB: physical solution
-    prob = (13./tauLeptonMass4)*(tauLeptonMass2 - nuMass2)*(tauLeptonMass2 + 2.*nuMass2)*nunuMass;
+  if ( nunuMass < TMath::Sqrt((1. - x)*svFitStandalone::tauLeptonMass2) ) { // LB: physical solution
+    prob = (13./svFitStandalone::tauLeptonMass4)*(svFitStandalone::tauLeptonMass2 - nuMass2)*(svFitStandalone::tauLeptonMass2 + 2.*nuMass2)*nunuMass;
   } else {    
-    double nuMass_limit  = TMath::Sqrt((1. - x)*tauLeptonMass2);
+    double nuMass_limit  = TMath::Sqrt((1. - x)*svFitStandalone::tauLeptonMass2);
     double nuMass2_limit = nuMass_limit*nuMass_limit;
-    prob = (13./tauLeptonMass4)*(tauLeptonMass2 - nuMass2_limit)*(tauLeptonMass2 + 2.*nuMass2_limit)*nuMass_limit;
+    prob = (13./svFitStandalone::tauLeptonMass4)*(svFitStandalone::tauLeptonMass2 - nuMass2_limit)*(svFitStandalone::tauLeptonMass2 + 2.*nuMass2_limit)*nuMass_limit;
     prob /= (1. + 1.e+6*TMath::Power(nunuMass - nuMass_limit, 2));
   }
   if ( applySinTheta ) prob *= (0.5*TMath::Sin(decayAngle));
@@ -76,9 +74,9 @@ probTauToHadPhaseSpace(double decayAngle, double nunuMass, double visMass, doubl
   }
   double Pvis_rf = svFitStandalone::pVisRestFrame(visMass, nunuMass, svFitStandalone::tauLeptonMass);
   double visMass2 = visMass*visMass;
-  double prob = tauLeptonMass/(2.*Pvis_rf);
-  if ( x < (visMass2/tauLeptonMass2) ) {
-    double x_limit = visMass2/tauLeptonMass2;
+  double prob = svFitStandalone::tauLeptonMass/(2.*Pvis_rf);
+  if ( x < (visMass2/svFitStandalone::tauLeptonMass2) ) {
+    double x_limit = visMass2/svFitStandalone::tauLeptonMass2;
     prob /= (1. + 1.e+6*TMath::Power(x - x_limit, 2));
   } else if ( x > 1. ) {
     double visEnFracX_limit = 1.;

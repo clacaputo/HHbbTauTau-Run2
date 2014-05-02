@@ -15,8 +15,6 @@ enum { kUniform, kGaus, kNone };
 
 #define SVFIT_DEBUG 1
 
-using namespace svFitStandalone;
-
 namespace {
 
   template <typename T>
@@ -96,7 +94,7 @@ SVfitStandaloneMarkovChainIntegrator::SVfitStandaloneMarkovChainIntegrator(const
 	      << " value within interval ]0..1[ expected --> ABORTING !!\n";
     assert(0);
   }
-  alpha2_ = square(alpha_);
+  alpha2_ = svFitStandalone::square(alpha_);
   
 //--- get parameter specifying how many Markov Chains are run in parallel
   numChains_ = numChains;
@@ -358,7 +356,7 @@ void SVfitStandaloneMarkovChainIntegrator::integrate(const std::vector<double>& 
 
   integralErr = 0.;
   for ( unsigned i = 0; i < k; ++i ) {
-    integralErr += square(integral_[i] - integral);
+    integralErr += svFitStandalone::square(integral_[i] - integral);
   }
   if ( k >= 2 ) integralErr /= (k*(k - 1));
   integralErr = TMath::Sqrt(integralErr);
@@ -389,7 +387,7 @@ void SVfitStandaloneMarkovChainIntegrator::print(std::ostream& stream) const
     double integralErr = 0.;
     for ( unsigned iBatch = 0; iBatch < numBatches_; ++iBatch ) { 
       double integral_i = integral_[iChain*numBatches_ + iBatch];
-      integralErr += square(integral_i - integral);
+      integralErr += svFitStandalone::square(integral_i - integral);
     }
     if ( numBatches_ >= 2 ) integralErr /= (numBatches_*(numBatches_ - 1));
     integralErr = TMath::Sqrt(integralErr);
