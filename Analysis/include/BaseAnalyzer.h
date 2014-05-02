@@ -530,8 +530,18 @@ protected:
 //            GetAnaData().Mass("Final_H_bb").Fill(resonance.daughters.at(1)->momentum.M(),weight);
 //            const Candidate corrected_h_tautua = CorrectMassBySVfit(*resonance.daughters.at(0), event.metMVA());
 //            GetAnaData().Mass("Final_H_tautau_corr").Fill(corrected_h_tautua.momentum.M(), weight);
-            GetAnaData().Mass("Final_H_tautau").Fill(resonance.momentum.M(),weight);
-            const Candidate corrected_h_tautua = CorrectMassBySVfit(resonance, event.metMVA());
+            GetAnaData().Mass("Final_H_tautau").Fill(resonance.momentum.M(), weight);
+            genEvent.Initialize(event.genParticles());
+            const auto higgsesMC = genEvent.GetParticles( { particles::Higgs } );
+            //std::cerr << "N higgses" << higgsesMC.size() << std::endl;
+            if(higgsesMC.size() != 1) {
+
+                throw std::runtime_error("More then 1 MC higgs per event!");
+            }
+            const ntuple::MET correctedMET = ApplyPostRecoilCorrection(event.metMVA(), resonance.momentum,
+                                                                       (*higgsesMC.begin())->momentum);
+            //const Candidate corrected_h_tautua = CorrectMassBySVfit(resonance, event.metMVA());
+            const Candidate corrected_h_tautua = CorrectMassBySVfit(resonance, correctedMET);
             GetAnaData().Mass("Final_H_tautau_corr").Fill(corrected_h_tautua.momentum.M(), weight);
         }
     }
