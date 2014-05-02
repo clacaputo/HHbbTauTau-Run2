@@ -1,6 +1,6 @@
-#include "TauAnalysis/SVfitStandalone/interface/LikelihoodFunctions.h"
+#include "HHbbTauTau/SVfit_standalone/interface/LikelihoodFunctions.h"
 
-#include "TauAnalysis/SVfitStandalone/interface/svFitStandaloneAuxFunctions.h"
+#include "HHbbTauTau/SVfit_standalone/interface/svFitStandaloneAuxFunctions.h"
 
 #include <TMath.h>
 

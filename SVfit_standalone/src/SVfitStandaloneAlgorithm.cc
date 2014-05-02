@@ -1,4 +1,4 @@
-#include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
+#include "HHbbTauTau/SVfit_standalone/interface/SVfitStandaloneAlgorithm.h"
 
 #include "Math/Factory.h"
 #include "Math/Functor.h"
