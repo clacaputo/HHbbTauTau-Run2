@@ -35,7 +35,7 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
         svFitStandalone::LorentzVector lepton(daughter->momentum.Px(), daughter->momentum.Py(),
                                               daughter->momentum.Pz(), daughter->momentum.E());
         svFitStandalone::kDecayType decayType;
-        if (daughter->type == (Candidate::Electron || Candidate::Mu))
+        if (daughter->type == Candidate::Electron || daughter->type == Candidate::Mu)
             decayType = svFitStandalone::kLepDecay;
         else if (daughter->type == Candidate::Tau)
             decayType = svFitStandalone::kHadDecay;

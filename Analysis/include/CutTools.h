@@ -153,6 +153,8 @@ public:
 
     virtual void WriteRootObject()
     {
+        if(!selections.size())
+            return;
         std::unique_ptr<TH1D> selection_histogram(
                     new TH1D(Name().c_str(), Name().c_str(),selections.size(),-0.5,-0.5+selections.size()));
         for (unsigned n = 0; n < selections.size(); ++n){
