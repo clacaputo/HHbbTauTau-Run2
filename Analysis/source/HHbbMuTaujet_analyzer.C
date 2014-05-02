@@ -82,20 +82,22 @@ protected:
                                                           analysis::Candidate::Higgs, "H_mu_tau", 0);
         cut(Higgses_mu_tau.size(), "H_mu_tau");
 
-        const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
-        cut(b_jets.size() >= 2, ">=2b_loose");
+//        analysis::CorrectMassBySVfit(Higgses_mu_tau, event.metMVA(), anaData.Mass("H_mu_tau_corr"), weight);
 
-        const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
-                                                     analysis::Candidate::Higgs, "H_bb", Candidate::UnknownCharge());
-        cut(Higgses_bb.size(), "H_bb");
+//        const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
+//        cut(b_jets.size() >= 2, ">=2b_loose");
 
-        const auto Resonances =
-                FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, cuts::minDeltaR_betweenHiggses,
-                                      analysis::Candidate::Resonance, "resonance", Candidate::UnknownCharge());
-        cut(Resonances.size(), "resonance");
+//        const auto Higgses_bb =FindCompatibleObjects(b_jets, cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,
+//                                                     analysis::Candidate::Higgs, "H_bb", Candidate::UnknownCharge());
+//        cut(Higgses_bb.size(), "H_bb");
+
+//        const auto Resonances =
+//                FindCompatibleObjects(Higgses_mu_tau, Higgses_bb, cuts::minDeltaR_betweenHiggses,
+//                                      analysis::Candidate::Resonance, "resonance", Candidate::UnknownCharge());
+//        cut(Resonances.size(), "resonance");
 
         //OBJECT VETO
-        const auto finalSelectionResonances = ApplyVetos(Resonances, cut);
+        const auto finalSelectionResonances = ApplyVetos(Higgses_mu_tau, cut);
 
         HistogramAfterFinalSelection(finalSelectionResonances);
     }
