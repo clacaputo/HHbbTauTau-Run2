@@ -9,9 +9,11 @@
 #include <limits>
 #include <assert.h>
 
+namespace svFitStandalone {
 enum { kMetropolis };
 
 enum { kUniform, kGaus, kNone };
+}
 
 #define SVFIT_DEBUG 1
 
@@ -55,11 +57,11 @@ SVfitStandaloneMarkovChainIntegrator::SVfitStandaloneMarkovChainIntegrator(const
     numMovesTotal_accepted_(0),
     numMovesTotal_rejected_(0)
 {
-  moveMode_ = kMetropolis;
+  moveMode_ = svFitStandalone::kMetropolis;
 
-  if      ( initMode == "uniform" ) initMode_ = kUniform;
-  else if ( initMode == "Gaus"    ) initMode_ = kGaus;
-  else if ( initMode == "none"    ) initMode_ = kNone;
+  if      ( initMode == "uniform" ) initMode_ = svFitStandalone::kUniform;
+  else if ( initMode == "Gaus"    ) initMode_ = svFitStandalone::kGaus;
+  else if ( initMode == "none"    ) initMode_ = svFitStandalone::kNone;
   else {
     std::cerr << "<SVfitStandaloneMarkovChainIntegrator>:"
 	      << "Invalid Configuration Parameter 'initMode' = " << initMode << ","
@@ -243,7 +245,7 @@ void SVfitStandaloneMarkovChainIntegrator::integrate(const std::vector<double>& 
 
   for ( unsigned iChain = 0; iChain < numChains_; ++iChain ) {
     bool isValidStartPos = false;
-    if ( initMode_ == kNone ) {
+    if ( initMode_ == svFitStandalone::kNone ) {
       prob_ = evalProb(q_);
       if ( prob_ > 0. ) {
 	bool isWithinBounds = true;
@@ -432,7 +434,7 @@ void SVfitStandaloneMarkovChainIntegrator::initializeStartPosition_and_Momentum(
     bool isInitialized = false;
     while ( !isInitialized ) {
       double q0 = 0.;
-      if ( initMode_ == kGaus ) q0 = rnd_.Gaus(0.5, 0.5);
+      if ( initMode_ == svFitStandalone::kGaus ) q0 = rnd_.Gaus(0.5, 0.5);
       else q0 = rnd_.Uniform(0., 1.);
       if ( q0 > 0. && q0 < 1. ) {
 	q_[iDimension] = q0;
@@ -527,7 +529,7 @@ void SVfitStandaloneMarkovChainIntegrator::makeStochasticMove(unsigned idxMove, 
 #ifdef SVFIT_DEBUG 
   if ( verbose_ >= 2 ) std::cout << "epsilon = " << format_vdouble(epsilon) << std::endl;
 #endif
-  if        ( moveMode_ == kMetropolis ) { // Metropolis algorithm: move according to eq. (27) in [2]
+  if        ( moveMode_ == svFitStandalone::kMetropolis ) { // Metropolis algorithm: move according to eq. (27) in [2]
 //--- update position components
 //    by single step of chosen size in direction of the momentum components
     for ( unsigned iDimension = 0; iDimension < numDimensions_; ++iDimension ) {    
@@ -560,7 +562,7 @@ void SVfitStandaloneMarkovChainIntegrator::makeStochasticMove(unsigned idxMove, 
   else assert(0);
 
   double pAccept = 0.;
-  if        ( moveMode_ == kMetropolis ) { // Metropolis algorithm: move according to eq. (13) in [2]
+  if        ( moveMode_ == svFitStandalone::kMetropolis ) { // Metropolis algorithm: move according to eq. (13) in [2]
 #ifdef SVFIT_DEBUG 
     if ( verbose_ >= 2 ) std::cout << " deltaE = " << deltaE << std::endl;
 #endif

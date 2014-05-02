@@ -172,3 +172,4 @@ RecoilCorrector_v7/fitcode/correct2DCorrector_v6.C
 RecoilCorrector_v7/fitcode/correct2DCorrector.C
 RecoilCorrector_v7/fitcode/runRecoilFit_v4.C
 RecoilCorrector_v7/fitcode/runRecoilFit_v6.C
+Analysis/include/PostRecoilCorrection.h

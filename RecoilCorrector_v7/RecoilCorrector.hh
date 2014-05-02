@@ -25,14 +25,12 @@
 // where leptonPt, leptonPhi are dilepton kinematics for z->ll and single lepton kinematics for w->lnu
 //
 
-using namespace std;
-
 class RecoilCorrector
 {
   
 public:
-  RecoilCorrector(string iNameZDat, int iSeed=0xDEADBEEF);
-  RecoilCorrector(string iNameZDat1, string iPrefix, int iSeed=0xDEADBEEF);
+  RecoilCorrector(std::string iNameZDat, int iSeed=0xDEADBEEF);
+  RecoilCorrector(std::string iNameZDat1, std::string iPrefix, int iSeed=0xDEADBEEF);
   void CorrectAll(double &met, double &metphi, double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
   void Correct(double &pfmet, double &pfmetphi, double &trkmet, double &trkmetphi, 
 	       double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double iFluc    ,double iScale=0,int njet=0);
@@ -129,33 +127,33 @@ protected:
   //void   Correct(double &met, double &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,double iFluc,int njet);
 
   TRandom1 *fRandom; 
-  vector<TF1*> fF1U1Fit; vector<TF1*> fF1U1RMSSMFit; vector<TF1*> fF1U1RMS1Fit; vector<TF1*> fF1U1RMS2Fit; 
-  vector<TF1*> fF1U2Fit; vector<TF1*> fF1U2RMSSMFit; vector<TF1*> fF1U2RMS1Fit; vector<TF1*> fF1U2RMS2Fit; 
-  vector<TF1*> fF2U1Fit; vector<TF1*> fF2U1RMSSMFit; vector<TF1*> fF2U1RMS1Fit; vector<TF1*> fF2U1RMS2Fit; 
-  vector<TF1*> fF2U2Fit; vector<TF1*> fF2U2RMSSMFit; vector<TF1*> fF2U2RMS1Fit; vector<TF1*> fF2U2RMS2Fit; 
+  std::vector<TF1*> fF1U1Fit; std::vector<TF1*> fF1U1RMSSMFit; std::vector<TF1*> fF1U1RMS1Fit; std::vector<TF1*> fF1U1RMS2Fit;
+  std::vector<TF1*> fF1U2Fit; std::vector<TF1*> fF1U2RMSSMFit; std::vector<TF1*> fF1U2RMS1Fit; std::vector<TF1*> fF1U2RMS2Fit;
+  std::vector<TF1*> fF2U1Fit; std::vector<TF1*> fF2U1RMSSMFit; std::vector<TF1*> fF2U1RMS1Fit; std::vector<TF1*> fF2U1RMS2Fit;
+  std::vector<TF1*> fF2U2Fit; std::vector<TF1*> fF2U2RMSSMFit; std::vector<TF1*> fF2U2RMS1Fit; std::vector<TF1*> fF2U2RMS2Fit;
 
-  vector<TF1*> fD1U1Fit; vector<TF1*> fD1U1RMSSMFit; vector<TF1*> fD1U1RMS1Fit; vector<TF1*> fD1U1RMS2Fit; 
-  vector<TF1*> fD1U2Fit; vector<TF1*> fD1U2RMSSMFit; vector<TF1*> fD1U2RMS1Fit; vector<TF1*> fD1U2RMS2Fit; 
-  vector<TF1*> fD2U1Fit; vector<TF1*> fD2U1RMSSMFit; vector<TF1*> fD2U1RMS1Fit; vector<TF1*> fD2U1RMS2Fit; 
-  vector<TF1*> fD2U2Fit; vector<TF1*> fD2U2RMSSMFit; vector<TF1*> fD2U2RMS1Fit; vector<TF1*> fD2U2RMS2Fit; 
+  std::vector<TF1*> fD1U1Fit; std::vector<TF1*> fD1U1RMSSMFit; std::vector<TF1*> fD1U1RMS1Fit; std::vector<TF1*> fD1U1RMS2Fit;
+  std::vector<TF1*> fD1U2Fit; std::vector<TF1*> fD1U2RMSSMFit; std::vector<TF1*> fD1U2RMS1Fit; std::vector<TF1*> fD1U2RMS2Fit;
+  std::vector<TF1*> fD2U1Fit; std::vector<TF1*> fD2U1RMSSMFit; std::vector<TF1*> fD2U1RMS1Fit; std::vector<TF1*> fD2U1RMS2Fit;
+  std::vector<TF1*> fD2U2Fit; std::vector<TF1*> fD2U2RMSSMFit; std::vector<TF1*> fD2U2RMS1Fit; std::vector<TF1*> fD2U2RMS2Fit;
 
-  vector<TF1*> fM1U1Fit; vector<TF1*> fM1U1RMSSMFit; vector<TF1*> fM1U1RMS1Fit; vector<TF1*> fM1U1RMS2Fit; 
-  vector<TF1*> fM1U2Fit; vector<TF1*> fM1U2RMSSMFit; vector<TF1*> fM1U2RMS1Fit; vector<TF1*> fM1U2RMS2Fit; 
-  vector<TF1*> fM2U1Fit; vector<TF1*> fM2U1RMSSMFit; vector<TF1*> fM2U1RMS1Fit; vector<TF1*> fM2U1RMS2Fit; 
-  vector<TF1*> fM2U2Fit; vector<TF1*> fM2U2RMSSMFit; vector<TF1*> fM2U2RMS1Fit; vector<TF1*> fM2U2RMS2Fit; 
+  std::vector<TF1*> fM1U1Fit; std::vector<TF1*> fM1U1RMSSMFit; std::vector<TF1*> fM1U1RMS1Fit; std::vector<TF1*> fM1U1RMS2Fit;
+  std::vector<TF1*> fM1U2Fit; std::vector<TF1*> fM1U2RMSSMFit; std::vector<TF1*> fM1U2RMS1Fit; std::vector<TF1*> fM1U2RMS2Fit;
+  std::vector<TF1*> fM2U1Fit; std::vector<TF1*> fM2U1RMSSMFit; std::vector<TF1*> fM2U1RMS1Fit; std::vector<TF1*> fM2U1RMS2Fit;
+  std::vector<TF1*> fM2U2Fit; std::vector<TF1*> fM2U2RMSSMFit; std::vector<TF1*> fM2U2RMS1Fit; std::vector<TF1*> fM2U2RMS2Fit;
 
-  vector<TF1*> fF1U1U2Corr;     vector<TF1*> fF2U1U2Corr;
-  vector<TF1*> fF1F2U1Corr;     vector<TF1*> fF1F2U2Corr;
-  vector<TF1*> fF1F2U1U2Corr;   vector<TF1*> fF1F2U2U1Corr;
+  std::vector<TF1*> fF1U1U2Corr;     std::vector<TF1*> fF2U1U2Corr;
+  std::vector<TF1*> fF1F2U1Corr;     std::vector<TF1*> fF1F2U2Corr;
+  std::vector<TF1*> fF1F2U1U2Corr;   std::vector<TF1*> fF1F2U2U1Corr;
 
-  vector<TF1*> fM1U1U2Corr;     vector<TF1*> fM2U1U2Corr;
-  vector<TF1*> fM1M2U1Corr;     vector<TF1*> fM1M2U2Corr;
-  vector<TF1*> fM1M2U1U2Corr;   vector<TF1*> fM1M2U2U1Corr;
+  std::vector<TF1*> fM1U1U2Corr;     std::vector<TF1*> fM2U1U2Corr;
+  std::vector<TF1*> fM1M2U1Corr;     std::vector<TF1*> fM1M2U2Corr;
+  std::vector<TF1*> fM1M2U1U2Corr;   std::vector<TF1*> fM1M2U2U1Corr;
   int fId; int fJet;
 };
 
 //-----------------------------------------------------------------------------------------------------------------------------------------
-  RecoilCorrector::RecoilCorrector(string iNameZDat,std::string iPrefix, int iSeed) {
+  RecoilCorrector::RecoilCorrector(std::string iNameZDat,std::string iPrefix, int iSeed) {
 
   fRandom = new TRandom1(iSeed);
 
@@ -166,7 +164,7 @@ protected:
   fId = 0; fJet = 0;
 }
 
-RecoilCorrector::RecoilCorrector(string iNameZ, int iSeed) {
+RecoilCorrector::RecoilCorrector(std::string iNameZ, int iSeed) {
 
   fRandom = new TRandom1(iSeed);
   // get fits for Z data
@@ -446,9 +444,9 @@ void RecoilCorrector::metDistributionType1(double &iMet,double &iMPhi,double iGe
   double lRescale  = sqrt((TMath::Pi())/2.);		     
   double pU1       = iU1RZDatFit->Eval(iGenPt)/iU1RZMCFit->Eval(iGenPt);
   double pU2       = 0; //Right guys are for cumulants => code deleted
-  double pFrac1    = max( iU1MSZDatFit->Eval(iGenPt)*iU1MSZDatFit->Eval(iGenPt)
+  double pFrac1    = std::max( iU1MSZDatFit->Eval(iGenPt)*iU1MSZDatFit->Eval(iGenPt)
 			  -iU1MSZMCFit->Eval(iGenPt)*iU1MSZMCFit ->Eval(iGenPt),0.);
-  double pFrac2    = max( iU2MSZDatFit->Eval(iGenPt)*iU2MSZDatFit->Eval(iGenPt)
+  double pFrac2    = std::max( iU2MSZDatFit->Eval(iGenPt)*iU2MSZDatFit->Eval(iGenPt)
 			  -iU2MSZMCFit->Eval(iGenPt)*iU2MSZMCFit ->Eval(iGenPt),0.);
   pFrac1 = sqrt(pFrac1)*lRescale;
   pFrac2 = sqrt(pFrac2)*lRescale;
@@ -537,7 +535,7 @@ void RecoilCorrector::metDistributionType2(double &iMet,double &iMPhi,double iGe
   //double pDMean2    = pDFrac2;
  
   double pMU1       = iU1RZMCFit  ->Eval(iGenPt);
-  double pMU2       = 0; 
+//  double pMU2       = 0;
   double pMFrac1    = iU1MSZMCFit ->Eval(iGenPt)*lRescale;
   double pMSigma1_1 = iU1S1ZMCFit ->Eval(iGenPt)*pMFrac1;
   double pMSigma1_2 = iU1S2ZMCFit ->Eval(iGenPt)*pMFrac1;
@@ -549,11 +547,11 @@ void RecoilCorrector::metDistributionType2(double &iMet,double &iMPhi,double iGe
   //Uncertainty propagation
   if(iFluc != 0 || iScale != 0) { 
     double lEUR1    = getError(iGenPt,iU1Default  ,PFU1);
-    double lEUS1_1  = getError(iGenPt,iU1S1ZDatFit,PFS1U1);
-    double lEUS1_2  = getError(iGenPt,iU1S2ZDatFit,PFS2U1);
+//    double lEUS1_1  = getError(iGenPt,iU1S1ZDatFit,PFS1U1);
+//    double lEUS1_2  = getError(iGenPt,iU1S2ZDatFit,PFS2U1);
     double lEU1Frac = getError(iGenPt,iU1MSZDatFit,PFMSU1);
-    double lEUS2_1  = getError(iGenPt,iU2S1ZDatFit,PFS1U2);
-    double lEUS2_2  = getError(iGenPt,iU2S2ZDatFit,PFS2U2);
+//    double lEUS2_1  = getError(iGenPt,iU2S1ZDatFit,PFS1U2);
+//    double lEUS2_2  = getError(iGenPt,iU2S2ZDatFit,PFS2U2);
     double lEU2Frac = getError(iGenPt,iU2MSZDatFit,PFMSU2);
 
     //cout << "Err u1    : " << lEU1Frac << " -- " << iFluc << " -- " << pDFrac1 << " -- " << iU1MSZDatFit->GetParError(0) << endl;
@@ -589,7 +587,7 @@ void RecoilCorrector::metDistributionType2(double &iMet,double &iMPhi,double iGe
 
   double p1Charge        = pU1Diff/fabs(pU1Diff);
   double p2Charge        = pU2Diff/fabs(pU2Diff);
-  double pTU1Diff        = pU1Diff;
+//  double pTU1Diff        = pU1Diff;
   // double lMU1U2  = iU1U2ZMCCorr->Eval(iGenPt);
   // pU1Diff                = deCorrelate(pMMean1,lMU1U2,0.,0.,pU1Diff/pMMean1,pU2Diff/pMMean1 ,0.,0.);
   //pU2Diff                = deCorrelate(pMMean2,lMU1U2,0.,0.,pU2Diff/pMMean2,pTU1Diff/pMMean2,0.,0.);

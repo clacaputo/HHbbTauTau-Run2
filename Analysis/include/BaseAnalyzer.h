@@ -16,6 +16,7 @@
 #include "MCfinalState.h"
 #include "Candidate.h"
 #include "custom_cuts.h"
+#include "PostRecoilCorrection.h"
 #include "SVfit.h"
 #include <chrono>
 #include <iomanip>
