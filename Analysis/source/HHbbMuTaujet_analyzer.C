@@ -47,8 +47,8 @@ protected:
     {
         BaseAnalyzer::ProcessEvent();
         using namespace analysis;
-        finalState::bbMuTaujet muTauJet;
-        if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
+//        finalState::bbMuTaujet muTauJet;
+//        if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
 
         //std::cout << "event.triggers() size= " << event.triggers().size() << std::endl;
 
@@ -63,12 +63,12 @@ protected:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
 //        anaData.PV_sumPt().Fill(primaryVertex.sumPtSquared);
-        if(useMCtruth) {
-            const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
-            anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);
-            const double DeltaR_PV = (muTauJet.resonance->vertex - primaryVertex.position).Perp();
-            anaData.ResonanceDeltaR_PV().Fill(DeltaR_PV);
-        }
+//        if(useMCtruth) {
+//            const double DeltaZ_PV = muTauJet.resonance->vertex.Z() - primaryVertex.position.Z();
+//            anaData.ResonanceDeltaZ_PV().Fill(DeltaZ_PV);
+//            const double DeltaR_PV = (muTauJet.resonance->vertex - primaryVertex.position).Perp();
+//            anaData.ResonanceDeltaR_PV().Fill(DeltaR_PV);
+//        }
 
         //SIGNAL OBJECTS
         const auto muons = CollectMuons(true);

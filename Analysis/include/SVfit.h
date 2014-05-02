@@ -48,8 +48,11 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
     SVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMET, covMET, 0);
     algo.addLogM(false);
     algo.integrateMarkovChain();
-    if (!algo.isValidSolution())
-        throw std::runtime_error("SVFit algo is not valid");
+    if (!algo.isValidSolution()) {
+        std::cerr << "Can't fit\n";
+        return Candidate(higgsCandidate);
+        //throw std::runtime_error("SVFit algo is not valid");
+    }
 
     Candidate correctedCandidate(higgsCandidate);
     correctedCandidate.momentum.SetPtEtaPhiM(algo.pt(),
