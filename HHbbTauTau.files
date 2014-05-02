@@ -167,3 +167,8 @@ SVfit_standalone/src/SVfitStandaloneMarkovChainIntegrator.cc
 SVfit_standalone/BuildFile.xml
 SVfit_standalone/README.md
 Analysis/include/SVfit.h
+RecoilCorrector_v7/RecoilCorrector.hh
+RecoilCorrector_v7/fitcode/correct2DCorrector_v6.C
+RecoilCorrector_v7/fitcode/correct2DCorrector.C
+RecoilCorrector_v7/fitcode/runRecoilFit_v4.C
+RecoilCorrector_v7/fitcode/runRecoilFit_v6.C
