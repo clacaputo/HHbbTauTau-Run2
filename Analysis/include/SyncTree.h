@@ -16,7 +16,7 @@
     SIMPLE_VAR(Int_t, lumi) \
     SIMPLE_VAR(Int_t, evt) \
     SIMPLE_VAR(Int_t, npv) \
-    VECTOR_VAR(Int_t, npu) \
+    SIMPLE_VAR(Int_t, npu) \
     SIMPLE_VAR(Double_t, rho) \
     SIMPLE_VAR(Double_t, mcweight) \
     SIMPLE_VAR(Double_t, puweight) \
