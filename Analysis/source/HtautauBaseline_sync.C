@@ -7,6 +7,7 @@
  */
 
 #include "../include/BaseAnalyzer.h"
+#include "../include/SyncTree.h"
 
 class BaselineAnalyzerData : public analysis::SignalAnalyzerData {
 public:
@@ -20,7 +21,7 @@ public:
                           const std::string& _prefix = "none", Long64_t _maxNumberOfEvents = 0,
                           bool _useMCtruth = false, const std::string& reweightFileName = "none")
         : BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth, reweightFileName),
-          anaData(*outputFile)
+          anaData(*outputFile), etauTree("etauTree"), mutauTree("mutauTree"), tautauTree("tautauTree")
     {
         anaData.getOutputFile().cd();
     }
@@ -74,7 +75,7 @@ protected:
             FillSyncTree(etauTree, Higgses_e_tau);
         else if(HaveTriggerFired(cuts::Htautau_Summer13::trigger::MuTau::hltPaths) &&
                 ( !useMCtruth || FindAnalysisFinalState(muTaujet) ) )
-            FillSyncTree(muTauTree, Higgses_mu_tau);
+            FillSyncTree(mutauTree, Higgses_mu_tau);
         else if(HaveTriggerFired(cuts::Htautau_Summer13::trigger::TauTau::hltPaths) &&
                 ( !useMCtruth || FindAnalysisFinalState(taujetTaujet) ) )
             FillSyncTree(tautauTree, Higgses_tautau);
@@ -132,7 +133,12 @@ protected:
         return true;
     }
 
+    void FillSyncTree(ntuple::SyncTree& syncTree, const analysis::Candidate& higgs){
+
+    }
+
 private:
     BaselineAnalyzerData anaData;
+    ntuple::SyncTree etauTree, mutauTree, tautauTree;
 };
 
