@@ -26,6 +26,13 @@ public:
         anaData.getOutputFile().cd();
     }
 
+    ~HtautauBaseline_sync()
+    {
+        etauTree.Write();
+        mutauTree.Write();
+        tautauTree.Write();
+    }
+
 protected:
     virtual analysis::SignalAnalyzerData& GetAnaData() { return anaData; }
 
@@ -291,8 +298,13 @@ protected:
         final_state.resonance = *resonances.begin();
 
         analysis::GenParticlePtrVector resonanceDecayProducts;
-        if(!analysis::FindDecayProducts(*final_state.resonance, resonanceDecay,resonanceDecayProducts))
-            throw std::runtime_error("Resonance does not decay into 2 taus");
+        if(!analysis::FindDecayProducts(*final_state.resonance, resonanceDecay,resonanceDecayProducts)) {
+            std::cout << "event id = " << event.eventId().eventId << std::endl;
+//            genEvent.PrintChain(final_state.resonance);
+//            throw std::runtime_error("Resonance does not decay into 2 taus");
+            std::cerr << "Resonance does not decay into 2 taus\n";
+            return false;
+        }
 
         final_state.taus = resonanceDecayProducts;
 
@@ -354,7 +366,8 @@ protected:
         return true;
     }
 
-    void FillSyncTree(ntuple::SyncTree& syncTree, const analysis::Candidate& higgs){
+    void FillSyncTree(ntuple::SyncTree& syncTree, const analysis::Candidate& higgs)
+    {
         syncTree.run() = event.eventInfo().run;
         syncTree.lumi() = event.eventInfo().lumis;
         syncTree.evt() = event.eventInfo().EventId;
@@ -432,6 +445,8 @@ protected:
         syncTree.mvacov01() = event.metMVA().significanceMatrix.at(1);
         syncTree.mvacov10() = event.metMVA().significanceMatrix.at(2);
         syncTree.mvacov11() = event.metMVA().significanceMatrix.at(3);
+
+        syncTree.Fill();
     }
 
 private:
