@@ -18,6 +18,8 @@
     SIMPLE_VAR(Float_t, energy) \
     /* Charge */ \
     SIMPLE_VAR(Int_t, charge) \
+    /* Decay mode */ \
+    SIMPLE_VAR(Int_t, decayMode) \
     /* Leading particle pT */ \
     SIMPLE_VAR(Float_t, leadChargedParticlePt) \
     SIMPLE_VAR(Float_t, leadNeutralParticleEt) \
@@ -200,3 +202,27 @@ TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, TauTree, TAU_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef TAU_DATA
+
+namespace ntuple {
+namespace tau_id {
+enum hadronicDecayMode {
+  kNull = -1,
+  kOneProng0PiZero,
+  kOneProng1PiZero,
+  kOneProng2PiZero,
+  kOneProng3PiZero,
+  kOneProngNPiZero,
+  kTwoProng0PiZero,
+  kTwoProng1PiZero,
+  kTwoProng2PiZero,
+  kTwoProng3PiZero,
+  kTwoProngNPiZero,
+  kThreeProng0PiZero,
+  kThreeProng1PiZero,
+  kThreeProng2PiZero,
+  kThreeProng3PiZero,
+  kThreeProngNPiZero,
+  kRareDecayMode
+};
+}
+}

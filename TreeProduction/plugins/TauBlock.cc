@@ -68,6 +68,7 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         tauTree.pt()     = patTau.pt();
         tauTree.energy() = patTau.energy();
         tauTree.charge() = patTau.charge();
+        tauTree.decayMode() = patTau.decayMode();
 
         // Leading particle pT
         tauTree.leadChargedParticlePt() = patTau.leadPFChargedHadrCand().isNonnull()
