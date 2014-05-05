@@ -49,9 +49,9 @@ struct bbTaujetTaujet : public bbTauTau {
 };
 
 struct TauTau {
-    const GenParticle* Higgs;
+    const GenParticle* resonance;
     GenParticlePtrVector taus;
-    TauTau() : Higgs(nullptr) {}
+    TauTau() : resonance(nullptr) {}
     virtual ~TauTau() {}
 };
 
@@ -60,6 +60,7 @@ struct ETaujet : public TauTau {
     const GenParticle* tau_jet;
 
     ETaujet() : electron(nullptr), tau_jet(nullptr) {}
+    ETaujet(const TauTau& other) : TauTau(other), electron(nullptr), tau_jet(nullptr) {}
 };
 
 struct MuTaujet : public TauTau{
@@ -67,6 +68,7 @@ struct MuTaujet : public TauTau{
     const GenParticle* tau_jet;
 
     MuTaujet() : muon(nullptr), tau_jet(nullptr) {}
+    MuTaujet(const TauTau& other) : TauTau(other), muon(nullptr), tau_jet(nullptr) {}
 };
 
 struct TaujetTaujet : public TauTau {
@@ -74,6 +76,7 @@ struct TaujetTaujet : public TauTau {
     const GenParticle* subleading_tau_jet;
 
     TaujetTaujet() : leading_tau_jet(nullptr), subleading_tau_jet(nullptr) {}
+    TaujetTaujet(const TauTau& other) : TauTau(other), leading_tau_jet(nullptr), subleading_tau_jet(nullptr) {}
 };
 
 } // finalState

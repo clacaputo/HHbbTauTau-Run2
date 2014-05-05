@@ -22,7 +22,7 @@ namespace tauID {
         const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
         const double decayModeFinding = 0.5; // > AN-10-82
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double againstElectronMediumMVA5 = 0.5; //  > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double againstElectronMediumMVA3 = 0.5; //  > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
                                                       // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
                                                       // MVA3 is recommended, but it does not exists any more
         const double LooseCombinedIsolationDeltaBetaCorr3Hits = 0.5;
@@ -45,7 +45,7 @@ namespace tauID {
         const double decayModeFinding = 0.5; // > AN-10-82
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double againstElectronLooseMVA5 = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double againstElectronLooseMVA3 = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
                                                      // recommended only for sub-leading tau
                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
                                                      // MVA3 is recommended, but it does not exists any more

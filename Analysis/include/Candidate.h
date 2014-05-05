@@ -29,10 +29,7 @@ public:
     CandidatePtrVector daughters;
     CandidatePtrVector finalStateDaughters;
     int charge;
-    static int UnknownCharge(){
-        return std::numeric_limits<int>::max();
-    }
-
+    static int UnknownCharge() { return std::numeric_limits<int>::max(); }
 
     Candidate() : type(Unknown), index(0), charge(UnknownCharge()){}
 
@@ -76,6 +73,41 @@ public:
             if (daughters.at(n) != other.daughters.at(n)) return true;
         }
         return false;
+    }
+
+    const Candidate* GetDaughter(Type daughterType) const
+    {
+        for(const Candidate* daughter : daughters) {
+            if(daughter->type == daughterType)
+                return daughter;
+        }
+        throw std::runtime_error("daughter with specified type not found.");
+    }
+
+    const Candidate* GetLeadingDaughter(Type expectedDaughterType = Unknown) const
+    {
+        if(!daughters.size())
+            throw std::runtime_error("candidate has no daughters");
+        if(daughters.size() != 2)
+            throw std::runtime_error("candidate has too many daughters");
+        const Candidate* leadingDaughter = daughters.at(0)->momentum.Pt() > daughters.at(1)->momentum.Pt()
+                                         ? daughters.at(0) : daughters.at(1);
+        if(expectedDaughterType != Unknown && leadingDaughter->type != expectedDaughterType)
+            throw std::runtime_error("unexpected leading daughter type");
+        return leadingDaughter;
+    }
+
+    const Candidate* GetSubleadingDaughter(Type expectedDaughterType = Unknown) const
+    {
+        if(!daughters.size())
+            throw std::runtime_error("candidate has no daughters");
+        if(daughters.size() != 2)
+            throw std::runtime_error("candidate has too many daughters");
+        const Candidate* subleadingDaughter = daughters.at(0)->momentum.Pt() > daughters.at(1)->momentum.Pt()
+                                         ? daughters.at(1) : daughters.at(0);
+        if(expectedDaughterType != Unknown && subleadingDaughter->type != expectedDaughterType)
+            throw std::runtime_error("unexpected subleading daughter type");
+        return subleadingDaughter;
     }
 };
 

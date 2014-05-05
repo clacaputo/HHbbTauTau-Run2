@@ -18,11 +18,10 @@
 #include "custom_cuts.h"
 #include "PostRecoilCorrection.h"
 #include "SVfit.h"
-#include <chrono>
 #include <iomanip>
 #include <functional>
-
 #include "RunReport.h"
+#include "Tools.h"
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \
@@ -43,6 +42,9 @@
     cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), weight)
 
 namespace analysis {
+
+static const ParticleCodes TauMuonicDecay = { particles::mu, particles::nu_mu, particles::nu_tau };
+static const ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
 class SignalAnalyzerData : public root_ext::AnalyzerData {
 
@@ -72,38 +74,6 @@ public:
     ENTRY_1D(float, Higgs_BB_MC_Pt)
     ENTRY_2D(float, DR_bjets_vs_HiggsPt_MC)
     ENTRY_2D(float, DR_Higgs_vs_ResonancePt_MC)
-
-
-};
-
-class Timer {
-public:
-    typedef std::chrono::high_resolution_clock clock;
-    Timer(unsigned _report_interval)
-        : start(clock::now()), block_start(start), report_interval(_report_interval)
-    {
-        std::cout << "Starting analyzer...\n";
-    }
-
-    void Report(size_t event_id, bool final_report = false)
-    {
-        using namespace std::chrono;
-        const auto now = clock::now();
-        const auto since_last_report = duration_cast<seconds>(now - block_start).count();
-        if(!final_report && since_last_report < report_interval) return;
-
-        const auto since_start = duration_cast<seconds>(now - start).count();
-        const double speed = ((double) event_id) / since_start;
-        if(final_report)
-            std::cout << "Total: ";
-        std::cout << "time = " << since_start << " seconds, events processed = " << event_id
-                  << ", average speed = " << std::setprecision(1) << std::fixed << speed << " events/s\n";
-        block_start = now;
-    }
-
-private:
-    clock::time_point start, block_start;
-    unsigned report_interval;
 };
 
 class BaseAnalyzer {
@@ -592,7 +562,7 @@ protected:
     }
 
 protected:
-    Timer timer;
+    tools::Timer timer;
     EventDescriptor event;
     TreeExtractor treeExtractor;
     std::shared_ptr<TFile> outputFile;
