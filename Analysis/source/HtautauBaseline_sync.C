@@ -365,8 +365,8 @@ protected:
         }
         syncTree.puweight() = weight;
         Double_t DMweight = 1;
-        analysis::Candidate* cand1 = higgs.finalStateDaughters.at(0);
-        analysis::Candidate* cand2 = higgs.finalStateDaughters.at(1);
+        const analysis::Candidate* cand1 = higgs.finalStateDaughters.at(0);
+        const analysis::Candidate* cand2 = higgs.finalStateDaughters.at(1);
         if (cand1->momentum.Pt() < cand2->momentum.Pt()){
             cand1 = higgs.finalStateDaughters.at(1);
             cand2 = higgs.finalStateDaughters.at(0);
