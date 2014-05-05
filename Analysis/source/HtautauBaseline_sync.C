@@ -355,7 +355,83 @@ protected:
     }
 
     void FillSyncTree(ntuple::SyncTree& syncTree, const analysis::Candidate& higgs){
+        syncTree.run() = event.eventInfo().run;
+        syncTree.lumi() = event.eventInfo().lumis;
+        syncTree.evt() = event.eventInfo().EventId;
+        for (unsigned n = 0; n < event.eventInfo().bunchCrossing.size(); ++n){
+            if (event.eventInfo().bunchCrossing.at(n) == 0){
+                syncTree.npu() = event.eventInfo().nPU.at(n); //only in-time PU
+            }
+        }
+        syncTree.puweight() = weight;
+        Double_t DMweight = 1;
+        analysis::Candidate* cand1 = higgs.finalStateDaughters.at(0);
+        analysis::Candidate* cand2 = higgs.finalStateDaughters.at(1);
+        if (cand1->momentum.Pt() < cand2->momentum.Pt()){
+            cand1 = higgs.finalStateDaughters.at(1);
+            cand2 = higgs.finalStateDaughters.at(0);
+        }
+        const ntuple::Tau& leg1 = event.taus().at(cand1->index);
+        const ntuple::Tau& leg2 = event.taus().at(cand2->index);
+        if (leg1.decayMode == 0)
+            DMweight *= 0.88;
+        if (leg2.decayMode == 0)
+            DMweight *= 0.88;
+        syncTree.decaymodeweight() = DMweight;
+        syncTree.mvis() = higgs.momentum.M();
 
+        syncTree.pt_1() = cand1->momentum.Pt();
+        syncTree.eta_1() = cand1->momentum.Eta();
+        syncTree.phi_1() = cand1->momentum.Phi();
+        syncTree.m_1() = cand1->momentum.M();
+        syncTree.q_1() = leg1.charge;
+        syncTree.iso_1() = leg1.byIsolationMVAraw;
+        syncTree.passid_1() = 1;
+        syncTree.passiso_1() = 1;
+        syncTree.mt_1() = cand1->momentum.Mt();
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
+        syncTree.againstElectronMVA3raw_1() = leg1.againstElectronMVA3raw;
+        syncTree.againstElectronMVA3category_1() = leg1.againstElectronMVA3category;
+        syncTree.byIsolationMVA2raw_1() = leg1.byIsolationMVA2raw;
+        syncTree.againstMuonLoose_1() = leg1.againstMuonLoose;
+        syncTree.againstMuonLoose2_1() = leg1.againstMuonLoose2;
+        syncTree.againstMuonMedium2_1() = leg1.againstMuonMedium2;
+        syncTree.againstMuonTight2_1() = leg1.againstMuonTight2;
+        syncTree.againstElectronLooseMVA3_1() = leg1.againstElectronLooseMVA3;
+        syncTree.againstElectronLoose_1() = leg1.againstElectronLoose;
+
+        syncTree.pt_2() = cand2->momentum.Pt();
+        syncTree.eta_2() = cand2->momentum.Eta();
+        syncTree.phi_2() = cand2->momentum.Phi();
+        syncTree.m_2() = cand2->momentum.M();
+        syncTree.q_2() = leg2.charge;
+        syncTree.iso_2() = leg2.byIsolationMVAraw;
+        syncTree.passid_2() = 1;
+        syncTree.passiso_2() = 1;
+        syncTree.mt_2() = cand2->momentum.Mt();
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits;
+        syncTree.againstElectronMVA3raw_2() = leg2.againstElectronMVA3raw;
+        syncTree.againstElectronMVA3category_2() = leg2.againstElectronMVA3category;
+        syncTree.byIsolationMVA2raw_2() = leg2.byIsolationMVA2raw;
+        syncTree.againstMuonLoose_2() = leg2.againstMuonLoose;
+        syncTree.againstMuonLoose2_2() = leg2.againstMuonLoose2;
+        syncTree.againstMuonMedium2_2() = leg2.againstMuonMedium2;
+        syncTree.againstMuonTight2_2() = leg2.againstMuonTight2;
+        syncTree.againstElectronLooseMVA3_2() = leg2.againstElectronLooseMVA3;
+        syncTree.againstElectronLoose_2() = leg2.againstElectronLoose;
+
+        syncTree.met() = event.metPF().pt_uncorrected; //raw
+        syncTree.metphi() = event.metPF().phi_uncorrected; //raw
+        syncTree.mvamet() = event.metMVA().pt;
+        syncTree.mvametphi() = event.metMVA().phi;
+        syncTree.metcov00() = event.metPF().significanceMatrix.at(0);
+        syncTree.metcov01() = event.metPF().significanceMatrix.at(1);
+        syncTree.metcov10() = event.metPF().significanceMatrix.at(2);
+        syncTree.metcov11() = event.metPF().significanceMatrix.at(3);
+        syncTree.mvacov00() = event.metMVA().significanceMatrix.at(0);
+        syncTree.mvacov01() = event.metMVA().significanceMatrix.at(1);
+        syncTree.mvacov10() = event.metMVA().significanceMatrix.at(2);
+        syncTree.mvacov11() = event.metMVA().significanceMatrix.at(3);
     }
 
 private:

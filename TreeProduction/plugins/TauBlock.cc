@@ -1,3 +1,11 @@
+/*!
+ * \file TauBlock.cc
+ * \author Original author: Subir Sarkar
+ * \author Contributing author: Konstantin Androsov (INFN Pisa, Siena University)
+ * \author Contributing author: Maria Teresa Grippo (INFN Pisa, Siena University)
+ */
+
+
 #include <iostream>
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
