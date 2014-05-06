@@ -214,6 +214,10 @@ inline GenParticleSet FindMatchedParticles(const TLorentzVector& candidateMoment
                                            const GenParticleSet& genParticles, double deltaR)
 {
     GenParticleSet matchedGenParticles;
+    for (const GenParticle* genParticle : genParticles){
+        if (candidateMomentum.DeltaR(genParticle->momentum) < deltaR)
+            matchedGenParticles.insert(genParticle);
+    }
     return matchedGenParticles;
 }
 
