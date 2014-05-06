@@ -20,7 +20,7 @@ namespace tauID {
     namespace ETau {
         const double pt = 20; // > twiki TauIDRecommendation
         const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const double decayModeFinding = 0.5; // > AN-10-82
+        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double againstElectronMediumMVA3 = 0.5; //  > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
                                                       // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
@@ -31,18 +31,18 @@ namespace tauID {
     namespace MuTau {
         const double pt = 20; // > twiki TauIDRecommendation
         const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const double decayModeFinding = 0.5; // > AN-10-82
+        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
         const double againstMuonTight = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double LooseCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                       // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
     }
     namespace TauTau {
-        //const double pt = 45; // > AN-13-189
-        const double pt_lead = 25; // > AN-2013-187
-        const double pt_sublead = 20; // > AN-2013-187
-        const double eta = 2.1; // < AN-13-189
-        const double decayModeFinding = 0.5; // > AN-10-82
+        //const double pt = 45; // > AN-2013/189 H->tautau full hadronic
+        const double pt_lead = 25; // > AN-2013/187 H->tautau + W or Z
+        const double pt_sublead = 20; // > AN-2013/187 H->tautau + W or Z
+        const double eta = 2.1; // < AN-2013/189 H->tautau full hadronic
+        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double againstElectronLooseMVA3 = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
@@ -130,7 +130,7 @@ namespace btag {
     const double CSVT = 0.898; //medium twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
 
     namespace signal {
-        const double pt = 20; // > AN-13-075 HH bb gamma gamma
+        const double pt = 20; // > AN-2013/075 HH->bb gamma gamma
         const double eta = 2.4; // < twiki HiggsToTauTauWorkingSummer2013#bjets
         const double CSV = CSVM; // recommended twiki HiggsToTauTauWorkingSummer2013#bjets
     }
@@ -147,7 +147,7 @@ namespace vertex {
     const double ndf = 4; // >= twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const double z = 24.0; // < cm, twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
     const double r = 2.0; // < cm, twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_mu_mu_tau
-    const bool chooseHighestSumPt2 = true; // = AN-13-188
+    const bool chooseHighestSumPt2 = true; // = AN-2013/188 H->tautau physics objects
 }
 
 namespace trigger {

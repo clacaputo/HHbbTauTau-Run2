@@ -13,8 +13,8 @@
 namespace analysis {
 
 class Candidate;
+
 typedef std::vector<Candidate> CandidateVector;
-typedef std::vector<const Candidate*> CandidatePtrVector;
 
 class Vertex;
 typedef std::vector<Vertex> VertexVector;
@@ -26,8 +26,8 @@ public:
     Type type;
     size_t index;
     TLorentzVector momentum;
-    CandidatePtrVector daughters;
-    CandidatePtrVector finalStateDaughters;
+    CandidateVector daughters;
+    CandidateVector finalStateDaughters;
     int charge;
     static int UnknownCharge() { return std::numeric_limits<int>::max(); }
 
@@ -46,9 +46,9 @@ public:
         if (daughter1.charge == UnknownCharge() || daughter2.charge == UnknownCharge())
             charge = UnknownCharge();
         else charge = daughter1.charge + daughter2.charge;
-        for(const Candidate* daughter : daughters) {
-            if(daughter->finalStateDaughters.size()) {
-                for(const Candidate* finalStateDaughter : daughter->finalStateDaughters)
+        for(const Candidate& daughter : daughters) {
+            if(daughter.finalStateDaughters.size()) {
+                for(const Candidate& finalStateDaughter : daughter.finalStateDaughters)
                     finalStateDaughters.push_back(finalStateDaughter);
             } else
                 finalStateDaughters.push_back(daughter);
@@ -75,37 +75,37 @@ public:
         return false;
     }
 
-    const Candidate* GetDaughter(Type daughterType) const
+    const Candidate& GetDaughter(Type daughterType) const
     {
-        for(const Candidate* daughter : daughters) {
-            if(daughter->type == daughterType)
+        for(const Candidate& daughter : daughters) {
+            if(daughter.type == daughterType)
                 return daughter;
         }
         throw std::runtime_error("daughter with specified type not found.");
     }
 
-    const Candidate* GetLeadingDaughter(Type expectedDaughterType = Unknown) const
+    const Candidate& GetLeadingDaughter(Type expectedDaughterType = Unknown) const
     {
         if(!daughters.size())
             throw std::runtime_error("candidate has no daughters");
         if(daughters.size() != 2)
             throw std::runtime_error("candidate has too many daughters");
-        const Candidate* leadingDaughter = daughters.at(0)->momentum.Pt() > daughters.at(1)->momentum.Pt()
+        const Candidate& leadingDaughter = daughters.at(0).momentum.Pt() > daughters.at(1).momentum.Pt()
                                          ? daughters.at(0) : daughters.at(1);
-        if(expectedDaughterType != Unknown && leadingDaughter->type != expectedDaughterType)
+        if(expectedDaughterType != Unknown && leadingDaughter.type != expectedDaughterType)
             throw std::runtime_error("unexpected leading daughter type");
         return leadingDaughter;
     }
 
-    const Candidate* GetSubleadingDaughter(Type expectedDaughterType = Unknown) const
+    const Candidate& GetSubleadingDaughter(Type expectedDaughterType = Unknown) const
     {
         if(!daughters.size())
             throw std::runtime_error("candidate has no daughters");
         if(daughters.size() != 2)
             throw std::runtime_error("candidate has too many daughters");
-        const Candidate* subleadingDaughter = daughters.at(0)->momentum.Pt() > daughters.at(1)->momentum.Pt()
+        const Candidate& subleadingDaughter = daughters.at(0).momentum.Pt() > daughters.at(1).momentum.Pt()
                                          ? daughters.at(1) : daughters.at(0);
-        if(expectedDaughterType != Unknown && subleadingDaughter->type != expectedDaughterType)
+        if(expectedDaughterType != Unknown && subleadingDaughter.type != expectedDaughterType)
             throw std::runtime_error("unexpected subleading daughter type");
         return subleadingDaughter;
     }

@@ -210,4 +210,11 @@ inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const 
     return true;
 }
 
+inline GenParticleSet FindMatchedParticles(const TLorentzVector& candidateMomentum,
+                                           const GenParticleSet& genParticles, double deltaR)
+{
+    GenParticleSet matchedGenParticles;
+    return matchedGenParticles;
+}
+
 } // analysis
