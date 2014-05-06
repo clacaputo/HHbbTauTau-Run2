@@ -105,9 +105,11 @@ protected:
         correctedTaus.clear();
         const analysis::GenParticleSet& tausMC = genEvent.GetParticles({ particles::tau });
 
+        TLorentzVector sumCorrectedTaus, sumTaus;
         for(const ntuple::Tau& tau : event.taus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
+            sumTaus += momentum;
             double scaleFactor = 1.0;
 
             const bool hasMCmatch = analysis::FindMatchedParticles(momentum, tausMC, deltaR).size() != 0;
@@ -124,20 +126,15 @@ protected:
             correctedTau.phi = correctedMomentum.Phi();
             correctedTau.energy = correctedMomentum.E();
             correctedTaus.push_back(correctedTau);
+            sumCorrectedTaus += correctedMomentum;
         }
-    }
-
-    analysis::Candidate ApplyTauMomentumCorrection(const analysis::Candidate& higgs,
-                                                   const analysis::finalState::TauTau& final_state)
-    {
-        analysis::CandidateVector correctedCandidates;
-        for(const analysis::Candidate& candidate : higgs.daughters) {
-            if(candidate.type != analysis::Candidate::Tau) {
-                correctedCandidates.push_back(candidate);
-                continue;
-            }
-
-        }
+        TLorentzVector met, metCorrected;
+        met.SetPtEtaPhiM(event.metMVA().pt, event.metMVA().eta, event.metMVA().phi, 0.);
+        metCorrected = met + sumTaus - sumCorrectedTaus;
+        correctedMET = event.metMVA();
+        correctedMET.pt = metCorrected.Pt();
+        correctedMET.eta = metCorrected.Eta();
+        correctedMET.phi = metCorrected.Phi();
     }
 
     analysis::CandidateVector CollectTaus_eTau()
@@ -145,7 +142,7 @@ protected:
         const BaseSelector base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
                 bool enabled, root_ext::AnalyzerData& _anaData)
                 -> analysis::Candidate { return SelectTau_eTau(id, _objectSelector, enabled, _anaData); };
-        return CollectObjects<analysis::Candidate>(anaData.TauSelection("eTau"), event.taus().size(),
+        return CollectObjects<analysis::Candidate>(anaData.TauSelection("eTau"), correctedTaus.size(),
                                                    base_selector, "taus_eTau");
     }
 
@@ -154,7 +151,7 @@ protected:
         const BaseSelector base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
                 bool enabled, root_ext::AnalyzerData& _anaData)
                 -> analysis::Candidate { return SelectTau_muTau(id, _objectSelector, enabled, _anaData); };
-        return CollectObjects<analysis::Candidate>(anaData.TauSelection("muTau"), event.taus().size(),
+        return CollectObjects<analysis::Candidate>(anaData.TauSelection("muTau"), correctedTaus.size(),
                                                    base_selector, "taus_muTau");
     }
 
@@ -163,7 +160,7 @@ protected:
         const BaseSelector base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
                 bool enabled, root_ext::AnalyzerData& _anaData)
                 -> analysis::Candidate { return SelectTau_tauTau(id, _objectSelector, enabled, _anaData); };
-        return CollectObjects<analysis::Candidate>(anaData.TauSelection("tauTau"), event.taus().size(),
+        return CollectObjects<analysis::Candidate>(anaData.TauSelection("tauTau"), correctedTaus.size(),
                                                    base_selector, "taus_tauTau");
     }
 
@@ -226,7 +223,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::ETau;
         const std::string selection_label = "tau_eTau";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -246,7 +243,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::MuTau;
         const std::string selection_label = "tau_muTau";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -266,7 +263,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::TauTau;
         const std::string selection_label = "tau_tauTau";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt_sublead, "pt");
@@ -328,7 +325,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::veto;
         const std::string selection_label = "tau_bkg";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
