@@ -40,8 +40,8 @@ public:
     }
 
     Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type), index(-1) {
-        daughters.push_back(&daughter1);
-        daughters.push_back(&daughter2);
+        daughters.push_back(daughter1);
+        daughters.push_back(daughter2);
         momentum = daughter1.momentum + daughter2.momentum;
         if (daughter1.charge == UnknownCharge() || daughter2.charge == UnknownCharge())
             charge = UnknownCharge();

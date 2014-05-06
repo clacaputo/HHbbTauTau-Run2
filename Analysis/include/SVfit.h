@@ -31,13 +31,13 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
 
     // setup measure tau lepton vectors
     std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
-    for (const Candidate* daughter : higgsCandidate.finalStateDaughters){
-        svFitStandalone::LorentzVector lepton(daughter->momentum.Px(), daughter->momentum.Py(),
-                                              daughter->momentum.Pz(), daughter->momentum.E());
+    for (const Candidate& daughter : higgsCandidate.finalStateDaughters){
+        svFitStandalone::LorentzVector lepton(daughter.momentum.Px(), daughter.momentum.Py(),
+                                              daughter.momentum.Pz(), daughter.momentum.E());
         svFitStandalone::kDecayType decayType;
-        if (daughter->type == Candidate::Electron || daughter->type == Candidate::Mu)
+        if (daughter.type == Candidate::Electron || daughter.type == Candidate::Mu)
             decayType = svFitStandalone::kLepDecay;
-        else if (daughter->type == Candidate::Tau)
+        else if (daughter.type == Candidate::Tau)
             decayType = svFitStandalone::kHadDecay;
         else
             throw std::runtime_error("final state daughters are not compatible with a leptonic or hadronic tau decay");
@@ -47,7 +47,7 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
     // construct the class object from the minimal necesarry information
     SVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMET, covMET, 0);
     algo.addLogM(false);
-    algo.integrateMarkovChain();
+    algo.integrateVEGAS();
     if (!algo.isValidSolution()) {
         std::cerr << "Can't fit\n";
         return Candidate(higgsCandidate);

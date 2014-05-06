@@ -28,6 +28,7 @@ public:
 
     ~HtautauBaseline_sync()
     {
+        anaData.getOutputFile().cd();
         etauTree.Write();
         mutauTree.Write();
         tautauTree.Write();
@@ -76,9 +77,9 @@ protected:
         const auto Higgses_mu_tau_veto = ApplyVetos(Higgses_mu_tau_signal, "mu_tau", electrons_bkg, muons_bkg, taus_bkg);
         const auto Higgses_tautau_veto = ApplyVetos(Higgses_tautau_signal, "tautau", electrons_bkg, muons_bkg, taus_bkg);
 
-        const auto Higgses_e_tau = ApplyCorrections(Higgses_e_tau_veto);
-        const auto Higgses_mu_tau = ApplyVetos(Higgses_mu_tau_veto);
-        const auto Higgses_tautau = ApplyVetos(Higgses_tautau_veto);
+        const auto Higgses_e_tau = ApplyCorrections(Higgses_e_tau_veto, tauTau);
+        const auto Higgses_mu_tau = ApplyCorrections(Higgses_mu_tau_veto, tauTau);
+        const auto Higgses_tautau = ApplyCorrections(Higgses_tautau_veto, tauTau);
 
         finalState::ETaujet eTaujet(tauTau);
         finalState::MuTaujet muTaujet(tauTau);
@@ -135,6 +136,22 @@ protected:
         correctedMET.pt = metCorrected.Pt();
         correctedMET.eta = metCorrected.Eta();
         correctedMET.phi = metCorrected.Phi();
+    }
+
+    analysis::CandidateVector ApplyCorrections(const analysis::CandidateVector& higgses,
+                                               analysis::finalState::TauTau& final_state)
+    {
+        analysis::CandidateVector candidates;
+        for (const analysis::Candidate higgs : higgses){
+            ntuple::MET postRecoilMET(correctedMET);
+            if (useMCtruth){
+                postRecoilMET = analysis::ApplyPostRecoilCorrection(correctedMET, higgs.momentum,
+                                                                    final_state.resonance->momentum);
+            }
+            const analysis::Candidate corrected_h_tautau = analysis::CorrectMassBySVfit(higgs, postRecoilMET);
+            candidates.push_back(corrected_h_tautau);
+        }
+        return candidates;
     }
 
     analysis::CandidateVector CollectTaus_eTau()
@@ -345,11 +362,11 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::TauTau;
         CandidateVector result;
         for(const Candidate& higgs : higgses) {
-            const Candidate* leading_tau = higgs.GetLeadingDaughter(Candidate::Tau);
-            const Candidate* subleading_tau = higgs.GetSubleadingDaughter(Candidate::Tau);
-            const ntuple::Tau& ntuple_subleadingTau = event.taus().at(subleading_tau->index);
+            const Candidate& leading_tau = higgs.GetLeadingDaughter(Candidate::Tau);
+            const Candidate& subleading_tau = higgs.GetSubleadingDaughter(Candidate::Tau);
+            const ntuple::Tau& ntuple_subleadingTau = correctedTaus.at(subleading_tau.index);
             if(ntuple_subleadingTau.againstElectronLooseMVA3 > againstElectronLooseMVA3
-                    && leading_tau->momentum.Pt() > pt_lead)
+                    && leading_tau.momentum.Pt() > pt_lead)
                 result.push_back(higgs);
         }
         return result;
@@ -382,10 +399,10 @@ protected:
             throw std::runtime_error("no available higgs candidate to select");
         const auto higgsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
         {
-            const ntuple::Tau& first_tau1 = event.taus().at(first.daughters.at(0)->index);
-            const ntuple::Tau& first_tau2 = event.taus().at(first.daughters.at(1)->index);
-            const ntuple::Tau& second_tau1 = event.taus().at(second.daughters.at(0)->index);
-            const ntuple::Tau& second_tau2 = event.taus().at(second.daughters.at(1)->index);
+            const ntuple::Tau& first_tau1 = correctedTaus.at(first.daughters.at(0).index);
+            const ntuple::Tau& first_tau2 = correctedTaus.at(first.daughters.at(1).index);
+            const ntuple::Tau& second_tau1 = correctedTaus.at(second.daughters.at(0).index);
+            const ntuple::Tau& second_tau2 = correctedTaus.at(second.daughters.at(1).index);
             const double first_iso = std::max(first_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
                                               first_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits);
             const double second_iso = std::max(second_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
@@ -489,14 +506,14 @@ protected:
         }
         syncTree.puweight() = weight;
         Double_t DMweight = 1;
-        const analysis::Candidate* cand1 = higgs.finalStateDaughters.at(0);
-        const analysis::Candidate* cand2 = higgs.finalStateDaughters.at(1);
-        if (cand1->momentum.Pt() < cand2->momentum.Pt()){
+        analysis::Candidate cand1 = higgs.finalStateDaughters.at(0);
+        analysis::Candidate cand2 = higgs.finalStateDaughters.at(1);
+        if (cand1.momentum.Pt() < cand2.momentum.Pt()){
             cand1 = higgs.finalStateDaughters.at(1);
             cand2 = higgs.finalStateDaughters.at(0);
         }
-        const ntuple::Tau& leg1 = event.taus().at(cand1->index);
-        const ntuple::Tau& leg2 = event.taus().at(cand2->index);
+        const ntuple::Tau& leg1 = correctedTaus.at(cand1.index);
+        const ntuple::Tau& leg2 = correctedTaus.at(cand2.index);
         if (leg1.decayMode == 0)
             DMweight *= 0.88;
         if (leg2.decayMode == 0)
@@ -504,15 +521,15 @@ protected:
         syncTree.decaymodeweight() = DMweight;
         syncTree.mvis() = higgs.momentum.M();
 
-        syncTree.pt_1() = cand1->momentum.Pt();
-        syncTree.eta_1() = cand1->momentum.Eta();
-        syncTree.phi_1() = cand1->momentum.Phi();
-        syncTree.m_1() = cand1->momentum.M();
+        syncTree.pt_1() = cand1.momentum.Pt();
+        syncTree.eta_1() = cand1.momentum.Eta();
+        syncTree.phi_1() = cand1.momentum.Phi();
+        syncTree.m_1() = cand1.momentum.M();
         syncTree.q_1() = leg1.charge;
         syncTree.iso_1() = leg1.byIsolationMVAraw;
         syncTree.passid_1() = 1;
         syncTree.passiso_1() = 1;
-        syncTree.mt_1() = cand1->momentum.Mt();
+        syncTree.mt_1() = cand1.momentum.Mt();
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         syncTree.againstElectronMVA3raw_1() = leg1.againstElectronMVA3raw;
         syncTree.againstElectronMVA3category_1() = leg1.againstElectronMVA3category;
@@ -524,15 +541,15 @@ protected:
         syncTree.againstElectronLooseMVA3_1() = leg1.againstElectronLooseMVA3;
         syncTree.againstElectronLoose_1() = leg1.againstElectronLoose;
 
-        syncTree.pt_2() = cand2->momentum.Pt();
-        syncTree.eta_2() = cand2->momentum.Eta();
-        syncTree.phi_2() = cand2->momentum.Phi();
-        syncTree.m_2() = cand2->momentum.M();
+        syncTree.pt_2() = cand2.momentum.Pt();
+        syncTree.eta_2() = cand2.momentum.Eta();
+        syncTree.phi_2() = cand2.momentum.Phi();
+        syncTree.m_2() = cand2.momentum.M();
         syncTree.q_2() = leg2.charge;
         syncTree.iso_2() = leg2.byIsolationMVAraw;
         syncTree.passid_2() = 1;
         syncTree.passiso_2() = 1;
-        syncTree.mt_2() = cand2->momentum.Mt();
+        syncTree.mt_2() = cand2.momentum.Mt();
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         syncTree.againstElectronMVA3raw_2() = leg2.againstElectronMVA3raw;
         syncTree.againstElectronMVA3category_2() = leg2.againstElectronMVA3category;

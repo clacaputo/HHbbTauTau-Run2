@@ -618,3 +618,4 @@ process.out.fileName = 'patTuple.root'          ##  (e.g. 'myTuple.root')
 #                                               ##
 process.options.wantSummary = False             ##  (to suppress the long output at the end of the job)    
 
+print process.dumpPython()

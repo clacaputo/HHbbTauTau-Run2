@@ -19,4 +19,20 @@ def applyJetParameters(process, isMC):
          jetIdLabel   = 'ak5'
     )
 
+    process.load("RecoJets.JetProducers.PileupJetID_cfi")
+    process.pileupJetIdProducer.jets = cms.InputTag('ak5PFJets')
+    process.pileupJetIdProducerChs.jets = cms.InputTag('ak5PFJets')
+    process.pileupJetIdProducer.applyJec = cms.bool(True)
+    process.pileupJetIdProducer.inputIsCorrected = cms.bool(False)
+
+    # Embed into PAT jets as userdata
+    process.patJets.userData.userFloats.src = cms.VInputTag(
+        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant'),
+        cms.InputTag('pileupJetIdProducer', 'cutbasedDiscriminant'),
+        cms.InputTag('pileupJetIdProducer', 'philv1Discriminant'))
+    process.patJets.userData.userInts.src = cms.VInputTag(
+        cms.InputTag('pileupJetIdProducer', 'fullId'),
+        cms.InputTag('pileupJetIdProducer', 'cutbasedId'),
+        cms.InputTag('pileupJetIdProducer', 'philv1Id'))
+
     return

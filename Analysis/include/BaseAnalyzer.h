@@ -436,8 +436,8 @@ protected:
         if(candidate.finalStateDaughters.size()) {
             for (const Candidate& bkg_candidate : backgroundCandidates) {
                 bool hasMatchedDaughter = false;
-                for(const Candidate* daughter : candidate.finalStateDaughters) {
-                    if (bkg_candidate.momentum.DeltaR(daughter->momentum) <= minDeltaR) {
+                for(const Candidate& daughter : candidate.finalStateDaughters) {
+                    if (bkg_candidate.momentum.DeltaR(daughter.momentum) <= minDeltaR) {
                         hasMatchedDaughter = true;
                         break;
                     }
@@ -485,16 +485,16 @@ protected:
     void HistogramAfterFinalSelection(const CandidateVector& finalSelectionResonances)
     {
         for (const Candidate& resonance : finalSelectionResonances){
-            for (const Candidate* finalStateDaughter : resonance.finalStateDaughters){
-                if (finalStateDaughter->type == Candidate::Mu)
-                    SelectMuon(finalStateDaughter->index,GetAnaData().MuonSelection(), false, anaDataFinalSelection);
-                if (finalStateDaughter->type == Candidate::Tau)
-                    SelectTau(finalStateDaughter->index,GetAnaData().TauSelection(), false, anaDataFinalSelection);
-                if (finalStateDaughter->type == Candidate::Bjet)
-                    SelectBJet(finalStateDaughter->index,GetAnaData().BJetSelection("loose"), false, anaDataFinalSelection,
+            for (const Candidate& finalStateDaughter : resonance.finalStateDaughters){
+                if (finalStateDaughter.type == Candidate::Mu)
+                    SelectMuon(finalStateDaughter.index,GetAnaData().MuonSelection(), false, anaDataFinalSelection);
+                if (finalStateDaughter.type == Candidate::Tau)
+                    SelectTau(finalStateDaughter.index,GetAnaData().TauSelection(), false, anaDataFinalSelection);
+                if (finalStateDaughter.type == Candidate::Bjet)
+                    SelectBJet(finalStateDaughter.index,GetAnaData().BJetSelection("loose"), false, anaDataFinalSelection,
                                cuts::Htautau_Summer13::btag::CSVL, "loose");
-                if (finalStateDaughter->type == Candidate::Electron)
-                    SelectElectron(finalStateDaughter->index,GetAnaData().ElectronSelection(), false, anaDataFinalSelection);
+                if (finalStateDaughter.type == Candidate::Electron)
+                    SelectElectron(finalStateDaughter.index,GetAnaData().ElectronSelection(), false, anaDataFinalSelection);
             }
 //            GetAnaData().Mass("Final_H_tautau").Fill(resonance.daughters.at(0)->momentum.M(),weight);
 //            GetAnaData().Mass("Final_H_bb").Fill(resonance.daughters.at(1)->momentum.M(),weight);
