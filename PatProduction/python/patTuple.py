@@ -86,7 +86,7 @@ process.p = cms.Path(
 process.out.outputCommands = [
     'drop *',
     'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
-    'keep patJets_patJets_*_*',
+    'keep patJets_patJetsTriggerMatch_*_*',
     'keep patMETs_*_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
     'keep patTaus_patTausTriggerMatch_*_*',

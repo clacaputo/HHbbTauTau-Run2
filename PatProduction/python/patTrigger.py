@@ -76,10 +76,32 @@ def applyTriggerParameters(process):
         , resolveByMatchQuality = cms.bool( True )
       )
 
+    ## jets
+    process.patJetsHLTMatch = cms.EDProducer(
+        # matching in DeltaR, sorting by best DeltaR
+        "PATTriggerMatcherDRLessByR"
+        # matcher input collections
+        , src     = cms.InputTag( 'patJets' )
+        , matched = cms.InputTag( 'patTrigger' )
+        # selections of trigger objects
+        , matchedCuts = cms.string( 'type( "TriggerJet" ) && ' +
+                                   '( path( "HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30*" ) || ' +
+                                   'path( "HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30*" ) || ' +
+                                   'path( "HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30*" ) )')
+        # selection of matches
+        , maxDPtRel   = cms.double( 0.5 ) # no effect here
+        , maxDeltaR   = cms.double( 0.5 )
+        , maxDeltaEta = cms.double( 0.2 ) # no effect here
+        # definition of matcher output
+        , resolveAmbiguities    = cms.bool( True )
+        , resolveByMatchQuality = cms.bool( True )
+      )
+
     switchOnTriggerMatchEmbedding(process, triggerMatchers = [
                   'patMuonsHLTMatch',
                   'patElectronsHLTMatch',
                   'patTausHLTMatch',
+                  'patJetsHLTMatch'
           ])
 
     return
