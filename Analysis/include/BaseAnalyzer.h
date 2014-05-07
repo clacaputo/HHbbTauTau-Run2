@@ -164,14 +164,22 @@ protected:
     bool HaveTriggerFired(const std::vector<std::string>& interestingPaths) const
     {
         for (const ntuple::Trigger& trigger : event.triggers()){
-            for (unsigned n = 0; n < trigger.hltpaths.size(); ++n){
-                for (unsigned k = 0; k < interestingPaths.size(); ++k){
-                    const std::string& triggerPath = trigger.hltpaths.at(n);
-                    const std::string& interestingPath = interestingPaths.at(k);
-                    std::size_t found = triggerPath.find(interestingPath);
-                    if (found != std::string::npos && trigger.hltresults.at(n) == 1 &&
-                            trigger.hltprescales.at(n) == 1) return true;
-                }
+            if (HaveTriggerMatched(trigger.hltpaths, interestingPaths) && trigger.hltresults.at(n) == 1 &&
+                    trigger.hltprescales.at(n) == 1)
+                return true;
+        }
+        return false;
+    }
+
+    bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
+                            const std::vector<std::string>& interestingPaths) const
+    {
+        for (unsigned n = 0; n < objectMatchedPaths.size(); ++n){
+            for (unsigned k = 0; k < interestingPaths.size(); ++k){
+                const std::string& objectMatchedPath = objectMatchedPaths.at(n);
+                const std::string& interestingPath = interestingPaths.at(k);
+                std::size_t found = objectMatchedPath.find(interestingPath);
+                if (found != std::string::npos) return true;
             }
         }
         return false;
