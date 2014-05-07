@@ -38,9 +38,9 @@ namespace tauID {
                                                       // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
     }
     namespace TauTau {
-        //const double pt = 45; // > AN-2013/189 H->tautau full hadronic
-        const double pt_lead = 25; // > AN-2013/187 H->tautau + W or Z
-        const double pt_sublead = 20; // > AN-2013/187 H->tautau + W or Z
+        const double pt = 45; // > AN-2013/189 H->tautau full hadronic
+        //const double pt_lead = 25; // > AN-2013/187 H->tautau + W or Z
+        //const double pt_sublead = 20; // > AN-2013/187 H->tautau + W or Z
         const double eta = 2.1; // < AN-2013/189 H->tautau full hadronic
         const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
