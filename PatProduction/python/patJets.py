@@ -26,6 +26,7 @@ def applyJetParameters(process, isMC):
     process.pileupJetIdProducer.inputIsCorrected = cms.bool(False)
     process.full_5x_wp.Pt2030_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
     process.full_5x_wp.Pt3050_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
+    process.pileupJetIdProducer.residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt')
 
     # Embed into PAT jets as userdata
     process.patJets.userData.userFloats.src = cms.VInputTag(
