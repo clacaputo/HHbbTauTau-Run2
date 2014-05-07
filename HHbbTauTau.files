@@ -178,3 +178,6 @@ Analysis/source/HtautauBaseline_sync.C
 Analysis/include/Tools.h
 Analysis/source/HetauBaseline_sync.C
 Analysis/source/HmutauBaseline_sync.C
+Analysis/include/AnalysisTools.h
+Analysis/include/HH_BaseAnalyzer.h
+Analysis/include/H_BaseAnalyzer.h

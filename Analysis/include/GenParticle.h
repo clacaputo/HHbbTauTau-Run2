@@ -15,7 +15,6 @@
 #include "../include/iostream_operators.h"
 #include "TreeProduction/interface/GenParticle.h"
 
-
 namespace analysis {
 
 class GenParticle;
@@ -25,8 +24,6 @@ typedef std::vector< const GenParticle* > GenParticlePtrVector;
 typedef std::vector< GenParticlePtrVector > GenParticleVector2D;
 typedef std::set< const GenParticle* > GenParticleSet;
 typedef std::map<particles::ParticleCode, GenParticleSet> ParticleCodeMap;
-typedef std::vector<particles::ParticleCode> ParticleCodes;
-typedef std::vector<ParticleCodes> ParticleCodes2D;
 typedef std::vector<size_t> GenParticleIndexVector;
 
 class GenParticle {

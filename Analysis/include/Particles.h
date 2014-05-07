@@ -13,7 +13,7 @@
 #include <map>
 #include <stdexcept>
 #include <sstream>
-
+#include <vector>
 #include <iostream>
 
 namespace particles {
@@ -345,6 +345,9 @@ struct PdgParticle {
     {
         return Code == other.Code && Type == other.Type;
     }
-
 };
+
+typedef std::vector<particles::ParticleCode> ParticleCodes;
+typedef std::vector<ParticleCodes> ParticleCodes2D;
+
 } // particles

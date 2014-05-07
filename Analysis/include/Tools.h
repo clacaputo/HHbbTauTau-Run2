@@ -61,4 +61,11 @@ std::vector<Type> join_vectors(const std::vector< const std::vector<Type>* >& in
     return result;
 }
 
+template<class Container, class T>
+size_t find_index(const Container& container, const T& value)
+{
+    const auto iter = std::find(container.begin(), container.end(), value);
+    return std::distance(container.begin(), iter);
+}
+
 } // tools

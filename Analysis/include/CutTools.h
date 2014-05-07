@@ -109,15 +109,15 @@ protected:
 
 class Cutter {
 public:
-    Cutter(ObjectSelector& _objectSelector, bool _enabled = true)
-        : objectSelector(&_objectSelector), enabled(_enabled), param_id(0) {}
+    Cutter(ObjectSelector* _objectSelector)
+        : objectSelector(_objectSelector), param_id(0) {}
 
-    bool Enabled() const { return enabled; }
+    bool Enabled() const { return objectSelector != nullptr; }
     int CurrentParamId() const { return param_id; }
 
     void operator()(bool expected, const std::string& label)
     {
-        if(enabled){
+        if(Enabled()){
             ++param_id;
             if(!expected)
                 throw cut_failed(param_id -1);
@@ -136,10 +136,7 @@ public:
 
 private:
     ObjectSelector* objectSelector;
-    bool enabled;
     size_t param_id;
-
-
 };
 
 } // cuts
