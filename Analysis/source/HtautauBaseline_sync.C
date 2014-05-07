@@ -283,7 +283,7 @@ protected:
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt_sublead, "pt");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
         cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_tight");
@@ -362,11 +362,10 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::TauTau;
         CandidateVector result;
         for(const Candidate& higgs : higgses) {
-            const Candidate& leading_tau = higgs.GetLeadingDaughter(Candidate::Tau);
+            //const Candidate& leading_tau = higgs.GetLeadingDaughter(Candidate::Tau);
             const Candidate& subleading_tau = higgs.GetSubleadingDaughter(Candidate::Tau);
             const ntuple::Tau& ntuple_subleadingTau = correctedTaus.at(subleading_tau.index);
-            if(ntuple_subleadingTau.againstElectronLooseMVA3 > againstElectronLooseMVA3
-                    && leading_tau.momentum.Pt() > pt_lead)
+            if(ntuple_subleadingTau.againstElectronLooseMVA3 > againstElectronLooseMVA3)
                 result.push_back(higgs);
         }
         return result;
