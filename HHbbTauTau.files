@@ -176,3 +176,5 @@ Analysis/include/PostRecoilCorrection.h
 Analysis/include/SyncTree.h
 Analysis/source/HtautauBaseline_sync.C
 Analysis/include/Tools.h
+Analysis/source/HetauBaseline_sync.C
+Analysis/source/HmutauBaseline_sync.C
