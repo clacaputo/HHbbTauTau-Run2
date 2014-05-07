@@ -205,6 +205,9 @@ protected:
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
 
+        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
+                                                         cuts::Htautau_Summer13::trigger::ETau::hltPaths);
+        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
         return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
 
@@ -231,6 +234,10 @@ protected:
         cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
+        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
+                                                         cuts::Htautau_Summer13::trigger::MuTau::hltPaths);
+        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
@@ -251,6 +258,9 @@ protected:
         cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronMediumMVA3, 2, -0.5, 1.5) > againstElectronMediumMVA3, "vs_e_mediumMVA");
 
+        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
+                                                         cuts::Htautau_Summer13::trigger::ETau::hltPaths);
+        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
@@ -271,6 +281,10 @@ protected:
         cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
         cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
 
+        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
+                                                         cuts::Htautau_Summer13::trigger::MuTau::hltPaths);
+        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
@@ -290,6 +304,10 @@ protected:
         cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
         cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
             > MediumCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
+
+        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
+                                                         cuts::Htautau_Summer13::trigger::TauTau::hltPaths);
+        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
