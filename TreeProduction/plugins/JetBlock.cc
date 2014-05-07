@@ -32,6 +32,7 @@
  
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Jet.h"
+#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
 #define SIMPLE_VAR(type, name) jetTree.name() = jet.bDiscriminator(#name);
 
@@ -111,6 +112,8 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       jetTree.photonMultiplicity()          = jet.photonMultiplicity();
 
       jetTree.nConstituents()               = jet.numberOfDaughters();
+
+      jetTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patTau);
 
       B_TAG_DATA()
 

@@ -43,6 +43,8 @@
     SIMPLE_VAR(UInt_t, nConstituents) \
     SIMPLE_VAR(Bool_t, passLooseID) \
     SIMPLE_VAR(Bool_t, passTightID) \
+    /* Trigger match information */ \
+    VECTOR_VAR(std::string, matchedTriggerPaths) \
     /* b-tag discriminators */ \
     B_TAG_DATA() \
     /**/
