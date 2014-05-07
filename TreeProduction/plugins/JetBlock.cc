@@ -113,7 +113,7 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       jetTree.nConstituents()               = jet.numberOfDaughters();
 
-      jetTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(patTau);
+      jetTree.matchedTriggerPaths() = CollectMatchedTriggerPaths(jet);
 
       B_TAG_DATA()
 
