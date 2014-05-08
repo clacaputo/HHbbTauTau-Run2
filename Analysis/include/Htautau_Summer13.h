@@ -57,8 +57,8 @@ namespace MuTau {
         const double pt = 15; // >
         const double eta = 2.4; // <
         const double dz = 0.2; // <
-        const double d0 = 0.045; // <
-        const bool isGlobalMuon = true; // =
+        const double d0 = 0.045; // < same definition as db
+        const bool isGlobalMuon = true; // = already applied at Tree selection level as skim - MuonBlock.cc
         const bool isTrackerMuon = true; // =
         const bool isPFMuon = true; // =
         const double pfRelIso = 0.3; // <

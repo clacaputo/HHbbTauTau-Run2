@@ -151,33 +151,56 @@ protected:
         return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
 
-    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
-                                                     root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                                     root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
-        using namespace cuts::Htautau_Summer13::muonID::veto;
-        const std::string selection_label = "muon_bkg";
-        cuts::Cutter cut(objectSelector, enabled);
+        using namespace cuts::Htautau_Summer13::MuTau::muonVeto;
+        cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(isTightMuon, 2, -0.5, 1.5) == isTightMuon, "tight");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
+        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
+        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
+        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
+        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
     CandidateVector CollectZmuons()
     {
-        return CollectCandidateObjects("z_muons", &BaseAnalyzer::SelectZmuon, event.muons().size());
+        return CollectCandidateObjects("z_muons", &HmutauBaseline_sync::SelectZmuon, event.muons().size());
     }
 
     virtual Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
                                  const std::string& selection_label)
     {
+        using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Muon& object = event.muons().at(id);
+
+        cut(true, ">0 mu cand");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
+        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
+        cut(X(isTrackerMuon, 2, -0.5, 1.5) == isTrackerMuon, "trackerMuon");
+        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PFMuon");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
+
+        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
 

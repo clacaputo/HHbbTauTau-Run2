@@ -98,7 +98,7 @@ protected:
             const double second_Pt2 = second.daughters.at(1).momentum.Pt();
             const double second_sumPt = second_Pt1 + second_Pt2;
 
-            return first_sumPt > second_sumPt;
+            return first_sumPt < second_sumPt;
         };
         return *std::max_element(higgses.begin(), higgses.end(), higgsSelector);
     }
