@@ -81,3 +81,13 @@ TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, JetTree, JET_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef JET_DATA
+
+namespace ntuple {
+namespace JetID_MVA {
+enum Id {
+    kTight  = 0,
+    kMedium = 1,
+    kLoose  = 2
+};
+}
+}
