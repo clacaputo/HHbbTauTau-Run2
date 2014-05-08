@@ -14,9 +14,15 @@
 namespace cuts {
 namespace Htautau_Summer13 {
 
-const double DeltaR_betweenSignalObjects = 0.5; // >
-
 namespace MuTau {
+    const double DeltaR_betweenSignalObjects = 0.5; // > // AN-2013/178 H->etau,mutau
+
+    namespace trigger {
+        // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+        const std::vector<std::string> hltPaths =
+                {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20","HLT_IsoMu18_eta2p1_LooseIsoPFTau20"};
+    }
+
     namespace muonID {
         const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
         const double eta = 2.1; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
@@ -94,6 +100,15 @@ namespace MuTau {
 }
 
 namespace ETau {
+    const double DeltaR_betweenSignalObjects = 0.5; // > // AN-2013/178 H->etau,mutau
+
+    namespace trigger {
+        // twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
+        const std::vector<std::string> hltPaths =
+            {"HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
+             "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20"};
+    }
+
     namespace electronID{
         const double pt = 24; // >  HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
         const double eta_high = 2.1; // <  HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
@@ -174,6 +189,19 @@ namespace ETau {
 }
 
 namespace TauTau {
+    // https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/analyzers/DiLeptonAnalyzer.py
+    const double DeltaR_betweenSignalObjects = 0.5; // >
+
+    namespace trigger {
+        // twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state
+        const std::vector<std::string> hltPaths =
+                {"HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30",
+                 "HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30",
+                 "HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30",
+                 "HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1",
+                 "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1" };
+    }
+
     namespace tauID {
         const double pt = 45; // > AN-2013/189 H->tautau full hadronic
         const double eta = 2.1; // < AN-2013/189 H->tautau full hadronic
@@ -248,28 +276,6 @@ namespace vertex {
     const double z = 24.0; // < cm
     const double r = 2.0; // < cm
     const bool chooseHighestSumPt2 = true; // =
-}
-
-namespace trigger {
-    namespace MuTau {
-        const std::vector<std::string> hltPaths =
-                {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20","HLT_IsoMu18_eta2p1_LooseIsoPFTau20"};
-
-    }
-    namespace ETau {
-        const std::vector<std::string> hltPaths =
-            {"HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
-             "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20"};
-    }
-
-    namespace TauTau {
-        const std::vector<std::string> hltPaths =
-                {"HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30",
-                 "HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30",
-                 "HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30",
-                 "HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1",
-                 "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1" };
-    }
 }
 
 } // Htautau_Summer13

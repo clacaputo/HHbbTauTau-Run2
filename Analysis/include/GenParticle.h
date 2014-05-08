@@ -207,8 +207,9 @@ inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const 
     return true;
 }
 
+template<typename Container>
 inline GenParticleSet FindMatchedParticles(const TLorentzVector& candidateMomentum,
-                                           const GenParticleSet& genParticles, double deltaR)
+                                           const Container& genParticles, double deltaR)
 {
     GenParticleSet matchedGenParticles;
     for (const GenParticle* genParticle : genParticles){
