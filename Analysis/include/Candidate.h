@@ -21,7 +21,7 @@ typedef std::vector<Vertex> VertexVector;
 
 class Candidate {
 public:
-    enum Type { Unknown, Mu, Electron, Tau, Bjet, Z, Higgs, Resonance };
+    enum Type { Unknown, Mu, Electron, Tau, Jet, Bjet, Z, Higgs, Resonance };
 
     Type type;
     size_t index;
