@@ -76,36 +76,6 @@ protected:
         FillSyncTree(higgs_corr);
     }
 
-    virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector& objectSelector,
-                                               bool enabled, root_ext::AnalyzerData& _anaData)
-    {
-        using namespace cuts::Htautau_Summer13::electronID::ETau;
-        const std::string selection_label = "electron";
-        cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Electron& object = event.electrons().at(id);
-
-        cut(true, ">0 ele cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
-        cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
-                               eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
-        cut(X(missingHits, 20, 0.0, 20.0) < missingHits, "missingHits");
-        cut(X(hasMatchedConversion, 2, -0.5, 1.5) == hasMatchedConversion, "conversion");
-        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (ele_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
-        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
-
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::ETau::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
-    }
-
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector& objectSelector,
                                            bool enabled, root_ext::AnalyzerData& _anaData)
     {
@@ -201,6 +171,17 @@ protected:
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
+
+    CandidateVector CollectZmuons()
+    {
+        return CollectCandidateObjects("z_muons", &BaseAnalyzer::SelectZmuon, event.muons().size());
+    }
+
+    virtual Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
+                                 const std::string& selection_label)
+    {
+    }
+
 
     bool FindAnalysisFinalState(analysis::finalState::MuTaujet& final_state)
     {
