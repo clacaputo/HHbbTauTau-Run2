@@ -24,6 +24,36 @@ public:
 
 
 protected:
+    void CollectBJets(const Candidate& higgs)
+    {
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
+            { return SelectBjet(id, _objectSelector, _anaData, _selection_label, higgs); };
+        return CollectObjects<analysis::Candidate>("bjets", base_selector, event.jets().size());
+    }
+
+    virtual analysis::Candidate SelectBjet(size_t id, cuts::ObjectSelector* objectSelector,
+                                            root_ext::AnalyzerData& _anaData, const std::string& selection_label,
+                                            const Candidate& higgs)
+    {
+
+    }
+
+    void CollectJets(const Candidate& higgs)
+    {
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
+            { return SelectJet(id, _objectSelector, _anaData, _selection_label, higgs); };
+        return CollectObjects<analysis::Candidate>("jets", base_selector, event.jets().size());
+    }
+
+    virtual analysis::Candidate SelectJet(size_t id, cuts::ObjectSelector* objectSelector,
+                                            root_ext::AnalyzerData& _anaData, const std::string& selection_label,
+                                            const Candidate& higgs)
+    {
+
+    }
+
     void ApplyTauCorrections(const finalState::TauTau& mcFinalState)
     {
         static const double deltaR = 0.3;
