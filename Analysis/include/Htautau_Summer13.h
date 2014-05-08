@@ -251,23 +251,31 @@ namespace TauTau {
 
 }
 
-namespace btag {
-    const double CSVL = 0.244; // loose twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-    const double CSVM = 0.679; //medium twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-    const double CSVT = 0.898; //medium twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
+namespace jetID {
+    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
+    const double pt = 30; // >
+    const double eta = 2.7; // <
+    const double puLooseID = true; // =
+    const double deltaR_signalObjects = 0.5; // >
 
-    namespace signal {
-        const double pt = 20; // > AN-2013/075 HH->bb gamma gamma
-        const double eta = 2.4; // < twiki HiggsToTauTauWorkingSummer2013#bjets
-        const double CSV = CSVM; // recommended twiki HiggsToTauTauWorkingSummer2013#bjets
-    }
-    namespace veto {
-        const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double eta = 2.4; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double CSV = CSVT; // twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double passLooseID = true; // = twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        const double deltaR_signalObjects = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-    }
+    // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
+    const double pfLooseID = true; // =
+}
+
+namespace btag {
+    // twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
+    const double CSVL = 0.244; // > loose
+    const double CSVM = 0.679; // > medium
+    const double CSVT = 0.898; // > tight
+
+    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
+    const double pt = 20; // >
+    const double eta = 2.4; // <
+    const double CSV = CSVM; // >
+    const double puLooseID = true; // =
+
+    // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
+    const double pfLooseID = true; // =
 }
 
 // AN-2013/188 H->tautau physics objects
