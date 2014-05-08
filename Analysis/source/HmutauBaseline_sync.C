@@ -32,6 +32,7 @@ protected:
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
+        using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
         if (useMCtruth && !FindAnalysisFinalState(muTau)) return;
 
@@ -40,15 +41,14 @@ protected:
         cuts::Cutter cut(anaData.Selection("event"));
         cut(true, "total");
 
-        cut(HaveTriggerFired(cuts::Htautau_Summer13::MuTau::trigger::hltPaths), "trigger");
+        cut(HaveTriggerFired(trigger::hltPaths), "trigger");
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
 
         const auto z_muons = CollectZmuons();
-        const auto z_muon_candidates = FindCompatibleObjects(z_muons, cuts::Htautau_Summer13::MuTau::ZmumuVeto::deltaR,
-                                                             Candidate::Z, "Z_mu_mu", 0);
+        const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);
         cut(!z_muon_candidates.size(), "z_mumu_veto");
 
         const auto electrons_bkg = CollectBackgroundElectrons();
@@ -66,9 +66,8 @@ protected:
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
-        const auto higgses = FindCompatibleObjects(muons, taus,
-                                                   cuts::Htautau_Summer13::MuTau::DeltaR_betweenSignalObjects,
-                                                   analysis::Candidate::Higgs, "H_mu_tau", 0);
+        const auto higgses = FindCompatibleObjects(muons, taus, DeltaR_betweenSignalObjects,
+                                                   Candidate::Higgs, "H_mu_tau", 0);
         cut(higgses.size(), "mu_tau");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgses);
@@ -76,12 +75,12 @@ protected:
         FillSyncTree(higgs_corr);
     }
 
-    virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector& objectSelector,
-                                           bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
-        using namespace cuts::Htautau_Summer13::muonID::MuTau;
-        const std::string selection_label = "muon";
-        cuts::Cutter cut(objectSelector, enabled);
+        using namespace cuts::Htautau_Summer13::MuTau;
+        using namespace cuts::Htautau_Summer13::MuTau::muonID;
+        cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
@@ -90,8 +89,8 @@ protected:
         cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
         cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
         cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
-        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
         cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
@@ -99,32 +98,30 @@ protected:
         cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::MuTau::hltPaths);
+        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
         cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
-    analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector& objectSelector,
-                                        bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
+                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
-        using namespace cuts::Htautau_Summer13::tauID::MuTau;
-        const std::string selection_label = "tau_muTau";
-        cuts::Cutter cut(objectSelector, enabled);
+        using namespace cuts::Htautau_Summer13::MuTau;
+        using namespace cuts::Htautau_Summer13::MuTau::tauID;
+        cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
         cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
-            > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
         cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
+            < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::MuTau::hltPaths);
+        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
         cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
