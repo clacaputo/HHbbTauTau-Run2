@@ -68,7 +68,24 @@ protected:
                                             root_ext::AnalyzerData& _anaData, const std::string& selection_label,
                                             const Candidate& higgs)
     {
+        using namespace cuts::Htautau_Summer13::jetID;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Jet& object = event.jets().at(id);
 
+        cut(true, ">0 jet cand");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(passLooseID, 2, -0.5, 1.5) == pfLooseID, "pfLooseID");
+        const bool pass_puLooseID = object.puIdBits & (1 << ntuple::JetID_MVA::kLoose);
+        cut(Y(pass_puLooseID == puLooseID, 2, -0.5, 1.5), "puLooseID");
+
+        const Candidate jet(analysis::Candidate::Jet, id, object);
+        for(const Candidate& daughter : higgs.finalStateDaughters) {
+            const double deltaR = jet.momentum.DeltaR(daughter.momentum);
+            cut(Y(deltaR, 70, 0.0, 7.0) > deltaR_signalObjects, "dR_signal");
+        }
+
+        return jet;
     }
 
     void ApplyTauCorrections(const finalState::TauTau& mcFinalState)
