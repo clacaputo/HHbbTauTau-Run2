@@ -22,11 +22,6 @@ public:
           syncTree("syncTree")
     {}
 
-    virtual ~H_BaseAnalyzer()
-    {
-        GetAnaData().getOutputFile().cd();
-        syncTree.Write();
-    }
 
 protected:
     void ApplyTauCorrections(const finalState::TauTau& mcFinalState)
@@ -71,18 +66,13 @@ protected:
         correctedMET.phi = metCorrected.Phi();
     }
 
-    CandidateVector ApplyCorrections(const CandidateVector& higgses, const GenParticle* resonance)
+    Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance)
     {
-        CandidateVector candidates;
-        for (const Candidate& higgs : higgses){
-            ntuple::MET postRecoilMET(correctedMET);
-            if (useMCtruth){
-                postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum);
-            }
-            const Candidate corrected_h_tautau = CorrectMassBySVfit(higgs, postRecoilMET);
-            candidates.push_back(corrected_h_tautau);
+        ntuple::MET postRecoilMET(correctedMET);
+        if (useMCtruth){
+            postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum);
         }
-        return candidates;
+        return CorrectMassBySVfit(higgs, postRecoilMET);
     }
 
     const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
@@ -106,8 +96,8 @@ protected:
 
     bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
     {
-        static const analysis::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
-        static const analysis::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
+        static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
+        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
 
         genEvent.Initialize(event.genParticles());
 

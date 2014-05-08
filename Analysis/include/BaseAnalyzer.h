@@ -80,7 +80,7 @@ public:
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&){}
-            GetAnaData().EventSelection().fill_selection(weight);
+            GetAnaData().Selection("event").fill_selection(weight);
         }
         timer.Report(n, true);
         runReport.Report();
@@ -209,7 +209,7 @@ protected:
     VertexVector CollectVertices()
     {
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Candidate
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Vertex
             { return SelectVertex(id, _objectSelector, _anaData, _selection_label); };
         return CollectObjects<Vertex>("vertices", base_selector, event.vertices().size());
     }

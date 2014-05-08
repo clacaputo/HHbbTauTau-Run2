@@ -43,7 +43,7 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
     return HaveTriggerMatched(objectMatchedPaths, interestingPaths, n);
 }
 
-inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, TFile* outputFile = nullptr)
+inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )
 {
     std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
     if(reweightFile->IsZombie()){

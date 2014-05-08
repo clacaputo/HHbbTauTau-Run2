@@ -94,7 +94,7 @@ public:
         }
     }
 
-    GenParticleSet GetParticles(const ParticleCodes& particleCodes) const
+    GenParticleSet GetParticles(const particles::ParticleCodes& particleCodes) const
     {
         GenParticleSet results;
         for (const particles::ParticleCode& code : particleCodes){
@@ -130,7 +130,7 @@ public:
     }
 };
 
-inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCodes& particleCodes,
+inline bool FindDecayProducts(const GenParticle& genParticle, const particles::ParticleCodes& particleCodes,
                               GenParticlePtrVector& decayProducts)
 {
     if (genParticle.status != particles::Decayed_or_fragmented)
@@ -183,14 +183,14 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const ParticleCode
     return true;
 }
 
-inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const ParticleCodes2D& particleCodes2D,
+inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const particles::ParticleCodes2D& particleCodes2D,
                                 GenParticleVector2D& decayProducts2D, GenParticleIndexVector& indexes)
 {
     std::set<size_t> taken_genParticles;
     if (genParticles.size() != particleCodes2D.size())
         throw std::runtime_error("mismatched vector size of particles");
     decayProducts2D.clear();
-    for(const ParticleCodes& codes : particleCodes2D){
+    for(const particles::ParticleCodes& codes : particleCodes2D){
         bool particleFound = false;
         for (size_t n = 0; n < genParticles.size(); ++n ){
             if (taken_genParticles.count(n)) continue;

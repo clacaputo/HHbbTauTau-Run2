@@ -25,8 +25,15 @@ public:
         anaData.getOutputFile().cd();
     }
 
+    virtual ~HmutauBaseline_sync()
+    {
+        anaData.getOutputFile().cd();
+        syncTree.Write();
+    }
+
+
 protected:
-    virtual analysis::SignalAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
 
     virtual void ProcessEvent()
     {
@@ -36,9 +43,9 @@ protected:
         finalState::MuTaujet muTau;
         if (useMCtruth && !FindAnalysisFinalState(muTau)) return;
 
-        ApplyTauCorrections();
+        ApplyTauCorrections(muTau);
 
-        cuts::Cutter cut(anaData.Selection("event"));
+        cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
         cut(HaveTriggerFired(trigger::hltPaths), "trigger");
@@ -137,7 +144,8 @@ protected:
 
         cut(true, ">0 ele cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta_high, "eta");
+        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
+        cut(eta < eta_high, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
@@ -176,12 +184,15 @@ protected:
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
-    CandidateVector CollectZmuons()
+    analysis::CandidateVector CollectZmuons()
     {
-        return CollectCandidateObjects("z_muons", &HmutauBaseline_sync::SelectZmuon, event.muons().size());
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
+            { return SelectZmuon(id, _objectSelector, _anaData, _selection_label); };
+        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event.muons().size());
     }
 
-    virtual Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
+    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
                                  const std::string& selection_label)
     {
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
@@ -198,7 +209,7 @@ protected:
         cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
         cut(X(isTrackerMuon, 2, -0.5, 1.5) == isTrackerMuon, "trackerMuon");
         cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PFMuon");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
