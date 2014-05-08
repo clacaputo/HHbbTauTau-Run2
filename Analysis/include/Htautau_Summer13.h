@@ -254,7 +254,7 @@ namespace TauTau {
 namespace jetID {
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
     const double pt = 30; // >
-    const double eta = 2.7; // <
+    const double eta = 4.7; // <
     const double puLooseID = true; // =
     const double deltaR_signalObjects = 0.5; // >
 
