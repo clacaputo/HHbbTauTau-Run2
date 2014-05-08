@@ -34,10 +34,10 @@ namespace MuTau {
               // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
         const bool isPFMuon = true; // = def of isTightMuon
         const int nMatched_Stations = 1; // > def of isTightMuon
-        const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
-        const double dz = 0.2; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
         const int pixHits = 0; // > def of isTightMuon
         const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
+        const double dz = 0.2; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
+        const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
 
         const double pFRelIso = 0.1; // < twiki SWGuideMuonId#Muon_Isolation_AN1
     }
