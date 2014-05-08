@@ -78,7 +78,11 @@ protected:
         cut(higgses.size(), "mu_tau");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgses);
-        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance);
+
+        const auto jets = CollectJets(higgs);
+        const auto bjets = CollectBJets(higgs);
+        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, jets.size());
+
         FillSyncTree(higgs_corr);
     }
 

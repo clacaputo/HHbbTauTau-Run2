@@ -15,7 +15,7 @@
 
 namespace analysis {
 ntuple::MET ApplyPostRecoilCorrection(const ntuple::MET& originalMET, const TLorentzVector& resonantMomentum,
-                                      const TLorentzVector& resonantMomentumMC)
+                                      const TLorentzVector& resonantMomentumMC, const size_t njets)
 {
     //from Riccardo
     static const std::string fileCorrectTo = "RecoilCorrector_v7/recoilfits/recoilfit_ztt53X_20pv_njet.root";
@@ -29,7 +29,7 @@ ntuple::MET ApplyPostRecoilCorrection(const ntuple::MET& originalMET, const TLor
     corrector.addMCFile(fileZmmMC);
 
     corrector.CorrectType2(met, metphi, resonantMomentumMC.Pt(), resonantMomentumMC.Phi(),
-                           resonantMomentum.Pt(), resonantMomentum.Phi(), iU1, iU2, 0);
+                           resonantMomentum.Pt(), resonantMomentum.Phi(), iU1, iU2, njets);
 
     ntuple::MET correctedMET(originalMET);
     correctedMET.pt = met;

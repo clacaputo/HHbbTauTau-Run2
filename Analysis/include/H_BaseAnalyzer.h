@@ -36,7 +36,24 @@ protected:
                                             root_ext::AnalyzerData& _anaData, const std::string& selection_label,
                                             const Candidate& higgs)
     {
+        using namespace cuts::Htautau_Summer13::btag;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Jet& object = event.jets().at(id);
 
+        cut(true, ">0 mu cand");
+        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
+        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags, 130, -11.0, 2.0) > CSV, "CSV");
+        cut(X(passLooseID, 2, -0.5, 1.5) == pfLooseID, "pfLooseID");
+        const bool passPUlooseID = object.puIdBits && (1 << ntuple::JetID_MVA::kLoose);
+        cut(Y(passPUlooseID, 2, -0.5, 1.5) == puLooseID, "puLooseId");
+        const Candidate bjet(Candidate::Bjet, id, object);
+        for (const Candidate& daughter : higgs.finalStateDaughters){
+            const double DeltaR = bjet.momentum.DeltaR(daughter.momentum);
+            cut(Y(DeltaR, 70, 0.0, 7.0) > deltaR_signalObjects, "DR_signalLeptons");
+        }
+
+        return bjet;
     }
 
     void CollectJets(const Candidate& higgs)
@@ -96,11 +113,11 @@ protected:
         correctedMET.phi = metCorrected.Phi();
     }
 
-    Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance)
+    Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         ntuple::MET postRecoilMET(correctedMET);
         if (useMCtruth){
-            postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum);
+            postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
         }
         return CorrectMassBySVfit(higgs, postRecoilMET);
     }

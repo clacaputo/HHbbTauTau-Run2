@@ -272,10 +272,10 @@ namespace btag {
     const double pt = 20; // >
     const double eta = 2.4; // <
     const double CSV = CSVM; // >
-    const double puLooseID = true; // =
-
     // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
+    const double puLooseID = true; // =
     const double pfLooseID = true; // =
+    const double deltaR_signalObjects = 0.5; // >
 }
 
 // AN-2013/188 H->tautau physics objects
