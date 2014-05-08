@@ -24,6 +24,9 @@
     SIMPLE_VAR(Double_t, decaymodeweight) \
     SIMPLE_VAR(Double_t, weight) \
     SIMPLE_VAR(Double_t, m_sv) \
+    SIMPLE_VAR(Double_t, pt_sv) \
+    SIMPLE_VAR(Double_t, eta_sv) \
+    SIMPLE_VAR(Double_t, phi_sv) \
     SIMPLE_VAR(Double_t, mvis) \
     SIMPLE_VAR(Double_t, m_sv_Up) \
     SIMPLE_VAR(Double_t, m_sv_Down) \
@@ -64,6 +67,8 @@
     SIMPLE_VAR(Double_t, q_2) \
     SIMPLE_VAR(Double_t, iso_2) \
     SIMPLE_VAR(Double_t, antiele_2) \
+    SIMPLE_VAR(Double_t, d0_2) \
+    SIMPLE_VAR(Double_t, dZ_2) \
     SIMPLE_VAR(Int_t, passid_2) \
     SIMPLE_VAR(Int_t, passiso_2) \
     SIMPLE_VAR(Double_t, mt_2) \
