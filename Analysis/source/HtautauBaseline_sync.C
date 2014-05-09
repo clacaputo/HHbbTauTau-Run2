@@ -141,33 +141,33 @@ protected:
         return *std::min_element(higgses.begin(), higgses.end(), higgsSelector);
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::TaujetTaujet& final_state)
-    {
-        if(!H_BaseAnalyzer::FindAnalysisFinalState(final_state))
-            return false;
+//    bool FindAnalysisFinalState(analysis::finalState::TaujetTaujet& final_state)
+//    {
+//        if(!H_BaseAnalyzer::FindAnalysisFinalState(final_state))
+//            return false;
 
-        unsigned n_hadronic_taus = 0;
+//        unsigned n_hadronic_taus = 0;
 
-        if(final_state.taus.size() != 2)
-            throw std::runtime_error("bad tautau MC final state");
+//        if(final_state.taus.size() != 2)
+//            throw std::runtime_error("bad tautau MC final state");
 
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector TauProducts;
-            if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
-                    && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
-                ++n_hadronic_taus;
-        }
+//        for (const analysis::GenParticle* tau_MC : final_state.taus) {
+//            analysis::GenParticlePtrVector TauProducts;
+//            if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
+//                    && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
+//                ++n_hadronic_taus;
+//        }
 
-        if (n_hadronic_taus != 2) return false;
-        if(final_state.taus.at(0)->momentum.Pt() > final_state.taus.at(1)->momentum.Pt()) {
-            final_state.leading_tau_jet = final_state.taus.at(0);
-            final_state.subleading_tau_jet = final_state.taus.at(1);
-        } else {
-            final_state.leading_tau_jet = final_state.taus.at(1);
-            final_state.subleading_tau_jet = final_state.taus.at(0);
-        }
-        return true;
-    }
+//        if (n_hadronic_taus != 2) return false;
+//        if(final_state.taus.at(0)->momentum.Pt() > final_state.taus.at(1)->momentum.Pt()) {
+//            final_state.leading_tau_jet = final_state.taus.at(0);
+//            final_state.subleading_tau_jet = final_state.taus.at(1);
+//        } else {
+//            final_state.leading_tau_jet = final_state.taus.at(1);
+//            final_state.subleading_tau_jet = final_state.taus.at(0);
+//        }
+//        return true;
+//    }
 
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,

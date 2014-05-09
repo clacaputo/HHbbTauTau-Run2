@@ -171,23 +171,23 @@ protected:
         return analysis::Candidate(analysis::Candidate::Electron, id, object, object.charge);
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
-    {
-        if(!H_BaseAnalyzer::FindAnalysisFinalState(final_state))
-            return false;
+//    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
+//    {
+//        if(!H_BaseAnalyzer::FindAnalysisFinalState(final_state))
+//            return false;
 
-        final_state.electron = final_state.tau_jet = nullptr;
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
-                final_state.electron = tauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
-                final_state.tau_jet = tau_MC;
-        }
+//        final_state.electron = final_state.tau_jet = nullptr;
+//        for (const analysis::GenParticle* tau_MC : final_state.taus) {
+//            analysis::GenParticlePtrVector tauProducts;
+//            if (analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
+//                final_state.electron = tauProducts.at(0);
+//            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
+//                final_state.tau_jet = tau_MC;
+//        }
 
-        if (!final_state.electron || !final_state.tau_jet) return false;
-        return true;
-    }
+//        if (!final_state.electron || !final_state.tau_jet) return false;
+//        return true;
+//    }
 
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
