@@ -24,30 +24,6 @@ public:
 
 
 protected:
-    // Common for ETau and MuTau channels.
-    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::MuTau;
-        using namespace cuts::Htautau_Summer13::ETau_MuTau::tauID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
-
-        cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
-        cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
-            < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-
-        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
-    }
-
     virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
                                                          root_ext::AnalyzerData& _anaData,
                                                          const std::string& selection_label)

@@ -78,6 +78,18 @@ namespace ETau {
         const double MVApogNonTrig[3] = { 0.925, 0.975, 0.985 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
     }
 
+    namespace tauID {
+        const double pt = 20; // > twiki TauIDRecommendation
+        const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
+        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
+        const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double againstElectronMediumMVA3 = 0.5; //  > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
+                                                      // MVA3 is recommended, but it does not exists any more
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
+                                                      // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+    }
+
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
     namespace ZeeVeto {
         const double pt = 15; // >
@@ -98,21 +110,6 @@ namespace ETau {
         const double delta_phi[] = { 0.8, 0.7 }; // <
         const double HoverE[] = { 0.15, std::numeric_limits<double>::max() }; // <
         const double dZ_vtx[] = { 0.2, 0.2 }; // <
-    }
-}
-
-namespace ETau_MuTau {
-    namespace tauID {
-        const double pt = 20; // > twiki TauIDRecommendation
-        const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-                                // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
-        const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double againstElectronMediumMVA3 = 0.5; //  > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
-                                                      // MVA3 is recommended, but it does not exists any more
-        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
-                                                      // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
     }
 }
 
