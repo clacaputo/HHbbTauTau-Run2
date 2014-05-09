@@ -53,7 +53,7 @@ protected:
                                                      root_ext::AnalyzerData& _anaData,
                                                      const std::string& selection_label)
     {
-        using namespace cuts::Htautau_Summer13::MuTau::muonVeto;
+        using namespace cuts::Htautau_Summer13::muonVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
 

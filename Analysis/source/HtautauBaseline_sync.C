@@ -84,6 +84,7 @@ protected:
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
+        using namespace cuts::Htautau_Summer13::TauTau;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
         cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
@@ -92,7 +93,7 @@ protected:
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
         cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_tight");
+        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
         cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
             > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
@@ -138,65 +139,11 @@ protected:
         return *std::min_element(higgses.begin(), higgses.end(), higgsSelector);
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
+    bool FindAnalysisFinalState(analysis::finalState::TaujetTaujet& final_state)
     {
-        static const analysis::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
-        static const analysis::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
-
-        genEvent.Initialize(event.genParticles());
-
-        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
-        if (resonances.size() != 1)
-            throw std::runtime_error("not one resonance per event");
-
-        final_state.resonance = *resonances.begin();
-
-        analysis::GenParticlePtrVector resonanceDecayProducts;
-        if(!analysis::FindDecayProducts(*final_state.resonance, resonanceDecay,resonanceDecayProducts)) {
-            std::cout << "event id = " << event.eventId().eventId << std::endl;
-//            genEvent.PrintChain(final_state.resonance);
-//            throw std::runtime_error("Resonance does not decay into 2 taus");
-            std::cerr << "Resonance does not decay into 2 taus\n";
+        if(!H_BaseAnalyzer::FindAnalysisFinalState(final_state))
             return false;
-        }
 
-        final_state.taus = resonanceDecayProducts;
-
-        return true;
-    }
-
-    bool FindAnalysisFinalState_eTau(analysis::finalState::ETaujet& final_state)
-    {
-        final_state.electron = final_state.tau_jet = nullptr;
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
-                final_state.electron = tauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
-                final_state.tau_jet = tau_MC;
-        }
-
-        if (!final_state.electron || !final_state.tau_jet) return false;
-        return true;
-    }
-
-    bool FindAnalysisFinalState_muTau(analysis::finalState::MuTaujet& final_state)
-    {
-        final_state.muon = final_state.tau_jet = nullptr;
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
-                final_state.muon = tauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
-                final_state.tau_jet = tau_MC;
-        }
-
-        if (!final_state.muon || !final_state.tau_jet) return false;
-        return true;
-    }
-
-    bool FindAnalysisFinalState_tauTau(analysis::finalState::TaujetTaujet& final_state)
-    {
         unsigned n_hadronic_taus = 0;
 
         if(final_state.taus.size() != 2)
@@ -220,42 +167,37 @@ protected:
         return true;
     }
 
-    void FillSyncTree(ntuple::SyncTree& syncTree, const analysis::Candidate& higgs)
+    void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
+                      const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
+                      const analysis::VertexVector& vertices)
     {
-        syncTree.run() = event.eventInfo().run;
-        syncTree.lumi() = event.eventInfo().lumis;
-        syncTree.evt() = event.eventInfo().EventId;
-        for (unsigned n = 0; n < event.eventInfo().bunchCrossing.size(); ++n){
-            if (event.eventInfo().bunchCrossing.at(n) == 0){
-                syncTree.npu() = event.eventInfo().nPU.at(n); //only in-time PU
-            }
-        }
-        syncTree.puweight() = weight;
         Double_t DMweight = 1;
-        analysis::Candidate cand1 = higgs.finalStateDaughters.at(0);
-        analysis::Candidate cand2 = higgs.finalStateDaughters.at(1);
-        if (cand1.momentum.Pt() < cand2.momentum.Pt()){
-            cand1 = higgs.finalStateDaughters.at(1);
-            cand2 = higgs.finalStateDaughters.at(0);
+        analysis::Candidate leadTau, subLeadTau;
+        if (higgs.finalStateDaughters.at(0).momentum.Pt() < higgs.finalStateDaughters.at(1).momentum.Pt()){
+            leadTau = higgs.finalStateDaughters.at(1);
+            subLeadTau = higgs.finalStateDaughters.at(0);
         }
-        const ntuple::Tau& leg1 = correctedTaus.at(cand1.index);
-        const ntuple::Tau& leg2 = correctedTaus.at(cand2.index);
+        else {
+            leadTau = higgs.finalStateDaughters.at(0);
+            subLeadTau = higgs.finalStateDaughters.at(1);
+        }
+        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
+        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
         if (leg1.decayMode == 0)
             DMweight *= 0.88;
         if (leg2.decayMode == 0)
             DMweight *= 0.88;
         syncTree.decaymodeweight() = DMweight;
-        syncTree.mvis() = higgs.momentum.M();
 
-        syncTree.pt_1() = cand1.momentum.Pt();
-        syncTree.eta_1() = cand1.momentum.Eta();
-        syncTree.phi_1() = cand1.momentum.Phi();
-        syncTree.m_1() = cand1.momentum.M();
-        syncTree.q_1() = leg1.charge;
+        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, subLeadTau);
+
+        //leadTau
+        syncTree.pt_1() = leadTau.momentum.Pt();
+        syncTree.eta_1() = leadTau.momentum.Eta();
+        syncTree.phi_1() = leadTau.momentum.Phi();
+        syncTree.m_1() = leadTau.momentum.M();
+        syncTree.q_1() = leadTau.charge;
         syncTree.iso_1() = leg1.byIsolationMVAraw;
-        syncTree.passid_1() = 1;
-        syncTree.passiso_1() = 1;
-        syncTree.mt_1() = cand1.momentum.Mt();
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         syncTree.againstElectronMVA3raw_1() = leg1.againstElectronMVA3raw;
         syncTree.againstElectronMVA3category_1() = leg1.againstElectronMVA3category;
@@ -266,39 +208,6 @@ protected:
         syncTree.againstMuonTight2_1() = leg1.againstMuonTight2;
         syncTree.againstElectronLooseMVA3_1() = leg1.againstElectronLooseMVA3;
         syncTree.againstElectronLoose_1() = leg1.againstElectronLoose;
-
-        syncTree.pt_2() = cand2.momentum.Pt();
-        syncTree.eta_2() = cand2.momentum.Eta();
-        syncTree.phi_2() = cand2.momentum.Phi();
-        syncTree.m_2() = cand2.momentum.M();
-        syncTree.q_2() = leg2.charge;
-        syncTree.iso_2() = leg2.byIsolationMVAraw;
-        syncTree.passid_2() = 1;
-        syncTree.passiso_2() = 1;
-        syncTree.mt_2() = cand2.momentum.Mt();
-        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits;
-        syncTree.againstElectronMVA3raw_2() = leg2.againstElectronMVA3raw;
-        syncTree.againstElectronMVA3category_2() = leg2.againstElectronMVA3category;
-        syncTree.byIsolationMVA2raw_2() = leg2.byIsolationMVA2raw;
-        syncTree.againstMuonLoose_2() = leg2.againstMuonLoose;
-        syncTree.againstMuonLoose2_2() = leg2.againstMuonLoose2;
-        syncTree.againstMuonMedium2_2() = leg2.againstMuonMedium2;
-        syncTree.againstMuonTight2_2() = leg2.againstMuonTight2;
-        syncTree.againstElectronLooseMVA3_2() = leg2.againstElectronLooseMVA3;
-        syncTree.againstElectronLoose_2() = leg2.againstElectronLoose;
-
-        syncTree.met() = event.metPF().pt_uncorrected; //raw
-        syncTree.metphi() = event.metPF().phi_uncorrected; //raw
-        syncTree.mvamet() = event.metMVA().pt;
-        syncTree.mvametphi() = event.metMVA().phi;
-        syncTree.metcov00() = event.metPF().significanceMatrix.at(0);
-        syncTree.metcov01() = event.metPF().significanceMatrix.at(1);
-        syncTree.metcov10() = event.metPF().significanceMatrix.at(2);
-        syncTree.metcov11() = event.metPF().significanceMatrix.at(3);
-        syncTree.mvacov00() = event.metMVA().significanceMatrix.at(0);
-        syncTree.mvacov01() = event.metMVA().significanceMatrix.at(1);
-        syncTree.mvacov10() = event.metMVA().significanceMatrix.at(2);
-        syncTree.mvacov11() = event.metMVA().significanceMatrix.at(3);
 
         syncTree.Fill();
     }
