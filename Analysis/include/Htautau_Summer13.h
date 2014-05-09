@@ -65,26 +65,6 @@ namespace MuTau {
         const double deltaR = 0.15; // >
         const bool haveOppositeCharge = true; // =
     }
-
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-    namespace muonVeto {
-        const double pt = 10; // >
-        const double eta = 2.4; // <
-        const double dz = 0.2; // <
-        const double d0 = 0.045; // <
-
-        //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
-        const bool isGlobalMuonPromptTight = true;
-              // = https://cmssdt.cern.ch/SDT/lxr/source/DataFormats/MuonReco/src/MuonSelectors.cc#567 and 590 definition
-              // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
-        const bool isPFMuon = true; // = def of isTightMuon
-        const int nMatched_Stations = 1; // > def of isTightMuon
-        const int pixHits = 0; // > def of isTightMuon
-        const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
-
-        const double pfRelIso = 0.3; // <
-    }
-
 }
 
 namespace ETau {
@@ -142,26 +122,6 @@ namespace ETau {
         const double delta_HoverE[] = { 0.15, std::numeric_limits<double>::max() }; // <
         const double dZ_vtx[] = { 0.2, 0.2 }; // <
     }
-
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-    namespace muonVeto {
-        const double pt = 10; // >
-        const double eta = 2.4; // <
-        const double dz = 0.2; // <
-        const double d0 = 0.045; // <
-
-        //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
-        const bool isGlobalMuonPromptTight = true;
-              // = https://cmssdt.cern.ch/SDT/lxr/source/DataFormats/MuonReco/src/MuonSelectors.cc#567 and 590 definition
-              // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
-        const bool isPFMuon = true; // = def of isTightMuon
-        const int nMatched_Stations = 1; // > def of isTightMuon
-        const int pixHits = 0; // > def of isTightMuon
-        const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
-
-        const double pfRelIso = 0.3; // <
-    }
-
 }
 
 namespace TauTau {
@@ -191,23 +151,11 @@ namespace TauTau {
         const double MediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
     }
-
-    // AN-2013/189 H->tautau full hadronic &&
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-    namespace muonVeto {
-        const double pt = 10; // >
-        const double eta = 2.4; // <
-
-        //def of isLooseMuon: twiki SWGuideMuonId#Loose_Muon
-        const bool isGlobalMuon_or_isTrackerMuon = true; // =
-        const bool isPFMuon = true; // =
-
-        const double pfRelIso = 0.3; // <
-    }
-
 }
 
 // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
+// twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+// https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/physicsobjects/HTauTauElectron.py
 namespace electronVeto {
     const double pt = 10; // >
     const double eta_high = 2.5; // <
@@ -218,6 +166,27 @@ namespace electronVeto {
     const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
     const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
                                               // loose HiggsToTauTauWorkingSummer2013#Electron_ID
+}
+
+// AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
+// twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+// https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py
+namespace muonVeto {
+    const double pt = 10; // >
+    const double eta = 2.4; // <
+    const double dz = 0.2; // <
+    const double d0 = 0.045; // <
+
+    //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
+    const bool isGlobalMuonPromptTight = true;
+          // = https://cmssdt.cern.ch/SDT/lxr/source/DataFormats/MuonReco/src/MuonSelectors.cc#567 and 590 definition
+          // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
+    const bool isPFMuon = true; // = def of isTightMuon
+    const int nMatched_Stations = 1; // > def of isTightMuon
+    const int pixHits = 0; // > def of isTightMuon
+    const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
+
+    const double pfRelIso = 0.3; // <
 }
 
 namespace jetID {

@@ -138,31 +138,6 @@ protected:
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
-    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                                     root_ext::AnalyzerData& _anaData, const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::MuTau::muonVeto;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event.muons().at(id);
-
-        cut(true, ">0 mu cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
-        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
-        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
-        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
-        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
-        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
-
-        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
-    }
-
     analysis::CandidateVector CollectZmuons()
     {
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
