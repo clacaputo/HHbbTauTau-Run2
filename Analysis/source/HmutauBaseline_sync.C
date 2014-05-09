@@ -39,6 +39,7 @@ protected:
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
+        using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
         if (useMCtruth && !FindAnalysisFinalState(muTau)) return;
@@ -119,7 +120,7 @@ protected:
                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
         using namespace cuts::Htautau_Summer13::MuTau;
-        using namespace cuts::Htautau_Summer13::MuTau::tauID;
+        using namespace cuts::Htautau_Summer13::ETau_MuTau::tauID;
         cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
 

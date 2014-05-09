@@ -39,6 +39,7 @@ protected:
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
+        using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
         finalState::TaujetTaujet tauTau;
         if (useMCtruth && !FindAnalysisFinalState(tauTau)) return;
