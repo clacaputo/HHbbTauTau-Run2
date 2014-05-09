@@ -165,9 +165,9 @@ protected:
         return true;
     }
 
-    virtual void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
-                              const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
-                              const analysis::VertexVector& vertices)
+    void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
+                      const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
+                      const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
@@ -187,24 +187,10 @@ protected:
         syncTree.d0_1() = (mu_vertex - primaryVertex.position).Perp();
         syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
 
-
         Double_t DMweight = 1;
         if (ntuple_tau.decayMode == 0)
             DMweight *= 0.88;
         syncTree.decaymodeweight() = DMweight;
-
-        syncTree.met() = event.metPF().pt; //raw
-        syncTree.metphi() = event.metPF().phi; //raw
-        syncTree.mvamet() = correctedMET.pt;
-        syncTree.mvametphi() = correctedMET.phi;
-        syncTree.metcov00() = event.metPF().significanceMatrix.at(0);
-        syncTree.metcov01() = event.metPF().significanceMatrix.at(1);
-        syncTree.metcov10() = event.metPF().significanceMatrix.at(2);
-        syncTree.metcov11() = event.metPF().significanceMatrix.at(3);
-        syncTree.mvacov00() = correctedMET.significanceMatrix.at(0);
-        syncTree.mvacov01() = correctedMET.significanceMatrix.at(1);
-        syncTree.mvacov10() = correctedMET.significanceMatrix.at(2);
-        syncTree.mvacov11() = correctedMET.significanceMatrix.at(3);
 
         TLorentzVector met;
         met.SetPtEtaPhiM(correctedMET.pt, correctedMET.eta, correctedMET.phi, 0.);

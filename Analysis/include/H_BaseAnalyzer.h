@@ -260,9 +260,8 @@ protected:
         return true;
     }
 
-    virtual void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
-                              const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
-                              const analysis::VertexVector& vertices, const analysis::Tau& tau)
+    void FillSyncTree(const Candidate& higgs, const Candidate& higgs_corr, const CandidateVector& jets,
+                      const CandidateVector& bjets, const VertexVector& vertices, const Candidate& tau)
     {
         syncTree.run() = event.eventInfo().run;
         syncTree.lumi() = event.eventInfo().lumis;
