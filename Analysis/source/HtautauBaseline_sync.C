@@ -64,6 +64,8 @@ protected:
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
+
+
         const auto higgses = FindCompatibleObjects(taus,
                    cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau", 0);
 
@@ -214,8 +216,5 @@ protected:
 
 private:
     BaselineAnalyzerData anaData;
-    ntuple::SyncTree etauTree, mutauTree, tautauTree;
-    ntuple::TauVector correctedTaus;
-    ntuple::MET correctedMET;
 };
 
