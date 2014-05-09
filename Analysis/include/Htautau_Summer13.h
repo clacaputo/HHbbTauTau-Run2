@@ -85,18 +85,6 @@ namespace MuTau {
         const double pfRelIso = 0.3; // <
     }
 
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-    namespace electronVeto {
-        const double pt = 10; // >
-        const double eta_high = 2.5; // <
-        const double dz = 0.2; // <
-        const double d0 = 0.045; // <
-        const double pFRelIso = 0.3; // <
-        const double ref_pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
-                                                  // loose HiggsToTauTauWorkingSummer2013#Electron_ID
-    }
 }
 
 namespace ETau {
@@ -174,18 +162,6 @@ namespace ETau {
         const double pfRelIso = 0.3; // <
     }
 
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-    namespace electronVeto {
-        const double pt = 10; // >
-        const double eta_high = 2.5; // <
-        const double dz = 0.2; // <
-        const double d0 = 0.045; // <
-        const double pFRelIso = 0.3; // <
-        const double ref_pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
-                                                  // loose HiggsToTauTauWorkingSummer2013#Electron_ID
-    }
 }
 
 namespace TauTau {
@@ -229,26 +205,19 @@ namespace TauTau {
         const double pfRelIso = 0.3; // <
     }
 
-    // AN-2013/189 H->tautau full hadronic &&
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-    namespace electronVeto {
-        const double pt = 10; // >
-        const double eta_high = 2.5; // <
-        const double pFRelIso = 0.3; // <
-        const double ref_pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+}
 
-        // WP95 definition for Loose twiki EgammaCutBasedIdentification
-        const double barrel_eta_high = 1.479; // <=
-        const double endcap_eta_low = 1.479; // >
-        const double endcap_eta_high = 2.5; // <
-        const size_t barrel_index = 0, endcap_index = 1;
-        const double sigma_ieta_ieta[] = { 0.01, 0.03 }; // <
-        const double delta_eta[] = { 0.007, 0.009 }; // <
-        const double delta_phi[] = { 0.15, 0.10 }; // <
-        const double delta_HoverE[] = { 0.12, 0.10 }; // <
-        const double dZ_vtx[] = { 0.2, 0.2 }; // <
-    }
-
+// AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
+namespace electronVeto {
+    const double pt = 10; // >
+    const double eta_high = 2.5; // <
+    const double dz = 0.2; // <
+    const double d0 = 0.045; // <
+    const double pFRelIso = 0.3; // <
+    const double ref_pt = 20; // twiki HiggsToTauTauWorkingSummer2013#Electron_ID
+    const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
+    const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
+                                              // loose HiggsToTauTauWorkingSummer2013#Electron_ID
 }
 
 namespace jetID {

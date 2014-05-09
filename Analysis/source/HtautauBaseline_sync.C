@@ -6,287 +6,127 @@
  * \date 2014-05-05 created
  */
 
-#include "../include/BaseAnalyzer.h"
+#include "../include/H_BaseAnalyzer.h"
 #include "../include/SyncTree.h"
 
-class BaselineAnalyzerData : public analysis::SignalAnalyzerData {
+class BaselineAnalyzerData : public analysis::BaseAnalyzerData {
 public:
-    BaselineAnalyzerData(TFile& outputFile) : SignalAnalyzerData(outputFile) {}
+    BaselineAnalyzerData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
 
 };
 
-class HtautauBaseline_sync : public analysis::BaseAnalyzer {
+class HtautauBaseline_sync : public analysis::H_BaseAnalyzer {
 public:
     HtautauBaseline_sync(const std::string& inputFileName, const std::string& outputFileName,
                           const std::string& _prefix = "none", Long64_t _maxNumberOfEvents = 0,
                           bool _useMCtruth = false, const std::string& reweightFileName = "none")
-        : BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth, reweightFileName),
-          anaData(*outputFile), etauTree("etauTree"), mutauTree("mutauTree"), tautauTree("tautauTree")
+        : H_BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth, reweightFileName),
+          anaData(*outputFile)
     {
         anaData.getOutputFile().cd();
     }
 
-    ~HtautauBaseline_sync()
+    virtual ~HtautauBaseline_sync()
     {
         anaData.getOutputFile().cd();
-        etauTree.Write();
-        mutauTree.Write();
-        tautauTree.Write();
+        syncTree.Write();
     }
 
 protected:
-    virtual analysis::SignalAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
 
     virtual void ProcessEvent()
     {
-        BaseAnalyzer::ProcessEvent();
+        H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
-        finalState::TauTau tauTau;
+        using namespace cuts::Htautau_Summer13::TauTau;
+        finalState::TaujetTaujet tauTau;
         if (useMCtruth && !FindAnalysisFinalState(tauTau)) return;
 
-        ApplyTauCorrections();
+        ApplyTauCorrections(tauTau);
 
-        cuts::Cutter cut(anaData.EventSelection());
+        cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
+
+        cut(HaveTriggerFired(trigger::hltPaths), "trigger");
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.back();
 
-        //SIGNAL OBJECTS
-        const auto electrons = CollectElectrons(true);
-        const auto muons = CollectMuons(true);
-        const auto taus_eTau = CollectTaus_eTau();
-        const auto taus_muTau = CollectTaus_muTau();
-        const auto taus_tauTau = CollectTaus_tauTau();
+        const auto electrons_bkg = CollectBackgroundElectrons();
+        cut(!electrons_bkg.size(), "no_electron");
 
-        // BACKGROUND OBJECTS
-        const auto electrons_bkg = CollectElectrons(false);
-        const auto muons_bkg = CollectMuons(false);
-        const auto taus_bkg = CollectTaus(false);
+        const auto muons_bkg = CollectBackgroundMuons();
+        cut(!muons_bkg.size(), "no_muon");
 
-        const auto Higgses_e_tau_signal = FindCompatibleObjects(electrons, taus_eTau,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects,analysis::Candidate::Higgs, "H_e_tau", 0);
-        const auto Higgses_mu_tau_signal = FindCompatibleObjects(muons, taus_muTau,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_mu_tau", 0);
-        const auto Higgses_tautau_loose = FindCompatibleObjects(taus_tauTau,
+        const auto taus = CollectTaus();
+        cut(taus.size(), "tau_cand");
+
+        const auto higgses = FindCompatibleObjects(taus,
                    cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau", 0);
-        const auto Higgses_tautau_signal = ApplyTauFullSelection(Higgses_tautau_loose);
 
-        const auto Higgses_e_tau_veto = ApplyVetos(Higgses_e_tau_signal, "e_tau", electrons_bkg, muons_bkg, taus_bkg);
-        const auto Higgses_mu_tau_veto = ApplyVetos(Higgses_mu_tau_signal, "mu_tau", electrons_bkg, muons_bkg, taus_bkg);
-        const auto Higgses_tautau_veto = ApplyVetos(Higgses_tautau_signal, "tautau", electrons_bkg, muons_bkg, taus_bkg);
+        const auto higgses_tautau = ApplyTauFullSelection(higgses);
 
-        const auto Higgses_e_tau = ApplyCorrections(Higgses_e_tau_veto, tauTau);
-        const auto Higgses_mu_tau = ApplyCorrections(Higgses_mu_tau_veto, tauTau);
-        const auto Higgses_tautau = ApplyCorrections(Higgses_tautau_veto, tauTau);
+        cut(higgses_tautau.size(), "tau_tau");
 
-        finalState::ETaujet eTaujet(tauTau);
-        finalState::MuTaujet muTaujet(tauTau);
-        finalState::TaujetTaujet taujetTaujet(tauTau);
-        if(Higgses_e_tau.size() && HaveTriggerFired(cuts::Htautau_Summer13::trigger::ETau::hltPaths) &&
-                ( !useMCtruth || FindAnalysisFinalState_eTau(eTaujet) ) )
-            FillSyncTree(etauTree, SelectSemiLeptonicHiggs(Higgses_e_tau));
-        else if(Higgses_mu_tau.size() && HaveTriggerFired(cuts::Htautau_Summer13::trigger::MuTau::hltPaths) &&
-                ( !useMCtruth || FindAnalysisFinalState_muTau(muTaujet) ) )
-            FillSyncTree(mutauTree, SelectSemiLeptonicHiggs(Higgses_mu_tau));
-        else if(Higgses_tautau.size() && HaveTriggerFired(cuts::Htautau_Summer13::trigger::TauTau::hltPaths) &&
-                ( !useMCtruth || FindAnalysisFinalState_tauTau(taujetTaujet) ) )
-            FillSyncTree(tautauTree, SelectFullyHadronicHiggs(Higgses_tautau));
+        const Candidate higgs = SelectSemiLeptonicHiggs(higgses_tautau);
+
+        const auto jets = CollectJets(higgs);
+        const auto bjets = CollectBJets(higgs);
+        const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
+
+        FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
+
     }
 
-    void ApplyTauCorrections()
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                                     root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
-        static const double deltaR = 0.3;
-        if(!useMCtruth) {
-            correctedTaus = event.taus();
-            correctedMET = event.metMVA();
-            return;
-        }
-        correctedTaus.clear();
-        const analysis::GenParticleSet& tausMC = genEvent.GetParticles({ particles::tau });
-
-        TLorentzVector sumCorrectedTaus, sumTaus;
-        for(const ntuple::Tau& tau : event.taus()) {
-            TLorentzVector momentum;
-            momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
-            sumTaus += momentum;
-            double scaleFactor = 1.0;
-
-            const bool hasMCmatch = analysis::FindMatchedParticles(momentum, tausMC, deltaR).size() != 0;
-            if(hasMCmatch) {
-                if(tau.decayMode == ntuple::tau_id::kOneProng1PiZero)
-                    scaleFactor = 1.025 + 0.001 * std::min(std::max(momentum.Pt() - 45.0, 0.0), 10.0);
-                else if(tau.decayMode == ntuple::tau_id::kThreeProng0PiZero)
-                    scaleFactor = 1.012 + 0.001 * std::min(std::max(momentum.Pt() - 32.0, 0.0), 18.0);
-            }
-            const TLorentzVector correctedMomentum = momentum * scaleFactor;
-            ntuple::Tau correctedTau(tau);
-            correctedTau.pt = correctedMomentum.Pt();
-            correctedTau.eta = correctedMomentum.Eta();
-            correctedTau.phi = correctedMomentum.Phi();
-            correctedTau.energy = correctedMomentum.E();
-            correctedTaus.push_back(correctedTau);
-            sumCorrectedTaus += correctedMomentum;
-        }
-        TLorentzVector met, metCorrected;
-        met.SetPtEtaPhiM(event.metMVA().pt, event.metMVA().eta, event.metMVA().phi, 0.);
-        metCorrected = met + sumTaus - sumCorrectedTaus;
-        correctedMET = event.metMVA();
-        correctedMET.pt = metCorrected.Pt();
-        correctedMET.eta = metCorrected.Eta();
-        correctedMET.phi = metCorrected.Phi();
-    }
-
-    analysis::CandidateVector ApplyCorrections(const analysis::CandidateVector& higgses,
-                                               analysis::finalState::TauTau& final_state)
-    {
-        analysis::CandidateVector candidates;
-        for (const analysis::Candidate higgs : higgses){
-            ntuple::MET postRecoilMET(correctedMET);
-            if (useMCtruth){
-                postRecoilMET = analysis::ApplyPostRecoilCorrection(correctedMET, higgs.momentum,
-                                                                    final_state.resonance->momentum);
-            }
-            const analysis::Candidate corrected_h_tautau = analysis::CorrectMassBySVfit(higgs, postRecoilMET);
-            candidates.push_back(corrected_h_tautau);
-        }
-        return candidates;
-    }
-
-    analysis::CandidateVector CollectTaus_eTau()
-    {
-        const BaseSelector base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
-                bool enabled, root_ext::AnalyzerData& _anaData)
-                -> analysis::Candidate { return SelectTau_eTau(id, _objectSelector, enabled, _anaData); };
-        return CollectObjects<analysis::Candidate>(anaData.TauSelection("eTau"), correctedTaus.size(),
-                                                   base_selector, "taus_eTau");
-    }
-
-    analysis::CandidateVector CollectTaus_muTau()
-    {
-        const BaseSelector base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
-                bool enabled, root_ext::AnalyzerData& _anaData)
-                -> analysis::Candidate { return SelectTau_muTau(id, _objectSelector, enabled, _anaData); };
-        return CollectObjects<analysis::Candidate>(anaData.TauSelection("muTau"), correctedTaus.size(),
-                                                   base_selector, "taus_muTau");
-    }
-
-    analysis::CandidateVector CollectTaus_tauTau()
-    {
-        const BaseSelector base_selector = [&](unsigned id, cuts::ObjectSelector& _objectSelector,
-                bool enabled, root_ext::AnalyzerData& _anaData)
-                -> analysis::Candidate { return SelectTau_tauTau(id, _objectSelector, enabled, _anaData); };
-        return CollectObjects<analysis::Candidate>(anaData.TauSelection("tauTau"), correctedTaus.size(),
-                                                   base_selector, "taus_tauTau");
-    }
-
-    virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector& objectSelector,
-                                               bool enabled, root_ext::AnalyzerData& _anaData)
-    {
-        using namespace cuts::Htautau_Summer13::electronID::ETau;
-        const std::string selection_label = "electron";
-        cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Electron& object = event.electrons().at(id);
-
-        cut(true, ">0 ele cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
-        cut(eta < eta_high && (eta < cuts::Htautau_Summer13::electronID::eta_CrackVeto_low ||
-                               eta > cuts::Htautau_Summer13::electronID::eta_CrackVeto_high), "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
-        cut(X(missingHits, 20, 0.0, 20.0) < missingHits, "missingHits");
-        cut(X(hasMatchedConversion, 2, -0.5, 1.5) == hasMatchedConversion, "conversion");
-        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (ele_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
-        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
-
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::ETau::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
-    }
-
-    virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector& objectSelector,
-                                           bool enabled, root_ext::AnalyzerData& _anaData)
-    {
-        using namespace cuts::Htautau_Summer13::muonID::MuTau;
-        const std::string selection_label = "muon";
-        cuts::Cutter cut(objectSelector, enabled);
+        using namespace cuts::Htautau_Summer13::TauTau::muonVeto;
+        cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
-        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
-        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
-        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
-
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::MuTau::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+        const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
+        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
+        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
+        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
+        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
+        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
-    analysis::Candidate SelectTau_eTau(size_t id, cuts::ObjectSelector& objectSelector,
-                                       bool enabled, root_ext::AnalyzerData& _anaData)
+    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
+                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
-        using namespace cuts::Htautau_Summer13::tauID::ETau;
-        const std::string selection_label = "tau_eTau";
-        cuts::Cutter cut(objectSelector, enabled);
+        using namespace cuts::Htautau_Summer13::TauTau::tauID;
+        cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
         cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
-            > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
-        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
-        cut(X(againstElectronMediumMVA3, 2, -0.5, 1.5) > againstElectronMediumMVA3, "vs_e_mediumMVA");
-
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::ETau::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
-    }
-
-    analysis::Candidate SelectTau_muTau(size_t id, cuts::ObjectSelector& objectSelector,
-                                        bool enabled, root_ext::AnalyzerData& _anaData)
-    {
-        using namespace cuts::Htautau_Summer13::tauID::MuTau;
-        const std::string selection_label = "tau_muTau";
-        cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = correctedTaus.at(id);
-
-        cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(byLooseCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
-            > LooseCombinedIsolationDeltaBetaCorr3Hits, "looseIso3Hits");
         cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
         cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
+            < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths,
-                                                         cuts::Htautau_Summer13::trigger::MuTau::hltPaths);
+        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
         cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
+
 
     analysis::Candidate SelectTau_tauTau(size_t id, cuts::ObjectSelector& objectSelector, bool enabled,
                                          root_ext::AnalyzerData& _anaData)

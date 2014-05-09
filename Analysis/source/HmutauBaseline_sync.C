@@ -138,31 +138,6 @@ protected:
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
 
-    virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                                         root_ext::AnalyzerData& _anaData,
-                                                         const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::MuTau::electronVeto;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event.electrons().at(id);
-
-        cut(true, ">0 ele cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
-        cut(eta < eta_high, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
-        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = (ele_vertex - primaryVertex.position).Perp(); // same as dB
-        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
-        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
-        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[pt_index][eta_index], "mva");
-
-        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
-    }
-
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                                      root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
