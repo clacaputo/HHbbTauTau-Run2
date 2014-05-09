@@ -137,7 +137,7 @@ namespace TauTau {
                                                      // recommended only for sub-leading pt tau
                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
                                                      // MVA3 is recommended, but it does not exists any more for new tauID
-        const double MediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
+        const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
     }
 }
