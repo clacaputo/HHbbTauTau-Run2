@@ -96,7 +96,7 @@ namespace ETau {
         const double sigma_ieta_ieta[] = { 0.01, 0.03 }; // <
         const double delta_eta[] = { 0.007, 0.01 }; // <
         const double delta_phi[] = { 0.8, 0.7 }; // <
-        const double delta_HoverE[] = { 0.15, std::numeric_limits<double>::max() }; // <
+        const double HoverE[] = { 0.15, std::numeric_limits<double>::max() }; // <
         const double dZ_vtx[] = { 0.2, 0.2 }; // <
     }
 }

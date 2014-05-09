@@ -116,29 +116,6 @@ protected:
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
 
-    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::MuTau;
-        using namespace cuts::Htautau_Summer13::ETau_MuTau::tauID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
-
-        cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
-        cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
-            < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-
-        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
-    }
-
     analysis::CandidateVector CollectZmuons()
     {
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
@@ -192,29 +169,12 @@ protected:
                               const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                               const analysis::VertexVector& vertices)
     {
-        syncTree.run() = event.eventInfo().run;
-        syncTree.lumi() = event.eventInfo().lumis;
-        syncTree.evt() = event.eventInfo().EventId;
-        syncTree.npv() = vertices.size();
-        for (unsigned n = 0; n < event.eventInfo().bunchCrossing.size(); ++n){
-            if (event.eventInfo().bunchCrossing.at(n) == 0){
-                syncTree.npu() = event.eventInfo().nPU.at(n); //only in-time PU
-            }
-        }
-        syncTree.puweight() = weight;
-
-
-
-        syncTree.mvis() = higgs.momentum.M();
-        syncTree.m_sv() = higgs_corr.momentum.M();
-        syncTree.pt_sv() = higgs_corr.momentum.Pt();
-        syncTree.eta_sv() = higgs_corr.momentum.Eta();
-        syncTree.phi_sv() = higgs_corr.momentum.Phi();
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
+        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, tau);
 
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
         const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
-        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
 
         //muon
         syncTree.pt_1() = muon.momentum.Pt();
@@ -223,37 +183,15 @@ protected:
         syncTree.m_1() = muon.momentum.M();
         syncTree.q_1() = muon.charge;
         syncTree.iso_1() = ntuple_muon.pfRelIso;
-
         const TVector3 mu_vertex(ntuple_muon.vx, ntuple_muon.vy, ntuple_muon.vz);
         syncTree.d0_1() = (mu_vertex - primaryVertex.position).Perp();
         syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
 
 
-        //tau
-        syncTree.pt_2() = tau.momentum.Pt();
-        syncTree.eta_2() = tau.momentum.Eta();
-        syncTree.phi_2() = tau.momentum.Phi();
-        syncTree.m_2() = tau.momentum.M();
-        syncTree.q_2() = tau.charge;
-        syncTree.iso_2() = ntuple_tau.byIsolationMVAraw;
-        const TVector3 tau_vertex(ntuple_tau.vx, ntuple_tau.vy, ntuple_tau.vz);
-        syncTree.d0_2() = (tau_vertex - primaryVertex.position).Perp();
-        syncTree.dZ_2() = std::abs(ntuple_tau.vz - primaryVertex.position.Z());
-
         Double_t DMweight = 1;
         if (ntuple_tau.decayMode == 0)
             DMweight *= 0.88;
         syncTree.decaymodeweight() = DMweight;
-        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau.byCombinedIsolationDeltaBetaCorrRaw3Hits;
-        syncTree.againstElectronMVA3raw_2() = ntuple_tau.againstElectronMVA3raw;
-        syncTree.againstElectronMVA3category_2() = ntuple_tau.againstElectronMVA3category;
-        syncTree.byIsolationMVA2raw_2() = ntuple_tau.byIsolationMVA2raw;
-        syncTree.againstMuonLoose_2() = ntuple_tau.againstMuonLoose;
-        syncTree.againstMuonLoose2_2() = ntuple_tau.againstMuonLoose2;
-        syncTree.againstMuonMedium2_2() = ntuple_tau.againstMuonMedium2;
-        syncTree.againstMuonTight2_2() = ntuple_tau.againstMuonTight2;
-        syncTree.againstElectronLooseMVA3_2() = ntuple_tau.againstElectronLooseMVA3;
-        syncTree.againstElectronLoose_2() = ntuple_tau.againstElectronLoose;
 
         syncTree.met() = event.metPF().pt; //raw
         syncTree.metphi() = event.metPF().phi; //raw
@@ -272,44 +210,7 @@ protected:
         met.SetPtEtaPhiM(correctedMET.pt, correctedMET.eta, correctedMET.phi, 0.);
         const double Mt = std::sqrt(2*muon.momentum.Pt()*met.Pt()*(1-std::cos(muon.momentum.DeltaPhi(met)))); //see AN-13-178
         syncTree.mt_1() = Mt;
-        syncTree.njets() = jets.size();
-        syncTree.nbtag() = bjets.size();
-        if (jets.size() >= 1){
-            const ntuple::Jet& ntuple_jet = event.jets().at(jets.at(0).index);
-            syncTree.jpt_1() = jets.at(0).momentum.Pt();
-            syncTree.jeta_1() = jets.at(0).momentum.Eta();
-            syncTree.jphi_1() = jets.at(0).momentum.Phi();
-            syncTree.jmva_1() = ntuple_jet.puIdMVA;
-        }
-        else {
-            syncTree.jpt_1() = -10000;
-            syncTree.jeta_1() = -10000;
-            syncTree.jphi_1() = -10000;
-            syncTree.jmva_1() = -10000;
-        }
-        if (jets.size() >= 2){
-            const ntuple::Jet& ntuple_jet = event.jets().at(jets.at(1).index);
-            syncTree.jpt_2() = jets.at(1).momentum.Pt();
-            syncTree.jeta_2() = jets.at(1).momentum.Eta();
-            syncTree.jphi_2() = jets.at(1).momentum.Phi();
-            syncTree.jmva_2() = ntuple_jet.puIdMVA;
-        }
-        else {
-            syncTree.jpt_2() = -10000;
-            syncTree.jeta_2() = -10000;
-            syncTree.jphi_2() = -10000;
-            syncTree.jmva_2() = -10000;
-        }
-        if (bjets.size() >= 1){
-            syncTree.bpt() = bjets.at(0).momentum.Pt();
-            syncTree.beta() = bjets.at(0).momentum.Eta();
-            syncTree.bphi() = bjets.at(0).momentum.Phi();
-        }
-        else {
-            syncTree.bpt() = -10000;
-            syncTree.beta() = -10000;
-            syncTree.bphi() = -10000;
-        }
+
         syncTree.Fill();
     }
 
