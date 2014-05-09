@@ -43,6 +43,16 @@ namespace MuTau {
         const double pFRelIso = 0.1; // < twiki SWGuideMuonId#Muon_Isolation_AN1
     }
 
+    namespace tauID {
+        const double pt = 20; // > twiki TauIDRecommendation
+        const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
+        const double againstMuonTight = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
+                                                      // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+   }
+
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
     namespace ZmumuVeto {
         const double pt = 15; // >
