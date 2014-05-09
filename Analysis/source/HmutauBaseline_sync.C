@@ -317,7 +317,7 @@ protected:
         syncTree.mvacov10() = correctedMET.significanceMatrix.at(2);
         syncTree.mvacov11() = correctedMET.significanceMatrix.at(3);
 
-        const TLorentzVector met;
+        TLorentzVector met;
         met.SetPtEtaPhiM(correctedMET.pt, correctedMET.eta, correctedMET.phi, 0.);
         const double Mt = std::sqrt(2*muon.momentum.Pt()*met.Pt()*(1-std::cos(muon.momentum.DeltaPhi(met)))); //see AN-13-178
         syncTree.mt_1() = Mt;
