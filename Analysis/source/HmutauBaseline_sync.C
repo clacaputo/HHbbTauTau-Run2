@@ -276,7 +276,7 @@ protected:
         const TVector3 mu_vertex(ntuple_muon.vx, ntuple_muon.vy, ntuple_muon.vz);
         syncTree.d0_1() = (mu_vertex - primaryVertex.position).Perp();
         syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
-        //syncTree.mt_1() = cand1.momentum.Mt(); //see AN to calculate it
+
 
         //tau
         syncTree.pt_2() = tau.momentum.Pt();
@@ -288,7 +288,7 @@ protected:
         const TVector3 tau_vertex(ntuple_tau.vx, ntuple_tau.vy, ntuple_tau.vz);
         syncTree.d0_2() = (tau_vertex - primaryVertex.position).Perp();
         syncTree.dZ_2() = std::abs(ntuple_tau.vz - primaryVertex.position.Z());
-        //syncTree.mt_2() = cand2.momentum.Mt(); //see AN to calculate it
+
         Double_t DMweight = 1;
         if (ntuple_tau.decayMode == 0)
             DMweight *= 0.88;
@@ -317,6 +317,10 @@ protected:
         syncTree.mvacov10() = correctedMET.significanceMatrix.at(2);
         syncTree.mvacov11() = correctedMET.significanceMatrix.at(3);
 
+        const TLorentzVector met;
+        met.SetPtEtaPhiM(correctedMET.pt, correctedMET.eta, correctedMET.phi, 0.);
+        const double Mt = std::sqrt(2*muon.momentum.Pt()*met.Pt()*(1-std::cos(muon.momentum.DeltaPhi(met)))); //see AN-13-178
+        syncTree.mt_1() = Mt;
         syncTree.njets() = jets.size();
         syncTree.nbtag() = bjets.size();
         if (jets.size() >= 1){
