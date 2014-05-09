@@ -32,7 +32,7 @@ public:
     }
 
 protected:
-    virtual analysis::SignalAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
 
     virtual void ProcessEvent()
     {
@@ -110,7 +110,7 @@ protected:
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
 
-        const bool haveTriggerMatch = HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
         cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
         return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
