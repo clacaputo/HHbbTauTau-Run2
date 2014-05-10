@@ -130,7 +130,8 @@ public:
 
     bool operator < (const Vertex& other) const
     {
-        return sumPtSquared < other.sumPtSquared;
+        return index > other.index;
+//        return sumPtSquared < other.sumPtSquared;
     }
 
 };
