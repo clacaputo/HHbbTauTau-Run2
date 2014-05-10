@@ -22,7 +22,7 @@ if [ $STORAGE = "Pisa" ] ; then
 elif [ $STORAGE = "Bari" ] ; then
     PREFIX="/lustre/cms"
 elif [ $STORAGE = "Local" ] ; then
-    PREFIX="/Users/Kes/workspace/analysis"
+    PREFIX=$CMS_STORE
 else
     echo "ERROR: unknown storage"
     exit
@@ -139,7 +139,7 @@ elif [ $STORAGE = "Local" ] ; then
         fi
     done
     wait
-    echo "$N_JOBS finished on fai"
+    echo "$N_JOBS finished on local"
 else
     echo "unknow queue"
 fi
