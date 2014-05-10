@@ -21,6 +21,8 @@ if [ $STORAGE = "Pisa" ] ; then
 #    PREFIX="/gpfs/ddn/srm/cms"
 elif [ $STORAGE = "Bari" ] ; then
     PREFIX="/lustre/cms"
+elif [ $STORAGE = "Local" ] ; then
+    PREFIX="/Users/Kes/workspace/analysis"
 else
     echo "ERROR: unknown storage"
     exit
@@ -52,7 +54,8 @@ if [ ! -f "$MAKE_PATH" ] ; then
         exit
 fi
 
-JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" )
+JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -print0 | xargs -0 -n 1 basename | sed "s/\.txt//" )
+#JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" )
 
 if [ "x$JOBS" = "x" ] ; then
 	echo "ERROR: directory '$FILE_LIST_PATH' does not contains any job description."
@@ -117,6 +120,19 @@ elif [ "$QUEUE" = "fai" ] ; then
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
+        if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
+                wait
+                i=0
+        fi
+    done
+    wait
+    echo "$N_JOBS finished on fai"
+elif [ $STORAGE = "Local" ] ; then
+    for NAME in $JOBS ; do
+        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME "dont_set_cmsenv" &
+        i=$(($i + 1))
+        n=$(($n + 1))
+        echo "job $n started"
         if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
                 wait
                 i=0
