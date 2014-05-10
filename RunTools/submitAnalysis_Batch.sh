@@ -17,7 +17,8 @@ RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
 MAKE_PATH=$WORKING_PATH/RunTools/make.sh
 
 if [ $STORAGE = "Pisa" ] ; then
-    PREFIX="/gpfs/ddn/srm/cms"
+    PREFIX=/gpfs/ddn/cms/user/androsov
+#    PREFIX="/gpfs/ddn/srm/cms"
 elif [ $STORAGE = "Bari" ] ; then
     PREFIX="/lustre/cms"
 else
@@ -83,9 +84,9 @@ echo "All jobs compiled."
 i=0
 n=0
 
-if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
+if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
-        bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq_pre-cms.bash \
+        bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
              -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME
     done
     echo "$N_JOBS have been submited in local in Pisa"
