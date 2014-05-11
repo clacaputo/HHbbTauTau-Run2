@@ -31,7 +31,9 @@ public:
         Data_distr->Scale( 1.0/ Data_distr->Integral() );
         Data_File->Close();
         outputFile->cd();
-        nPU_MCdistr = new TH1D("MC_pileup", "MC nPU distribution", Data_distr->GetNbinsX(), 0, Data_distr->GetNbinsX());
+        nPU_MCdistr = new TH1D("MC_pileup", "MC nPU distribution", Data_distr->GetNbinsX(),
+                               Data_distr->GetBinLowEdge(1),
+                               Data_distr->GetBinLowEdge(Data_distr->GetNbinsX() + 1));
     }
 
 

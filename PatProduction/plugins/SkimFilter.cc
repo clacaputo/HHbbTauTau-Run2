@@ -65,7 +65,7 @@ bool SkimFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (!haveGoodVertex) return false;
 
     for(const pat::Tau& tau : taus) {
-        if(tau.pt() > 15.0 && std::abs(tau.eta()) < 2.3  && tau.decayMode() > 0.5)
+        if(tau.pt() > 15.0 && std::abs(tau.eta()) < 2.3  && tau.tauID("decayModeFinding") > 0.5)
             ++nGoodTaus;
         if(nGoodTaus >= 2) return true;
     }

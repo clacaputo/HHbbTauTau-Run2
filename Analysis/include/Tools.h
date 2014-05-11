@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <chrono>
+#include <iostream>
 
 namespace tools {
 
@@ -19,7 +20,7 @@ public:
     Timer(unsigned _report_interval)
         : start(clock::now()), block_start(start), report_interval(_report_interval)
     {
-        std::cout << "Starting analyzer...\n";
+        std::cout << "Starting analyzer..." << std::endl;
     }
 
     void Report(size_t event_id, bool final_report = false)
@@ -34,7 +35,7 @@ public:
         if(final_report)
             std::cout << "Total: ";
         std::cout << "time = " << since_start << " seconds, events processed = " << event_id
-                  << ", average speed = " << std::setprecision(1) << std::fixed << speed << " events/s\n";
+                  << ", average speed = " << std::setprecision(1) << std::fixed << speed << " events/s" << std::endl;
         block_start = now;
     }
 

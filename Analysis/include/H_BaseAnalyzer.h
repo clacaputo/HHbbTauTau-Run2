@@ -224,10 +224,11 @@ protected:
 
         analysis::GenParticlePtrVector resonanceDecayProducts;
         if(!analysis::FindDecayProducts(*final_state.resonance, resonanceDecay,resonanceDecayProducts)) {
-            std::cout << "event id = " << event.eventId().eventId << std::endl;
+
 //            genEvent.PrintChain(final_state.resonance);
 //            throw std::runtime_error("Resonance does not decay into 2 taus");
-            std::cerr << "Resonance does not decay into 2 taus\n";
+            std::cerr << "event id = " << event.eventId().eventId
+                      << " Resonance does not decayed into 2 taus" << std::endl;
             return false;
         }
 
