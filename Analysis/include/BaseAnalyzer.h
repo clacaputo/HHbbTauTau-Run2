@@ -97,17 +97,19 @@ protected:
             const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
             if(bxIndex >= eventInfo.bunchCrossing.size())
                 throw std::runtime_error("in-time BX not found");
-            SetWeight(eventInfo.nPU.at(bxIndex));
+            //SetWeight(eventInfo.nPU.at(bxIndex));
+            SetWeight(eventInfo.trueNInt.at(bxIndex));
         }
     }
 
-    void SetWeight(Int_t nPU)
+    void SetWeight(float nPU)
     {
-        static const Int_t maxAvailablePU = 70;
-        static const double defaultWeight = 1.0;
+        static const float maxAvailablePU = 60;
+        static const double defaultWeight = 0.0;
         if (!weights) return;
         const Int_t bin = weights->FindBin(nPU);
-        const bool goodBin = bin >= 1 && bin <= maxAvailablePU;
+		const Int_t maxBin = weights->FindBin(maxAvailablePU);
+        const bool goodBin = bin >= 1 && bin <= maxBin;
         weight = goodBin ? weights->GetBinContent(bin) : defaultWeight;
     }
 
