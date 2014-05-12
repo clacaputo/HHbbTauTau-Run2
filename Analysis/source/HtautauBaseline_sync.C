@@ -183,8 +183,10 @@ protected:
             leadTau = higgs.finalStateDaughters.at(0);
             subLeadTau = higgs.finalStateDaughters.at(1);
         }
-        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
-        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
+//        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
+//        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
+        const ntuple::Tau& leg1 = event.taus().at(leadTau.index);
+        const ntuple::Tau& leg2 = event.taus().at(subLeadTau.index);
         if (leg1.decayMode == 0)
             DMweight *= 0.88;
         if (leg2.decayMode == 0)
@@ -193,12 +195,14 @@ protected:
 
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, subLeadTau);
 
-        //leadTau
-        syncTree.pt_1() = leadTau.momentum.Pt();
-        syncTree.eta_1() = leadTau.momentum.Eta();
-        syncTree.phi_1() = leadTau.momentum.Phi();
-        syncTree.m_1() = leadTau.momentum.M();
-        syncTree.q_1() = leadTau.charge;
+        //leadTau - not corrected!
+        syncTree.pt_1() = leg1.pt;
+        syncTree.eta_1() = leg1.eta;
+        syncTree.phi_1() = leg1.phi;
+        TLorentzVector leg1_momentum;
+        leg1_momentum.SetPtEtaPhiE(leg1.pt,leg1.eta,leg1.phi,leg1.energy);
+        syncTree.m_1() = leg1_momentum.M();
+        syncTree.q_1() = leg1.charge;
         syncTree.iso_1() = leg1.byIsolationMVAraw;
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         syncTree.againstElectronMVA3raw_1() = leg1.againstElectronMVA3raw;
