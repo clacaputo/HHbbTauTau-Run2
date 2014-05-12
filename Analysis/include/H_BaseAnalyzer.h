@@ -246,7 +246,7 @@ protected:
         syncTree.npv() = vertices.size();
         for (unsigned n = 0; n < event.eventInfo().bunchCrossing.size(); ++n){
             if (event.eventInfo().bunchCrossing.at(n) == 0){
-                syncTree.npu() = event.eventInfo().nPU.at(n); //only in-time PU
+                syncTree.npu() = event.eventInfo().trueNInt.at(n); //only in-time PU
             }
         }
         syncTree.puweight() = weight;
