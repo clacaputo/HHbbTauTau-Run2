@@ -18,8 +18,10 @@
 #include <TString.h>
 #include <TCanvas.h>
 #include <TH1.h>
+#include <TH2.h>
 #include <TText.h>
 #include <TLine.h>
+#include <TPad.h>
 
 class Print_SyncPlots {
 public:
@@ -170,7 +172,7 @@ private:
     template<typename VarType>
     void drawHistos(TCanvas * C, TString filename, TString category, TTree* Tmine, TTree* Tother, TString var,
                     int nbins, float xmin, float xmax, TString selection, TString myGroup, TString myRootFile,
-                    TString group, TString groupRootFile,TString mySel="1",TString groupSel="1")
+                    TString group, TString groupRootFile,TString mySel,TString groupSel)
     {
         try {
 
@@ -179,18 +181,24 @@ private:
             //   cout<<var<<" "<<nbins<<" "<<xmin<<" "<<xmax<<" "<<selection<<endl;
 
 
-            TH1F* Hmine = new TH1F(TString("Hmine")+var,"",nbins,xmin,xmax);
+            std::unique_ptr<TH1F> Hmine(new TH1F(TString("Hmine")+var,"",nbins,xmin,xmax));
             Hmine->GetYaxis()->SetTitle(category);
             Hmine->GetXaxis()->SetTitle(var);
             Hmine->SetLineColor(1);
             Hmine->SetMarkerColor(1);
             Hmine->SetStats(0);
-            TH1F* Hother = new TH1F(TString("Hother")+var,"",nbins,xmin,xmax);
+
+            std::unique_ptr<TH1F> Hother(new TH1F(TString("Hother")+var,"",nbins,xmin,xmax));
             Hother->GetYaxis()->SetTitle(category);
             Hother->GetXaxis()->SetTitle(var);
             Hother->SetLineColor(2);
             Hother->SetMarkerColor(2);
             Hother->SetStats(0);
+
+            std::unique_ptr<TH2F> Hmine_vs_other(new TH2F(TString("Hmine_vs_other") + var, "", nbins, xmin, xmax,
+                                                          nbins, xmin, xmax));
+            Hmine_vs_other->GetXaxis()->SetTitle(var + "_mine");
+            Hmine_vs_other->GetYaxis()->SetTitle(var + "_other");
 
             TText TXmine;
             TXmine.SetTextColor(1);
@@ -201,8 +209,9 @@ private:
 
 
             if(plotOnlyMatchedEvents) {
-                FillHistogram<VarType>(Tmine, Hmine, var.Data(), my_events);
-                FillHistogram<VarType>(Tother, Hother, var.Data(), other_events);
+                const std::vector<VarType> my_values = CollectValues<VarType>(Tmine, var.Data());
+                const std::vector<VarType> other_values = CollectValues<VarType>(Tother, var.Data());
+                FillHistograms<VarType>(my_values, other_values, *Hmine, *Hother, *Hmine_vs_other);
             } else {
                 Tmine->Draw(var+">>"+Hmine->GetName(),selection+"*("+mySel+")");
                 Tother->Draw(var+">>"+Hother->GetName(),selection+"*("+groupSel+")");
@@ -241,8 +250,8 @@ private:
             //   line.DrawLine(HDiff->GetXaxis()->GetXmin(),0,HDiff->GetXaxis()->GetXmax(),0);
 
             ///Draw the ratio of the historgrams
-            TH1F*HDiff=(TH1F*)Hother->Clone("HDiff");
-            HDiff->Divide(Hmine);
+            std::unique_ptr<TH1F> HDiff((TH1F*)Hother->Clone("HDiff"));
+            HDiff->Divide(Hmine.get());
             ///HDiff->GetYaxis()->SetRangeUser(0.9,1.1);
             HDiff->GetYaxis()->SetRangeUser(0.9,1.1);
             //HDiff->GetYaxis()->SetRangeUser(0.98,1.02);
@@ -268,26 +277,34 @@ private:
 
             C->Print(filename);
 
-            delete Hmine;
-            delete Hother;
-            delete HDiff;
+            if(plotOnlyMatchedEvents) {
+                pad1.Clear();
+                pad1.cd();
+                Hmine_vs_other->Draw();
+                TXmine.DrawTextNDC(.23,.84,myGroup+" : "+(long)(Hmine->Integral(0,Hmine->GetNbinsX()+1)));
+                TXother.DrawTextNDC(.53,.84,group+": "+(long)(Hother->Integral(0,Hother->GetNbinsX()+1)));
+                C->Clear();
+                pad1.Draw();
+                C->Print(filename);
+            }
+
         } catch(std::runtime_error& e){
             std::cerr << "ERROR: " << e.what() << std::endl;
         }
     }
 
-    template<typename VarType, typename Histogram>
-    void FillHistogram(TTree* tree, Histogram* histogram, const std::string& name, const std::vector<Int_t>& events)
+    template<typename VarType, typename Histogram, typename Histogram2D>
+    void FillHistograms(const std::vector<VarType>& my_values, const std::vector<VarType>& other_values,
+                        Histogram& my_histogram, Histogram& other_histogram, Histogram2D& histogram2D)
     {
-        std::set<Int_t> filled_events;
-        const std::vector<VarType> values = CollectValues<VarType>(tree, name);
-        if(values.size() != events.size())
-            throw std::runtime_error("values and events sizes not match");
-        for(size_t n = 0; n < values.size(); ++n) {
-            if(intersection.count(events.at(n)) && !filled_events.count(events.at(n))) {
-                histogram->Fill(values.at(n));
-                filled_events.insert(events.at(n));
-            }
+        for(const auto& event_entry_pair : event_to_entry_pair_map) {
+            const size_t my_entry = event_entry_pair.second.first;
+            const size_t other_entry = event_entry_pair.second.second;
+            const VarType& my_value = my_values.at(my_entry);
+            const VarType& other_value = other_values.at(other_entry);
+            my_histogram.Fill(my_value);
+            other_histogram.Fill(other_value);
+            histogram2D.Fill(my_value, other_value);
         }
     }
 
@@ -303,11 +320,28 @@ private:
                                                 other_events_set.begin(), other_events_set.end(),
                                                 intersection_vector.begin());
         intersection_vector.resize(iter - intersection_vector.begin());
-        std::cout << my_events.size() << " " << other_events.size() << " " << intersection_vector.size() << std::endl;
-        std::cout << my_events_set.size() << " " << other_events_set.size() << " " << intersection_vector.size() << std::endl;
-//        throw std::runtime_error("debug");
+        std::cout << "# my events = " << my_events.size() << ", " << "# my unique events = " << my_events_set.size()
+                  << "\n# other events = " << other_events.size()
+                  << ", # other unique events = " << other_events_set.size()
+                  << "\n # common events = " << intersection_vector.size() << std::endl;
         intersection.clear();
         intersection.insert(intersection_vector.begin(), intersection_vector.end());
+        std::map<Int_t, size_t> my_event_to_entry_map, other_event_to_entry_map;
+        FillEventToEntryMap(my_events, intersection, my_event_to_entry_map);
+        FillEventToEntryMap(other_events, intersection, other_event_to_entry_map);
+        for(const auto& event_entry : my_event_to_entry_map) {
+            event_to_entry_pair_map[event_entry.first] =
+                    std::pair<size_t, size_t>(event_entry.second, other_event_to_entry_map.at(event_entry.first));
+        }
+    }
+
+    void FillEventToEntryMap(const std::vector<Int_t>& events, const std::set<Int_t>& intersection,
+                             std::map<Int_t, size_t>& event_to_entry_map)
+    {
+        for(size_t n = 0; n < events.size(); ++n) {
+            if(intersection.count(events[n]))
+                event_to_entry_map[events[n]] = n;
+        }
     }
 
     template<typename VarType>
@@ -344,4 +378,5 @@ private:
     bool plotOnlyMatchedEvents;
     std::vector<Int_t> my_events, other_events;
     std::set<Int_t> intersection;
+    std::map<Int_t, std::pair<size_t, size_t> > event_to_entry_pair_map;
 };
