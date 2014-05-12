@@ -332,7 +332,6 @@ protected:
             syncTree.beta() = -10000;
             syncTree.bphi() = -10000;
         }
-        syncTree.Fill();
     }
 
 protected:
