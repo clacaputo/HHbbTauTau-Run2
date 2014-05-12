@@ -183,10 +183,10 @@ protected:
 
     Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
-        ntuple::MET postRecoilMET(correctedMET);
         if (useMCtruth){
             postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
         }
+        else postRecoilMET = correctedMET;
         return CorrectMassBySVfit(higgs, postRecoilMET);
     }
 
@@ -283,16 +283,16 @@ protected:
 
         syncTree.met() = event.metPF().pt; //raw
         syncTree.metphi() = event.metPF().phi; //raw
-        syncTree.mvamet() = correctedMET.pt;
-        syncTree.mvametphi() = correctedMET.phi;
+        syncTree.mvamet() = postRecoilMET.pt;
+        syncTree.mvametphi() = postRecoilMET.phi;
         syncTree.metcov00() = event.metPF().significanceMatrix.at(0);
         syncTree.metcov01() = event.metPF().significanceMatrix.at(1);
         syncTree.metcov10() = event.metPF().significanceMatrix.at(2);
         syncTree.metcov11() = event.metPF().significanceMatrix.at(3);
-        syncTree.mvacov00() = correctedMET.significanceMatrix.at(0);
-        syncTree.mvacov01() = correctedMET.significanceMatrix.at(1);
-        syncTree.mvacov10() = correctedMET.significanceMatrix.at(2);
-        syncTree.mvacov11() = correctedMET.significanceMatrix.at(3);
+        syncTree.mvacov00() = postRecoilMET.significanceMatrix.at(0);
+        syncTree.mvacov01() = postRecoilMET.significanceMatrix.at(1);
+        syncTree.mvacov10() = postRecoilMET.significanceMatrix.at(2);
+        syncTree.mvacov11() = postRecoilMET.significanceMatrix.at(3);
 
         syncTree.njets() = jets.size();
         syncTree.nbtag() = bjets.size();
@@ -338,5 +338,6 @@ protected:
     ntuple::SyncTree syncTree;
     ntuple::TauVector correctedTaus;
     ntuple::MET correctedMET;
+    ntuple::MET postRecoilMET;
 };
 } // analysis
