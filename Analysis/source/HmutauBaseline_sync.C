@@ -53,7 +53,7 @@ protected:
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
-        primaryVertex = vertices.back();
+        primaryVertex = vertices.front();
 
         const auto z_muons = CollectZmuons();
         const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);

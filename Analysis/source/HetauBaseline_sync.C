@@ -52,7 +52,7 @@ protected:
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
-        primaryVertex = vertices.back();
+        primaryVertex = vertices.front();
 
         const auto z_electrons = CollectZelectrons();
         const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,

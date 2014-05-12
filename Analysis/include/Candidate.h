@@ -39,7 +39,8 @@ public:
         momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
     }
 
-    Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type), index(-1) {
+    Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type),
+        index(std::numeric_limits<size_t>::max()) {
         daughters.push_back(daughter1);
         daughters.push_back(daughter2);
         momentum = daughter1.momentum + daughter2.momentum;
@@ -57,7 +58,9 @@ public:
 
     bool operator < (const Candidate& other) const
     {
-        return momentum.Pt() < other.momentum.Pt();
+        if(index == std::numeric_limits<size_t>::max() || other.index == std::numeric_limits<size_t>::max())
+            return momentum.Pt() > other.momentum.Pt();
+        return index < other.index;
     }
 
     bool operator == (const Candidate& other) const
@@ -130,7 +133,7 @@ public:
 
     bool operator < (const Vertex& other) const
     {
-        return index > other.index;
+        return index < other.index;
 //        return sumPtSquared < other.sumPtSquared;
     }
 

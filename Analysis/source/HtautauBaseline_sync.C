@@ -53,7 +53,7 @@ protected:
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
-        primaryVertex = vertices.back();
+        primaryVertex = vertices.front();
 
         const auto electrons_bkg = CollectBackgroundElectrons();
         cut(!electrons_bkg.size(), "no_electron");
