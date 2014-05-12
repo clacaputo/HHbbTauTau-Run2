@@ -257,14 +257,17 @@ protected:
         syncTree.eta_sv() = higgs_corr.momentum.Eta();
         syncTree.phi_sv() = higgs_corr.momentum.Phi();
 
-        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
+        //const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
+        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
 
-        //tau
-        syncTree.pt_2() = tau.momentum.Pt();
-        syncTree.eta_2() = tau.momentum.Eta();
-        syncTree.phi_2() = tau.momentum.Phi();
-        syncTree.m_2() = tau.momentum.M();
-        syncTree.q_2() = tau.charge;
+        //tau - not corrected
+        syncTree.pt_2() = ntuple_tau.pt;
+        syncTree.eta_2() = ntuple_tau.eta;
+        syncTree.phi_2() = ntuple_tau.phi;
+        TLorentzVector tau_momentum;
+        tau_momentum.SetPtEtaPhiE(ntuple_tau.pt,ntuple_tau.eta,ntuple_tau.phi,ntuple_tau.energy);
+        syncTree.m_2() = tau_momentum.M();
+        syncTree.q_2() = ntuple_tau.charge;
         syncTree.iso_2() = ntuple_tau.byIsolationMVAraw;
         const TVector3 tau_vertex(ntuple_tau.vx, ntuple_tau.vy, ntuple_tau.vz);
         syncTree.d0_2() = (tau_vertex - primaryVertex.position).Perp();
