@@ -388,10 +388,12 @@ private:
             if(my_events_only.count(event_entry.first))
                 my_events_only_map[event_entry.first] = event_entry.second;
         }
-
+        std::cout << "Riccardo events" << std::endl;
         for(const auto& event_entry : other_event_to_entry_map) {
-            if(other_events_only.count(event_entry.first))
+            if(other_events_only.count(event_entry.first)){
                 other_events_only_map[event_entry.first] = event_entry.second;
+                std::cout << "eventId = " << event_entry.first << std::endl;
+            }
         }
 
         std::cout << "# my events = " << my_events.size() << ", " << "# my unique events = " << my_events_set.size()
