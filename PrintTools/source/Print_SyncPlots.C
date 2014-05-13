@@ -66,9 +66,10 @@ public:
         drawHistos<Int_t>("npu", 50, 0, 50);
         drawHistos<Double_t>("pt_1", 100, 0, 100);
         drawHistos<Double_t>("eta_1", 60, -3, 3);
-        drawHistos<Double_t>("iso_1", 60, -.02, 0.12);
+        drawHistos<Double_t>("iso_1", 200, -1, 1);
         drawHistos<Double_t>("pt_2", 100, 0, 100);
         drawHistos<Double_t>("eta_2", 60, -3, 3);
+        drawHistos<Double_t>("iso_2", 200, -1, 1);
         drawHistos<Double_t>("mvis", 50, 0, 200);
         drawHistos<Double_t>("met", 20, 0, 200);
         drawHistos<Double_t>("metphi", 30, -3.5, 3.5);
@@ -78,7 +79,7 @@ public:
         drawHistos<Double_t>("mvacov01", 40, 0, 1000);
         drawHistos<Double_t>("mvacov10", 40, 0, 1000);
         drawHistos<Double_t>("mvacov11", 40, 0, 1000);
-        drawHistos<Double_t>("mt_1", 50, 0, 200);
+        //drawHistos<Double_t>("mt_1", 50, 0, 200);
         drawHistos<Double_t>("m_sv", 60, 0, 300);
 
 
@@ -109,16 +110,16 @@ public:
         drawHistos<Double_t>("jeta_1", 50, -5, 5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
         drawHistos<Double_t>("jpt_2", 50, 0, 200, atLeast2jets_my, atLeast2jets_other, "njets>=2");
         drawHistos<Double_t>("jeta_2", 50, -5, 5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("mjj", 50, 0, 3000, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("jdeta", 50, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Int_t>("njetingap", 4, -0.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("mjj", 50, 0, 3000, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("jdeta", 50, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Int_t>("njetingap", 4, -0.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
-        drawHistos<Double_t>("visjeteta", 100, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("ptvis", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("jdphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("dijetpt", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("hdijetphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("mva", 40, -1, 1.001, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("visjeteta", 100, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("ptvis", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("jdphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("dijetpt", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("hdijetphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos<Double_t>("mva", 40, -1, 1.001, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
         drawHistos<Double_t>("mvis", 50, 0, 200, noJets_my, noJets_other, "njets==0");
 
@@ -138,9 +139,9 @@ public:
         drawHistos<Double_t>("beta", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
 
         drawHistos<Double_t>("puweight", 25, -.1, 0.9);
-        drawHistos<Double_t>("effweight", 30, .8, 1.1);
-        drawHistos<Double_t>("embeddedWeight", 50, 0, 1);
-        drawHistos<Double_t>("weight", 30, 0, 2.0);
+        //drawHistos<Double_t>("effweight", 30, .8, 1.1);
+        //drawHistos<Double_t>("embeddedWeight", 50, 0, 1);
+        //drawHistos<Double_t>("weight", 30, 0, 2.0);
 
         //with puweight
 //        TString weight="(puweight)";
