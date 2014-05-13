@@ -128,7 +128,7 @@ protected:
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
         cut(X(passLooseID, 2, -0.5, 1.5) == pfLooseID, "pfLooseID");
         const bool pass_puLooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
-        cut(Y(pass_puLooseID == puLooseID, 2, -0.5, 1.5), "puLooseID");
+        cut(Y(pass_puLooseID, 2, -0.5, 1.5) == puLooseID, "puLooseID");
 
         const Candidate jet(analysis::Candidate::Jet, id, object);
         for(const Candidate& daughter : higgs.finalStateDaughters) {
