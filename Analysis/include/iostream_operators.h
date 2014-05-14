@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& s, const TVector3& v){
 }
 
 std::ostream& operator<<(std::ostream& s, const TLorentzVector& v){
-    s << "(" << v.E() << ", " << v.Px() << ", " << v.Py() << ", " << v.Pz() << ")";
+    s << "(" << v.Pt() << ", " << v.Eta() << ", " << v.Phi() << ", " << v.E() << ")";
     return s;
 }
 

@@ -77,10 +77,12 @@ public:
         size_t n = 0;
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor.ExtractNext(event); ++n) {
             timer.Report(n);
+            //if (event.eventId().eventId != 2845) continue;
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&){}
             GetAnaData().Selection("event").fill_selection(weight);
+            //break;
         }
         timer.Report(n, true);
         runReport.Report();
@@ -257,9 +259,14 @@ protected:
         CandidateVector result;
         for (unsigned n = 0; n < objects.size(); ++n){
             for (unsigned k = n+1; k < objects.size(); ++k){
+//                std::cout << "first tau momentum " << objects.at(n).momentum << std::endl;
+//                std::cout << "second tau momentum " << objects.at(k).momentum << std::endl;
+//                std::cout << "DeltaR " << objects.at(n).momentum.DeltaR(objects.at(k).momentum) << std::endl;
+//                std::cout << "first tau charge " << objects.at(n).charge << std::endl;
+//                std::cout << "second tau charge " << objects.at(k).charge << std::endl;
                 if(objects.at(n).momentum.DeltaR(objects.at(k).momentum) > minDeltaR) {
                     const Candidate candidate(type, objects.at(n), objects.at(k));
-                    if (candidate.charge != expectedCharge) continue;
+                    if (expectedCharge != Candidate::UnknownCharge() && candidate.charge != expectedCharge ) continue;
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
                 }

@@ -63,15 +63,17 @@ protected:
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
+        cut(taus.size() >= 2, "at least 2 taus");
 
 
 
         const auto higgses = FindCompatibleObjects(taus,
-                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau", 0);
+                   cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau");
 
+        cut(higgses.size(), "DeltaR higgses");
         const auto higgses_tautau = ApplyTauFullSelection(higgses);
 
-        cut(higgses_tautau.size(), "tau_tau");
+        cut(higgses_tautau.size(), "tau_tau selection");
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgses_tautau);
 
