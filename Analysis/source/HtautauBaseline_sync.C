@@ -44,7 +44,7 @@ protected:
         finalState::TaujetTaujet tauTau;
         if (useMCtruth && !FindAnalysisFinalState(tauTau)) return;
 
-        ApplyTauCorrections(tauTau);
+
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -61,6 +61,7 @@ protected:
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
 
+        ApplyTauCorrections(tauTau);
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
         cut(taus.size() >= 2, "at least 2 taus");
@@ -79,9 +80,10 @@ protected:
 
         const auto jets = CollectJets(higgs);
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
+        //const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
 
-        FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
+        //FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
+        FillSyncTree(higgs, higgs, jets, bjets, vertices);
 
     }
 
@@ -185,10 +187,10 @@ protected:
             leadTau = higgs.finalStateDaughters.at(0);
             subLeadTau = higgs.finalStateDaughters.at(1);
         }
-//        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
-//        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
-        const ntuple::Tau& leg1 = event.taus().at(leadTau.index);
-        const ntuple::Tau& leg2 = event.taus().at(subLeadTau.index);
+        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
+        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
+//        const ntuple::Tau& leg1 = event.taus().at(leadTau.index);
+//        const ntuple::Tau& leg2 = event.taus().at(subLeadTau.index);
         if (leg1.decayMode == 0)
             DMweight *= 0.88;
         if (leg2.decayMode == 0)

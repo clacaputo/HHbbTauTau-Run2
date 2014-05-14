@@ -257,8 +257,8 @@ protected:
         syncTree.eta_sv() = higgs_corr.momentum.Eta();
         syncTree.phi_sv() = higgs_corr.momentum.Phi();
 
-        //const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
-        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
+        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
+        //const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
 
         //tau - not corrected
         syncTree.pt_2() = ntuple_tau.pt;
