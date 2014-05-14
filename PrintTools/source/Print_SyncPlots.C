@@ -380,14 +380,18 @@ private:
         FillEventToEntryMap(my_events, my_event_to_entry_map);
         FillEventToEntryMap(other_events, other_event_to_entry_map);
 
+        std::cout << "Our events" << std::endl;
         for(const auto& event_entry : my_event_to_entry_map) {
             if(intersection.count(event_entry.first)) {
                 common_event_to_entry_pair_map[event_entry.first] =
                         std::pair<size_t, size_t>(event_entry.second, other_event_to_entry_map.at(event_entry.first));
             }
-            if(my_events_only.count(event_entry.first))
+            if(my_events_only.count(event_entry.first)) {
                 my_events_only_map[event_entry.first] = event_entry.second;
+                std::cout << "eventId = " << event_entry.first << std::endl;
+            }
         }
+
         std::cout << "Riccardo events" << std::endl;
         for(const auto& event_entry : other_event_to_entry_map) {
             if(other_events_only.count(event_entry.first)){
