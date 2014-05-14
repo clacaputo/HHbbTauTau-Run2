@@ -109,6 +109,7 @@ protected:
             > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
 
         const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths);
         cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
