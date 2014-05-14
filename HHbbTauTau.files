@@ -181,5 +181,5 @@ Analysis/source/HmutauBaseline_sync.C
 Analysis/include/AnalysisTools.h
 Analysis/include/HH_BaseAnalyzer.h
 Analysis/include/H_BaseAnalyzer.h
-myTools/skimRiccardo.py
-myTools/tree_trimmer.py
+RunTools/python/skimRiccardo.py
+RunTools/python/tree_trimmer.py
