@@ -108,11 +108,12 @@ protected:
         cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
             > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
 
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths);
+        //const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+        const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
+        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
         cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
+        return tau;
     }
 
     analysis::CandidateVector ApplyTauFullSelection(const analysis::CandidateVector& higgses)
