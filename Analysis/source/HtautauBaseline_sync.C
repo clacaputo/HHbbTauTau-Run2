@@ -77,8 +77,8 @@ protected:
 
         cut(higgses_tautau.size(), "tau_tau selection");
 
-        const Candidate higgs = SelectFullyHadronicHiggs(higgses_tautau);
 
+        const Candidate higgs = SelectFullyHadronicHiggs(higgses_tautau);
 
         const auto jets = CollectJets(higgs);
         const auto bjets = CollectBJets(higgs);
@@ -130,7 +130,6 @@ protected:
         }
         return result;
     }
-
 
     const analysis::Candidate& SelectFullyHadronicHiggs(const analysis::CandidateVector& higgses)
     {
