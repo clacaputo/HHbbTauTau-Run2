@@ -71,7 +71,7 @@ protected:
         const auto higgses = FindCompatibleObjects(taus,
                    cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau");
 
-        cut(higgses.size(), "DeltaR higgses");
+        cut(higgses.size(), "DeltaR taus");
 
         const auto higgses_tautau = ApplyTauFullSelection(higgses);
 
