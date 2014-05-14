@@ -13,6 +13,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <iostream>
 #include <TH1D.h>
 #include <Rtypes.h>
@@ -42,8 +43,6 @@ private:
     std::string message;
 };
 
-
-
 template<typename ValueType, typename Histogram>
 ValueType fill_histogram(ValueType value, Histogram& histogram, double weight)
 {
@@ -65,7 +64,9 @@ public:
             counters.push_back(0);
             selections.push_back(0);
             selectionsSquaredErros.push_back(0);
-            labels.push_back(param_label);
+            const std::string label = make_unique_label(param_label);
+            labels.push_back(label);
+            label_set.insert(label);
         }
         counters.at(param_id)++;
     }
@@ -97,14 +98,23 @@ public:
         return selected;
     }
 
+private:
+    std::string make_unique_label(const std::string& label)
+    {
+        if(!label_set.count(label)) return label;
+        for(size_t n = 2; ; ++n) {
+            std::ostringstream ss;
+            ss << label << "_" << n;
+            if(!label_set.count(ss.str())) return ss.str();
+        }
+    }
 
 protected:
     std::vector<unsigned> counters;
     std::vector<double> selections;
     std::vector<double> selectionsSquaredErros;
     std::vector<std::string> labels;
-
-
+    std::set<std::string> label_set;
 };
 
 class Cutter {
