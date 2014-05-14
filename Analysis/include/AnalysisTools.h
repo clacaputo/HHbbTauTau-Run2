@@ -57,7 +57,7 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
                 const std::string& interestingPath = interestingPaths.at(k);
                 const size_t found = objectMatchedPath.find(interestingPath);
                 if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                        triggerObjectMomentum.DeltaR(candidate.momentum) > 0.5) return true;
+                        triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5) return true;
             }
         }
     }
