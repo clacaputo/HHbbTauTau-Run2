@@ -72,18 +72,22 @@ protected:
                    cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau");
 
         cut(higgses.size(), "DeltaR higgses");
+
         const auto higgses_tautau = ApplyTauFullSelection(higgses);
 
         cut(higgses_tautau.size(), "tau_tau selection");
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgses_tautau);
 
+
         const auto jets = CollectJets(higgs);
         const auto bjets = CollectBJets(higgs);
-        //const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
 
+        //const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
         //FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
+        postRecoilMET = correctedMET;
         FillSyncTree(higgs, higgs, jets, bjets, vertices);
+        //std::cout << "I filled the tree" << std::endl;
 
     }
 
