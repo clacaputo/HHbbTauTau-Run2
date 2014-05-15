@@ -20,6 +20,52 @@ def applyJetParameters(process, isMC):
     )
 
     process.load("RecoJets.JetProducers.PileupJetID_cfi")
+
+    process.puJetId = cms.EDProducer("PileupJetIdProducer",
+        residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt'),
+        runMvas = cms.bool(False),
+        inputIsCorrected = cms.bool(True),
+        vertexes = cms.InputTag("offlinePrimaryVertices"),
+        produceJetIds = cms.bool(True),
+        jec = cms.string('AK5PF'),
+        residualsFromTxt = cms.bool(False),
+        applyJec = cms.bool(False),
+        jetids = cms.InputTag(""),
+        rho = cms.InputTag("kt6PFJets","rho"),
+        jets = cms.InputTag("patJets"),
+        algos = cms.VPSet(cms.PSet(
+            cutBased = cms.bool(True),
+            JetIdParams = cms.PSet(
+                Pt010_RMSLoose = cms.vdouble(0.06, 0.05, 0.05, 0.07),
+                Pt3050_RMSMedium = cms.vdouble(0.06, 0.03, 0.03, 0.04),
+                Pt3050_BetaStarMedium = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt010_BetaStarMedium = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt1020_BetaStarTight = cms.vdouble(0.15, 0.15, 999.0, 999.0),
+                Pt010_RMSMedium = cms.vdouble(0.06, 0.03, 0.03, 0.04),
+                Pt1020_RMSLoose = cms.vdouble(0.06, 0.05, 0.05, 0.07),
+                Pt1020_BetaStarLoose = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt2030_RMSTight = cms.vdouble(0.05, 0.07, 0.03, 0.045),
+                Pt3050_RMSTight = cms.vdouble(0.05, 0.06, 0.03, 0.04),
+                Pt1020_RMSTight = cms.vdouble(0.06, 0.07, 0.04, 0.05),
+                Pt3050_BetaStarTight = cms.vdouble(0.15, 0.15, 999.0, 999.0),
+                Pt3050_RMSLoose = cms.vdouble(0.06, 0.05, 0.05, 0.055),
+                Pt2030_RMSLoose = cms.vdouble(0.06, 0.05, 0.05, 0.055),
+                Pt010_BetaStarTight = cms.vdouble(0.15, 0.15, 999.0, 999.0),
+                Pt2030_BetaStarMedium = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt1020_RMSMedium = cms.vdouble(0.06, 0.03, 0.03, 0.04),
+                Pt2030_BetaStarLoose = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt2030_BetaStarTight = cms.vdouble(0.15, 0.15, 999.0, 999.0),
+                Pt2030_RMSMedium = cms.vdouble(0.06, 0.03, 0.03, 0.04),
+                Pt010_BetaStarLoose = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt3050_BetaStarLoose = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt1020_BetaStarMedium = cms.vdouble(0.2, 0.3, 999.0, 999.0),
+                Pt010_RMSTight = cms.vdouble(0.06, 0.07, 0.04, 0.05)
+            ),
+            impactParTkThreshold = cms.double(1.0),
+            label = cms.string('cutbased')
+        ))
+    )
+
     process.pileupJetIdProducer = cms.EDProducer("PileupJetIdProducer",
         produceJetIds = cms.bool(False),
         runMvas = cms.bool(True),
