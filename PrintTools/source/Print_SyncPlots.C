@@ -66,10 +66,10 @@ public:
         drawHistos<Int_t>("npu", 50, 0, 50);
         drawHistos<Double_t>("pt_1", 100, 0, 100);
         drawHistos<Double_t>("eta_1", 60, -3, 3);
-        drawHistos<Double_t>("iso_1", 200, -1, 1);
+        drawHistos<Double_t>("iso_1", 200, 0., 2);
         drawHistos<Double_t>("pt_2", 100, 0, 100);
         drawHistos<Double_t>("eta_2", 60, -3, 3);
-        drawHistos<Double_t>("iso_2", 200, -1, 1);
+        drawHistos<Double_t>("iso_2", 200, 0., 2);
         drawHistos<Double_t>("mvis", 50, 0, 200);
         drawHistos<Double_t>("met", 20, 0, 200);
         drawHistos<Double_t>("metphi", 30, -3.5, 3.5);
