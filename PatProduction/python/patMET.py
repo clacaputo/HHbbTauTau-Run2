@@ -40,9 +40,9 @@ def applyMVAMETParamteres(process, isMC):
     process.patMETsMVAtauTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAtauTau') )
 
     process.patMETsMVAsequence = cms.Sequence(
-        patMETsMVAmuTau *
-        patMETsMVAeTau *
-        patMETsMVAtauTau
+        process.patMETsMVAmuTau *
+        process.patMETsMVAeTau *
+        process.patMETsMVAtauTau
     )
 
     return
