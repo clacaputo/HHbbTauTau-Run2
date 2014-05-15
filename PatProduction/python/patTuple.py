@@ -66,13 +66,13 @@ process.p = cms.Path(
     process.pfParticleSelectionSequence *
     process.muIsoSequence *
     process.electronIsoSequence *
-    process.pileupJetIdProducer *
     process.mvaTrigV0 *
     process.mvaNonTrigV0 *
     process.type0PFMEtCorrection *
     process.producePFMETCorrections *
     process.pfMEtMVAsequence *
     process.patDefaultSequence *
+    process.pileupJetIdProducer *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
     process.patMETsMVAsequence *

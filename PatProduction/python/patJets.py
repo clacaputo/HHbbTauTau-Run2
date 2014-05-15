@@ -20,22 +20,82 @@ def applyJetParameters(process, isMC):
     )
 
     process.load("RecoJets.JetProducers.PileupJetID_cfi")
-    process.pileupJetIdProducer.jets = cms.InputTag('ak5PFJets')
-    process.pileupJetIdProducerChs.jets = cms.InputTag('ak5PFJets')
-    process.pileupJetIdProducer.applyJec = cms.bool(True)
-    process.pileupJetIdProducer.inputIsCorrected = cms.bool(False)
-    process.full_5x_wp.Pt2030_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
-    process.full_5x_wp.Pt3050_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
-    process.pileupJetIdProducer.residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt')
-
-    # Embed into PAT jets as userdata
-    process.patJets.userData.userFloats.src = cms.VInputTag(
-        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant'),
-        cms.InputTag('pileupJetIdProducer', 'cutbasedDiscriminant'),
-        cms.InputTag('pileupJetIdProducer', 'philv1Discriminant'))
-    process.patJets.userData.userInts.src = cms.VInputTag(
-        cms.InputTag('pileupJetIdProducer', 'fullId'),
-        cms.InputTag('pileupJetIdProducer', 'cutbasedId'),
-        cms.InputTag('pileupJetIdProducer', 'philv1Id'))
+    process.pileupJetIdProducer = cms.EDProducer("PileupJetIdProducer",
+        produceJetIds = cms.bool(False),
+        runMvas = cms.bool(True),
+        inputIsCorrected = cms.bool(True),
+        vertexes = cms.InputTag("offlinePrimaryVertices"),
+        residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt'),
+        jec = cms.string('AK5PF'),
+        residualsFromTxt = cms.bool(False),
+        applyJec = cms.bool(False),
+        jetids = cms.InputTag("puJetId"),
+        rho = cms.InputTag("kt6PFJets","rho"),
+        jets = cms.InputTag("patJets"),
+        algos = cms.VPSet(cms.PSet(
+            tmvaVariables = cms.vstring('nvtx',
+                'dZ',
+                'beta',
+                'betaStar',
+                'nCharged',
+                'nNeutrals',
+                'dR2Mean',
+                'ptD',
+                'frac01',
+                'frac02',
+                'frac03',
+                'frac04',
+                'frac05'),
+            tmvaMethod = cms.string('JetIDMVAHighPt'),
+            cutBased = cms.bool(False),
+            tmvaWeights = cms.string('RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_Dec2012.weights.xml'),
+            tmvaSpectators = cms.vstring('jetPt',
+                'jetEta',
+                'jetPhi'),
+            label = cms.string('full'),
+            version = cms.int32(-1),
+            JetIdParams = cms.PSet(
+                Pt2030_Tight = cms.vdouble(0.73, 0.05, -0.26, -0.42),
+                Pt2030_Loose = cms.vdouble(-0.63, -0.6, -0.55, -0.45),
+                Pt3050_Medium = cms.vdouble(0.1, -0.36, -0.54, -0.54),
+                Pt1020_MET = cms.vdouble(0.3, -0.2, -0.4, -0.4),
+                Pt2030_Medium = cms.vdouble(0.1, -0.36, -0.54, -0.54),
+                Pt010_Tight = cms.vdouble(-0.83, -0.81, -0.74, -0.81),
+                Pt1020_Tight = cms.vdouble(-0.83, -0.81, -0.74, -0.81),
+                Pt3050_MET = cms.vdouble(0.0, 0.0, -0.1, -0.2),
+                Pt010_MET = cms.vdouble(0.0, -0.6, -0.4, -0.4),
+                Pt1020_Loose = cms.vdouble(-0.95, -0.96, -0.94, -0.95),
+                Pt010_Medium = cms.vdouble(-0.83, -0.92, -0.9, -0.92),
+                Pt1020_Medium = cms.vdouble(-0.83, -0.92, -0.9, -0.92),
+                Pt2030_MET = cms.vdouble(0.0, 0.0, 0.0, 0.0),
+                Pt010_Loose = cms.vdouble(-0.95, -0.96, -0.94, -0.95),
+                Pt3050_Loose = cms.vdouble(-0.63, -0.6, -0.55, -0.45),
+                Pt3050_Tight = cms.vdouble(0.73, 0.05, -0.26, -0.42)
+            ),
+            impactParTkThreshold = cms.double(1.0)
+        )
+        )
+    )
 
     return
+
+#    process.load("RecoJets.JetProducers.PileupJetID_cfi")
+#    process.pileupJetIdProducer.jets = cms.InputTag('ak5PFJets')
+#    process.pileupJetIdProducerChs.jets = cms.InputTag('ak5PFJets')
+#    process.pileupJetIdProducer.applyJec = cms.bool(True)
+#    process.pileupJetIdProducer.inputIsCorrected = cms.bool(False)
+#    process.full_5x_wp.Pt2030_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
+#    process.full_5x_wp.Pt3050_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
+#    process.pileupJetIdProducer.residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt')
+
+#    # Embed into PAT jets as userdata
+#    process.patJets.userData.userFloats.src = cms.VInputTag(
+#        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant'),
+#        cms.InputTag('pileupJetIdProducer', 'cutbasedDiscriminant'),
+#        cms.InputTag('pileupJetIdProducer', 'philv1Discriminant'))
+#    process.patJets.userData.userInts.src = cms.VInputTag(
+#        cms.InputTag('pileupJetIdProducer', 'fullId'),
+#        cms.InputTag('pileupJetIdProducer', 'cutbasedId'),
+#        cms.InputTag('pileupJetIdProducer', 'philv1Id'))
+
+#    return
