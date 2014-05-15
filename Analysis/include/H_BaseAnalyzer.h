@@ -159,9 +159,11 @@ protected:
             const bool hasMCmatch = analysis::FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
             if(hasMCmatch) {
                 if(tau.decayMode == ntuple::tau_id::kOneProng1PiZero)
-                    scaleFactor = 1.025 + 0.001 * std::min(std::max(momentum.Pt() - 45.0, 0.0), 10.0);
+                    //scaleFactor = 1.025 + 0.001 * std::min(std::max(momentum.Pt() - 45.0, 0.0), 10.0);
+                    scaleFactor = 1.012;
                 else if(tau.decayMode == ntuple::tau_id::kThreeProng0PiZero)
-                    scaleFactor = 1.012 + 0.001 * std::min(std::max(momentum.Pt() - 32.0, 0.0), 18.0);
+                    //scaleFactor = 1.012 + 0.001 * std::min(std::max(momentum.Pt() - 32.0, 0.0), 18.0);
+                    scaleFactor = 1.012;
             }
             const TLorentzVector correctedMomentum = momentum * scaleFactor;
             ntuple::Tau correctedTau(tau);
