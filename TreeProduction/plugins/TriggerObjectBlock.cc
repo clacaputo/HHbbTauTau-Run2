@@ -132,10 +132,13 @@ void TriggerObjectBlock::analyze(const edm::Event& iEvent, const edm::EventSetup
         triggerObjectTree.phi()    = (**it).phi();
         triggerObjectTree.pt()     = (**it).pt();
         triggerObjectTree.energy() = (**it).energy();
+        triggerObjectTree.pdgId() = (**it).pdgId();
+
         for (const auto& imap : pathInfoMap) {
             triggerObjectTree.pathNames().push_back(imap.first);
             triggerObjectTree.pathValues().push_back(imap.second);
         }
+
         triggerObjectTree.Fill();
     }
 }
