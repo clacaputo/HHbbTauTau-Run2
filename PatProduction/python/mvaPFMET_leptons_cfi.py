@@ -76,10 +76,16 @@ isotausTT = cms.EDFilter(
 
 isotausET = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "))
 isotausMT = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "),
-                            discriminators += cms.PSet(
-                                        discriminator = cms.InputTag("hpsPFTauDiscriminationByTightMuonRejection"),
-                                        selectionCut=cms.double(0.5)
-                                    )
+                            discriminators = cms.VPSet(
+                                cms.PSet(
+                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByDecayModeFinding"),
+                                    selectionCut = cms.double(0.5)
+                                ),
+                                cms.PSet(
+                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByTightMuonRejection"),
+                                    selectionCut=cms.double(0.5)
+                                )
+                            )
                            )
 
 isomuonseq     = cms.Sequence(isomuons)
