@@ -46,7 +46,7 @@ isoelectrons = cms.EDFilter(
     filter = cms.bool(False)
 )
 
-isotaus = cms.EDFilter(
+isotausTT = cms.EDFilter(
     "PFTauSelector",
     src = cms.InputTag('hpsPFTauProducer'),
     BooleanOperator = cms.string("and"),
@@ -60,18 +60,26 @@ isotaus = cms.EDFilter(
             discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits"),
             selectionCut = cms.double(0.5)
         ),
-        cms.PSet(
-            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseElectronRejection"),
-            selectionCut = cms.double(0.5)
-        ),
-        cms.PSet(
-            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseMuonRejection2"),
-            selectionCut=cms.double(0.5)
-        )
+#        cms.PSet(
+#            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseElectronRejection"),
+#            selectionCut = cms.double(0.5)
+#        ),
+#        cms.PSet(
+#            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseMuonRejection2"),
+#            selectionCut=cms.double(0.5)
+#        )
     ),
-    cut = cms.string("abs(eta) < 2.3 && pt > 19.0 "),
+    cut = cms.string("abs(eta) < 2.1 && pt > 40.0 "),
     filter = cms.bool(False)
 )
+
+isotausET = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "))
+isotausMT = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "),
+                            discriminators += cms.PSet(
+                                        discriminator = cms.InputTag("hpsPFTauDiscriminationByTightMuonRejection"),
+                                        selectionCut=cms.double(0.5)
+                                    )
+                           )
 
 isomuonseq     = cms.Sequence(isomuons)
 isoelectronseq = cms.Sequence(isoelectrons)

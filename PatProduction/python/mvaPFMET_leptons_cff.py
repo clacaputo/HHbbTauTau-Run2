@@ -11,23 +11,29 @@ calibratedAK5PFJetsForPFMEtMVA = cms.EDProducer('PFJetCorrectionProducer',
     correctors = cms.vstring("ak5PFL1FastL2L3") # NOTE: use "ak5PFL1FastL2L3" for MC / "ak5PFL1FastL2L3Residual" for Data
 )
 
-pfMEtMVA = cms.EDProducer("PFMETProducerMVA",
+pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     srcCorrJets = cms.InputTag('calibratedAK5PFJetsForPFMEtMVA'),
     srcUncorrJets = cms.InputTag('ak5PFJets'),
     srcPFCandidates = cms.InputTag('particleFlow'),
     srcVertices = cms.InputTag('offlinePrimaryVertices'),
     # NOTE: you need to set this to collections of electrons, muons and tau-jets passing the lepton
     #       reconstruction & identification criteria applied in your analysis
-    srcLeptons = cms.VInputTag("isomuons","isoelectrons","isotaus"),
+    srcLeptons = cms.VInputTag("isomuons","isotaus"),
     minNumLeptons = cms.int32(0),
     srcRho = cms.InputTag('kt6PFJets','rho'),
     globalThreshold = cms.double(-1.),#pfMet.globalThreshold,
     minCorrJetPt = cms.double(-1.),
+    #inputFileNames = cms.PSet(
+    #    U     = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmet_53_June2013_type1.root'),
+    #    DPhi  = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmetphi_53_June2013_type1.root'),
+#        CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root'),
+#        CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root')
+#    ),
     inputFileNames = cms.PSet(
-        U     = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmet_53_June2013_type1.root'),
-        DPhi  = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmetphi_53_June2013_type1.root'),
-        CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root'),
-        CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root')
+        DPhi = cms.FileInPath('HHbbTauTau/PatProduction/data/gbrmetphi_53_Dec2012.root'),
+        CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root'),
+        U = cms.FileInPath('HHbbTauTau/PatProduction/data/gbrmet_53_Dec2012.root'),
+        CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root')
     ),
     loadMVAfromDB = cms.bool(False),
     is42 = cms.bool(False), # CV: set this flag to true if you are running mvaPFMET in CMSSW_4_2_x                           
@@ -63,9 +69,14 @@ pfMEtMVA = cms.EDProducer("PFMETProducerMVA",
     verbosity = cms.int32(0)
 )
 
+process.pfMEtMVAeTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotaus") )
+process.pfMEtMVAtauTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotaus") )
+
 pfMEtMVAsequence  = cms.Sequence(
     (isomuonseq + isotauseq + isoelectronseq) *
     calibratedAK5PFJetsForPFMEtMVA *
-    pfMEtMVA
+    pfMEtMVAmuTau *
+    pfMEtMVAeTau *
+    pfMEtMVAtauTau
 )
 

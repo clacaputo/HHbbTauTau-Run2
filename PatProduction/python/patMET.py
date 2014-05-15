@@ -35,6 +35,14 @@ def applyMVAMETParamteres(process, isMC):
     else:
         process.calibratedAK5PFJetsForPFMEtMVA.correctors = cms.vstring("ak5PFL1FastL2L3Residual")
 
-    process.patMETsMVA = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVA') )
+    process.patMETsMVAmuTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAmuTau') )
+    process.patMETsMVAeTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAeTau') )
+    process.patMETsMVAtauTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAtauTau') )
+
+    process.patMETsMVAsequence = cms.Sequence(
+        patMETsMVAmuTau *
+        patMETsMVAeTau *
+        patMETsMVAtauTau
+    )
 
     return
