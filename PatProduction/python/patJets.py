@@ -123,6 +123,18 @@ def applyJetParameters(process, isMC):
         )
     )
 
+    # Embed into PAT jets as userdata
+    process.patJets.userData.userFloats.src = cms.VInputTag(
+        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant')
+        #cms.InputTag('pileupJetIdProducer', 'cutbasedDiscriminant'),
+        #cms.InputTag('pileupJetIdProducer', 'philv1Discriminant')
+        )
+    process.patJets.userData.userInts.src = cms.VInputTag(
+        cms.InputTag('pileupJetIdProducer', 'fullId')
+        #cms.InputTag('pileupJetIdProducer', 'cutbasedId'),
+        #cms.InputTag('pileupJetIdProducer', 'philv1Id')
+        )
+
     return
 
 #    process.load("RecoJets.JetProducers.PileupJetID_cfi")
@@ -133,15 +145,5 @@ def applyJetParameters(process, isMC):
 #    process.full_5x_wp.Pt2030_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
 #    process.full_5x_wp.Pt3050_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
 #    process.pileupJetIdProducer.residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt')
-
-#    # Embed into PAT jets as userdata
-#    process.patJets.userData.userFloats.src = cms.VInputTag(
-#        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant'),
-#        cms.InputTag('pileupJetIdProducer', 'cutbasedDiscriminant'),
-#        cms.InputTag('pileupJetIdProducer', 'philv1Discriminant'))
-#    process.patJets.userData.userInts.src = cms.VInputTag(
-#        cms.InputTag('pileupJetIdProducer', 'fullId'),
-#        cms.InputTag('pileupJetIdProducer', 'cutbasedId'),
-#        cms.InputTag('pileupJetIdProducer', 'philv1Id'))
 
 #    return
