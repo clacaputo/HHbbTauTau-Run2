@@ -18,7 +18,7 @@ pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     srcVertices = cms.InputTag('offlinePrimaryVertices'),
     # NOTE: you need to set this to collections of electrons, muons and tau-jets passing the lepton
     #       reconstruction & identification criteria applied in your analysis
-    srcLeptons = cms.VInputTag("isomuons","isotaus"),
+    srcLeptons = cms.VInputTag("isomuons","isotausMT"),
     minNumLeptons = cms.int32(0),
     srcRho = cms.InputTag('kt6PFJets','rho'),
     globalThreshold = cms.double(-1.),#pfMet.globalThreshold,
@@ -69,8 +69,8 @@ pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     verbosity = cms.int32(0)
 )
 
-process.pfMEtMVAeTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotaus") )
-process.pfMEtMVAtauTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotaus") )
+process.pfMEtMVAeTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotausET") )
+process.pfMEtMVAtauTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotausTT") )
 
 pfMEtMVAsequence  = cms.Sequence(
     (isomuonseq + isotauseq + isoelectronseq) *
