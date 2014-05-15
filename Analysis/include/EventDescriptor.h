@@ -38,6 +38,8 @@ typedef std::tuple< ntuple::Event,
                     ntuple::METVector,
                     ntuple::METVector,
                     ntuple::METVector,
+                    ntuple::METVector,
+                    ntuple::METVector,
                     ntuple::GenMETVector > EventTuple;
 
 template<typename ObjectType>
@@ -78,26 +80,38 @@ public:
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET in the event");
     }
-    const ntuple::MET& metMVA() const {
+    const ntuple::MET& metMVAeTau() const {
         const ntuple::METVector& metVector = std::get<10>(_data);
         if (metVector.size() == 1)
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET MVA in the event");
     }
-    const ntuple::MET& metPF() const {
+    const ntuple::MET& metMVAmuTau() const {
         const ntuple::METVector& metVector = std::get<11>(_data);
+        if (metVector.size() == 1)
+            return metVector.at(0);
+        throw std::runtime_error("more than 1 MET MVA in the event");
+    }
+    const ntuple::MET& metMVAtauTau() const {
+        const ntuple::METVector& metVector = std::get<12>(_data);
+        if (metVector.size() == 1)
+            return metVector.at(0);
+        throw std::runtime_error("more than 1 MET MVA in the event");
+    }
+    const ntuple::MET& metPF() const {
+        const ntuple::METVector& metVector = std::get<13>(_data);
         if (metVector.size() == 1)
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET PF in the event");
     }
     const ntuple::MET& metTC() const {
-        const ntuple::METVector& metVector = std::get<12>(_data);
+        const ntuple::METVector& metVector = std::get<14>(_data);
         if (metVector.size() == 1)
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET TC in the event");
     }
     const ntuple::GenMET& genMet() const {
-        const ntuple::GenMETVector& genMetVector = std::get<13>(_data);
+        const ntuple::GenMETVector& genMetVector = std::get<15>(_data);
         if (genMetVector.size() == 1)
             return genMetVector.at(0);
         throw std::runtime_error("more than 1 gen MET in the event");
