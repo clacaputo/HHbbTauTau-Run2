@@ -55,12 +55,12 @@ isotausTT = cms.EDFilter(
         cms.PSet(
             discriminator = cms.InputTag("hpsPFTauDiscriminationByDecayModeFinding"),
             selectionCut = cms.double(0.5)
+        ),
+        #cms.PSet( discriminator=cms.InputTag("hpsPFTauDiscriminationByMVAIsolation"), selectionCut=cms.double(0.5)),
+        cms.PSet(
+            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits"),
+            selectionCut = cms.double(0.5)
         )
-#        #cms.PSet( discriminator=cms.InputTag("hpsPFTauDiscriminationByMVAIsolation"), selectionCut=cms.double(0.5)),
-#        cms.PSet(
-#            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits"),
-#            selectionCut = cms.double(0.5)
-#        ),
 #        cms.PSet(
 #            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseElectronRejection"),
 #            selectionCut = cms.double(0.5)
@@ -70,7 +70,7 @@ isotausTT = cms.EDFilter(
 #            selectionCut=cms.double(0.5)
 #        )
     ),
-    cut = cms.string('abs(eta) < 2.1 && pt > 40.0 && tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0'),
+    cut = cms.string('abs(eta) < 2.1 && pt > 40.0'),
     filter = cms.bool(False)
 )
 
@@ -79,6 +79,10 @@ isotausMT = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "),
                             discriminators = cms.VPSet(
                                 cms.PSet(
                                     discriminator = cms.InputTag("hpsPFTauDiscriminationByDecayModeFinding"),
+                                    selectionCut = cms.double(0.5)
+                                ),
+		                        cms.PSet(
+                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits"),
                                     selectionCut = cms.double(0.5)
                                 ),
                                 cms.PSet(

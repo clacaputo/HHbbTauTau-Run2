@@ -5,6 +5,8 @@ metBlock = cms.EDAnalyzer("METBlock",
         METs = cms.InputTag('patMETs'),
         METsPF = cms.InputTag('patMETsPF'),
         METsTC = cms.InputTag('patMETsTC'),
-        METsMVA = cms.InputTag('patMETsMVA')
+        METsMVAmuTau = cms.InputTag('patMETsMVAmuTau'),
+        METsMVAeTau = cms.InputTag('patMETsMVAeTau'),
+        METsMVAtauTau = cms.InputTag('patMETsMVAtauTau')
     )
 )

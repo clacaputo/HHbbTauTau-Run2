@@ -69,8 +69,8 @@ pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     verbosity = cms.int32(0)
 )
 
-process.pfMEtMVAeTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotausET") )
-process.pfMEtMVAtauTau = process.pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotausTT") )
+pfMEtMVAeTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotausET") )
+pfMEtMVAtauTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotausTT") )
 
 pfMEtMVAsequence  = cms.Sequence(
     (isomuonseq + isotauseq + isoelectronseq) *
