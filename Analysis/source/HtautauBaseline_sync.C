@@ -89,12 +89,12 @@ protected:
 
         const auto bjets = CollectBJets(higgs);
 
-        //to be changed
-        //const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
-        //FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
-        postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs, jets, bjets, vertices);
-        //std::cout << "I filled the tree" << std::endl;
+
+        const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
+        FillSyncTree(higgs, higgs_corr, higgs_JetsMap.at(higgs), bjets, vertices);
+//        postRecoilMET = correctedMET;
+//        FillSyncTree(higgs, higgs, higgs_JetsMap.at(higgs), bjets, vertices);
+
 
     }
 

@@ -84,6 +84,7 @@ protected:
         const auto bjets = CollectBJets(higgs);
         const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, jets.size());
 
+        postRecoilMET = correctedMET;
         FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
     }
 

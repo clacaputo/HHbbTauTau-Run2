@@ -74,22 +74,29 @@ protected:
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
+
         const auto higgses = FindCompatibleObjects(muons, taus, DeltaR_betweenSignalObjects,
-                                                   Candidate::Higgs, "H_mu_tau", 0);
+                                                   Candidate::Higgs, "H_mu_tau");
         cut(higgses.size(), "mu_tau");
+
 
         const auto higgsTriggered = ApplyTriggerMatch(higgses);
         cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
 
+
         const auto jets = CollectJets();
+
         const auto filteredJets = FilterCompatibleObjects(jets,higgs,cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
 
-        const auto bjets = CollectBJets(higgs);
-        //const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, jets.size());
 
-        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+        const auto bjets = CollectBJets(higgs);
+        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+
+        //postRecoilMET = correctedMET;
+        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,

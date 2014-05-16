@@ -55,8 +55,11 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5 &&
-                    candidate.GetPdgId() == triggerObject.pdgId) return true;
+                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5 /*&&
+                    candidate.GetPdgId() == std::abs(triggerObject.pdgId)*/){
+                //std::cout << "cand pdg = " << candidate.GetPdgId() << ",trigger pgd = " << triggerObject.pdgId << std::endl;
+                return true;
+            }
         }
     }
     return false;
