@@ -224,6 +224,9 @@ namespace vertex {
 
 namespace tauCorrections {
 
+    const double DecayModeWeight = 0.88; // = HiggsToTauTauWorkingSummer2013#TauTau_scale_factors
+                                         // for 1-prong no pi 0 taus
+
     const double deltaR = 0.3; // < Updated to be compatible with H->tautau code
 
     // For taus that matched MC truth.

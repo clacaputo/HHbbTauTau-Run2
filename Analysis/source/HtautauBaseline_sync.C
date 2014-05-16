@@ -260,10 +260,10 @@ protected:
         const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
 //        const ntuple::Tau& leg1 = event.taus().at(leadTau.index);
 //        const ntuple::Tau& leg2 = event.taus().at(subLeadTau.index);
-        if (leg1.decayMode == 0)
-            DMweight *= 0.88;
-        if (leg2.decayMode == 0)
-            DMweight *= 0.88;
+        if (leg1.decayMode == ntuple::tau_id::kOneProng0PiZero)
+            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
+        if (leg2.decayMode == ntuple::tau_id::kOneProng0PiZero)
+            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
         syncTree.decaymodeweight() = DMweight;
 
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, subLeadTau);
