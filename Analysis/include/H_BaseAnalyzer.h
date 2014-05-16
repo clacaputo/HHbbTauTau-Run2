@@ -139,12 +139,13 @@ protected:
         return jet;
     }
 
-    void ApplyTauCorrections(const finalState::TauTau& mcFinalState)
+    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA)
     {
-        static const double deltaR = 0.3;
+        using namespace cuts::Htautau_Summer13::tauCorrections;
+
         if(!useMCtruth) {
             correctedTaus = event.taus();
-            correctedMET = event.metMVA();
+            correctedMET = metMVA;
             return;
         }
         correctedTaus.clear();
@@ -154,17 +155,10 @@ protected:
             TLorentzVector momentum;
             momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
             sumTaus += momentum;
-            double scaleFactor = 1.0;
 
-            const bool hasMCmatch = analysis::FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
-            if(hasMCmatch) {
-                if(tau.decayMode == ntuple::tau_id::kOneProng1PiZero)
-                    //scaleFactor = 1.025 + 0.001 * std::min(std::max(momentum.Pt() - 45.0, 0.0), 10.0);
-                    scaleFactor = 1.012;
-                else if(tau.decayMode == ntuple::tau_id::kThreeProng0PiZero)
-                    //scaleFactor = 1.012 + 0.001 * std::min(std::max(momentum.Pt() - 32.0, 0.0), 18.0);
-                    scaleFactor = 1.012;
-            }
+            const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
+            const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
+                                                         static_cast<ntuple::tau_id::hadronicDecayMode>(tau.decayMode));
             const TLorentzVector correctedMomentum = momentum * scaleFactor;
             ntuple::Tau correctedTau(tau);
             correctedTau.pt = correctedMomentum.Pt();
@@ -174,10 +168,11 @@ protected:
             correctedTaus.push_back(correctedTau);
             sumCorrectedTaus += correctedMomentum;
         }
+
         TLorentzVector met, metCorrected;
-        met.SetPtEtaPhiM(event.metMVA().pt, event.metMVA().eta, event.metMVA().phi, 0.);
+        met.SetPtEtaPhiM(metMVA.pt, metMVA.eta, metMVA.phi, 0.);
         metCorrected = met + sumTaus - sumCorrectedTaus;
-        correctedMET = event.metMVA();
+        correctedMET = metMVA;
         correctedMET.pt = metCorrected.Pt();
         correctedMET.eta = metCorrected.Eta();
         correctedMET.phi = metCorrected.Phi();

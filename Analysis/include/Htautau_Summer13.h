@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "TreeProduction/interface/Tau.h"
+
 namespace cuts {
 namespace Htautau_Summer13 {
 // AN-2013/178 H->etau,mutau
@@ -218,6 +220,25 @@ namespace vertex {
     const double z = 24.0; // < cm
     const double r = 2.0; // < cm
     const bool chooseHighestSumPt2 = true; // =
+}
+
+namespace tauCorrections {
+    //
+    const double deltaR = 0.3;
+
+    // For taus that matched MC truth.
+    // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.
+    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode)
+    {
+        if(!hasMCmatch) return 1.0;
+        if(decayMode == ntuple::tau_id::kOneProng1PiZero)
+            //return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
+            return 1.012;
+        if(decayMode == ntuple::tau_id::kThreeProng0PiZero)
+            //scaleFactor = 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
+            return 1.012;
+        return 1.0;
+    }
 }
 
 } // Htautau_Summer13

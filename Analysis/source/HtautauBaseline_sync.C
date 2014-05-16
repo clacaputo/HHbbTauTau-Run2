@@ -61,7 +61,7 @@ protected:
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
 
-        ApplyTauCorrections(tauTau);
+        ApplyTauCorrections(tauTau, event.metMVAtauTau());
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
         cut(taus.size() >= 2, "at least 2 taus");
@@ -122,10 +122,10 @@ protected:
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
         CandidateVector result;
         for(const Candidate& higgs : higgses) {
-            const Candidate& leading_tau = higgs.GetLeadingDaughter(Candidate::Tau);
-            std::cout << "leading tau mom " << leading_tau.momentum << std::endl;
+//            const Candidate& leading_tau = higgs.GetLeadingDaughter(Candidate::Tau);
+//            std::cout << "leading tau mom " << leading_tau.momentum << std::endl;
             const Candidate& subleading_tau = higgs.GetSubleadingDaughter(Candidate::Tau);
-            std::cout << "subleading tau mom " << subleading_tau.momentum << std::endl;
+//            std::cout << "subleading tau mom " << subleading_tau.momentum << std::endl;
             const ntuple::Tau& ntuple_subleadingTau = correctedTaus.at(subleading_tau.index);
             if(ntuple_subleadingTau.againstElectronLooseMVA3 > againstElectronLooseMVA3)
                 result.push_back(higgs);
