@@ -139,12 +139,12 @@ protected:
         return result;
     }
 
-    const Higgs_JetsMap MatchedHiggsAndJets(const analysis::CandidateVector& higgses,
+    Higgs_JetsMap MatchedHiggsAndJets(const analysis::CandidateVector& higgses,
                                             const analysis::CandidateVector& jets)
     {
         Higgs_JetsMap higgs_JetsMap;
         for (const analysis::Candidate& higgs : higgses){
-            const analysis::CandidateVector goodJets;
+            analysis::CandidateVector goodJets;
             for (const analysis::Candidate& jet : jets){
                 const double deltaR_1 = jet.momentum.DeltaR(higgs.finalStateDaughters.at(0).momentum);
                 const double deltaR_2 = jet.momentum.DeltaR(higgs.finalStateDaughters.at(1).momentum);
@@ -157,7 +157,7 @@ protected:
         return higgs_JetsMap;
     }
 
-    const analysis::CandidateVector& ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap)
+    analysis::CandidateVector ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap)
     {
         analysis::CandidateVector triggeredHiggses;
         for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap){

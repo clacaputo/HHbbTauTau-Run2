@@ -45,26 +45,6 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
 }
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
-                               const std::vector<std::string>& interestingPaths,
-                               const analysis::Candidate& candidate)
-{
-    for (const ntuple::TriggerObject& triggerObject : triggerObjects){
-        TLorentzVector triggerObjectMomentum;
-        triggerObjectMomentum.SetPtEtaPhiE(triggerObject.pt,triggerObject.eta,triggerObject.phi,triggerObject.energy);
-        for (unsigned n = 0; n < triggerObject.pathNames.size(); ++n){
-            for (size_t k = 0; k < interestingPaths.size(); ++k){
-                const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
-                const std::string& interestingPath = interestingPaths.at(k);
-                const size_t found = objectMatchedPath.find(interestingPath);
-                if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                        triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5) return true;
-            }
-        }
-    }
-    return false;
-}
-
-inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
                                const std::string& interestingPath,
                                const analysis::Candidate& candidate)
 {
