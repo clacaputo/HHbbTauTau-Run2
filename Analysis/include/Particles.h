@@ -15,6 +15,7 @@
 #include <sstream>
 #include <vector>
 #include <iostream>
+#include <limits>
 
 namespace particles {
 class ParticleCode {
@@ -78,7 +79,7 @@ public:
 
         Names()[raw_code] = name;
         Codes()[name] = raw_code;
-        if(!raw_code)
+        if(raw_code == std::numeric_limits<int>::max())
             Freeze() = true;
     }
 
@@ -227,7 +228,8 @@ PARTICLE(omega_c_star_0, 4334);
 PARTICLE(omega_c_0, 4332);
 PARTICLE(sd_1, 3103);
 PARTICLE(Radion, 35);
-PARTICLE(NONEXISTENT, 0);
+PARTICLE(Jet, 0);
+PARTICLE(NONEXISTENT, std::numeric_limits<int>::max());
 
 #undef PARTICLE
 

@@ -24,12 +24,12 @@ static const particles::ParticleCodes TauMuonicDecay = { particles::mu, particle
 static const particles::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
-                               const std::vector<std::string>& interestingPaths, size_t& n)
+                               const std::map< std::string, bool >& interestinghltPathsMap, size_t& n)
 {
     for (; n < objectMatchedPaths.size(); ++n){
-        for (size_t k = 0; k < interestingPaths.size(); ++k){
+        for (const auto& path_iter : interestinghltPathsMap){
             const std::string& objectMatchedPath = objectMatchedPaths.at(n);
-            const std::string& interestingPath = interestingPaths.at(k);
+            const std::string& interestingPath = path_iter.first;
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos) return true;
         }
@@ -38,10 +38,10 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
 }
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
-                               const std::vector<std::string>& interestingPaths)
+                               const std::map< std::string, bool >& interestinghltPathsMap)
 {
     size_t n = 0;
-    return HaveTriggerMatched(objectMatchedPaths, interestingPaths, n);
+    return HaveTriggerMatched(objectMatchedPaths, interestinghltPathsMap, n);
 }
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
@@ -55,7 +55,8 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5) return true;
+                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5 &&
+                    candidate.GetPdgId() == triggerObject.pdgId) return true;
         }
     }
     return false;

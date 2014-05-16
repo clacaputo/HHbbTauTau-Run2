@@ -10,6 +10,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <map>
 
 #include "TreeProduction/interface/Tau.h"
 
@@ -22,8 +23,8 @@ const double DeltaR_betweenSignalObjects = 0.5; // >
 namespace MuTau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const std::vector<std::string> hltPaths =
-                {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20","HLT_IsoMu18_eta2p1_LooseIsoPFTau20"};
+        const std::map< std::string, bool > hltPaths =
+        {{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20",false},{"HLT_IsoMu18_eta2p1_LooseIsoPFTau20",false}};
     }
 
     namespace muonID {
@@ -73,9 +74,9 @@ namespace MuTau {
 namespace ETau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const std::vector<std::string> hltPaths =
-            {"HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
-             "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20"};
+        const std::map< std::string, bool > hltPaths =
+            {{"HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",false},
+             {"HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20",false}};
     }
 
     namespace electronID{

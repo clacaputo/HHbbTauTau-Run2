@@ -115,10 +115,10 @@ protected:
         weight = goodBin ? weights->GetBinContent(bin) : defaultWeight;
     }
 
-    bool HaveTriggerFired(const std::vector<std::string>& interestingPaths) const
+    bool HaveTriggerFired(const std::map< std::string, bool >& interestinghltPathsMap) const
     {
         for (const ntuple::Trigger& trigger : event.triggers()){
-            for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestingPaths, n); ++n){
+            for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPathsMap, n); ++n){
                 if (trigger.hltresults.at(n) == 1 && trigger.hltprescales.at(n) == 1)
                     return true;
             }

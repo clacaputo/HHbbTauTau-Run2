@@ -9,6 +9,7 @@
 #pragma once
 #include <TLorentzVector.h>
 #include <vector>
+#include "Particles.h"
 
 namespace analysis {
 
@@ -19,10 +20,17 @@ typedef std::vector<Candidate> CandidateVector;
 class Vertex;
 typedef std::vector<Vertex> VertexVector;
 
+
 class Candidate {
 public:
     enum Type { Unknown, Mu, Electron, Tau, Jet, Bjet, Z, Higgs, Resonance };
-
+    static const std::map<Type,particles::ParticleCode>& typeToPdgMap(){
+        static const std::map<Type,particles::ParticleCode> map = {{Type::Mu, particles::mu},
+                                                                      {Type::Electron, particles::e},
+                                                                      {Type::Tau, particles::tau},
+                                                                      {Type::Jet, particles::Jet}};
+        return map;
+    }
     Type type;
     size_t index;
     TLorentzVector momentum;
@@ -111,6 +119,11 @@ public:
         if(expectedDaughterType != Unknown && subleadingDaughter.type != expectedDaughterType)
             throw std::runtime_error("unexpected subleading daughter type");
         return subleadingDaughter;
+    }
+
+    const particles::ParticleCode& GetPdgId() const
+    {
+        return typeToPdgMap().at(type);
     }
 };
 
