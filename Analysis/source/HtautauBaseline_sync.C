@@ -83,6 +83,7 @@ protected:
         const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses_tautau,jets);
 
         const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap);
+        cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
 
