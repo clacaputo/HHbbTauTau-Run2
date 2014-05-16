@@ -64,6 +64,23 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
     return false;
 }
 
+inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
+                               const std::string& interestingPath,
+                               const analysis::Candidate& candidate)
+{
+    for (const ntuple::TriggerObject& triggerObject : triggerObjects){
+        TLorentzVector triggerObjectMomentum;
+        triggerObjectMomentum.SetPtEtaPhiE(triggerObject.pt,triggerObject.eta,triggerObject.phi,triggerObject.energy);
+        for (unsigned n = 0; n < triggerObject.pathNames.size(); ++n){
+            const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
+            const size_t found = objectMatchedPath.find(interestingPath);
+            if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
+                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5) return true;
+        }
+    }
+    return false;
+}
+
 inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )
 {
     std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));

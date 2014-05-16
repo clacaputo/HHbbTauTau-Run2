@@ -33,6 +33,7 @@ public:
     }
 
 protected:
+    typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
     virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
 
     virtual void ProcessEvent()
@@ -77,12 +78,17 @@ protected:
 
         cut(higgses_tautau.size(), "tau_tau selection");
 
+        const auto jets = CollectJets();
 
-        const Candidate higgs = SelectFullyHadronicHiggs(higgses_tautau);
+        const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses_tautau,jets);
 
-        const auto jets = CollectJets(higgs);
+        const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap);
+
+        const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
+
         const auto bjets = CollectBJets(higgs);
 
+        //to be changed
         //const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, jets.size());
         //FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
         postRecoilMET = correctedMET;
@@ -108,10 +114,10 @@ protected:
         cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
             > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
 
-        //const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+//        const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
+//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return tau;
     }
@@ -131,6 +137,62 @@ protected:
                 result.push_back(higgs);
         }
         return result;
+    }
+
+    const Higgs_JetsMap MatchedHiggsAndJets(const analysis::CandidateVector& higgses,
+                                            const analysis::CandidateVector& jets)
+    {
+        Higgs_JetsMap higgs_JetsMap;
+        for (const analysis::Candidate& higgs : higgses){
+            const analysis::CandidateVector goodJets;
+            for (const analysis::Candidate& jet : jets){
+                const double deltaR_1 = jet.momentum.DeltaR(higgs.finalStateDaughters.at(0).momentum);
+                const double deltaR_2 = jet.momentum.DeltaR(higgs.finalStateDaughters.at(1).momentum);
+                if (deltaR_1 > cuts::Htautau_Summer13::jetID::deltaR_signalObjects &&
+                        deltaR_2 > cuts::Htautau_Summer13::jetID::deltaR_signalObjects)
+                    goodJets.push_back(jet);
+            }
+            higgs_JetsMap[higgs] = goodJets;
+        }
+        return higgs_JetsMap;
+    }
+
+    const analysis::CandidateVector& ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap)
+    {
+        analysis::CandidateVector triggeredHiggses;
+        for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap){
+            for(const auto& higgs_iter : higgs_JetsMap){
+                const analysis::Candidate& higgs = higgs_iter.first;
+                const analysis::CandidateVector& jets = higgs_iter.second;
+
+                if (interestingPathIter.second == true){
+                    bool triggeredJet = false;
+                    for (unsigned n = 0; n < jets.size(); ++n){
+                        if (analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,
+                                                         higgs.finalStateDaughters.at(0)) &&
+                                analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,
+                                                                                     higgs.finalStateDaughters.at(1)) &&
+                                analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,
+                                                                                     jets.at(n))){
+                            triggeredJet = true;
+                            break;
+                        }
+
+                    }
+                    if (triggeredJet) triggeredHiggses.push_back(higgs);
+                    continue;
+                }
+                else {
+                    if (analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,
+                                                     higgs.finalStateDaughters.at(0)) &&
+                            analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,
+                                                                                 higgs.finalStateDaughters.at(1)))
+                        triggeredHiggses.push_back(higgs);
+                    continue;
+                }
+            }
+        }
+        return triggeredHiggses;
     }
 
     const analysis::Candidate& SelectFullyHadronicHiggs(const analysis::CandidateVector& higgses)

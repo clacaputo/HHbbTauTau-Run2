@@ -128,12 +128,12 @@ namespace ETau {
 namespace TauTau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state
-        const std::vector<std::string> hltPaths =
-                {"HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30",
-                 "HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30",
-                 "HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30",
-                 "HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1",
-                 "HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1" };
+        const std::map< std::string, bool > hltPathsMap =
+        {{"HLT_DoubleMediumIsoPFTau25_Trk5_eta2p1_Jet30",true},
+         {"HLT_DoubleMediumIsoPFTau30_Trk5_eta2p1_Jet30",true},
+         {"HLT_DoubleMediumIsoPFTau30_Trk1_eta2p1_Jet30",true},
+         {"HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1", false},
+         {"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1",false} };
     }
 
     namespace tauID {
@@ -223,8 +223,8 @@ namespace vertex {
 }
 
 namespace tauCorrections {
-    //
-    const double deltaR = 0.3;
+
+    const double deltaR = 0.3; // < Updated to be compatible with H->tautau code
 
     // For taus that matched MC truth.
     // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.

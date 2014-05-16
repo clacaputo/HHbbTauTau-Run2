@@ -107,17 +107,16 @@ protected:
         return bjet;
     }
 
-    analysis::CandidateVector CollectJets(const Candidate& higgs)
+    analysis::CandidateVector CollectJets()
     {
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectJet(id, _objectSelector, _anaData, _selection_label, higgs); };
+            { return SelectJet(id, _objectSelector, _anaData, _selection_label); };
         return CollectObjects<analysis::Candidate>("jets", base_selector, event.jets().size());
     }
 
     virtual analysis::Candidate SelectJet(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label,
-                                          const Candidate& higgs)
+                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
     {
         using namespace cuts::Htautau_Summer13::jetID;
         cuts::Cutter cut(objectSelector);
@@ -131,10 +130,6 @@ protected:
         cut(Y(pass_puLooseID, 2, -0.5, 1.5) == puLooseID, "puLooseID");
 
         const Candidate jet(analysis::Candidate::Jet, id, object);
-        for(const Candidate& daughter : higgs.finalStateDaughters) {
-            const double deltaR = jet.momentum.DeltaR(daughter.momentum);
-            cut(Y(deltaR, 70, 0.0, 7.0) > deltaR_signalObjects, "dR_signal");
-        }
 
         return jet;
     }
