@@ -63,24 +63,24 @@ public:
         //drawHistos("run", 300, 170000, 173000);
         //drawHistos("run", 200, 190000, 194000);
         //drawHistos("run", 200, 190000, 210000);
-        drawHistos<Int_t>("npu", 50, 0, 50);
-        drawHistos<Double_t>("pt_1", 100, 0, 100);
-        drawHistos<Double_t>("eta_1", 60, -3, 3);
-        drawHistos<Double_t>("iso_1", 200, 0., 2);
-        drawHistos<Double_t>("pt_2", 100, 0, 100);
-        drawHistos<Double_t>("eta_2", 60, -3, 3);
-        drawHistos<Double_t>("iso_2", 200, 0., 2);
-        drawHistos<Double_t>("mvis", 50, 0, 200);
-        drawHistos<Double_t>("met", 20, 0, 200);
-        drawHistos<Double_t>("metphi", 30, -3.5, 3.5);
-        drawHistos<Double_t>("mvamet", 30, 0, 150);
-        drawHistos<Double_t>("mvametphi", 35, -3.5, 3.5);
-        drawHistos<Double_t>("mvacov00", 40, 0, 1000);
-        drawHistos<Double_t>("mvacov01", 40, 0, 1000);
-        drawHistos<Double_t>("mvacov10", 40, 0, 1000);
-        drawHistos<Double_t>("mvacov11", 40, 0, 1000);
-        //drawHistos<Double_t>("mt_1", 50, 0, 200);
-        drawHistos<Double_t>("m_sv", 60, 0, 300);
+        drawHistos("npu", 50, 0, 50);
+        drawHistos("pt_1", 100, 0, 100);
+        drawHistos("eta_1", 60, -3, 3);
+        drawHistos("iso_1", 200, 0., 2);
+        drawHistos("pt_2", 100, 0, 100);
+        drawHistos("eta_2", 60, -3, 3);
+        drawHistos("iso_2", 200, 0., 2);
+        drawHistos("mvis", 50, 0, 200);
+        drawHistos("met", 20, 0, 200);
+        drawHistos("metphi", 30, -3.5, 3.5);
+        drawHistos("mvamet", 30, 0, 150);
+        drawHistos("mvametphi", 35, -3.5, 3.5);
+        drawHistos("mvacov00", 40, 0, 1000);
+        drawHistos("mvacov01", 40, 0, 1000);
+        drawHistos("mvacov10", 40, 0, 1000);
+        drawHistos("mvacov11", 40, 0, 1000);
+        //drawHistos("mt_1", 50, 0, 200);
+        drawHistos("m_sv", 60, 0, 300);
 
 
         // Jets
@@ -105,23 +105,23 @@ public:
             return other_njets.at(entry_id) >= 2;
         };
 
-        drawHistos<Int_t>("njets", 5, -0.5, 4.5);
-        drawHistos<Double_t>("jpt_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
-        drawHistos<Double_t>("jeta_1", 50, -5, 5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
-        drawHistos<Double_t>("jpt_2", 50, 0, 200, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        drawHistos<Double_t>("jeta_2", 50, -5, 5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("mjj", 50, 0, 3000, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("jdeta", 50, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Int_t>("njetingap", 4, -0.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("njets", 5, -0.5, 4.5);
+        drawHistos("jpt_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jeta_1", 50, -5, 5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jpt_2", 50, 0, 200, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jeta_2", 50, -5, 5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("mjj", 50, 0, 3000, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("jdeta", 50, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("njetingap", 4, -0.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
-        //drawHistos<Double_t>("visjeteta", 100, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("ptvis", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("jdphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("dijetpt", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("hdijetphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos<Double_t>("mva", 40, -1, 1.001, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("visjeteta", 100, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("ptvis", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("jdphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("dijetpt", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("hdijetphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        //drawHistos("mva", 40, -1, 1.001, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
-        drawHistos<Double_t>("mvis", 50, 0, 200, noJets_my, noJets_other, "njets==0");
+        drawHistos("mvis", 50, 0, 200, noJets_my, noJets_other, "njets==0");
 
 
         // b-jets
@@ -134,14 +134,14 @@ public:
             return other_nbjets.at(entry_id) >= 1;
         };
 
-        drawHistos<Int_t>("nbtag", 5, -0.5, 4.5);
-        drawHistos<Double_t>("bpt", 50, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
-        drawHistos<Double_t>("beta", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+        drawHistos("nbtag", 5, -0.5, 4.5);
+        drawHistos("bpt", 50, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+        drawHistos("beta", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
 
-        drawHistos<Double_t>("puweight", 25, -.1, 0.9);
-        //drawHistos<Double_t>("effweight", 30, .8, 1.1);
-        //drawHistos<Double_t>("embeddedWeight", 50, 0, 1);
-        //drawHistos<Double_t>("weight", 30, 0, 2.0);
+        drawHistos("puweight", 25, -.1, 0.9);
+        //drawHistos("effweight", 30, .8, 1.1);
+        //drawHistos("embeddedWeight", 50, 0, 1);
+        //drawHistos("weight", 30, 0, 2.0);
 
         //with puweight
 //        TString weight="(puweight)";
@@ -182,14 +182,13 @@ private:
         return tree;
     }
 
-    template<typename VarType>
     void drawHistos(const std::string& var, int nbins, float xmin, float xmax)
     {
         const auto SelectAll = [](size_t entry_id) -> bool { return true; };
-        drawHistos<VarType>(var, nbins, xmin, xmax, SelectAll, SelectAll, "All");
+        drawHistos(var, nbins, xmin, xmax, SelectAll, SelectAll, "All");
     }
 
-    template<typename VarType, typename MySelector, typename OtherSelector>
+    template<typename MySelector, typename OtherSelector>
     void drawHistos(const std::string& var, int nbins, float xmin, float xmax, const MySelector& my_selector,
                     const OtherSelector& other_selector, const std::string& selection_label)
     {
@@ -210,15 +209,31 @@ private:
             std::shared_ptr<TH2F> Hmine_vs_other(new TH2F(TString("Hmine_vs_other") + var, "", nbins, xmin, xmax,
                                                           nbins, xmin, xmax));
 
-
-            const std::vector<VarType> my_values = CollectValues<VarType>(Tmine, var);
-            const std::vector<VarType> other_values = CollectValues<VarType>(Tother, var);
-            FillCommonHistograms<VarType>(my_values, other_values, my_selector, other_selector,
-                                          *Hmine_common, *Hother_common, *Hmine_vs_other);
-            FillInclusiveHistogram(my_values, my_selector, *Hmine_all);
-            FillInclusiveHistogram(other_values, other_selector, *Hother_all);
-            FillExclusiveHistogram(my_values, my_selector, *Hmine_diff, my_events_only_map);
-            FillExclusiveHistogram(other_values, other_selector, *Hother_diff, other_events_only_map);
+            TBranch* myBranch = Tmine->GetBranch(var.c_str());
+            TBranch* otherBranch = Tother->GetBranch(var.c_str());
+            TClass *myClass, *otherClass;
+            EDataType myType, otherType;
+            myBranch->GetExpectedType(myClass, myType);
+            otherBranch->GetExpectedType(otherClass, otherType);
+            if(myClass || otherClass)
+                throw std::runtime_error("branches with complex objects are not supported.");
+            if(myType == kFloat_t && otherType == kFloat_t)
+                FillAllHistograms<Float_t, Float_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kDouble_t && otherType == kDouble_t)
+                FillAllHistograms<Double_t, Double_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kDouble_t && otherType == kFloat_t)
+                FillAllHistograms<Double_t, Float_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kFloat_t && otherType == kDouble_t)
+                FillAllHistograms<Float_t, Double_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kInt_t && otherType == kInt_t)
+                FillAllHistograms<Int_t, Int_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else
+                throw std::runtime_error("Unknown branch type combination.");
 
             DrawSuperimposedHistograms(Hmine_all, Hother_all, selection_label + " (all)", var);
             DrawSuperimposedHistograms(Hmine_common, Hother_common, selection_label + " (common)", var);
@@ -325,8 +340,26 @@ private:
         TXother.DrawTextNDC(.53,.84,group+": " + n_events_other);
     }
 
-    template<typename VarType, typename MySelector, typename OtherSelector, typename Histogram, typename Histogram2D>
-    void FillCommonHistograms(const std::vector<VarType>& my_values, const std::vector<VarType>& other_values,
+    template<typename MyVarType, typename OtherVarType, typename MySelector, typename OtherSelector,
+             typename Histogram, typename Histogram2D>
+    void FillAllHistograms(const std::string& var, const MySelector& my_selector, const OtherSelector& other_selector,
+                           Histogram& Hmine_all, Histogram& Hother_all,
+                           Histogram& Hmine_common, Histogram& Hother_common, Histogram2D& Hmine_vs_other,
+                           Histogram& Hmine_diff, Histogram& Hother_diff)
+    {
+        const std::vector<MyVarType> my_values = CollectValues<MyVarType>(Tmine, var);
+        const std::vector<OtherVarType> other_values = CollectValues<OtherVarType>(Tother, var);
+        FillCommonHistograms(my_values, other_values, my_selector, other_selector,
+                             Hmine_common, Hother_common, Hmine_vs_other);
+        FillInclusiveHistogram(my_values, my_selector, Hmine_all);
+        FillInclusiveHistogram(other_values, other_selector, Hother_all);
+        FillExclusiveHistogram(my_values, my_selector, Hmine_diff, my_events_only_map);
+        FillExclusiveHistogram(other_values, other_selector, Hother_diff, other_events_only_map);
+    }
+
+    template<typename MyVarType, typename OtherVarType, typename MySelector, typename OtherSelector,
+             typename Histogram, typename Histogram2D>
+    void FillCommonHistograms(const std::vector<MyVarType>& my_values, const std::vector<OtherVarType>& other_values,
                               const MySelector& my_selector, const OtherSelector& other_selector,
                               Histogram& my_histogram, Histogram& other_histogram, Histogram2D& histogram2D)
     {
@@ -335,8 +368,8 @@ private:
             const size_t other_entry = event_entry_pair.second.second;
             if(!my_selector(my_entry) || !other_selector(other_entry))
                 continue;
-            const VarType& my_value = my_values.at(my_entry);
-            const VarType& other_value = other_values.at(other_entry);
+            const MyVarType& my_value = my_values.at(my_entry);
+            const OtherVarType& other_value = other_values.at(other_entry);
             my_histogram.Fill(my_value);
             other_histogram.Fill(other_value);
             histogram2D.Fill(my_value, other_value);
@@ -380,7 +413,7 @@ private:
         FillEventToEntryMap(my_events, my_event_to_entry_map);
         FillEventToEntryMap(other_events, other_event_to_entry_map);
 
-        std::cout << "Our events" << std::endl;
+        std::cout << "Mine events" << std::endl;
         for(const auto& event_entry : my_event_to_entry_map) {
             if(intersection.count(event_entry.first)) {
                 common_event_to_entry_pair_map[event_entry.first] =
@@ -392,7 +425,7 @@ private:
             }
         }
 
-        std::cout << "Riccardo events" << std::endl;
+        std::cout << "Other's events" << std::endl;
         for(const auto& event_entry : other_event_to_entry_map) {
             if(other_events_only.count(event_entry.first)){
                 other_events_only_map[event_entry.first] = event_entry.second;
