@@ -242,7 +242,7 @@ protected:
             for(const Candidate& object2 : objects2) {
                 if(object2.momentum.DeltaR(object1.momentum) > minDeltaR) {
                     const Candidate candidate(type, object1, object2);
-                    if (candidate.charge != expectedCharge) continue;
+                    if (expectedCharge != Candidate::UnknownCharge() && candidate.charge != expectedCharge) continue;
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
                 }
@@ -275,6 +275,25 @@ protected:
         GetAnaData().N_objects(hist_name).Fill(result.size(),weight);
         return result;
     }
+
+    CandidateVector FilterCompatibleObjects(const CandidateVector& objectsToFilter,
+                                            const Candidate& referenceObject,
+                                          double minDeltaR)
+    {
+        CandidateVector result;
+        for(const Candidate& filterObject : objectsToFilter) {
+            bool allDaughterPassed = true;
+            for (const Candidate& daughter : referenceObject.finalStateDaughters){
+                if(filterObject.momentum.DeltaR(daughter.momentum) <= minDeltaR) {
+                    allDaughterPassed = false;
+                    break;
+                }
+            }
+            if (allDaughterPassed) result.push_back(filterObject);
+        }
+        return result;
+    }
+
 
 protected:
     tools::Timer timer;

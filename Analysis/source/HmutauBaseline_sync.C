@@ -44,8 +44,6 @@ protected:
         finalState::MuTaujet muTau;
         if (useMCtruth && !FindAnalysisFinalState(muTau)) return;
 
-        ApplyTauCorrections(muTau);
-
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
@@ -71,6 +69,8 @@ protected:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
+        ApplyTauCorrections(muTau,event.metMVAmuTau());
+
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
@@ -78,13 +78,18 @@ protected:
                                                    Candidate::Higgs, "H_mu_tau", 0);
         cut(higgses.size(), "mu_tau");
 
-        const Candidate higgs = SelectSemiLeptonicHiggs(higgses);
+        const auto higgsTriggered = ApplyTriggerMatch(higgses);
+        cut(higgsTriggered.size(), "trigger obj match");
 
-        const auto jets = CollectJets(higgs);
+        const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+
+        const auto jets = CollectJets();
+        const auto filteredJets = FilterCompatibleObjects(jets,higgs,cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
+
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, jets.size());
+        //const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, jets.size());
 
-        FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
+        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
@@ -110,10 +115,12 @@ protected:
         cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
         cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
 
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object,object.charge);
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,muon);
+//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
+        return muon;
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
@@ -133,10 +140,12 @@ protected:
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
             < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+        const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
+//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
+        return tau;
     }
 
     analysis::CandidateVector CollectZmuons()
@@ -187,6 +196,22 @@ protected:
 //        if (!final_state.muon || !final_state.tau_jet) return false;
 //        return true;
 //    }
+
+    analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses)
+    {
+        analysis::CandidateVector triggeredHiggses;
+        for (const auto& higgs : higgses){
+            for (const auto& interestingPathIter : cuts::Htautau_Summer13::MuTau::trigger::hltPaths){
+                if (analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,higgs.finalStateDaughters.at(0))
+                    && analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,higgs.finalStateDaughters.at(1))){
+                        triggeredHiggses.push_back(higgs);
+                        break;
+                    }
+                }
+            }
+        return triggeredHiggses;
+
+    }
 
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
