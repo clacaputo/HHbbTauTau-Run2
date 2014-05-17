@@ -206,16 +206,12 @@ protected:
 
     analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses)
     {
+        using namespace cuts::Htautau_Summer13::MuTau::trigger;
         analysis::CandidateVector triggeredHiggses;
         for (const auto& higgs : higgses){
-            for (const auto& interestingPathIter : cuts::Htautau_Summer13::MuTau::trigger::hltPaths){
-                if (analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,higgs.finalStateDaughters.at(0))
-                    && analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,higgs.finalStateDaughters.at(1))){
-                        triggeredHiggses.push_back(higgs);
-                        break;
-                    }
-                }
-            }
+            if(analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
+                triggeredHiggses.push_back(higgs);
+        }
         return triggeredHiggses;
 
     }

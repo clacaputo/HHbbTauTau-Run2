@@ -45,12 +45,10 @@ protected:
         finalState::TaujetTaujet tauTau;
         if (useMCtruth && !FindAnalysisFinalState(tauTau)) return;
 
-
-
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
-        cut(HaveTriggerFired(trigger::hltPathsMap), "trigger");
+        cut(HaveTriggerFired(trigger::hltPaths), "trigger");
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
@@ -66,8 +64,6 @@ protected:
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
         cut(taus.size() >= 2, "at least 2 taus");
-
-
 
         const auto higgses = FindCompatibleObjects(taus,
                    cuts::Htautau_Summer13::DeltaR_betweenSignalObjects, analysis::Candidate::Higgs, "H_2tau");
@@ -89,13 +85,10 @@ protected:
 
         const auto bjets = CollectBJets(higgs);
 
-
         const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
         FillSyncTree(higgs, higgs_corr, higgs_JetsMap.at(higgs), bjets, vertices);
 //        postRecoilMET = correctedMET;
 //        FillSyncTree(higgs, higgs, higgs_JetsMap.at(higgs), bjets, vertices);
-
-
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
@@ -161,37 +154,32 @@ protected:
     analysis::CandidateVector ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap)
     {
         analysis::CandidateVector triggeredHiggses;
-        for (const auto& higgs_iter : higgs_JetsMap){
+        for (const auto& higgs_iter : higgs_JetsMap) {
             const analysis::Candidate& higgs = higgs_iter.first;
             const analysis::CandidateVector& jets = higgs_iter.second;
-            bool isGoodHiggs = false;
-            for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap){
-                if (analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,higgs.finalStateDaughters.at(0))
-                    && analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,higgs.finalStateDaughters.at(1))){
-                    if (interestingPathIter.second == true){
-                        bool triggeredJet = false;
-                        for (unsigned n = 0; n < jets.size(); ++n){
-                            if (analysis::HaveTriggerMatched(event.triggerObjects(),interestingPathIter.first,jets.at(n))){
-                                triggeredJet = true;
-                                break;
-                            }
-                        }
-                        if (triggeredJet) {
-                            isGoodHiggs = true;
+            for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap) {
+                const std::string& interestingPath = interestingPathIter.first;
+                const bool jetTriggerRequest = interestingPathIter.second;
+                if(!analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, higgs))
+                    continue;
+
+                bool jetMatched = false;
+                if(jetTriggerRequest) {
+                    for (const auto& jet : jets){
+                        if (analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, jet)){
+                            jetMatched = true;
                             break;
                         }
-
-                    }
-                    else {
-                        isGoodHiggs = true;
-                        break;
                     }
                 }
+
+                if(!jetTriggerRequest || jetMatched) {
+                    triggeredHiggses.push_back(higgs);
+                    break;
+                }
             }
-            if (isGoodHiggs) triggeredHiggses.push_back(higgs);
         }
         return triggeredHiggses;
-
     }
 
     const analysis::Candidate& SelectFullyHadronicHiggs(const analysis::CandidateVector& higgses)

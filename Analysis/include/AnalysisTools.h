@@ -24,12 +24,11 @@ static const particles::ParticleCodes TauMuonicDecay = { particles::mu, particle
 static const particles::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
-                               const std::map< std::string, bool >& interestinghltPathsMap, size_t& n)
+                               const std::vector<std::string>& interestinghltPaths, size_t& n)
 {
     for (; n < objectMatchedPaths.size(); ++n){
-        for (const auto& path_iter : interestinghltPathsMap){
+        for (const std::string& interestingPath : interestinghltPaths){
             const std::string& objectMatchedPath = objectMatchedPaths.at(n);
-            const std::string& interestingPath = path_iter.first;
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos) return true;
         }
@@ -38,39 +37,44 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
 }
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
-                               const std::map< std::string, bool >& interestinghltPathsMap)
+                               const std::vector<std::string>& interestinghltPaths)
 {
     size_t n = 0;
-    return HaveTriggerMatched(objectMatchedPaths, interestinghltPathsMap, n);
+    return HaveTriggerMatched(objectMatchedPaths, interestinghltPaths, n);
 }
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
                                const std::string& interestingPath,
                                const analysis::Candidate& candidate)
 {
+    if(candidate.finalStateDaughters.size()) {
+        for(const Candidate& daughter : candidate.finalStateDaughters) {
+            if(!HaveTriggerMatched(triggerObjects, interestingPath, daughter))
+                return false;
+        }
+        return true;
+    }
+
     for (const ntuple::TriggerObject& triggerObject : triggerObjects){
         TLorentzVector triggerObjectMomentum;
-        triggerObjectMomentum.SetPtEtaPhiE(triggerObject.pt,triggerObject.eta,triggerObject.phi,triggerObject.energy);
+        triggerObjectMomentum.SetPtEtaPhiE(triggerObject.pt, triggerObject.eta, triggerObject.phi, triggerObject.energy);
         for (unsigned n = 0; n < triggerObject.pathNames.size(); ++n){
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5 /*&&
-                    candidate.GetPdgId() == std::abs(triggerObject.pdgId)*/){
-                //std::cout << "cand pdg = " << candidate.GetPdgId() << ",trigger pgd = " << triggerObject.pdgId << std::endl;
+                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5)
                 return true;
-            }
         }
     }
     return false;
 }
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
-                               const std::map< std::string, bool >& interestingPaths,
+                               const std::vector<std::string>& interestingPaths,
                                const analysis::Candidate& candidate)
 {
-    for (const auto& interestinPath : interestingPaths){
-        if (HaveTriggerMatched(triggerObjects,interestinPath.first,candidate)) return true;
+    for (const std::string& interestinPath : interestingPaths){
+        if (HaveTriggerMatched(triggerObjects,interestinPath,candidate)) return true;
     }
     return false;
 }

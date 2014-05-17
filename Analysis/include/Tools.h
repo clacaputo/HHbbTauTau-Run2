@@ -11,6 +11,7 @@
 #include <vector>
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 
 namespace tools {
 
@@ -62,11 +63,20 @@ std::vector<Type> join_vectors(const std::vector< const std::vector<Type>* >& in
     return result;
 }
 
-template<class Container, class T>
+template<typename Container, typename T>
 size_t find_index(const Container& container, const T& value)
 {
     const auto iter = std::find(container.begin(), container.end(), value);
     return std::distance(container.begin(), iter);
+}
+
+template<typename Map>
+std::vector< typename Map::key_type > collect_map_keys(const Map& map)
+{
+    std::vector< typename Map::key_type > result;
+    std::transform(map.begin(), map.end(), std::back_inserter(result),
+                   [](const typename Map::value_type& pair) { return pair.first; } );
+    return result;
 }
 
 } // tools
