@@ -225,10 +225,10 @@ protected:
         const ntuple::Vertex& object = event.vertices().at(id);
 
         cut(true, ">0 vertex");
-        cut(X(ndf, 350, 0.0, 350.0) > ndf, "ndf");
-        cut(std::abs( X(z, 600, -30.0, 30.0) ) < z, "z");
+        cut(X(ndf) > ndf, "ndf");
+        cut(std::abs( X(z) ) < z, "z");
         const double r_vertex = std::sqrt(object.x*object.x+object.y*object.y);
-        cut(std::abs( Y(r_vertex, 500, 0.0, 0.5) ) < r, "r");
+        cut(std::abs( Y(r_vertex) ) < r, "r");
 
         return analysis::Vertex(id, object);
     }

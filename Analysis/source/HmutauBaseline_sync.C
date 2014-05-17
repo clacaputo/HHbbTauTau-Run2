@@ -108,24 +108,24 @@ protected:
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
-        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
-        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
-        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
         const double dB_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
+        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
 
         const analysis::Candidate muon(analysis::Candidate::Mu, id, object,object.charge);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,muon);
-//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+//        cut(Y(haveTriggerMatch), "triggerMatch");
 
         return muon;
     }
@@ -139,13 +139,12 @@ protected:
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonTight, 2, -0.5, 1.5) > againstMuonTight, "vs_mu_tight");
-        cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
-            < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
+        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
         const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
@@ -171,16 +170,16 @@ protected:
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
         const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
-        cut(X(isTrackerMuon, 2, -0.5, 1.5) == isTrackerMuon, "trackerMuon");
-        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PFMuon");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(isTrackerMuon) == isTrackerMuon, "trackerMuon");
+        cut(X(isPFMuon) == isPFMuon, "PFMuon");
+        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }

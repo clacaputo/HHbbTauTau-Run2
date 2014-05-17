@@ -100,18 +100,17 @@ protected:
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
-        cut(X(againstElectronLoose, 2, -0.5, 1.5) > againstElectronLoose, "vs_e_loose");
-        cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits, 2, -0.5, 1.5)
-            > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
+        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits) > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
 
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
         const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
-//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+//        cut(Y(haveTriggerMatch), "triggerMatch");
 
         return tau;
     }

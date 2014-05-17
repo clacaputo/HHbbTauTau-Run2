@@ -33,18 +33,18 @@ protected:
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 ele cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
         cut(eta < eta_high, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
         const double d0_PV = (ele_vertex - primaryVertex.position).Perp(); // same as dB
-        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
 
         return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
@@ -58,19 +58,19 @@ protected:
         const ntuple::Muon& object = event.muons().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
         const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
-        cut(X(isGlobalMuonPromptTight, 2, -0.5, 1.5) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon, 2, -0.5, 1.5) == isPFMuon, "PF");
-        cut(X(nMatchedStations, 10, 0.0, 10.0) > nMatched_Stations, "stations");
-        cut(X(pixHits, 10, 0.0, 10.0) > pixHits, "pix_hits");
-        cut(X(trackerLayersWithMeasurement, 20, 0.0, 20.0) > trackerLayersWithMeasurement, "layers");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
 
         return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
     }
@@ -92,16 +92,16 @@ protected:
         const ntuple::Jet& object = event.jets().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags, 130, -11.0, 2.0) > CSV, "CSV");
-        cut(X(passLooseID, 2, -0.5, 1.5) == pfLooseID, "pfLooseID");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
+        cut(X(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
-        cut(Y(passPUlooseID, 2, -0.5, 1.5) == puLooseID, "puLooseId");
+        cut(Y(passPUlooseID) == puLooseID, "puLooseId");
         const Candidate bjet(Candidate::Bjet, id, object);
         for (const Candidate& daughter : higgs.finalStateDaughters){
             const double DeltaR = bjet.momentum.DeltaR(daughter.momentum);
-            cut(Y(DeltaR, 70, 0.0, 7.0) > deltaR_signalObjects, "DR_signalLeptons");
+            cut(Y(DeltaR) > deltaR_signalObjects, "DR_signalLeptons");
         }
 
         return bjet;
@@ -123,15 +123,13 @@ protected:
         const ntuple::Jet& object = event.jets().at(id);
 
         cut(true, ">0 jet cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(passLooseID, 2, -0.5, 1.5) == pfLooseID, "pfLooseID");
-        const bool pass_puLooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
-        cut(Y(pass_puLooseID, 2, -0.5, 1.5) == puLooseID, "puLooseID");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
+        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
 
-        const Candidate jet(analysis::Candidate::Jet, id, object);
-
-        return jet;
+        return Candidate(analysis::Candidate::Jet, id, object);
     }
 
     void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA)
@@ -232,6 +230,7 @@ protected:
     void FillSyncTree(const Candidate& higgs, const Candidate& higgs_corr, const CandidateVector& jets,
                       const CandidateVector& bjets, const VertexVector& vertices, const Candidate& tau)
     {
+        static const double default_value = -10000;
         syncTree.run() = event.eventInfo().run;
         syncTree.lumi() = event.eventInfo().lumis;
         syncTree.evt() = event.eventInfo().EventId;
@@ -299,10 +298,10 @@ protected:
             syncTree.jmva_1() = ntuple_jet.puIdMVA;
         }
         else {
-            syncTree.jpt_1() = -10000;
-            syncTree.jeta_1() = -10000;
-            syncTree.jphi_1() = -10000;
-            syncTree.jmva_1() = -10000;
+            syncTree.jpt_1() = default_value;
+            syncTree.jeta_1() = default_value;
+            syncTree.jphi_1() = default_value;
+            syncTree.jmva_1() = default_value;
         }
         if (jets.size() >= 2){
             const ntuple::Jet& ntuple_jet = event.jets().at(jets.at(1).index);
@@ -312,10 +311,10 @@ protected:
             syncTree.jmva_2() = ntuple_jet.puIdMVA;
         }
         else {
-            syncTree.jpt_2() = -10000;
-            syncTree.jeta_2() = -10000;
-            syncTree.jphi_2() = -10000;
-            syncTree.jmva_2() = -10000;
+            syncTree.jpt_2() = default_value;
+            syncTree.jeta_2() = default_value;
+            syncTree.jphi_2() = default_value;
+            syncTree.jmva_2() = default_value;
         }
         if (bjets.size() >= 1){
             syncTree.bpt() = bjets.at(0).momentum.Pt();
@@ -323,9 +322,9 @@ protected:
             syncTree.bphi() = bjets.at(0).momentum.Phi();
         }
         else {
-            syncTree.bpt() = -10000;
-            syncTree.beta() = -10000;
-            syncTree.bphi() = -10000;
+            syncTree.bpt() = default_value;
+            syncTree.beta() = default_value;
+            syncTree.bphi() = default_value;
         }
     }
 

@@ -15,8 +15,8 @@
 #include <memory>
 
 #include <TObject.h>
-#include <TH1D.h>
-#include <TH2D.h>
+#include <TH1.h>
+#include <TH2.h>
 #include <TTree.h>
 
 namespace root_ext {
@@ -205,5 +205,75 @@ struct HistogramFactory {
         return new SmartHistogram<ValueType>(name, args...);
     }
 };
+
+template<>
+struct HistogramFactory<TH1D> {
+private:
+    struct HistogramParameters {
+        size_t nbins;
+        double low;
+        double high;
+    };
+
+    typedef std::map<std::string, HistogramParameters> HistogramParametersMap;
+
+    static const HistogramParameters& GetParameters(const std::string& name)
+    {
+        static const std::string configName = "Analysis/config/histograms.cfg";
+        static bool parametersLoaded = false;
+        static HistogramParametersMap parameters;
+        if(!parametersLoaded) {
+            std::ifstream cfg(configName);
+            while (cfg.good()) {
+                std::string cfgLine;
+                std::getline(cfg,cfgLine);
+                if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
+                std::istringstream ss(cfgLine);
+                std::string param_name;
+                HistogramParameters param;
+                ss >> param_name;
+                ss >> param.nbins;
+                ss >> param.low;
+                ss >> param.high;
+                if(parameters.count(param_name)) {
+                    std::ostringstream ss_error;
+                    ss_error << "Redefinition of default parameters for histogram '" << param_name << "'.";
+                    throw std::runtime_error(ss_error.str());
+                }
+                parameters[param_name] = param;
+              }
+            parametersLoaded = true;
+        }
+        std::string best_name = name;
+        for(size_t pos = name.find_last_of('_'); !parameters.count(best_name) && pos != 0 && pos != std::string::npos;
+            pos = name.find_last_of('_', pos - 1))
+            best_name = name.substr(0, pos);
+
+        if(!parameters.count(best_name)) {
+            std::ostringstream ss_error;
+            ss_error << "Not found default parameters for histogram '" << name;
+            if(best_name != name)
+                ss_error << "' or '" << best_name;
+            ss_error << "'. Please, define it in '" << configName << "'.";
+            throw std::runtime_error(ss_error.str());
+        }
+        return parameters.at(best_name);
+    }
+
+public:
+    template<typename ...Args>
+    static SmartHistogram<TH1D>* Make(const std::string& name, Args... args)
+    {
+        return new SmartHistogram<TH1D>(name, args...);
+    }
+
+    static SmartHistogram<TH1D>* Make(const std::string& name)
+    {
+        const HistogramParameters& params = GetParameters(name);
+        return new SmartHistogram<TH1D>(name, params.nbins, params.low, params.high);
+    }
+
+};
+
 
 } // root_ext
