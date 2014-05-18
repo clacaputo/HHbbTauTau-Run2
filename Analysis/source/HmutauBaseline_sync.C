@@ -238,14 +238,11 @@ protected:
         syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
 
         Double_t DMweight = 1;
-        if (ntuple_tau.decayMode == 0)
-            DMweight *= 0.88;
+        if (ntuple_tau.decayMode == ntuple::tau_id::kOneProng0PiZero)
+            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
         syncTree.decaymodeweight() = DMweight;
 
-        TLorentzVector met;
-        met.SetPtEtaPhiM(correctedMET.pt, correctedMET.eta, correctedMET.phi, 0.);
-        const double Mt = std::sqrt(2*muon.momentum.Pt()*met.Pt()*(1-std::cos(muon.momentum.DeltaPhi(met)))); //see AN-13-178
-        syncTree.mt_1() = Mt;
+        syncTree.mt_1() = analysis::Calculate_MT(muon.momentum, correctedMET.pt, correctedMET.phi);
 
         syncTree.Fill();
     }

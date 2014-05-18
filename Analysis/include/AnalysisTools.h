@@ -95,4 +95,11 @@ inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, 
     return std::shared_ptr<TH1D>(static_cast<TH1D*>(originalWeights->Clone("PUweights")));
 }
 
+//see AN-13-178
+inline double Calculate_MT(const TLorentzVector& lepton_momentum, double met_pt, double met_phi)
+{
+    const double delta_phi = TVector2::Phi_mpi_pi(lepton_momentum.Phi() - met_phi);
+    return std::sqrt( 2.0 * lepton_momentum.Pt() * met_pt * ( 1.0 - std::cos(delta_phi) ) );
+}
+
 } // analysis
