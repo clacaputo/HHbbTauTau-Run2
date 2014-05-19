@@ -17,7 +17,7 @@ PREFIX=$9
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runPatProducer.sh
-N_EVENTS=-1
+N_EVENTS=1000
 
 if [ ! -d "$WORKING_PATH" ] ; then
     echo "ERROR: working path '$WORKING_PATH' does not exist."

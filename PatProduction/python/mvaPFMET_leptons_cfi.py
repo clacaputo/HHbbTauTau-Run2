@@ -47,6 +47,10 @@ isoelectrons = cms.EDFilter(
     filter = cms.bool(False)
 )
 
+hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet = hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits.clone(
+    maximumSumPtCut = 10.0
+)
+
 isotausTT = cms.EDFilter(
     "PFTauSelector",
     src = cms.InputTag('hpsPFTauProducer'),
@@ -58,7 +62,7 @@ isotausTT = cms.EDFilter(
         ),
         #cms.PSet( discriminator=cms.InputTag("hpsPFTauDiscriminationByMVAIsolation"), selectionCut=cms.double(0.5)),
         cms.PSet(
-            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits"),
+            discriminator = cms.InputTag("hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet"),
             selectionCut = cms.double(0.5)
         )
 #        cms.PSet(
@@ -82,7 +86,7 @@ isotausMT = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "),
                                     selectionCut = cms.double(0.5)
                                 ),
 		                        cms.PSet(
-                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits"),
+                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet"),
                                     selectionCut = cms.double(0.5)
                                 ),
                                 cms.PSet(
