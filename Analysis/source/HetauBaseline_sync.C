@@ -43,7 +43,7 @@ protected:
         finalState::ETaujet eTau;
         if (useMCtruth && !FindAnalysisFinalState(eTau)) return;
 
-        ApplyTauCorrections(eTau);
+
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -71,21 +71,32 @@ protected:
                 ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
+        ApplyTauCorrections(eTau,event.metMVAeTau());
+
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
         const auto higgses = FindCompatibleObjects(electrons, taus, DeltaR_betweenSignalObjects,
-                                                   Candidate::Higgs, "H_e_tau", 0);
+                                                   Candidate::Higgs, "H_e_tau");
         cut(higgses.size(), "e_tau");
 
-        const Candidate higgs = SelectSemiLeptonicHiggs(higgses);
+        const auto higgsTriggered = ApplyTriggerMatch(higgses, trigger::hltPaths);
+        cut(higgsTriggered.size(), "trigger obj match");
 
-        const auto jets = CollectJets(higgs);
+        const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+
+        const auto jets = CollectJets();
+
+        const auto filteredJets = FilterCompatibleObjects(jets,higgs,cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
+
+
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, jets.size());
+//        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
+//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
 
         postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs_corr, jets, bjets, vertices);
+        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+
     }
 
     virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector,
@@ -97,22 +108,22 @@ protected:
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 ele cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        const double eta = std::abs( X(eta, 120, -6.0, 6.0) );
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
         cut(eta < eta_high, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
-        cut(X(missingHits, 20, 0.0, 20.0) < missingHits, "missingHits");
-        cut(X(hasMatchedConversion, 2, -0.5, 1.5) == hasMatchedConversion, "conversion");
+        cut(Y(DeltaZ)  < dz, "dz");
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
         const double dB_PV = (ele_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV, 50, 0.0, 0.5) ) < dB, "dB");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pFRelIso, "pFRelIso");
+        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig, 300, -1.5, 1.5) > MVApogNonTrig[eta_index], "mva");
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
 
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
         return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
 
@@ -125,16 +136,16 @@ protected:
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
-        cut(X(decayModeFinding, 2, -0.5, 1.5) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonLoose, 2, -0.5, 1.5) > againstMuonLoose, "vs_mu_loose");
-        cut(X(againstElectronMediumMVA3, 2, -0.5, 1.5) > againstElectronMediumMVA3, "vs_e_mediumMVA");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits, 100, 0, 10)
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
+        cut(X(againstElectronMediumMVA3) > againstElectronMediumMVA3, "vs_e_mediumMVA");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits)
             < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
-        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
+//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
+//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
     }
@@ -155,19 +166,19 @@ protected:
         const ntuple::Electron& object = event.electrons().at(id);
 
         cut(true, ">0 mu cand");
-        cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
-        cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ, 6000, 0.0, 60.0)  < dz, "dz");
+        cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 e_vertex(object.vx, object.vy, object.vz);
         const double d0_PV = (e_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(d0_PV, 50, 0.0, 0.5) ) < d0, "d0");
-        cut(X(pfRelIso, 1000, 0.0, 100.0) < pfRelIso, "pFRelIso");
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
         const size_t eta_index = eta <= barrel_eta_high ? barrel_index : endcap_index;
-        cut(X(sigmaIEtaIEta, 100, 0.0, 0.1) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
-        cut(X(deltaEtaTrkSC, 100, 0.0, 0.1) < delta_eta[eta_index], "deltaEtaSC");
-        cut(X(deltaPhiTrkSC, 200, 0.0, 2.0) < delta_phi[eta_index], "deltaPhiSC");
-        cut(X(eSuperClusterOverP, 100, 0.0, 1.0) < HoverE[eta_index], "HoverE");
+        cut(X(sigmaIEtaIEta) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
+        cut(X(deltaEtaTrkSC) < delta_eta[eta_index], "deltaEtaSC");
+        cut(X(deltaPhiTrkSC) < delta_phi[eta_index], "deltaPhiSC");
+        cut(X(eSuperClusterOverP) < HoverE[eta_index], "HoverE");
 
         return analysis::Candidate(analysis::Candidate::Electron, id, object, object.charge);
     }
@@ -213,14 +224,11 @@ protected:
         syncTree.dZ_1() = std::abs(ntuple_electron.vz - primaryVertex.position.Z());
 
         Double_t DMweight = 1;
-        if (ntuple_tau.decayMode == 0)
-            DMweight *= 0.88;
+        if (ntuple_tau.decayMode == ntuple::tau_id::kOneProng0PiZero)
+            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
         syncTree.decaymodeweight() = DMweight;
 
-        TLorentzVector met;
-        met.SetPtEtaPhiM(correctedMET.pt, correctedMET.eta, correctedMET.phi, 0.);
-        //see AN-2013/178
-        syncTree.mt_1() = std::sqrt(2*electron.momentum.Pt()*met.Pt()*(1-std::cos(electron.momentum.DeltaPhi(met))));
+        syncTree.mt_1() = analysis::Calculate_MT(electron.momentum, correctedMET.pt, correctedMET.phi);
 
         syncTree.Fill();
     }
