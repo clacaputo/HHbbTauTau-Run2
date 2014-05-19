@@ -47,6 +47,8 @@ isoelectrons = cms.EDFilter(
     filter = cms.bool(False)
 )
 
+from RecoTauTag.Configuration.HPSPFTaus_cff import hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits
+
 hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet = hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits.clone(
     maximumSumPtCut = 10.0
 )
