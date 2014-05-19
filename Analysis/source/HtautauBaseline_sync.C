@@ -78,7 +78,7 @@ protected:
 
         const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses_tautau,jets);
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap);
+        const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
@@ -150,7 +150,7 @@ protected:
         return higgs_JetsMap;
     }
 
-    analysis::CandidateVector ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap)
+    analysis::CandidateVector ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap, bool useStandardTriggerMatch)
     {
         analysis::CandidateVector triggeredHiggses;
         for (const auto& higgs_iter : higgs_JetsMap) {
@@ -159,13 +159,21 @@ protected:
             for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap) {
                 const std::string& interestingPath = interestingPathIter.first;
                 const bool jetTriggerRequest = interestingPathIter.second;
-                if(!analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, higgs))
+
+                if(!useStandardTriggerMatch && !analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, higgs))
+                    continue;
+
+                if (useStandardTriggerMatch && !analysis::HaveTriggerMatched(event,interestingPath,higgs))
                     continue;
 
                 bool jetMatched = false;
                 if(jetTriggerRequest) {
                     for (const auto& jet : jets){
-                        if (analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, jet)){
+                        if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, jet)){
+                            jetMatched = true;
+                            break;
+                        }
+                        if (useStandardTriggerMatch && analysis::HaveTriggerMatched(event, interestingPath, jet)){
                             jetMatched = true;
                             break;
                         }
