@@ -100,4 +100,9 @@ isotausMT = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "),
 
 isomuonseq     = cms.Sequence(isomuons)
 isoelectronseq = cms.Sequence(isoelectrons)
-isotauseq      = cms.Sequence(isotausTT * isotausET * isotausMT)
+isotauseq      = cms.Sequence(
+    hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet *
+    isotausTT *
+    isotausET *
+    isotausMT
+)
