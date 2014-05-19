@@ -69,6 +69,45 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
     return false;
 }
 
+inline bool HaveTriggerMatched(const EventDescriptor& event,
+                               const std::string& interestingPath,
+                               const analysis::Candidate& candidate)
+{
+    if(candidate.finalStateDaughters.size()) {
+        for(const Candidate& daughter : candidate.finalStateDaughters) {
+            if(!HaveTriggerMatched(event, interestingPath, daughter))
+                return false;
+        }
+        return true;
+    }
+
+    std::vector<std::string> objectMatchedPaths;
+    if(candidate.type == analysis::Candidate::Tau){
+        const ntuple::Tau& tau = event.taus().at(candidate.index);
+        objectMatchedPaths = tau.matchedTriggerPaths;
+    }
+    else if (candidate.type == analysis::Candidate::Jet){
+        const ntuple::Jet& jet = event.jets().at(candidate.index);
+        objectMatchedPaths = jet.matchedTriggerPaths;
+    }
+    else if (candidate.type == analysis::Candidate::Mu){
+        const ntuple::Muon& muon = event.muons().at(candidate.index);
+        objectMatchedPaths = muon.matchedTriggerPaths;
+    }
+    else if (candidate.type == analysis::Candidate::Electron){
+        const ntuple::Electron& electron = event.electrons().at(candidate.index);
+        objectMatchedPaths = electron.matchedTriggerPaths;
+    }
+    else
+        throw std::runtime_error("unknow candidate to match trigger");
+    for (unsigned n = 0; n < objectMatchedPaths.size(); ++n){
+        const std::string& objectMatchedPath = objectMatchedPaths.at(n);
+        const size_t found = objectMatchedPath.find(interestingPath);
+        if (found != std::string::npos) return true;
+    }
+    return false;
+}
+
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
                                const std::vector<std::string>& interestingPaths,
                                const analysis::Candidate& candidate)
