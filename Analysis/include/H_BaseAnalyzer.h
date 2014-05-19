@@ -171,6 +171,18 @@ protected:
         correctedMET.phi = metCorrected.Phi();
     }
 
+    virtual analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
+                                                        const std::vector<std::string>& hltPaths)
+    {
+        analysis::CandidateVector triggeredHiggses;
+        for (const auto& higgs : higgses){
+            if(analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
+                triggeredHiggses.push_back(higgs);
+        }
+        return triggeredHiggses;
+
+    }
+
     Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         if (useMCtruth){
