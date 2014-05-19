@@ -11,11 +11,17 @@ calibratedAK5PFJetsForPFMEtMVA = cms.EDProducer('PFJetCorrectionProducer',
     correctors = cms.vstring("ak5PFL1FastL2L3") # NOTE: use "ak5PFL1FastL2L3" for MC / "ak5PFL1FastL2L3Residual" for Data
 )
 
+goodPVFilter = cms.EDFilter("VertexSelector",
+    filter = cms.bool(True),
+    src = cms.InputTag("offlinePrimaryVertices"),
+    cut = cms.string('!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2')
+)
+
 pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     srcCorrJets = cms.InputTag('calibratedAK5PFJetsForPFMEtMVA'),
     srcUncorrJets = cms.InputTag('ak5PFJets'),
     srcPFCandidates = cms.InputTag('particleFlow'),
-    srcVertices = cms.InputTag('offlinePrimaryVertices'),
+    srcVertices = cms.InputTag('goodPVFilter'),
     # NOTE: you need to set this to collections of electrons, muons and tau-jets passing the lepton
     #       reconstruction & identification criteria applied in your analysis
     srcLeptons = cms.VInputTag("isomuons","isotausMT"),
@@ -75,6 +81,7 @@ pfMEtMVAtauTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotausTT") )
 pfMEtMVAsequence  = cms.Sequence(
     (isomuonseq + isotauseq + isoelectronseq) *
     calibratedAK5PFJetsForPFMEtMVA *
+    goodPVFilter *
     pfMEtMVAmuTau *
     pfMEtMVAeTau *
     pfMEtMVAtauTau
