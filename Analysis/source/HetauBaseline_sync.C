@@ -155,8 +155,9 @@ protected:
         using namespace cuts::Htautau_Summer13::ETau::tauID;
         const int icut = std::round(tau.againstElectronMVA3category);
         if(icut < 0) return false;
-        if(icut >= againstElectronMediumMVA3_customValues.size()) return true;
-        return tau.againstElectronMVA3raw > againstElectronMediumMVA3_customValues.at(icut);
+		const size_t ucut = (size_t)icut;
+        if(ucut >= againstElectronMediumMVA3_customValues.size()) return true;
+        return tau.againstElectronMVA3raw > againstElectronMediumMVA3_customValues.at(ucut);
     }
 
     analysis::CandidateVector CollectZelectrons()
