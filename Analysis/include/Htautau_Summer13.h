@@ -103,6 +103,11 @@ namespace ETau {
                                                       // MVA3 is recommended, but it does not exists any more
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
                                                       // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+
+        // > https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/physicsobjects/Tau.py#L62
+        const std::vector<double> againstElectronMediumMVA3_customValues = {
+            0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95,0.897,0.958,0.955,0.942
+        };
     }
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state

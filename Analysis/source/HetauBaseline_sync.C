@@ -140,14 +140,23 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        cut(X(againstElectronMediumMVA3) > againstElectronMediumMVA3, "vs_e_mediumMVA");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits)
-            < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        const bool againstElectron =  againstElectronMediumMVA3_Custom(object);
+        cut(Y(againstElectron), "vs_e_mediumMVA");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
+    }
+
+    bool againstElectronMediumMVA3_Custom(const ntuple::Tau& tau)
+    {
+        using namespace cuts::Htautau_Summer13::ETau::tauID;
+        const int icut = std::round(tau.againstElectronMVA3category);
+        if(icut < 0) return false;
+        if(icut >= againstElectronMediumMVA3_customValues.size()) return true;
+        return tau.againstElectronMVA3raw > againstElectronMediumMVA3_customValues.at(icut);
     }
 
     analysis::CandidateVector CollectZelectrons()
