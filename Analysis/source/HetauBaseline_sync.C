@@ -54,10 +54,10 @@ protected:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.front();
 
-        const auto z_electrons = CollectZelectrons();
-        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
-                                                                 Candidate::Z, "Z_e_e", 0);
-        cut(!z_electron_candidates.size(), "z_ee_veto");
+//        const auto z_electrons = CollectZelectrons();
+//        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
+//                                                                 Candidate::Z, "Z_e_e", 0);
+        //cut(!z_electron_candidates.size(), "z_ee_veto");
 
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
@@ -140,7 +140,7 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        cut(X(againstElectronMediumMVA3) > againstElectronMediumMVA3, "vs_e_mediumMVA");
+        //cut(X(againstElectronMediumMVA3) > againstElectronMediumMVA3, "vs_e_mediumMVA");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits)
             < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
