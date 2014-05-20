@@ -22,6 +22,10 @@ namespace Htautau_Summer13 {
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/analyzers/DiLeptonAnalyzer.py
 const double DeltaR_betweenSignalObjects = 0.5; // >
 
+// https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauMuAnalyzer.py#L272
+// https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L665
+const double DeltaR_triggerMatch = 0.5; // <
+
 namespace MuTau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
@@ -245,11 +249,11 @@ namespace tauCorrections {
     {
         if(!hasMCmatch) return 1.0;
         if(decayMode == ntuple::tau_id::kOneProng1PiZero)
-            //return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
-            return 1.012;
+            return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
+            //return 1.012;
         if(decayMode == ntuple::tau_id::kThreeProng0PiZero)
-            //scaleFactor = 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
-            return 1.012;
+            return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
+            //return 1.012;
         return 1.0;
     }
 }
