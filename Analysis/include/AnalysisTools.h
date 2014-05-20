@@ -141,4 +141,18 @@ inline double Calculate_MT(const TLorentzVector& lepton_momentum, double met_pt,
     return std::sqrt( 2.0 * lepton_momentum.Pt() * met_pt * ( 1.0 - std::cos(delta_phi) ) );
 }
 
+template<typename CandidateCollection>
+inline bool AllCandidatesHaveSameCharge(const CandidateCollection& candidates)
+{
+    if(candidates.size() < 2) return true;
+    auto cand_iter = candidates.begin();
+    int charge = cand_iter->charge;
+    ++cand_iter;
+    for(; cand_iter != candidates.end(); ++cand_iter) {
+        if(charge != cand_iter->charge)
+            return false;
+    }
+    return true;
+}
+
 } // analysis

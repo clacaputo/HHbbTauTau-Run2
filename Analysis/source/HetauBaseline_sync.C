@@ -54,10 +54,11 @@ protected:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.front();
 
-//        const auto z_electrons = CollectZelectrons();
-//        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
-//                                                                 Candidate::Z, "Z_e_e", 0);
-        //cut(!z_electron_candidates.size(), "z_ee_veto");
+        const auto z_electrons = CollectZelectrons();
+//        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
+        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
+                                                                 Candidate::Z, "Z_e_e", 0);
+        cut(!z_electron_candidates.size(), "z_ee_veto");
 
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");

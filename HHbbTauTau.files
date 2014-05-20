@@ -184,3 +184,4 @@ Analysis/include/H_BaseAnalyzer.h
 RunTools/python/skimRiccardo.py
 RunTools/python/tree_trimmer.py
 Analysis/config/histograms.cfg
+Analysis/include/Htautau_TriggerEfficiency.h
