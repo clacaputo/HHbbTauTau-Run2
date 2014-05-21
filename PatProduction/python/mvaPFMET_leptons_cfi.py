@@ -14,12 +14,14 @@ isomuons = cms.EDFilter(
 )
 
 isoelectrons = cms.EDFilter(
-    "GsfElectronSelector",
-    src = cms.InputTag('gsfElectrons'),
+    "PATElectronSelector",
+    src = cms.InputTag('patElectronsWithEmbeddedVariables'),
     cut = cms.string(
         'abs(eta) < 2.1 && pt > 20.0 ' +
-        '&& gsfTrack.trackerExpectedHitsInner.numberOfHits == 0 '# +
-#        '&& (abs(superCluster.eta)<0.8 && mvaNonTrigV0 > 0.925) || (abs(leg2().sourcePtr().superCluster().eta())>0.8 && abs(leg2().sourcePtr().superCluster().eta())<1.479 && leg2().mvaNonTrigV0() > 0.975) || (abs(leg2().sourcePtr().superCluster().eta())>1.479 && leg2().mvaNonTrigV0() > 0.985)'
+        '&& gsfTrack.trackerExpectedHitsInner.numberOfHits == 0 ' +
+        '&& (abs(superCluster.eta)<0.8 && userFloat("mvaPOGNonTrig") > 0.925) ' +
+        '|| (abs(superCluster.eta)>0.8 && abs(superCluster.eta)<1.479 && userFloat("mvaPOGNonTrig") > 0.975) ' +
+        '|| (abs(superCluster.eta)>1.479 && userFloat("mvaPOGNonTrig") > 0.985) '
     ),
     filter = cms.bool(False)
 )
