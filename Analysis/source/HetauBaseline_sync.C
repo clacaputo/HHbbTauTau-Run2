@@ -144,6 +144,12 @@ protected:
         const bool againstElectron =  againstElectronMediumMVA3_Custom(object);
         cut(Y(againstElectron), "vs_e_mediumMVA");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 tau_vertex(object.vx, object.vy, object.vz);
+        const double dB_PV = (tau_vertex - primaryVertex.position).Perp();
+        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+
 
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");

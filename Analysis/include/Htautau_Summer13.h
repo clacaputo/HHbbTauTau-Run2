@@ -112,6 +112,9 @@ namespace ETau {
         const std::vector<double> againstElectronMediumMVA3_customValues = {
             0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95,0.897,0.958,0.955,0.942
         };
+        // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauEleAnalyzer.py#L187
+        const double dz = 0.2;
+        const double dB = 0.045;
     }
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
