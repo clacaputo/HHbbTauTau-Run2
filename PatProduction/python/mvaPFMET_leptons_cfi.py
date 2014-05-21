@@ -5,8 +5,8 @@ import FWCore.ParameterSet.Config as cms
 
 # Single muon for Wjets
 isomuons = cms.EDFilter(
-    "MuonSelector",
-    src = cms.InputTag('muons'),
+    "PATMuonSelector",
+    src = cms.InputTag('patMuonsWithEmbeddedVariables'),
     cut = cms.string(
         "abs(eta) < 2.1 && pt > 17."
         ),
@@ -26,61 +26,33 @@ isoelectrons = cms.EDFilter(
     filter = cms.bool(False)
 )
 
-from RecoTauTag.Configuration.HPSPFTaus_cff import hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits
-
-hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet = hpsPFTauDiscriminationByLooseCombinedIsolationDBSumPtCorr3Hits.clone(
-    maximumSumPtCut = 10.0
-)
-
 isotausTT = cms.EDFilter(
-    "PFTauSelector",
-    src = cms.InputTag('hpsPFTauProducer'),
-    BooleanOperator = cms.string("and"),
-    discriminators = cms.VPSet(
-        cms.PSet(
-            discriminator = cms.InputTag("hpsPFTauDiscriminationByDecayModeFinding"),
-            selectionCut = cms.double(0.5)
-        ),
-        #cms.PSet( discriminator=cms.InputTag("hpsPFTauDiscriminationByMVAIsolation"), selectionCut=cms.double(0.5)),
-        cms.PSet(
-            discriminator = cms.InputTag("hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet"),
-            selectionCut = cms.double(0.5)
-        )
-#        cms.PSet(
-#            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseElectronRejection"),
-#            selectionCut = cms.double(0.5)
-#        ),
-#        cms.PSet(
-#            discriminator = cms.InputTag("hpsPFTauDiscriminationByLooseMuonRejection2"),
-#            selectionCut=cms.double(0.5)
-#        )
+    "PATTauSelector",
+    src = cms.InputTag('patTaus'),
+    cut = cms.string(
+        'abs(eta) < 2.1 && pt > 40.0 ' +
+        '&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
+        '&& tauID("decayModeFinding") > 0.5 '
     ),
-    cut = cms.string('abs(eta) < 2.1 && pt > 40.0'),
     filter = cms.bool(False)
 )
 
-isotausET = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "))
-isotausMT = isotausTT.clone(cut = cms.string("abs(eta) < 2.3 && pt > 15.0 "),
-                            discriminators = cms.VPSet(
-                                cms.PSet(
-                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByDecayModeFinding"),
-                                    selectionCut = cms.double(0.5)
-                                ),
-		                        cms.PSet(
-                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet"),
-                                    selectionCut = cms.double(0.5)
-                                ),
-                                cms.PSet(
-                                    discriminator = cms.InputTag("hpsPFTauDiscriminationByTightMuonRejection"),
-                                    selectionCut=cms.double(0.5)
-                                )
-                            )
-                           )
+isotausET = isotausTT.clone(cut = cms.string(
+                                'abs(eta) < 2.3 && pt > 15.0 ' +
+                                '&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
+                                '&& tauID("decayModeFinding") > 0.5 '
+                                ))
+isotausMT = isotausTT.clone(cut = cms.string(
+                                'abs(eta) < 2.3 && pt > 15.0 ' +
+                                '&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
+                                '&& tauID("decayModeFinding") > 0.5 ' +
+                                '&& tauID("againstMuonTight") > 0.5 '
+                                ))
+
 
 isomuonseq     = cms.Sequence(isomuons)
 isoelectronseq = cms.Sequence(isoelectrons)
 isotauseq      = cms.Sequence(
-    hpsPFTauDiscriminationByCombinedIsolationDBSumPtCorr3HitsMVAmet *
     isotausTT *
     isotausET *
     isotausMT
