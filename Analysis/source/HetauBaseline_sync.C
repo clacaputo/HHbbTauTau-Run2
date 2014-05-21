@@ -187,9 +187,9 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
-        const TVector3 e_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = (e_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+//        const TVector3 e_vertex(object.vx, object.vy, object.vz);
+//        const double d0_PV = (e_vertex - primaryVertex.position).Perp();
+//        cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
         const size_t eta_index = eta <= barrel_eta_high ? barrel_index : endcap_index;
         cut(X(sigmaIEtaIEta) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
