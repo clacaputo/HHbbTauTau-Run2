@@ -181,6 +181,8 @@ namespace electronVeto {
     const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
     const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
                                               // loose HiggsToTauTauWorkingSummer2013#Electron_ID
+    const int missingHits = 1; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
+    const bool hasMatchedConversion = false; // =  HiggsToTauTauWorkingSummer2013#Electron_ID
 }
 
 // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
