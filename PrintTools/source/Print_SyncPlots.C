@@ -73,6 +73,10 @@ public:
         drawHistos("mvis", 50, 0, 200);
         drawHistos("met", 20, 0, 200);
         drawHistos("metphi", 30, -3.5, 3.5);
+        drawHistos("metcov00", 40, 0, 1000);
+        drawHistos("metcov01", 40, 0, 1000);
+        drawHistos("metcov10", 40, 0, 1000);
+        drawHistos("metcov11", 40, 0, 1000);
         drawHistos("mvamet", 30, 0, 150);
         drawHistos("mvametphi", 35, -3.5, 3.5);
         drawHistos("mvacov00", 40, 0, 1000);
