@@ -76,7 +76,7 @@ pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     impactParTkThreshold = cms.double(1.0)
 )
 
-pfMEtMVAeTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotausET") )
+pfMEtMVAeTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("patElectronsWithEmbeddedVariables","isotausET") )
 pfMEtMVAtauTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotausTT") )
 
 pfMEtMVAsequence  = cms.Sequence(
