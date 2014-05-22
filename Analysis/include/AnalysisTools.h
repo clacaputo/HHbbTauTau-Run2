@@ -118,6 +118,16 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
     return false;
 }
 
+inline bool HaveTriggerMatched(const EventDescriptor& event,
+                               const std::vector<std::string>& interestingPaths,
+                               const analysis::Candidate& candidate)
+{
+    for (const std::string& interestinPath : interestingPaths){
+        if (HaveTriggerMatched(event,interestinPath,candidate)) return true;
+    }
+    return false;
+}
+
 inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )
 {
     std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
