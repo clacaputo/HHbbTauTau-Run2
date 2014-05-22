@@ -60,7 +60,7 @@ protected:
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
 
-        ApplyTauCorrections(tauTau, event.metMVAtauTau());
+        ApplyTauCorrections(tauTau, event.metMVAtauTau(), false);
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
         cut(taus.size() >= 2, "at least 2 taus");

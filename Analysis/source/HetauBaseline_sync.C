@@ -72,7 +72,7 @@ protected:
                 ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
-        ApplyTauCorrections(eTau,event.metMVAeTau());
+        ApplyTauCorrections(eTau,event.metMVAeTau(), true);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");

@@ -134,7 +134,8 @@ protected:
         return Candidate(analysis::Candidate::Jet, id, object);
     }
 
-    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA)
+    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA,
+                             bool useLegacyCorrections)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
@@ -153,7 +154,7 @@ protected:
 
             const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
-                                                         static_cast<ntuple::tau_id::hadronicDecayMode>(tau.decayMode));
+                                   ntuple::tau_id::ConvertToHadronicDecayMode(tau.decayMode), useLegacyCorrections);
             const TLorentzVector correctedMomentum = momentum * scaleFactor;
             ntuple::Tau correctedTau(tau);
             correctedTau.pt = correctedMomentum.Pt();
