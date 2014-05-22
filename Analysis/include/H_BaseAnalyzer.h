@@ -174,7 +174,7 @@ protected:
         correctedMET.phi = metCorrected.Phi();
     }
 
-    virtual analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
+    analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
                                                         const std::vector<std::string>& hltPaths,
                                                         bool useStandardTriggerMatch)
     {
