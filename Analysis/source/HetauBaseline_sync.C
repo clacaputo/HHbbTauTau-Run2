@@ -11,7 +11,7 @@
 class BaselineAnalyzerData : public analysis::BaseAnalyzerData {
 public:
     BaselineAnalyzerData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
-
+    ENTRY_1D(double, Tau_Zele_deltaR)
 };
 
 class HetauBaseline_sync : public analysis::H_BaseAnalyzer {
@@ -55,7 +55,7 @@ protected:
         primaryVertex = vertices.front();
 
         const auto z_electrons = CollectZelectrons();
-        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
+//        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
 //        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
 //                                                                 Candidate::Z, "Z_e_e", 0);
 //        cut(!z_electron_candidates.size(), "z_ee_veto");
@@ -84,7 +84,18 @@ protected:
         const auto higgsTriggered = ApplyTriggerMatch(higgses, trigger::hltPaths,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
+//        const auto higgsZveto = ApplyZVeto(higgsTriggered, z_electrons);
+//        cut(higgsZveto.size(), "Z veto with dR");
+
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
+            const Candidate electron = higgs.GetDaughter(Candidate::Electron);
+            const Candidate tau = higgs.GetDaughter(Candidate::Tau);
+            for(const Candidate& z_electron : z_electrons) {
+                if(electron.charge != z_electron.charge)
+                    anaData.Tau_Zele_deltaR().Fill(tau.momentum.DeltaR(z_electron.momentum));
+            }
+        }
 
         const auto jets = CollectJets();
 
