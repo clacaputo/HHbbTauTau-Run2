@@ -92,11 +92,11 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-//        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
-//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
+        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
 
-        postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+//        postRecoilMET = correctedMET;
+//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 
