@@ -80,7 +80,7 @@ protected:
         cut(higgses.size(), "mu_tau");
 
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths);
+        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,true);
         cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
@@ -92,11 +92,11 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
-        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+//        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
 
-//        postRecoilMET = correctedMET;
-//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+        postRecoilMET = correctedMET;
+        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 

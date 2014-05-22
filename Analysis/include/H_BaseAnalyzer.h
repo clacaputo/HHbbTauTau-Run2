@@ -174,11 +174,14 @@ protected:
     }
 
     virtual analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
-                                                        const std::vector<std::string>& hltPaths)
+                                                        const std::vector<std::string>& hltPaths,
+                                                        bool useStandardTriggerMatch)
     {
         analysis::CandidateVector triggeredHiggses;
         for (const auto& higgs : higgses){
-            if(analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
+            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
+                triggeredHiggses.push_back(higgs);
+            if (useStandardTriggerMatch && analysis::HaveTriggerMatched(event,hltPaths,higgs))
                 triggeredHiggses.push_back(higgs);
         }
         return triggeredHiggses;
