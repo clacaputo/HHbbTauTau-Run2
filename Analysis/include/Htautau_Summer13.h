@@ -250,15 +250,20 @@ namespace tauCorrections {
 
     // For taus that matched MC truth.
     // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.
-    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode)
+    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode,
+                                      bool useLegacyCorrections)
     {
         if(!hasMCmatch) return 1.0;
-        if(decayMode == ntuple::tau_id::kOneProng1PiZero)
-            return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
-            //return 1.012;
-        if(decayMode == ntuple::tau_id::kThreeProng0PiZero)
-            return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
-            //return 1.012;
+        if(decayMode == ntuple::tau_id::kOneProng1PiZero) {
+            if(useLegacyCorrections)
+                return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
+            return 1.012;
+        }
+        if(decayMode == ntuple::tau_id::kThreeProng0PiZero) {
+            if(useLegacyCorrections)
+                return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
+            return 1.012;
+        }
         return 1.0;
     }
 }

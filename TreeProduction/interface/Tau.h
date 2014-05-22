@@ -224,5 +224,14 @@ enum hadronicDecayMode {
   kThreeProngNPiZero,
   kRareDecayMode
 };
+
+template<typename Value>
+inline hadronicDecayMode ConvertToHadronicDecayMode(const Value& value)
+{
+    if(value < kNull || value > kRareDecayMode)
+        throw std::runtime_error("value is not a hadronicDecayMode");
+    return static_cast<ntuple::tau_id::hadronicDecayMode>(value);
+}
+
 }
 }
