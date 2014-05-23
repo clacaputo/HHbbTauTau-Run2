@@ -91,13 +91,15 @@ protected:
         if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
             const Candidate electron = higgs.GetDaughter(Candidate::Electron);
             const Candidate tau = higgs.GetDaughter(Candidate::Tau);
+            double maxDeltaR = 0;
             for(const Candidate& z_electron : z_electrons) {
                 if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
                     const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
                     anaData.Tau_Zele_deltaR().Fill(DeltaR);
-                    cut(DeltaR < 0.03, "DR_eleTau");
+                    maxDeltaR = std::max(maxDeltaR,DeltaR);
                 }
             }
+            cut(maxDeltaR < 0.03, "DR_eleTau");
         }
 
         const auto jets = CollectJets();
