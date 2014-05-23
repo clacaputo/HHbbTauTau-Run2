@@ -92,8 +92,11 @@ protected:
             const Candidate electron = higgs.GetDaughter(Candidate::Electron);
             const Candidate tau = higgs.GetDaughter(Candidate::Tau);
             for(const Candidate& z_electron : z_electrons) {
-                if(electron.charge != z_electron.charge)
-                    anaData.Tau_Zele_deltaR().Fill(tau.momentum.DeltaR(z_electron.momentum));
+                if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
+                    const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
+                    anaData.Tau_Zele_deltaR().Fill(DeltaR);
+                    cut(DeltaR < 0.03, "DR_eleTau");
+                }
             }
         }
 
@@ -103,11 +106,11 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
-        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+//        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
+//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
 
-//        postRecoilMET = correctedMET;
-//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+        postRecoilMET = correctedMET;
+        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 
