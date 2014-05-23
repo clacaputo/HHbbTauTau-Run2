@@ -7,6 +7,11 @@
  */
 
 #pragma once
+
+#if defined(__GNUC__) || defined(__GNUG__)
+#define override
+#endif
+
 #include "TreeExtractor.h"
 #include "AnalyzerData.h"
 #include "Htautau_Summer13.h"
