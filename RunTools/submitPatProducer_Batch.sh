@@ -61,7 +61,7 @@ fi
 i=0
 n=0
 
-if [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
+if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
         bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq_pre-cms.bash \
              -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $FILE_LIST_PATH $OUTPUT_PATH \
