@@ -246,10 +246,10 @@ protected:
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         analysis::Htautau_Summer13::TriggerEfficiency efficiency;
-        const double eff_data_leadTau = efficiency.eff2012IsoTau19fb(leadTau.momentum.Pt(), leadTau.momentum.Eta());
-        const double eff_data_subLeadTau = efficiency.eff2012IsoTau19fb(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
-        const double eff_mc_leadTau = efficiency.effLooseTau15MC(leadTau.momentum.Pt(), leadTau.momentum.Eta());
-        const double eff_mc_subLeadTau = efficiency.effLooseTau15MC(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
+        const double eff_data_leadTau = efficiency.eff2012IsoParkedTau19fb_Simone(leadTau.momentum.Pt(), leadTau.momentum.Eta());
+        const double eff_data_subLeadTau = efficiency.eff2012IsoParkedTau19fb_Simone(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
+        const double eff_mc_leadTau = efficiency.eff2012IsoParkedTau19fbMC_Simone(leadTau.momentum.Pt(), leadTau.momentum.Eta());
+        const double eff_mc_subLeadTau = efficiency.eff2012IsoParkedTau19fbMC_Simone(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
         // first leadTau, second subLeadTau
         triggerWeights.push_back(eff_data_leadTau/eff_mc_leadTau);
         triggerWeights.push_back(eff_data_subLeadTau/eff_mc_subLeadTau);
