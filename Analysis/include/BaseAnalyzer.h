@@ -8,7 +8,7 @@
 
 #pragma once
 
-#if defined(__GNUC__) || defined(__GNUG__)
+#ifndef __APPLE__
 #define override
 #endif
 
