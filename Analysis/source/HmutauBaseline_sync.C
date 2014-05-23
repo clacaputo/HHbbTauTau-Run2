@@ -92,11 +92,14 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-//        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
-//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
 
-        postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+        CalculateFullEventWeight(higgs_corr);
+
+        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+
+//        postRecoilMET = correctedMET;
+//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 
@@ -204,14 +207,26 @@ protected:
 //        return true;
 //    }
 
-
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs)
+    {
+        triggerWeights.clear();
+        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        analysis::Htautau_Summer13::TriggerEfficiency efficiency;
+        const double eff_data_Mu = efficiency.effMu_muTau_Data_2012ABCD(mu.momentum.Pt(), mu.momentum.Eta());
+        const double eff_data_Tau = efficiency.effTau_muTau_Data_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
+        const double eff_mc_Mu = efficiency.effMu_muTau_MC_2012ABCD(mu.momentum.Pt(), mu.momentum.Eta());
+        const double eff_mc_tau = efficiency.effTau_muTau_MC_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
+        // first mu, second tau
+        triggerWeights.push_back(eff_data_Mu/eff_mc_Mu);
+        triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
+    }
 
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, tau);
 
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
@@ -227,11 +242,6 @@ protected:
         const TVector3 mu_vertex(ntuple_muon.vx, ntuple_muon.vy, ntuple_muon.vz);
         syncTree.d0_1() = (mu_vertex - primaryVertex.position).Perp();
         syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
-
-        Double_t DMweight = 1;
-        if (ntuple_tau.decayMode == ntuple::tau_id::kOneProng0PiZero)
-            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
-        syncTree.decaymodeweight() = DMweight;
 
         syncTree.mt_1() = analysis::Calculate_MT(muon.momentum, correctedMET.pt, correctedMET.phi);
 

@@ -299,7 +299,7 @@ protected:
         syncTree.againstMuonTight2_1() = leg1.againstMuonTight2;
         syncTree.againstElectronLooseMVA3_1() = leg1.againstElectronLooseMVA3;
         syncTree.againstElectronLoose_1() = leg1.againstElectronLoose;
-
+        syncTree.mt_1() = analysis::Calculate_MT(leadTau.momentum, correctedMET.pt, correctedMET.phi);
         syncTree.Fill();
     }
 

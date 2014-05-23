@@ -319,6 +319,8 @@ protected:
         syncTree.d0_2() = (tau_vertex - primaryVertex.position).Perp();
         syncTree.dZ_2() = std::abs(ntuple_tau.vz - primaryVertex.position.Z());
 
+        syncTree.mt_2() = analysis::Calculate_MT(tau.momentum, correctedMET.pt, correctedMET.phi);
+
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         syncTree.againstElectronMVA3raw_2() = ntuple_tau.againstElectronMVA3raw;
         syncTree.againstElectronMVA3category_2() = ntuple_tau.againstElectronMVA3category;
