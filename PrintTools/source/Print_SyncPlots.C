@@ -71,37 +71,38 @@ public:
         drawHistos("eta_2", 60, -3, 3);
         drawHistos("iso_2", 200, 0., 2);
         drawHistos("mvis", 50, 0, 200);
-        drawHistos("met", 20, 0, 200);
-        drawHistos("metphi", 30, -3.5, 3.5);
-        drawHistos("metcov00", 40, 0, 1000);
-        drawHistos("metcov01", 40, 0, 1000);
-        drawHistos("metcov10", 40, 0, 1000);
-        drawHistos("metcov11", 40, 0, 1000);
+        drawHistos("mt_1", 50, 0, 200);
+        drawHistos("mt_2", 50, 0, 200);
+//        drawHistos("met", 20, 0, 200);
+//        drawHistos("metphi", 30, -3.5, 3.5);
+//        drawHistos("metcov00", 40, 0, 1000);
+//        drawHistos("metcov01", 40, 0, 1000);
+//        drawHistos("metcov10", 40, 0, 1000);
+//        drawHistos("metcov11", 40, 0, 1000);
         drawHistos("mvamet", 30, 0, 150);
         drawHistos("mvametphi", 35, -3.5, 3.5);
         drawHistos("mvacov00", 40, 0, 1000);
         drawHistos("mvacov01", 40, 0, 1000);
         drawHistos("mvacov10", 40, 0, 1000);
         drawHistos("mvacov11", 40, 0, 1000);
-        //drawHistos("mt_1", 50, 0, 200);
         drawHistos("m_sv", 60, 0, 300);
 
 
         // Jets
         const std::vector<Int_t> my_njets = CollectValues<Int_t>(Tmine, "njets");
         const std::vector<Int_t> other_njets = CollectValues<Int_t>(Tother, "njets");
-        const auto noJets_my = [&](size_t entry_id) -> bool {
-            return my_njets.at(entry_id) == 0;
-        };
+//        const auto noJets_my = [&](size_t entry_id) -> bool {
+//            return my_njets.at(entry_id) == 0;
+//        };
         const auto atLeast1jet_my = [&](size_t entry_id) -> bool {
             return my_njets.at(entry_id) >= 1;
         };
         const auto atLeast2jets_my = [&](size_t entry_id) -> bool {
             return my_njets.at(entry_id) >= 2;
         };
-        const auto noJets_other = [&](size_t entry_id) -> bool {
-            return other_njets.at(entry_id) == 0;
-        };
+//        const auto noJets_other = [&](size_t entry_id) -> bool {
+//            return other_njets.at(entry_id) == 0;
+//        };
         const auto atLeast1jet_other = [&](size_t entry_id) -> bool {
             return other_njets.at(entry_id) >= 1;
         };
@@ -125,7 +126,7 @@ public:
         //drawHistos("hdijetphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
         //drawHistos("mva", 40, -1, 1.001, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
-        drawHistos("mvis", 50, 0, 200, noJets_my, noJets_other, "njets==0");
+//        drawHistos("mvis", 50, 0, 200, noJets_my, noJets_other, "njets==0");
 
 
         // b-jets
@@ -142,10 +143,17 @@ public:
         drawHistos("bpt", 50, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
         drawHistos("beta", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
 
-        drawHistos("puweight", 25, -.1, 0.9);
+        drawHistos("puweight", 40, 0, 2);
+        drawHistos("decaymodeweight", 20, 0.5, 1.5);
+        drawHistos("idweight_1", 40, 0, 2);
+        drawHistos("idweight_2", 40, 0, 2);
+        drawHistos("isoweight_1", 40, 0, 2);
+        drawHistos("isoweight_2", 40, 0, 2);
+        drawHistos("trigweight_1", 25, 0.5, 1.5);
+        drawHistos("trigweight_2", 25, 0.5, 1.5);
         //drawHistos("effweight", 30, .8, 1.1);
         //drawHistos("embeddedWeight", 50, 0, 1);
-        //drawHistos("weight", 30, 0, 2.0);
+        drawHistos("weight", 30, 0, 2.0);
 
         //with puweight
 //        TString weight="(puweight)";
