@@ -252,6 +252,42 @@ protected:
         triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
     }
 
+    virtual void CalculateIsoWeights(const analysis::Candidate& higgs)
+    {
+        using namespace cuts::Htautau_Summer13::ETau::electronISOscaleFactor;
+        IsoWeights.clear();
+        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
+        const double ele_pt = ele.momentum.Pt(), ele_eta = std::abs(ele.momentum.Eta());
+        if(ele_pt < pt.at(0))
+            throw std::runtime_error("No information about ISO. Electron pt is too small");
+        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
+        if(ele_eta >= eta.at(1))
+            throw std::runtime_error("No information about ISO. Electron eta is too big");
+        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
+        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
+        // first ele, second tau
+        IsoWeights.push_back(scale);
+        IsoWeights.push_back(1);
+    }
+
+    virtual void CalculateIDWeights(const analysis::Candidate& higgs)
+    {
+        using namespace cuts::Htautau_Summer13::ETau::electronIDscaleFactor;
+        IDweights.clear();
+        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
+        const double ele_pt = ele.momentum.Pt(), ele_eta = std::abs(ele.momentum.Eta());
+        if(ele_pt < pt.at(0))
+            throw std::runtime_error("No information about ID. Electron pt is too small");
+        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
+        if(ele_eta >= eta.at(1))
+            throw std::runtime_error("No information about ID. Electron eta is too big");
+        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
+        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
+        // first ele, second tau
+        IDweights.push_back(scale);
+        IDweights.push_back(1);
+    }
+
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
