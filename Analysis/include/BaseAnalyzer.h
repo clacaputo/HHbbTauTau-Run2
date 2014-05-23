@@ -29,17 +29,17 @@
 
 /*
 #define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label), weight)
+    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label), eventWeight)
 
 #define Y(name, ...) \
-    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label), weight)
+    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label), eventWeight)
 */
 
 #define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), weight)
+    cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), eventWeight)
 
 #define Y(name, ...) \
-    cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), weight)
+    cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), eventWeight)
 
 namespace analysis {
 
@@ -63,7 +63,8 @@ public:
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), weight(1)
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), eventWeight(1), PUweight(1), triggerWeight(1),
+          IDweight(1), IsoWeight(1)
     {
         TH1::SetDefaultSumw2();
         if (reweightFileName != "none")
@@ -81,7 +82,7 @@ public:
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&){}
-            GetAnaData().Selection("event").fill_selection(weight);
+            GetAnaData().Selection("event").fill_selection(eventWeight);
             //break;
         }
         timer.Report(n, true);
@@ -99,12 +100,13 @@ protected:
             const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
             if(bxIndex >= eventInfo.bunchCrossing.size())
                 throw std::runtime_error("in-time BX not found");
-            //SetWeight(eventInfo.nPU.at(bxIndex));
-            SetWeight(eventInfo.trueNInt.at(bxIndex));
+            //SetPUWeight(eventInfo.nPU.at(bxIndex));
+            SetPUWeight(eventInfo.trueNInt.at(bxIndex));
         }
+        eventWeight = eventWeight * PUweight;
     }
 
-    void SetWeight(float nPU)
+    void SetPUWeight(float nPU)
     {
         static const float maxAvailablePU = 60;
         static const double defaultWeight = 0.0;
@@ -112,7 +114,7 @@ protected:
         const Int_t bin = weights->FindBin(nPU);
 		const Int_t maxBin = weights->FindBin(maxAvailablePU);
         const bool goodBin = bin >= 1 && bin <= maxBin;
-        weight = goodBin ? weights->GetBinContent(bin) : defaultWeight;
+        PUweight = goodBin ? weights->GetBinContent(bin) : defaultWeight;
     }
 
     bool HaveTriggerFired(const std::vector<std::string>& interestinghltPaths) const
@@ -134,11 +136,11 @@ protected:
         const auto selector = [&](size_t id) -> ObjectType
             { return base_selector(id, &objectSelector, anaDataBeforeCut, selection_label); };
 
-        const auto selected = objectSelector.collect_objects<ObjectType>(weight, n_objects,selector);
+        const auto selected = objectSelector.collect_objects<ObjectType>(eventWeight, n_objects,selector);
         for(const ObjectType& candidate : selected)
             base_selector(candidate.index, nullptr, anaDataAfterCut, selection_label);
-        GetAnaData().N_objects(selection_label).Fill(selected.size(),weight);
-        GetAnaData().N_objects(selection_label + "_ntuple").Fill(n_objects,weight);
+        GetAnaData().N_objects(selection_label).Fill(selected.size(),eventWeight);
+        GetAnaData().N_objects(selection_label + "_ntuple").Fill(n_objects,eventWeight);
         return selected;
     }
 
@@ -244,11 +246,11 @@ protected:
                     const Candidate candidate(type, object1, object2);
                     if (expectedCharge != Candidate::UnknownCharge() && candidate.charge != expectedCharge) continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
+                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),eventWeight);
                 }
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size(),weight);
+        GetAnaData().N_objects(hist_name).Fill(result.size(),eventWeight);
         return result;
     }
 
@@ -268,11 +270,11 @@ protected:
                     const Candidate candidate(type, objects.at(n), objects.at(k));
                     if (expectedCharge != Candidate::UnknownCharge() && candidate.charge != expectedCharge ) continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),weight);
+                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),eventWeight);
                 }
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size(),weight);
+        GetAnaData().N_objects(hist_name).Fill(result.size(),eventWeight);
         return result;
     }
 
@@ -306,7 +308,7 @@ protected:
     bool useMCtruth;
     GenEvent genEvent;
     Vertex primaryVertex;
-    double weight;
+    double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
     std::shared_ptr<TH1D> weights;
 };
 
