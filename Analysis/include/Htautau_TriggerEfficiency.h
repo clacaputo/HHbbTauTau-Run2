@@ -26,7 +26,6 @@ namespace Htautau_Summer13 {
 
 class TriggerEfficiency {
 public:
-  TriggerEfficiency(){}
 
   ////Method for fitting turn-on curves
   bool fitEfficiency(const char* filename,float xmin=0.,float xmax=0.);

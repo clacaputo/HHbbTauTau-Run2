@@ -86,6 +86,9 @@ protected:
         const auto bjets = CollectBJets(higgs);
 
         const Candidate higgs_corr = ApplyCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
+
+        CalculateFullEventWeight(higgs_corr);
+
         FillSyncTree(higgs, higgs_corr, higgs_JetsMap.at(higgs), bjets, vertices);
 //        postRecoilMET = correctedMET;
 //        FillSyncTree(higgs, higgs, higgs_JetsMap.at(higgs), bjets, vertices);
@@ -236,29 +239,44 @@ protected:
 //        return true;
 //    }
 
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs)
+    {
+        triggerWeights.clear();
+        const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
+        const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
+        analysis::Htautau_Summer13::TriggerEfficiency efficiency;
+        const double eff_data_leadTau = efficiency.eff2012IsoTau19fb(leadTau.momentum.Pt(), leadTau.momentum.Eta());
+        const double eff_data_subLeadTau = efficiency.eff2012IsoTau19fb(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
+        const double eff_mc_leadTau = efficiency.effLooseTau15MC(leadTau.momentum.Pt(), leadTau.momentum.Eta());
+        const double eff_mc_subLeadTau = efficiency.effLooseTau15MC(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
+        // first leadTau, second subLeadTau
+        triggerWeights.push_back(eff_data_leadTau/eff_mc_leadTau);
+        triggerWeights.push_back(eff_data_subLeadTau/eff_mc_subLeadTau);
+    }
+
+    virtual void CalculateDMWeights(const analysis::Candidate& higgs)
+    {
+        DMweights.clear();
+        const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
+        const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
+        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
+        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
+        const double leadWeight = leg1.decayMode == ntuple::tau_id::kOneProng0PiZero ?
+                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
+        const double subLeadWeight = leg2.decayMode == ntuple::tau_id::kOneProng0PiZero ?
+                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
+        // first leadTau, second subLeadTau
+        DMweights.push_back(leadWeight);
+        DMweights.push_back(subLeadWeight);
+    }
+
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
     {
-        Double_t DMweight = 1;
-        analysis::Candidate leadTau, subLeadTau;
-        if (higgs.finalStateDaughters.at(0).momentum.Pt() < higgs.finalStateDaughters.at(1).momentum.Pt()){
-            leadTau = higgs.finalStateDaughters.at(1);
-            subLeadTau = higgs.finalStateDaughters.at(0);
-        }
-        else {
-            leadTau = higgs.finalStateDaughters.at(0);
-            subLeadTau = higgs.finalStateDaughters.at(1);
-        }
+        const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
+        const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
-        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
-//        const ntuple::Tau& leg1 = event.taus().at(leadTau.index);
-//        const ntuple::Tau& leg2 = event.taus().at(subLeadTau.index);
-        if (leg1.decayMode == ntuple::tau_id::kOneProng0PiZero)
-            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
-        if (leg2.decayMode == ntuple::tau_id::kOneProng0PiZero)
-            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
-        syncTree.decaymodeweight() = DMweight;
 
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, subLeadTau);
 
