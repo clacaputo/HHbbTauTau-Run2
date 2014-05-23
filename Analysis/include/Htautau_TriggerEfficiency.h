@@ -558,16 +558,26 @@ public:
     else               return efficiency(pt,19.01,    0.492647,    0.449299,    137.190323,    0.8850);
   }
 
-  ///full dataset ABCD
+  // full dataset ABCD original
+//  double effMu_muTau_Data_2012ABCD(double pt, double eta){
+//    if      (eta<-1.2)  return efficiency (pt,15.9825,7.90724e-05,5.49275e-08,1.6403,0.858285) ;
+//    else if (eta<-0.8)  return efficiency (pt,17.3283,0.707103,1.2047,1.3732,0.900519) ;
+//    else if (eta< 0.0)  return efficiency (pt,15.9828,0.0412999,0.0177441,1.66934,0.970097) ;
+//    else if (eta< 0.8)  return efficiency (pt,15.9802,0.0548775,0.020313,1.79791,0.968398) ;
+//    else if (eta< 1.2)  return efficiency (pt,16.8396,0.458636,0.633185,1.5706,0.8848) ;
+//    else                return efficiency (pt,15.9987,8.94398e-05,5.18549e-08,1.8342,0.854625) ;
+//  }
+
   double effMu_muTau_Data_2012ABCD(double pt, double eta){
-    if      (eta<-1.2)  return efficiency (pt,15.9825,7.90724e-05,5.49275e-08,1.6403,0.858285) ;
-    else if (eta<-0.8)  return efficiency (pt,17.3283,0.707103,1.2047,1.3732,0.900519) ;
-    else if (eta< 0.0)  return efficiency (pt,15.9828,0.0412999,0.0177441,1.66934,0.970097) ;
-    else if (eta< 0.8)  return efficiency (pt,15.9802,0.0548775,0.020313,1.79791,0.968398) ;
-    else if (eta< 1.2)  return efficiency (pt,16.8396,0.458636,0.633185,1.5706,0.8848) ;
-    else                return efficiency (pt,15.9987,8.94398e-05,5.18549e-08,1.8342,0.854625) ;
+    if      (eta<-1.2)  return efficiency (pt, 15.9977,	7.64004e-05,	6.4951e-08,	1.57403,	0.865325) ;
+    else if (eta<-0.8)  return efficiency (pt, 17.3974,	0.804001,	1.47145,	1.24295,	0.928198) ;
+    else if (eta< 0.0)  return efficiency (pt, 16.4307,	0.226312,	0.265553,	1.55756,	0.974462) ;
+    else if (eta< 0.8)  return efficiency (pt, 17.313,	0.662731,	1.3412,	1.05778,	1.26624) ;
+    else if (eta< 1.2)  return efficiency (pt, 16.9966,	0.550532,	0.807863,	1.55402,	0.885134) ;
+    else                return efficiency (pt, 15.9962,	0.000106195,	4.95058e-08,	1.9991,	0.851294) ;
   }
 
+  // OK
   double effMu_muTau_MC_2012ABCD(double pt, double eta){
     if      (eta<-1.2)  return efficiency (pt,16.0051,2.45144e-05,4.3335e-09,1.66134,0.87045) ;
     else if (eta<-0.8)  return efficiency (pt,17.3135,0.747636,1.21803,1.40611,0.934983) ;
@@ -577,14 +587,27 @@ public:
     else                return efficiency (pt,15.997,7.90069e-05,4.40036e-08,1.66272,0.884502) ;
   }
 
-  double effTau_muTau_Data_2012ABCD(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.52036251,1.47760312,2.53574445,1.71202550,0.93019930);
-    else               return efficiency(pt,18.41225333,0.76598912,0.60544260,5.38350881,0.85870108);
-  }
-  double effTau_muTau_MC_2012ABCD(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.88740627,0.10718873,0.12277723,1.60581265,0.95041892);
-    else               return efficiency(pt,18.30439676,1.44360240,3.79358997,1.07560564,0.93103925);
-  }
+    // original
+//  double effTau_muTau_Data_2012ABCD(double pt, double eta) {
+//    if(fabs(eta)<1.5)  return efficiency(pt,18.52036251,1.47760312,2.53574445,1.71202550,0.93019930);
+//    else               return efficiency(pt,18.41225333,0.76598912,0.60544260,5.38350881,0.85870108);
+//  }
+
+    double effTau_muTau_Data_2012ABCD(double pt, double eta) {
+      if(fabs(eta)<1.5)  return efficiency(pt, 18.604910,    0.276042,    0.137039,    2.698437,    0.940721);
+      else               return efficiency(pt, 18.701715,    0.216523,    0.148111,    2.245081,    0.895320);
+    }
+
+    // original
+//  double effTau_muTau_MC_2012ABCD(double pt, double eta) {
+//    if(fabs(eta)<1.5)  return efficiency(pt,18.88740627,0.10718873,0.12277723,1.60581265,0.95041892);
+//    else               return efficiency(pt,18.30439676,1.44360240,3.79358997,1.07560564,0.93103925);
+//  }
+
+    double effTau_muTau_MC_2012ABCD(double pt, double eta) {
+        if(fabs(eta)<1.5)  return efficiency(pt, 18.537441,    1.385790,    3.102076,    1.002486,    6.275127);
+        else               return efficiency(pt, 18.393366,    1.526254,    2.021678,    124.741631,    0.894280);
+    }
 
 
   //********************************
@@ -766,22 +789,40 @@ public:
     else               return efficiency(pt,18.62,    0.037935,    0.002134,    95.090919,    0.8515);
   }
 
-  //full data-set ABCD
+  //full data-set ABCD original
+//  double effEle_eTau_Data_2012ABCD(double pt, double eta){
+//    if(fabs(eta)<1.479)  return efficiency (pt,22.9041,1.04728,1.38544,1.22576,1.13019) ;
+//    else                 return efficiency (pt,21.9941,1.43419,1.01152,2.28622,0.939872) ;
+//  }
   double effEle_eTau_Data_2012ABCD(double pt, double eta){
-    if(fabs(eta)<1.479)  return efficiency (pt,22.9041,1.04728,1.38544,1.22576,1.13019) ;
-    else                 return efficiency (pt,21.9941,1.43419,1.01152,2.28622,0.939872) ;
+    if(fabs(eta)<1.479)  return efficiency (pt, 22.9704,	1.0258,	1.26889,	1.31024,	1.06409) ;
+    else                 return efficiency (pt, 21.9816,	1.40993,	0.978597,	2.33144,	0.937552) ;
   }
+
+  // OK
   double effEle_eTau_MC_2012ABCD(double pt, double eta){
     if(fabs(eta)<1.479)  return efficiency (pt,21.7243,0.619015,0.739301,1.34903,1.02594) ;
     else                 return efficiency (pt,22.1217,1.34054,1.8885,1.01855,4.7241) ;
   }
+
+  // original
+//  double effTau_eTau_Data_2012ABCD(double pt, double eta) {
+//    if(fabs(eta)<1.5)  return efficiency(pt,18.686211,    1.993524,    3.202713,    3.612693,    0.871640);
+//    else               return efficiency(pt,18.472954,    1.606388,    3.468975,    55.629620,    0.828977);
+//  }
   double effTau_eTau_Data_2012ABCD(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.686211,    1.993524,    3.202713,    3.612693,    0.871640);
-    else               return efficiency(pt,18.472954,    1.606388,    3.468975,    55.629620,    0.828977);
+    if(fabs(eta)<1.5)  return efficiency(pt, 18.538229,    0.651562,    0.324869,    13.099048,    0.902365);
+    else               return efficiency(pt, 18.756548,    0.230732,    0.142859,    3.358497,    0.851919);
   }
+
+  // original
+//  double effTau_eTau_MC_2012ABCD(double pt, double eta) {
+//    if(fabs(eta)<1.5)  return efficiency(pt,18.431118,    1.572877,    3.301699,    4.760769,    0.899620);
+//    else               return efficiency(pt,18.257217,    1.632443,    9.283116,    40.219585,    0.858643);
+//  }
   double effTau_eTau_MC_2012ABCD(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.431118,    1.572877,    3.301699,    4.760769,    0.899620);
-    else               return efficiency(pt,18.257217,    1.632443,    9.283116,    40.219585,    0.858643);
+    if(fabs(eta)<1.5)  return efficiency(pt, 18.525766,    0.275904,    0.126185,    4.957594,    0.915910);
+    else               return efficiency(pt, 18.552006,    0.632002,    0.426891,    133.934952,    0.866543);
   }
 
 

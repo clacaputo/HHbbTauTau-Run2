@@ -26,7 +26,7 @@ public:
         anaData.getOutputFile().cd();
     }
 
-    virtual ~HtautauBaseline_sync()
+    virtual ~HtautauBaseline_sync() override
     {
         anaData.getOutputFile().cd();
         syncTree.Write();
@@ -34,9 +34,9 @@ public:
 
 protected:
     typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
-    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent()
+    virtual void ProcessEvent() override
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
@@ -95,7 +95,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                          root_ext::AnalyzerData& _anaData,
+                                          const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::TauTau;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
@@ -239,7 +240,7 @@ protected:
 //        return true;
 //    }
 
-    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs)
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
         triggerWeights.clear();
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
@@ -254,7 +255,7 @@ protected:
         triggerWeights.push_back(eff_data_subLeadTau/eff_mc_subLeadTau);
     }
 
-    virtual void CalculateDMWeights(const analysis::Candidate& higgs)
+    virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
     {
         DMweights.clear();
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);

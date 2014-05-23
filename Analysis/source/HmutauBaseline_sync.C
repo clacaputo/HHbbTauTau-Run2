@@ -25,7 +25,7 @@ public:
         anaData.getOutputFile().cd();
     }
 
-    virtual ~HmutauBaseline_sync()
+    virtual ~HmutauBaseline_sync() override
     {
         anaData.getOutputFile().cd();
         syncTree.Write();
@@ -33,9 +33,9 @@ public:
 
 
 protected:
-    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent()
+    virtual void ProcessEvent() override
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
@@ -104,7 +104,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                           root_ext::AnalyzerData& _anaData,
+                                           const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::muonID;
@@ -135,7 +136,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                          root_ext::AnalyzerData& _anaData,
+                                          const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::tauID;
@@ -166,8 +168,9 @@ protected:
         return CollectObjects<analysis::Candidate>("z_muons", base_selector, event.muons().size());
     }
 
-    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                 const std::string& selection_label)
+    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                            root_ext::AnalyzerData& _anaData,
+                                            const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
         cuts::Cutter cut(objectSelector);
@@ -207,7 +210,7 @@ protected:
 //        return true;
 //    }
 
-    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs)
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
         triggerWeights.clear();
         const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);

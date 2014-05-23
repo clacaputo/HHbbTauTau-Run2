@@ -22,31 +22,30 @@ public:
           syncTree("syncTree")
     {}
 
-
 protected:
 
-    virtual void CalculateTriggerWeights(const Candidate& candidate)
+    virtual void CalculateTriggerWeights(const Candidate& candidate) override
     {
         triggerWeights.clear();
         triggerWeights.push_back(1);
         triggerWeights.push_back(1);
     }
 
-    virtual void CalculateIsoWeights(const Candidate& candidate)
+    virtual void CalculateIsoWeights(const Candidate& candidate) override
     {
         IsoWeights.clear();
         IsoWeights.push_back(1);
         IsoWeights.push_back(1);
     }
 
-    virtual void CalculateIdWeights(const Candidate& candidate)
+    virtual void CalculateIdWeights(const Candidate& candidate) override
     {
         IDweights.clear();
         IDweights.push_back(1);
         IDweights.push_back(1);
     }
 
-    virtual void CalculateDMWeights(const Candidate& candidate)
+    virtual void CalculateDMWeights(const Candidate& candidate) override
     {
         DMweights.clear();
         DMweights.push_back(1);
@@ -55,7 +54,7 @@ protected:
 
     virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
                                                          root_ext::AnalyzerData& _anaData,
-                                                         const std::string& selection_label)
+                                                         const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::electronVeto;
         cuts::Cutter cut(objectSelector);
@@ -82,7 +81,7 @@ protected:
 
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                                      root_ext::AnalyzerData& _anaData,
-                                                     const std::string& selection_label)
+                                                     const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::muonVeto;
         cuts::Cutter cut(objectSelector);

@@ -25,16 +25,16 @@ public:
         anaData.getOutputFile().cd();
     }
 
-    ~HetauBaseline_sync()
+    virtual ~HetauBaseline_sync() override
     {
         anaData.getOutputFile().cd();
         syncTree.Write();
     }
 
 protected:
-    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent()
+    virtual void ProcessEvent() override
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
@@ -120,7 +120,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                               root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                               root_ext::AnalyzerData& _anaData,
+                                               const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::electronID;
@@ -148,7 +149,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                          root_ext::AnalyzerData& _anaData,
+                                          const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::tauID;
@@ -195,7 +197,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectZelectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                                root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                                root_ext::AnalyzerData& _anaData,
+                                                const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
         cuts::Cutter cut(objectSelector);
@@ -237,7 +240,7 @@ protected:
 //        return true;
 //    }
 
-    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs)
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
         triggerWeights.clear();
         const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
@@ -252,7 +255,7 @@ protected:
         triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
     }
 
-    virtual void CalculateIsoWeights(const analysis::Candidate& higgs)
+    virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
     {
         using namespace cuts::Htautau_Summer13::ETau::electronISOscaleFactor;
         IsoWeights.clear();
