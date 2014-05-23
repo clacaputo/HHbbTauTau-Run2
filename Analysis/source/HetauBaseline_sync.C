@@ -56,9 +56,9 @@ protected:
 
         const auto z_electrons = CollectZelectrons();
 //        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
-//        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
-//                                                                 Candidate::Z, "Z_e_e", 0);
-//        cut(!z_electron_candidates.size(), "z_ee_veto");
+        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
+                                                                 Candidate::Z, "Z_e_e", 0);
+        cut(!z_electron_candidates.size(), "z_ee_veto");
 
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
@@ -88,19 +88,19 @@ protected:
 //        cut(higgsZveto.size(), "Z veto with dR");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
-        if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
-            const Candidate electron = higgs.GetDaughter(Candidate::Electron);
-            const Candidate tau = higgs.GetDaughter(Candidate::Tau);
-            double maxDeltaR = 0;
-            for(const Candidate& z_electron : z_electrons) {
-                if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
-                    const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
-                    anaData.Tau_Zele_deltaR().Fill(DeltaR);
-                    maxDeltaR = std::max(maxDeltaR,DeltaR);
-                }
-            }
-            cut(maxDeltaR < 0.03, "DR_eleTau");
-        }
+//        if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
+//            const Candidate electron = higgs.GetDaughter(Candidate::Electron);
+//            const Candidate tau = higgs.GetDaughter(Candidate::Tau);
+//            double maxDeltaR = 0;
+//            for(const Candidate& z_electron : z_electrons) {
+//                if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
+//                    const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
+//                    anaData.Tau_Zele_deltaR().Fill(DeltaR);
+//                    maxDeltaR = std::max(maxDeltaR,DeltaR);
+//                }
+//            }
+//            cut(maxDeltaR < 0.03, "DR_eleTau");
+//        }
 
         const auto jets = CollectJets();
 

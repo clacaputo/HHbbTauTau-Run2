@@ -225,7 +225,7 @@ protected:
         triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
     }
 
-    virtual void CalculateIsoWeights(const analysis::Candidate& higgs)
+    virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::muonISOscaleFactor;
         IsoWeights.clear();
