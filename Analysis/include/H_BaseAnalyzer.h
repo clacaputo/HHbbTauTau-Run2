@@ -45,6 +45,8 @@ protected:
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
 
         return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
     }
@@ -132,7 +134,8 @@ protected:
         return Candidate(analysis::Candidate::Jet, id, object);
     }
 
-    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA)
+    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA,
+                             bool useLegacyCorrections)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
@@ -151,7 +154,7 @@ protected:
 
             const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
-                                                         static_cast<ntuple::tau_id::hadronicDecayMode>(tau.decayMode));
+                                   ntuple::tau_id::ConvertToHadronicDecayMode(tau.decayMode), useLegacyCorrections);
             const TLorentzVector correctedMomentum = momentum * scaleFactor;
             ntuple::Tau correctedTau(tau);
             correctedTau.pt = correctedMomentum.Pt();
@@ -169,6 +172,21 @@ protected:
         correctedMET.pt = metCorrected.Pt();
         correctedMET.eta = metCorrected.Eta();
         correctedMET.phi = metCorrected.Phi();
+    }
+
+    analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
+                                                        const std::vector<std::string>& hltPaths,
+                                                        bool useStandardTriggerMatch)
+    {
+        analysis::CandidateVector triggeredHiggses;
+        for (const auto& higgs : higgses){
+            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
+                triggeredHiggses.push_back(higgs);
+            if (useStandardTriggerMatch && analysis::HaveTriggerMatched(event,hltPaths,higgs))
+                triggeredHiggses.push_back(higgs);
+        }
+        return triggeredHiggses;
+
     }
 
     Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)

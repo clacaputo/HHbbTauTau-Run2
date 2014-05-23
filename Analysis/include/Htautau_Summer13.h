@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <TMath.h>
 
 #include "Tools.h"
 #include "TreeProduction/interface/Tau.h"
@@ -20,6 +21,10 @@ namespace Htautau_Summer13 {
 // AN-2013/178 H->etau,mutau
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/analyzers/DiLeptonAnalyzer.py
 const double DeltaR_betweenSignalObjects = 0.5; // >
+
+// https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauMuAnalyzer.py#L272
+// https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L665
+const double DeltaR_triggerMatch = 0.5; // <
 
 namespace MuTau {
     namespace trigger {
@@ -102,6 +107,14 @@ namespace ETau {
                                                       // MVA3 is recommended, but it does not exists any more
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
                                                       // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+
+        // > https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/physicsobjects/Tau.py#L62
+        const std::vector<double> againstElectronMediumMVA3_customValues = {
+            0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95,0.897,0.958,0.955,0.942
+        };
+        // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauEleAnalyzer.py#L187
+        const double dz = 0.2;
+        const double dB = 0.045;
     }
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
@@ -168,6 +181,8 @@ namespace electronVeto {
     const double scEta_min[2] = {0.8, 1.479}; // loose HiggsToTauTauWorkingSummer2013#Electron_ID
     const double MVApogNonTrig[2][3] = {{0.925, 0.915, 0.965},{0.905,0.955, 0.975}};
                                               // loose HiggsToTauTauWorkingSummer2013#Electron_ID
+    const int missingHits = 1; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
+    const bool hasMatchedConversion = false; // =  HiggsToTauTauWorkingSummer2013#Electron_ID
 }
 
 // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
@@ -235,15 +250,20 @@ namespace tauCorrections {
 
     // For taus that matched MC truth.
     // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.
-    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode)
+    inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode,
+                                      bool useLegacyCorrections)
     {
         if(!hasMCmatch) return 1.0;
-        if(decayMode == ntuple::tau_id::kOneProng1PiZero)
-            //return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
+        if(decayMode == ntuple::tau_id::kOneProng1PiZero) {
+            if(useLegacyCorrections)
+                return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
             return 1.012;
-        if(decayMode == ntuple::tau_id::kThreeProng0PiZero)
-            //scaleFactor = 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
+        }
+        if(decayMode == ntuple::tau_id::kThreeProng0PiZero) {
+            if(useLegacyCorrections)
+                return 1.012 + 0.001 * std::min(std::max(pt - 32.0, 0.0), 18.0);
             return 1.012;
+        }
         return 1.0;
     }
 }

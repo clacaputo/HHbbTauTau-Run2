@@ -73,6 +73,10 @@ public:
         drawHistos("mvis", 50, 0, 200);
         drawHistos("met", 20, 0, 200);
         drawHistos("metphi", 30, -3.5, 3.5);
+        drawHistos("metcov00", 40, 0, 1000);
+        drawHistos("metcov01", 40, 0, 1000);
+        drawHistos("metcov10", 40, 0, 1000);
+        drawHistos("metcov11", 40, 0, 1000);
         drawHistos("mvamet", 30, 0, 150);
         drawHistos("mvametphi", 35, -3.5, 3.5);
         drawHistos("mvacov00", 40, 0, 1000);
@@ -207,7 +211,7 @@ private:
             std::shared_ptr<TH1F> Hother_diff(new TH1F(TString("Hother")+var + "diff","",nbins,xmin,xmax));
 
             std::shared_ptr<TH2F> Hmine_vs_other(new TH2F(TString("Hmine_vs_other") + var, "", nbins, xmin, xmax,
-                                                          nbins, xmin, xmax));
+                                                          40, -1.0, 1.0));
 
             TBranch* myBranch = Tmine->GetBranch(var.c_str());
             TBranch* otherBranch = Tother->GetBranch(var.c_str());
@@ -310,8 +314,12 @@ private:
                          const std::string& var)
     {
         Hmine_vs_other->SetTitle(selection_label.c_str());
-        Hmine_vs_other->GetXaxis()->SetTitle((var + "_mine").c_str());
-        Hmine_vs_other->GetYaxis()->SetTitle((var + "_other").c_str());
+        const std::string my_name = var + "_mine";
+        const std::string other_name = var + "_other";
+        std::ostringstream y_name;
+        y_name << "(" << other_name << " - " << my_name << ")/" << other_name;
+        Hmine_vs_other->GetXaxis()->SetTitle(my_name.c_str());
+        Hmine_vs_other->GetYaxis()->SetTitle(y_name.str().c_str());
 
         TPad pad1("pad1","", 0, 0, 1, 1);
         pad1.cd();
@@ -372,7 +380,10 @@ private:
             const OtherVarType& other_value = other_values.at(other_entry);
             my_histogram.Fill(my_value);
             other_histogram.Fill(other_value);
-            histogram2D.Fill(my_value, other_value);
+            if(other_value) {
+                const auto y_value = (other_value - my_value)/other_value;
+                histogram2D.Fill(my_value, y_value);
+            }
         }
     }
 

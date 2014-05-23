@@ -69,7 +69,7 @@ protected:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
-        ApplyTauCorrections(muTau,event.metMVAmuTau());
+        ApplyTauCorrections(muTau,event.metMVAmuTau(), true);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -80,7 +80,7 @@ protected:
         cut(higgses.size(), "mu_tau");
 
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgses);
+        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
@@ -92,10 +92,11 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+//        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
 
-        //postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+        postRecoilMET = correctedMET;
+        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 
@@ -203,17 +204,7 @@ protected:
 //        return true;
 //    }
 
-    analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses)
-    {
-        using namespace cuts::Htautau_Summer13::MuTau::trigger;
-        analysis::CandidateVector triggeredHiggses;
-        for (const auto& higgs : higgses){
-            if(analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
-                triggeredHiggses.push_back(higgs);
-        }
-        return triggeredHiggses;
 
-    }
 
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,

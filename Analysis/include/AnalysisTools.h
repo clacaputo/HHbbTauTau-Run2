@@ -62,9 +62,48 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                    triggerObjectMomentum.DeltaR(candidate.momentum) < 0.5)
+                    triggerObjectMomentum.DeltaR(candidate.momentum) < cuts::Htautau_Summer13::DeltaR_triggerMatch)
                 return true;
         }
+    }
+    return false;
+}
+
+inline bool HaveTriggerMatched(const EventDescriptor& event,
+                               const std::string& interestingPath,
+                               const analysis::Candidate& candidate)
+{
+    if(candidate.finalStateDaughters.size()) {
+        for(const Candidate& daughter : candidate.finalStateDaughters) {
+            if(!HaveTriggerMatched(event, interestingPath, daughter))
+                return false;
+        }
+        return true;
+    }
+
+    std::vector<std::string> objectMatchedPaths;
+    if(candidate.type == analysis::Candidate::Tau){
+        const ntuple::Tau& tau = event.taus().at(candidate.index);
+        objectMatchedPaths = tau.matchedTriggerPaths;
+    }
+    else if (candidate.type == analysis::Candidate::Jet){
+        const ntuple::Jet& jet = event.jets().at(candidate.index);
+        objectMatchedPaths = jet.matchedTriggerPaths;
+    }
+    else if (candidate.type == analysis::Candidate::Mu){
+        const ntuple::Muon& muon = event.muons().at(candidate.index);
+        objectMatchedPaths = muon.matchedTriggerPaths;
+    }
+    else if (candidate.type == analysis::Candidate::Electron){
+        const ntuple::Electron& electron = event.electrons().at(candidate.index);
+        objectMatchedPaths = electron.matchedTriggerPaths;
+    }
+    else
+        throw std::runtime_error("unknow candidate to match trigger");
+    for (unsigned n = 0; n < objectMatchedPaths.size(); ++n){
+        const std::string& objectMatchedPath = objectMatchedPaths.at(n);
+        const size_t found = objectMatchedPath.find(interestingPath);
+        if (found != std::string::npos) return true;
     }
     return false;
 }
@@ -75,6 +114,16 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
 {
     for (const std::string& interestinPath : interestingPaths){
         if (HaveTriggerMatched(triggerObjects,interestinPath,candidate)) return true;
+    }
+    return false;
+}
+
+inline bool HaveTriggerMatched(const EventDescriptor& event,
+                               const std::vector<std::string>& interestingPaths,
+                               const analysis::Candidate& candidate)
+{
+    for (const std::string& interestinPath : interestingPaths){
+        if (HaveTriggerMatched(event,interestinPath,candidate)) return true;
     }
     return false;
 }
@@ -100,6 +149,20 @@ inline double Calculate_MT(const TLorentzVector& lepton_momentum, double met_pt,
 {
     const double delta_phi = TVector2::Phi_mpi_pi(lepton_momentum.Phi() - met_phi);
     return std::sqrt( 2.0 * lepton_momentum.Pt() * met_pt * ( 1.0 - std::cos(delta_phi) ) );
+}
+
+template<typename CandidateCollection>
+inline bool AllCandidatesHaveSameCharge(const CandidateCollection& candidates)
+{
+    if(candidates.size() < 2) return true;
+    auto cand_iter = candidates.begin();
+    int charge = cand_iter->charge;
+    ++cand_iter;
+    for(; cand_iter != candidates.end(); ++cand_iter) {
+        if(charge != cand_iter->charge)
+            return false;
+    }
+    return true;
 }
 
 } // analysis
