@@ -80,7 +80,7 @@ protected:
         cut(higgses.size(), "mu_tau");
 
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,true);
+        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);

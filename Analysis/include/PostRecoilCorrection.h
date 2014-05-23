@@ -28,7 +28,7 @@ ntuple::MET ApplyPostRecoilCorrection(const ntuple::MET& originalMET, const TLor
     corrector.addDataFile(fileZmmData);
     corrector.addMCFile(fileZmmMC);
 
-    corrector.CorrectType1(met, metphi, resonantMomentumMC.Pt(), resonantMomentumMC.Phi(),
+    corrector.CorrectType2(met, metphi, resonantMomentumMC.Pt(), resonantMomentumMC.Phi(),
                            resonantMomentum.Pt(), resonantMomentum.Phi(), iU1, iU2, 0, 0, njets);
 
     ntuple::MET correctedMET(originalMET);
