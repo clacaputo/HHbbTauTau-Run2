@@ -22,6 +22,7 @@
 #include "RunReport.h"
 #include "Tools.h"
 #include "AnalysisTools.h"
+#include "Htautau_TriggerEfficiency.h"
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \
@@ -94,6 +95,7 @@ protected:
 
     virtual void ProcessEvent()
     {
+        eventWeight = 1;
         runReport.AddEvent(event.eventId());
         if (weights){
             const ntuple::Event& eventInfo = event.eventInfo();
@@ -103,7 +105,7 @@ protected:
             //SetPUWeight(eventInfo.nPU.at(bxIndex));
             SetPUWeight(eventInfo.trueNInt.at(bxIndex));
         }
-        eventWeight = eventWeight * PUweight;
+        eventWeight *= PUweight;
     }
 
     void SetPUWeight(float nPU)
@@ -116,6 +118,31 @@ protected:
         const bool goodBin = bin >= 1 && bin <= maxBin;
         PUweight = goodBin ? weights->GetBinContent(bin) : defaultWeight;
     }
+
+    void CalculateFullEventWeight(const Candidate& candidate)
+    {
+        CalculateTriggerWeights(candidate);
+        CalculateIsoWeights(candidate);
+        CalculateIdWeights(candidate);
+        CalculateDMWeights(candidate);
+        for (double weight : triggerWeights){
+            eventWeight *= weight;
+        }
+        for (double weight : IsoWeights){
+            eventWeight *= weight;
+        }
+        for (double weight : IDweights){
+            eventWeight *= weight;
+        }
+        for (double weight : DMweights){
+            eventWeight *= weight;
+        }
+    }
+
+    virtual void CalculateTriggerWeights(const Candidate& candidate) = 0;
+    virtual void CalculateIsoWeights(const Candidate& candidate) = 0;
+    virtual void CalculateIdWeights(const Candidate& candidate) = 0;
+    virtual void CalculateDMWeights(const Candidate& candidate) = 0;
 
     bool HaveTriggerFired(const std::vector<std::string>& interestinghltPaths) const
     {
@@ -309,6 +336,7 @@ protected:
     GenEvent genEvent;
     Vertex primaryVertex;
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
+    std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights;
     std::shared_ptr<TH1D> weights;
 };
 
