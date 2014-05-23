@@ -240,7 +240,7 @@ protected:
         IsoWeights.push_back(1);
     }
 
-    virtual void CalculateIDWeights(const analysis::Candidate& higgs)
+    virtual void CalculateIdWeights(const analysis::Candidate& higgs) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::muonIDscaleFactor;
         IDweights.clear();

@@ -144,7 +144,7 @@ public:
         drawHistos("beta", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
 
         drawHistos("puweight", 40, 0, 2);
-        drawHistos("decaymodeweight", 20, 0.5, 1.5);
+//        drawHistos("decaymodeweight", 20, 0.5, 1.5);
         drawHistos("idweight_1", 40, 0, 2);
         drawHistos("idweight_2", 40, 0, 2);
         drawHistos("isoweight_1", 40, 0, 2);
