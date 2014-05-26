@@ -45,6 +45,8 @@ TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, METTree, MET_DATA)
 namespace ntuple {
     std::vector<Float_t> SignificanceMatrixToVector(const TMatrixD& m)
     {
+        if(m.GetNrows() != 2 || m.GetNcols() != 2)
+            throw std::runtime_error("invalid matrix dimensions");
         std::vector<Float_t> v(4);
         v[0] = m[0][0];
         v[1] = m[0][1];

@@ -76,7 +76,7 @@ protected:
         cut(X(missingHits) < missingHits, "missingHits");
         cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
 
-        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
@@ -102,7 +102,7 @@ protected:
         cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
+        return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
 
     analysis::CandidateVector CollectBJets(const Candidate& higgs)
@@ -274,113 +274,197 @@ protected:
     }
 
     void FillSyncTree(const Candidate& higgs, const Candidate& higgs_corr, const CandidateVector& jets,
-                      const CandidateVector& bjets, const VertexVector& vertices, const Candidate& tau)
+                      const CandidateVector& bjets, const VertexVector& vertices, const Candidate& leg1,
+                      const Candidate& leg2)
     {
-        static const double default_value = -10000;
+        static const double default_value = ntuple::DefaultFillValueForSyncTree();
         syncTree.run() = event.eventInfo().run;
         syncTree.lumi() = event.eventInfo().lumis;
         syncTree.evt() = event.eventInfo().EventId;
+
         syncTree.npv() = vertices.size();
-        for (unsigned n = 0; n < event.eventInfo().bunchCrossing.size(); ++n){
-            if (event.eventInfo().bunchCrossing.at(n) == 0){
-                syncTree.npu() = event.eventInfo().trueNInt.at(n); //only in-time PU
-            }
-        }
+        const size_t bxIndex = tools::find_index(event.eventInfo().bunchCrossing, 0);
+        if(bxIndex >= event.eventInfo().bunchCrossing.size())
+            throw std::runtime_error("in-time BX not found");
+        syncTree.npu() = event.eventInfo().trueNInt.at(bxIndex);
+        //syncTree.rho();
+
+        //syncTree.mcweight();
         syncTree.puweight() = PUweight;
-        syncTree.decaymodeweight() = DMweights.at(0)*DMweights.at(1);
+        syncTree.trigweight_1() = triggerWeights.at(0);
+        syncTree.trigweight_2() = triggerWeights.at(1);
         syncTree.idweight_1() = IDweights.at(0);
         syncTree.idweight_2() = IDweights.at(1);
         syncTree.isoweight_1() = IsoWeights.at(0);
         syncTree.isoweight_2() = IsoWeights.at(1);
-        syncTree.trigweight_1() = triggerWeights.at(0);
-        syncTree.trigweight_2() = triggerWeights.at(1);
+        //syncTree.fakeweight();
+        //syncTree.effweight();
         syncTree.weight() = eventWeight;
+        //syncTree.embeddedWeight();
+        //syncTree.signalWeight();
 
         syncTree.mvis() = higgs.momentum.M();
         syncTree.m_sv() = higgs_corr.momentum.M();
         syncTree.pt_sv() = higgs_corr.momentum.Pt();
         syncTree.eta_sv() = higgs_corr.momentum.Eta();
         syncTree.phi_sv() = higgs_corr.momentum.Phi();
+        //syncTree.m_sv_Up();
+        //syncTree.m_sv_Down();
 
-        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
-        //const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
+        syncTree.pt_1() = leg1.momentum.Pt();
+        syncTree.phi_1() = leg1.momentum.Phi();
+        syncTree.eta_1() = leg1.momentum.Eta();
+        syncTree.m_1() = leg1.momentum.M();
+        syncTree.q_1() = leg1.charge;
+        syncTree.mt_1() = analysis::Calculate_MT(leg1.momentum, correctedMET.pt, correctedMET.phi);
+        syncTree.d0_1() = (leg1.vertexPosition - primaryVertex.position).Perp();
+        syncTree.dZ_1() = std::abs(leg1.vertexPosition.Z() - primaryVertex.position.Z());
 
-        //tau - not corrected
-        syncTree.pt_2() = ntuple_tau.pt;
-        syncTree.eta_2() = ntuple_tau.eta;
-        syncTree.phi_2() = ntuple_tau.phi;
-        TLorentzVector tau_momentum;
-        tau_momentum.SetPtEtaPhiE(ntuple_tau.pt,ntuple_tau.eta,ntuple_tau.phi,ntuple_tau.energy);
-        syncTree.m_2() = tau_momentum.M();
-        syncTree.q_2() = ntuple_tau.charge;
-        syncTree.iso_2() = ntuple_tau.byIsolationMVAraw;
-        const TVector3 tau_vertex(ntuple_tau.vx, ntuple_tau.vy, ntuple_tau.vz);
-        syncTree.d0_2() = (tau_vertex - primaryVertex.position).Perp();
-        syncTree.dZ_2() = std::abs(ntuple_tau.vz - primaryVertex.position.Z());
+        // leg1 lepton specific variable should be filled outside. Here all them set to the default value.
+        syncTree.iso_1() = default_value;
+        syncTree.mva_1() = default_value;
+        //syncTree.passid_1() = default_value;
+        //syncTree.passiso_1() = default_value;
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
+        syncTree.againstElectronMVA3raw_1() = default_value;
+        syncTree.byIsolationMVA2raw_1() = default_value;
+        syncTree.againstMuonLoose2_1() = default_value;
+        syncTree.againstMuonMedium2_1() = default_value;
+        syncTree.againstMuonTight2_1() = default_value;
 
-        syncTree.mt_2() = analysis::Calculate_MT(tau.momentum, correctedMET.pt, correctedMET.phi);
+        syncTree.pt_2() = leg2.momentum.Pt();
+        syncTree.phi_2() = leg2.momentum.Phi();
+        syncTree.eta_2() = leg2.momentum.Eta();
+        syncTree.m_2() = leg2.momentum.M();
+        syncTree.q_2() = leg2.charge;
+        syncTree.mt_2() = analysis::Calculate_MT(leg2.momentum, correctedMET.pt, correctedMET.phi);
+        syncTree.d0_2() = (leg2.vertexPosition - primaryVertex.position).Perp();
+        syncTree.dZ_2() = std::abs(leg2.vertexPosition.Z() - primaryVertex.position.Z());
 
-        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau.byCombinedIsolationDeltaBetaCorrRaw3Hits;
-        syncTree.againstElectronMVA3raw_2() = ntuple_tau.againstElectronMVA3raw;
-        syncTree.againstElectronMVA3category_2() = ntuple_tau.againstElectronMVA3category;
-        syncTree.byIsolationMVA2raw_2() = ntuple_tau.byIsolationMVA2raw;
-        syncTree.againstMuonLoose_2() = ntuple_tau.againstMuonLoose;
-        syncTree.againstMuonLoose2_2() = ntuple_tau.againstMuonLoose2;
-        syncTree.againstMuonMedium2_2() = ntuple_tau.againstMuonMedium2;
-        syncTree.againstMuonTight2_2() = ntuple_tau.againstMuonTight2;
-        syncTree.againstElectronLooseMVA3_2() = ntuple_tau.againstElectronLooseMVA3;
-        syncTree.againstElectronLoose_2() = ntuple_tau.againstElectronLoose;
+        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
+        syncTree.iso_2() = ntuple_tau_leg2.byIsolationMVAraw;
+        syncTree.mva_2() = ntuple_tau_leg2.againstElectronMVA3raw;
+        //syncTree.passid_2();
+        //syncTree.passiso_2();
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits;
+        syncTree.againstElectronMVA3raw_2() = ntuple_tau_leg2.againstElectronMVA3raw;
+        syncTree.byIsolationMVA2raw_2() = ntuple_tau_leg2.byIsolationMVA2raw;
+        syncTree.againstMuonLoose2_2() = ntuple_tau_leg2.againstMuonLoose2;
+        syncTree.againstMuonMedium2_2() = ntuple_tau_leg2.againstMuonMedium2;
+        syncTree.againstMuonTight2_2() = ntuple_tau_leg2.againstMuonTight2;
 
-        syncTree.met() = event.metPF().pt; //raw
-        syncTree.metphi() = event.metPF().phi; //raw
+        syncTree.pt_tt() = (leg1.momentum + leg2.momentum).Pt();
+
+        syncTree.met() = event.metPF().pt;
+        syncTree.metphi() = event.metPF().phi;
         syncTree.mvamet() = postRecoilMET.pt;
         syncTree.mvametphi() = postRecoilMET.phi;
-        syncTree.metcov00() = event.metPF().significanceMatrix.at(0);
-        syncTree.metcov01() = event.metPF().significanceMatrix.at(1);
-        syncTree.metcov10() = event.metPF().significanceMatrix.at(2);
-        syncTree.metcov11() = event.metPF().significanceMatrix.at(3);
-        syncTree.mvacov00() = postRecoilMET.significanceMatrix.at(0);
-        syncTree.mvacov01() = postRecoilMET.significanceMatrix.at(1);
-        syncTree.mvacov10() = postRecoilMET.significanceMatrix.at(2);
-        syncTree.mvacov11() = postRecoilMET.significanceMatrix.at(3);
+        //syncTree.pzetavis();
+        //syncTree.pzetamiss();
+        const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(event.metPF().significanceMatrix);
+        syncTree.metcov00() = metPFcov[0][0];
+        syncTree.metcov01() = metPFcov[0][1];
+        syncTree.metcov10() = metPFcov[1][0];
+        syncTree.metcov11() = metPFcov[1][1];
+        const TMatrixD metMVAcov = ntuple::VectorToSignificanceMatrix(postRecoilMET.significanceMatrix);
+        syncTree.mvacov00() = metMVAcov[0][0];
+        syncTree.mvacov01() = metMVAcov[0][1];
+        syncTree.mvacov10() = metMVAcov[1][0];
+        syncTree.mvacov11() = metMVAcov[1][1];
 
         syncTree.njets() = jets.size();
-        syncTree.nbtag() = bjets.size();
-        if (jets.size() >= 1){
-            const ntuple::Jet& ntuple_jet = event.jets().at(jets.at(0).index);
-            syncTree.jpt_1() = jets.at(0).momentum.Pt();
-            syncTree.jeta_1() = jets.at(0).momentum.Eta();
-            syncTree.jphi_1() = jets.at(0).momentum.Phi();
+        //syncTree.njetspt20();
+
+        if (jets.size() >= 1) {
+            const Candidate& jet = jets.at(0);
+            const ntuple::Jet& ntuple_jet = event.jets().at(jet.index);
+            syncTree.jpt_1() = jet.momentum.Pt();
+            syncTree.jeta_1() = jet.momentum.Eta();
+            syncTree.jphi_1() = jet.momentum.Phi();
+            syncTree.jptraw_1() = ntuple_jet.pt_raw;
+            //syncTree.jptunc_1();
             syncTree.jmva_1() = ntuple_jet.puIdMVA;
-        }
-        else {
+            //syncTree.jlrm_1();
+            //syncTree.jctm_1();
+            syncTree.jpass_1() = ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits);
+        } else {
             syncTree.jpt_1() = default_value;
             syncTree.jeta_1() = default_value;
             syncTree.jphi_1() = default_value;
+            syncTree.jptraw_1() = default_value;
+            syncTree.jptunc_1() = default_value;
             syncTree.jmva_1() = default_value;
+            syncTree.jlrm_1() = default_value;
+            syncTree.jctm_1() = default_value;
+            syncTree.jpass_1() = default_value;
         }
-        if (jets.size() >= 2){
-            const ntuple::Jet& ntuple_jet = event.jets().at(jets.at(1).index);
-            syncTree.jpt_2() = jets.at(1).momentum.Pt();
-            syncTree.jeta_2() = jets.at(1).momentum.Eta();
-            syncTree.jphi_2() = jets.at(1).momentum.Phi();
+
+        if (jets.size() >= 2) {
+            const Candidate& jet = jets.at(1);
+            const ntuple::Jet& ntuple_jet = event.jets().at(jet.index);
+            syncTree.jpt_2() = jet.momentum.Pt();
+            syncTree.jeta_2() = jet.momentum.Eta();
+            syncTree.jphi_2() = jet.momentum.Phi();
+            syncTree.jptraw_2() = ntuple_jet.pt_raw;
+            //syncTree.jptunc_2();
             syncTree.jmva_2() = ntuple_jet.puIdMVA;
-        }
-        else {
+            //syncTree.jlrm_2();
+            //syncTree.jctm_2();
+            syncTree.jpass_2() = ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits);
+        } else {
             syncTree.jpt_2() = default_value;
             syncTree.jeta_2() = default_value;
             syncTree.jphi_2() = default_value;
+            syncTree.jptraw_2() = default_value;
+            syncTree.jptunc_2() = default_value;
             syncTree.jmva_2() = default_value;
+            syncTree.jlrm_2() = default_value;
+            syncTree.jctm_2() = default_value;
+            syncTree.jpass_2() = default_value;
         }
-        if (bjets.size() >= 1){
-            syncTree.bpt() = bjets.at(0).momentum.Pt();
-            syncTree.beta() = bjets.at(0).momentum.Eta();
-            syncTree.bphi() = bjets.at(0).momentum.Phi();
+
+        syncTree.nbtag() = bjets.size();
+
+        if (bjets.size() >= 1) {
+            const Candidate& bjet = bjets.at(0);
+            const ntuple::Jet& ntuple_bjet = event.jets().at(bjet.index);
+            syncTree.bpt_1() = bjet.momentum.Pt();
+            syncTree.beta_1() = bjet.momentum.Eta();
+            syncTree.bphi_1() = bjet.momentum.Phi();
+            syncTree.bcsv_1() = ntuple_bjet.combinedSecondaryVertexBJetTags;
+        } else {
+            syncTree.bpt_1() = default_value;
+            syncTree.beta_1() = default_value;
+            syncTree.bphi_1() = default_value;
+            syncTree.bcsv_1() = default_value;
         }
-        else {
-            syncTree.bpt() = default_value;
-            syncTree.beta() = default_value;
-            syncTree.bphi() = default_value;
+
+        if (bjets.size() >= 2) {
+            const Candidate& bjet = bjets.at(1);
+            const ntuple::Jet& ntuple_bjet = event.jets().at(bjet.index);
+            syncTree.bpt_2() = bjet.momentum.Pt();
+            syncTree.beta_2() = bjet.momentum.Eta();
+            syncTree.bphi_2() = bjet.momentum.Phi();
+            syncTree.bcsv_2() = ntuple_bjet.combinedSecondaryVertexBJetTags;
+        } else {
+            syncTree.bpt_2() = default_value;
+            syncTree.beta_2() = default_value;
+            syncTree.bphi_2() = default_value;
+            syncTree.bcsv_2() = default_value;
+        }
+
+        if (bjets.size() >= 3){
+            const Candidate& bjet = bjets.at(2);
+            const ntuple::Jet& ntuple_bjet = event.jets().at(bjet.index);
+            syncTree.bpt_3() = bjet.momentum.Pt();
+            syncTree.beta_3() = bjet.momentum.Eta();
+            syncTree.bphi_3() = bjet.momentum.Phi();
+            syncTree.bcsv_3() = ntuple_bjet.combinedSecondaryVertexBJetTags;
+        } else {
+            syncTree.bpt_3() = default_value;
+            syncTree.beta_3() = default_value;
+            syncTree.bphi_3() = default_value;
+            syncTree.bcsv_3() = default_value;
         }
     }
 

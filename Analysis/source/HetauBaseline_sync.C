@@ -145,7 +145,7 @@ protected:
 
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-        return analysis::Candidate(analysis::Candidate::Electron, id, object,object.charge);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
@@ -175,7 +175,7 @@ protected:
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
-        return analysis::Candidate(analysis::Candidate::Tau, id, object,object.charge);
+        return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
 
     bool againstElectronMediumMVA3_Custom(const ntuple::Tau& tau)
@@ -198,7 +198,7 @@ protected:
 
     virtual analysis::Candidate SelectZelectron(size_t id, cuts::ObjectSelector* objectSelector,
                                                 root_ext::AnalyzerData& _anaData,
-                                                const std::string& selection_label) override
+                                                const std::string& selection_label)
     {
         using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
         cuts::Cutter cut(objectSelector);
@@ -219,7 +219,7 @@ protected:
         cut(X(deltaPhiTrkSC) < delta_phi[eta_index], "deltaPhiSC");
         cut(X(eSuperClusterOverP) < HoverE[eta_index], "HoverE");
 
-        return analysis::Candidate(analysis::Candidate::Electron, id, object, object.charge);
+        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
 //    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
@@ -295,24 +295,16 @@ protected:
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
     {
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, tau);
-
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
         const ntuple::Electron& ntuple_electron = event.electrons().at(electron.index);
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        // electron
-        syncTree.pt_1() = electron.momentum.Pt();
-        syncTree.eta_1() = electron.momentum.Eta();
-        syncTree.phi_1() = electron.momentum.Phi();
-        syncTree.m_1() = electron.momentum.M();
-        syncTree.q_1() = electron.charge;
+        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, electron, tau);
+
         syncTree.iso_1() = ntuple_electron.pfRelIso;
-        const TVector3 electron_vertex(ntuple_electron.vx, ntuple_electron.vy, ntuple_electron.vz);
-        syncTree.d0_1() = (electron_vertex - primaryVertex.position).Perp();
-        syncTree.dZ_1() = std::abs(ntuple_electron.vz - primaryVertex.position.Z());
-
-        syncTree.mt_1() = analysis::Calculate_MT(electron.momentum, correctedMET.pt, correctedMET.phi);
+        syncTree.mva_1() = ntuple_electron.mvaPOGNonTrig;
+        //syncTree.passid_2();
+        //syncTree.passiso_2();
 
         syncTree.Fill();
     }
