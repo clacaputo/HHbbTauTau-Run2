@@ -93,10 +93,13 @@ public:
         drawHistos("m_sv_Down", 60, 0, 300);
 
         //  First lepton :  muon for mu Tau, electron for e Tau, electron for e mu, Leading (in pT) Tau for Tau Tau
-        drawHistos("pt_1", 100, 0, 100);
+        drawHistos("pt_1", 100, 0, 150);
         drawHistos("eta_1", 60, -3, 3);
         drawHistos("phi_1", 30, -3.5, 3.5);
-        drawHistos("iso_1", 200, 0., 2);
+        if (channel == "etau" || channel == "mutau")
+            drawHistos("iso_1", 20, 0., 0.2);
+        if (channel == "tautau")
+            drawHistos("iso_1", 100, 0., 1);
         drawHistos("m_1", 20, 0, 2);
         drawHistos("q_1", 3, -1, 1);
         drawHistos("mva_1", 300, -1.5, 1.5);
@@ -113,7 +116,7 @@ public:
         drawHistos("againstMuonTight2_1", 2, -0.5, 1.5);
 
         //Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau
-        drawHistos("pt_2", 100, 0, 100);
+        drawHistos("pt_2", 100, 0, 150);
         drawHistos("eta_2", 60, -3, 3);
         drawHistos("phi_2", 30, -3.5, 3.5);
         drawHistos("iso_2", 200, 0., 2);
@@ -133,7 +136,7 @@ public:
         drawHistos("againstMuonTight2_2", 2, -0.5, 1.5);
 
         //Dilepton
-        drawHistos("pt_tt", 100, 0, 100);
+        drawHistos("pt_tt", 100, 0, 150);
 
         //Met related variables
 
@@ -144,7 +147,7 @@ public:
         drawHistos("metcov10", 40, 0, 1000);
         drawHistos("metcov11", 40, 0, 1000);
 
-        drawHistos("mvamet", 30, 0, 150);
+        drawHistos("mvamet", 20, 0, 200);
         drawHistos("mvametphi", 35, -3.5, 3.5);
         drawHistos("mvacov00", 40, 0, 1000);
         drawHistos("mvacov01", 40, 0, 1000);
