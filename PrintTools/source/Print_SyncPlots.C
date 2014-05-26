@@ -154,7 +154,7 @@ public:
         drawHistos("pzetavis", 300, 0, 300);
         drawHistos("pzetamiss", 300, 0, 300);
 
-
+        std::cout << "after met" << std::endl;
 
         // Jets
         const std::vector<Int_t> my_njets = CollectValues<Int_t>(Tmine, "njets");
@@ -301,7 +301,17 @@ private:
                                                           40, -1.0, 1.0));
 
             TBranch* myBranch = Tmine->GetBranch(var.c_str());
+            if (!myBranch){
+                std::ostringstream ss;
+                ss << "My Branch '" << var << "' is not found.";
+                throw std::runtime_error(ss.str());
+            }
             TBranch* otherBranch = Tother->GetBranch(var.c_str());
+            if (!otherBranch){
+                std::ostringstream ss;
+                ss << "Other Branch '" << var << "' is not found.";
+                throw std::runtime_error(ss.str());
+            }
             TClass *myClass, *otherClass;
             EDataType myType, otherType;
             myBranch->GetExpectedType(myClass, myType);
