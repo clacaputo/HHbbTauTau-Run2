@@ -110,7 +110,18 @@ protected:
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
             { return SelectBjet(id, _objectSelector, _anaData, _selection_label, higgs); };
-        return CollectObjects<analysis::Candidate>("bjets", base_selector, event.jets().size());
+        analysis::CandidateVector bjets =
+                CollectObjects<analysis::Candidate>("bjets", base_selector, event.jets().size());
+
+        const auto bjetsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
+        {
+            const ntuple::Jet& first_bjet = event.jets().at(first.index);
+            const ntuple::Jet& second_bjet = event.jets().at(second.index);
+
+            return first_bjet.combinedSecondaryVertexBJetTags > second_bjet.combinedSecondaryVertexBJetTags;
+        };
+        std::sort(bjets.begin(), bjets.end(), bjetsSelector);
+        return bjets;
     }
 
     virtual analysis::Candidate SelectBjet(size_t id, cuts::ObjectSelector* objectSelector,
@@ -154,6 +165,32 @@ protected:
 
         cut(true, ">0 jet cand");
         cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
+        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
+
+        return Candidate(analysis::Candidate::Jet, id, object);
+    }
+
+    analysis::CandidateVector CollectJetsPt20()
+    {
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
+            { return SelectJetPt20(id, _objectSelector, _anaData, _selection_label); };
+        return CollectObjects<analysis::Candidate>("jetsPt20", base_selector, event.jets().size());
+    }
+
+    virtual analysis::Candidate SelectJetPt20(size_t id, cuts::ObjectSelector* objectSelector,
+                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+    {
+        using namespace cuts::Htautau_Summer13::jetID;
+        const static double ptCut = 20.0;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Jet& object = event.jets().at(id);
+
+        cut(true, ">0 jet cand");
+        cut(X(pt) > ptCut, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
