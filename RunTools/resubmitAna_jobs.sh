@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -ne 6 ] ; then
+if [ $# -ne 5 ] ; then
     echo "Usage: dataset_name output_path analyzer_name include_sim pu_weights"
     exit
 fi
@@ -79,4 +79,4 @@ echo "$JOBS_TO_RESUBMIT" | xargs -n 1 printf "$FILE_LIST_PATH/%b.txt $NEW_FILE_L
 
 #RunTools/submitTreeProducer_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $INCLUDE_SIM $PREFIX
 #RunTools/submitPatProducer_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $GLOBAL_TAG $IS_MC $INCLUDE_SIM $PREFIX
-/RunTools/submitAnalysis_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $ANALYZER_NAME $INCLUDE_SIM $PU_WEIGHTS
+RunTools/submitAnalysis_Batch.sh local Bari 0 $NEW_FILE_LIST_PATH $OUTPUT_PATH $ANALYZER_NAME $INCLUDE_SIM $PU_WEIGHTS

@@ -25,16 +25,16 @@ public:
         anaData.getOutputFile().cd();
     }
 
-    ~HetauBaseline_sync()
+    virtual ~HetauBaseline_sync() override
     {
         anaData.getOutputFile().cd();
         syncTree.Write();
     }
 
 protected:
-    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent()
+    virtual void ProcessEvent() override
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
@@ -56,9 +56,9 @@ protected:
 
         const auto z_electrons = CollectZelectrons();
 //        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
-//        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
-//                                                                 Candidate::Z, "Z_e_e", 0);
-//        cut(!z_electron_candidates.size(), "z_ee_veto");
+        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
+                                                                 Candidate::Z, "Z_e_e", 0);
+        cut(!z_electron_candidates.size(), "z_ee_veto");
 
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
@@ -88,19 +88,19 @@ protected:
 //        cut(higgsZveto.size(), "Z veto with dR");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
-        if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
-            const Candidate electron = higgs.GetDaughter(Candidate::Electron);
-            const Candidate tau = higgs.GetDaughter(Candidate::Tau);
-            double maxDeltaR = 0;
-            for(const Candidate& z_electron : z_electrons) {
-                if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
-                    const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
-                    anaData.Tau_Zele_deltaR().Fill(DeltaR);
-                    maxDeltaR = std::max(maxDeltaR,DeltaR);
-                }
-            }
-            cut(maxDeltaR < 0.03, "DR_eleTau");
-        }
+//        if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
+//            const Candidate electron = higgs.GetDaughter(Candidate::Electron);
+//            const Candidate tau = higgs.GetDaughter(Candidate::Tau);
+//            double maxDeltaR = 0;
+//            for(const Candidate& z_electron : z_electrons) {
+//                if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
+//                    const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
+//                    anaData.Tau_Zele_deltaR().Fill(DeltaR);
+//                    maxDeltaR = std::max(maxDeltaR,DeltaR);
+//                }
+//            }
+//            cut(maxDeltaR < 0.03, "DR_eleTau");
+//        }
 
         const auto jets = CollectJets();
 
@@ -108,16 +108,20 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-//        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
-//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+        const Candidate higgs_corr = ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
 
-        postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+        CalculateFullEventWeight(higgs_corr);
+
+        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+
+//        postRecoilMET = correctedMET;
+//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 
     virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                               root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                               root_ext::AnalyzerData& _anaData,
+                                               const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::electronID;
@@ -145,7 +149,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                          root_ext::AnalyzerData& _anaData,
+                                          const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::tauID;
@@ -192,7 +197,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectZelectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                                root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                                root_ext::AnalyzerData& _anaData,
+                                                const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
         cuts::Cutter cut(objectSelector);
@@ -234,12 +240,62 @@ protected:
 //        return true;
 //    }
 
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
+    {
+        triggerWeights.clear();
+        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        analysis::Htautau_Summer13::TriggerEfficiency efficiency;
+        const double eff_data_Ele = efficiency.effEle_eTau_Data_2012ABCD(ele.momentum.Pt(), ele.momentum.Eta());
+        const double eff_data_Tau = efficiency.effTau_eTau_Data_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
+        const double eff_mc_Ele = efficiency.effEle_eTau_MC_2012ABCD(ele.momentum.Pt(), ele.momentum.Eta());
+        const double eff_mc_tau = efficiency.effTau_eTau_MC_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
+        // first ele, second tau
+        triggerWeights.push_back(eff_data_Ele/eff_mc_Ele);
+        triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
+    }
+
+    virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
+    {
+        using namespace cuts::Htautau_Summer13::ETau::electronISOscaleFactor;
+        IsoWeights.clear();
+        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
+        const double ele_pt = ele.momentum.Pt(), ele_eta = std::abs(ele.momentum.Eta());
+        if(ele_pt < pt.at(0))
+            throw std::runtime_error("No information about ISO. Electron pt is too small");
+        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
+        if(ele_eta >= eta.at(1))
+            throw std::runtime_error("No information about ISO. Electron eta is too big");
+        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
+        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
+        // first ele, second tau
+        IsoWeights.push_back(scale);
+        IsoWeights.push_back(1);
+    }
+
+    virtual void CalculateIdWeights(const analysis::Candidate& higgs) override
+    {
+        using namespace cuts::Htautau_Summer13::ETau::electronIDscaleFactor;
+        IDweights.clear();
+        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
+        const double ele_pt = ele.momentum.Pt(), ele_eta = std::abs(ele.momentum.Eta());
+        if(ele_pt < pt.at(0))
+            throw std::runtime_error("No information about ID. Electron pt is too small");
+        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
+        if(ele_eta >= eta.at(1))
+            throw std::runtime_error("No information about ID. Electron eta is too big");
+        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
+        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
+        // first ele, second tau
+        IDweights.push_back(scale);
+        IDweights.push_back(1);
+    }
+
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, tau);
 
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
@@ -255,11 +311,6 @@ protected:
         const TVector3 electron_vertex(ntuple_electron.vx, ntuple_electron.vy, ntuple_electron.vz);
         syncTree.d0_1() = (electron_vertex - primaryVertex.position).Perp();
         syncTree.dZ_1() = std::abs(ntuple_electron.vz - primaryVertex.position.Z());
-
-        Double_t DMweight = 1;
-        if (ntuple_tau.decayMode == ntuple::tau_id::kOneProng0PiZero)
-            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
-        syncTree.decaymodeweight() = DMweight;
 
         syncTree.mt_1() = analysis::Calculate_MT(electron.momentum, correctedMET.pt, correctedMET.phi);
 

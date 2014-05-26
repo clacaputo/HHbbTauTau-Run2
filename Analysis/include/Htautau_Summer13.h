@@ -33,6 +33,22 @@ namespace MuTau {
             { "HLT_IsoMu17_eta2p1_LooseIsoPFTau20", "HLT_IsoMu18_eta2p1_LooseIsoPFTau20" };
     }
 
+    // twiki HiggsToTauTauWorkingSummer2013
+    namespace muonIDscaleFactor {
+        const std::vector<double> eta = { 0.8, 1.2, 2.1 };
+        const std::vector<double> pt = { 20, 30 };
+        const std::vector< std::vector< double > > scaleFactors = { { 0.9818, 0.9829, 0.9869 },
+                                                                    { 0.9852, 0.9852, 0.9884 } };
+    }
+
+    // twiki HiggsToTauTauWorkingSummer2013
+    namespace muonISOscaleFactor {
+        const std::vector<double> eta = { 0.8, 1.2, 2.1 };
+        const std::vector<double> pt = { 20, 30 };
+        const std::vector< std::vector< double > > scaleFactors = { { 0.9494, 0.9835, 0.9923 },
+                                                                    { 0.9883, 0.9937, 0.9996 } };
+    }
+
     namespace muonID {
         const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
         const double eta = 2.1; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
@@ -83,6 +99,22 @@ namespace ETau {
         const std::vector<std::string> hltPaths =
             { "HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
               "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20" };
+    }
+
+    // twiki HiggsToTauTauWorkingSummer2013
+    namespace electronIDscaleFactor {
+        const std::vector<double> eta = { 1.479, 2.1 };
+        const std::vector<double> pt = { 24, 30 };
+        const std::vector< std::vector< double > > scaleFactors = { { 0.8999, 0.7945 },
+                                                                    { 0.9486, 0.8866 } };
+    }
+
+    // twiki HiggsToTauTauWorkingSummer2013
+    namespace electronISOscaleFactor {
+        const std::vector<double> eta = { 1.479, 2.1 };
+        const std::vector<double> pt = { 24, 30 };
+        const std::vector< std::vector< double > > scaleFactors = { { 0.9417, 0.9471 },
+                                                                    { 0.9804, 0.9900 } };
     }
 
     namespace electronID{

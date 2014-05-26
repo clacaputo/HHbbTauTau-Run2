@@ -25,7 +25,7 @@ public:
         anaData.getOutputFile().cd();
     }
 
-    virtual ~HmutauBaseline_sync()
+    virtual ~HmutauBaseline_sync() override
     {
         anaData.getOutputFile().cd();
         syncTree.Write();
@@ -33,9 +33,9 @@ public:
 
 
 protected:
-    virtual analysis::BaseAnalyzerData& GetAnaData() { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent()
+    virtual void ProcessEvent() override
     {
         H_BaseAnalyzer::ProcessEvent();
         using namespace analysis;
@@ -92,16 +92,20 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
-//        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
-//        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
 
-        postRecoilMET = correctedMET;
-        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+        CalculateFullEventWeight(higgs_corr);
+
+        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+
+//        postRecoilMET = correctedMET;
+//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
 
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                           root_ext::AnalyzerData& _anaData,
+                                           const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::muonID;
@@ -132,7 +136,8 @@ protected:
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+                                          root_ext::AnalyzerData& _anaData,
+                                          const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::tauID;
@@ -163,8 +168,9 @@ protected:
         return CollectObjects<analysis::Candidate>("z_muons", base_selector, event.muons().size());
     }
 
-    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                 const std::string& selection_label)
+    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                            root_ext::AnalyzerData& _anaData,
+                                            const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
         cuts::Cutter cut(objectSelector);
@@ -204,14 +210,62 @@ protected:
 //        return true;
 //    }
 
+    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
+    {
+        triggerWeights.clear();
+        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        analysis::Htautau_Summer13::TriggerEfficiency efficiency;
+        const double eff_data_Mu = efficiency.effMu_muTau_Data_2012ABCD(mu.momentum.Pt(), mu.momentum.Eta());
+        const double eff_data_Tau = efficiency.effTau_muTau_Data_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
+        const double eff_mc_Mu = efficiency.effMu_muTau_MC_2012ABCD(mu.momentum.Pt(), mu.momentum.Eta());
+        const double eff_mc_tau = efficiency.effTau_muTau_MC_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
+        // first mu, second tau
+        triggerWeights.push_back(eff_data_Mu/eff_mc_Mu);
+        triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
+    }
 
+    virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau::muonISOscaleFactor;
+        IsoWeights.clear();
+        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
+        const double mu_pt = mu.momentum.Pt(), mu_eta = std::abs(mu.momentum.Eta());
+        if(mu_pt < pt.at(0))
+            throw std::runtime_error("No information about ISO. Muon pt is too small");
+        const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
+        if(mu_eta >= eta.at(2))
+            throw std::runtime_error("No information about ISO. Muon eta is too big");
+        const size_t eta_bin = mu_eta < eta.at(0) ? 0 : ( mu_eta < eta.at(1) ? 1 : 2 );
+        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
+        // first mu, second tau
+        IsoWeights.push_back(scale);
+        IsoWeights.push_back(1);
+    }
+
+    virtual void CalculateIdWeights(const analysis::Candidate& higgs) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau::muonIDscaleFactor;
+        IDweights.clear();
+        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
+        const double mu_pt = mu.momentum.Pt(), mu_eta = std::abs(mu.momentum.Eta());
+        if(mu_pt < pt.at(0))
+            throw std::runtime_error("No information about ID. Muon pt is too small");
+        const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
+        if(mu_eta >= eta.at(2))
+            throw std::runtime_error("No information about ID. Muon eta is too big");
+        const size_t eta_bin = mu_eta < eta.at(0) ? 0 : ( mu_eta < eta.at(1) ? 1 : 2 );
+        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
+        // first mu, second tau
+        IDweights.push_back(scale);
+        IDweights.push_back(1);
+    }
 
     void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& ntuple_tau = correctedTaus.at(tau.index);
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, tau);
 
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
@@ -227,11 +281,6 @@ protected:
         const TVector3 mu_vertex(ntuple_muon.vx, ntuple_muon.vy, ntuple_muon.vz);
         syncTree.d0_1() = (mu_vertex - primaryVertex.position).Perp();
         syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
-
-        Double_t DMweight = 1;
-        if (ntuple_tau.decayMode == ntuple::tau_id::kOneProng0PiZero)
-            DMweight *= cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
-        syncTree.decaymodeweight() = DMweight;
 
         syncTree.mt_1() = analysis::Calculate_MT(muon.momentum, correctedMET.pt, correctedMET.phi);
 

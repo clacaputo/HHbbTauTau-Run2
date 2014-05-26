@@ -22,11 +22,39 @@ public:
           syncTree("syncTree")
     {}
 
-
 protected:
+
+    virtual void CalculateTriggerWeights(const Candidate& candidate) override
+    {
+        triggerWeights.clear();
+        triggerWeights.push_back(1);
+        triggerWeights.push_back(1);
+    }
+
+    virtual void CalculateIsoWeights(const Candidate& candidate) override
+    {
+        IsoWeights.clear();
+        IsoWeights.push_back(1);
+        IsoWeights.push_back(1);
+    }
+
+    virtual void CalculateIdWeights(const Candidate& candidate) override
+    {
+        IDweights.clear();
+        IDweights.push_back(1);
+        IDweights.push_back(1);
+    }
+
+    virtual void CalculateDMWeights(const Candidate& candidate) override
+    {
+        DMweights.clear();
+        DMweights.push_back(1);
+        DMweights.push_back(1);
+    }
+
     virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
                                                          root_ext::AnalyzerData& _anaData,
-                                                         const std::string& selection_label)
+                                                         const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::electronVeto;
         cuts::Cutter cut(objectSelector);
@@ -53,7 +81,7 @@ protected:
 
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                                      root_ext::AnalyzerData& _anaData,
-                                                     const std::string& selection_label)
+                                                     const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::muonVeto;
         cuts::Cutter cut(objectSelector);
@@ -258,7 +286,15 @@ protected:
                 syncTree.npu() = event.eventInfo().trueNInt.at(n); //only in-time PU
             }
         }
-        syncTree.puweight() = weight;
+        syncTree.puweight() = PUweight;
+        syncTree.decaymodeweight() = DMweights.at(0)*DMweights.at(1);
+        syncTree.idweight_1() = IDweights.at(0);
+        syncTree.idweight_2() = IDweights.at(1);
+        syncTree.isoweight_1() = IsoWeights.at(0);
+        syncTree.isoweight_2() = IsoWeights.at(1);
+        syncTree.trigweight_1() = triggerWeights.at(0);
+        syncTree.trigweight_2() = triggerWeights.at(1);
+        syncTree.weight() = eventWeight;
 
         syncTree.mvis() = higgs.momentum.M();
         syncTree.m_sv() = higgs_corr.momentum.M();
@@ -281,6 +317,8 @@ protected:
         const TVector3 tau_vertex(ntuple_tau.vx, ntuple_tau.vy, ntuple_tau.vz);
         syncTree.d0_2() = (tau_vertex - primaryVertex.position).Perp();
         syncTree.dZ_2() = std::abs(ntuple_tau.vz - primaryVertex.position.Z());
+
+        syncTree.mt_2() = analysis::Calculate_MT(tau.momentum, correctedMET.pt, correctedMET.phi);
 
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         syncTree.againstElectronMVA3raw_2() = ntuple_tau.againstElectronMVA3raw;
