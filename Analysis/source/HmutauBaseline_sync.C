@@ -127,7 +127,7 @@ protected:
         cut(std::abs( Y(dB_PV) ) < dB, "dB");
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
 
-        const analysis::Candidate muon(analysis::Candidate::Mu, id, object,object.charge);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,muon);
 //        cut(Y(haveTriggerMatch), "triggerMatch");
@@ -152,7 +152,7 @@ protected:
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
-        const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
+        const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
 //        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
@@ -170,7 +170,7 @@ protected:
 
     virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
                                             root_ext::AnalyzerData& _anaData,
-                                            const std::string& selection_label) override
+                                            const std::string& selection_label)
     {
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
         cuts::Cutter cut(objectSelector);
@@ -188,7 +188,7 @@ protected:
         cut(X(isPFMuon) == isPFMuon, "PFMuon");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object,object.charge);
+        return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
 
 
@@ -265,24 +265,16 @@ protected:
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
                       const analysis::VertexVector& vertices)
     {
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, tau);
-
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
         const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        //muon
-        syncTree.pt_1() = muon.momentum.Pt();
-        syncTree.eta_1() = muon.momentum.Eta();
-        syncTree.phi_1() = muon.momentum.Phi();
-        syncTree.m_1() = muon.momentum.M();
-        syncTree.q_1() = muon.charge;
+        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, muon, tau);
+
         syncTree.iso_1() = ntuple_muon.pfRelIso;
-        const TVector3 mu_vertex(ntuple_muon.vx, ntuple_muon.vy, ntuple_muon.vz);
-        syncTree.d0_1() = (mu_vertex - primaryVertex.position).Perp();
-        syncTree.dZ_1() = std::abs(ntuple_muon.vz - primaryVertex.position.Z());
-
-        syncTree.mt_1() = analysis::Calculate_MT(muon.momentum, correctedMET.pt, correctedMET.phi);
+        syncTree.mva_1() = 0;
+        //syncTree.passid_2();
+        //syncTree.passiso_2();
 
         syncTree.Fill();
     }

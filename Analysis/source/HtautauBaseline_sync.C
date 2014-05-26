@@ -112,7 +112,7 @@ protected:
         cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits) > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
 
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-        const analysis::Candidate tau(analysis::Candidate::Tau, id, object,object.charge);
+        const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,tau);
 //        cut(Y(haveTriggerMatch), "triggerMatch");
 
@@ -277,34 +277,24 @@ protected:
     {
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
+        const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, subLeadTau);
+        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, leadTau, subLeadTau);
 
-        //leadTau - not corrected!
-        syncTree.pt_1() = leg1.pt;
-        syncTree.eta_1() = leg1.eta;
-        syncTree.phi_1() = leg1.phi;
-        TLorentzVector leg1_momentum;
-        leg1_momentum.SetPtEtaPhiE(leg1.pt,leg1.eta,leg1.phi,leg1.energy);
-        syncTree.m_1() = leg1_momentum.M();
-        syncTree.q_1() = leg1.charge;
-        syncTree.iso_1() = leg1.byIsolationMVAraw;
-        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
-        syncTree.againstElectronMVA3raw_1() = leg1.againstElectronMVA3raw;
-        syncTree.againstElectronMVA3category_1() = leg1.againstElectronMVA3category;
-        syncTree.byIsolationMVA2raw_1() = leg1.byIsolationMVA2raw;
-        syncTree.againstMuonLoose_1() = leg1.againstMuonLoose;
-        syncTree.againstMuonLoose2_1() = leg1.againstMuonLoose2;
-        syncTree.againstMuonMedium2_1() = leg1.againstMuonMedium2;
-        syncTree.againstMuonTight2_1() = leg1.againstMuonTight2;
-        syncTree.againstElectronLooseMVA3_1() = leg1.againstElectronLooseMVA3;
-        syncTree.againstElectronLoose_1() = leg1.againstElectronLoose;
-        syncTree.mt_1() = analysis::Calculate_MT(leadTau.momentum, correctedMET.pt, correctedMET.phi);
+        syncTree.iso_1() = ntuple_tau_leg1.byIsolationMVAraw;
+        syncTree.mva_1() = 0;
+        //syncTree.passid_1();
+        //syncTree.passiso_1();
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
+        syncTree.againstElectronMVA3raw_1() = ntuple_tau_leg1.againstElectronMVA3raw;
+        syncTree.byIsolationMVA2raw_1() = ntuple_tau_leg1.byIsolationMVA2raw;
+        syncTree.againstMuonLoose2_1() = ntuple_tau_leg1.againstMuonLoose2;
+        syncTree.againstMuonMedium2_1() = ntuple_tau_leg1.againstMuonMedium2;
+        syncTree.againstMuonTight2_1() = ntuple_tau_leg1.againstMuonTight2;
+
         syncTree.Fill();
     }
 
 private:
     BaselineAnalyzerData anaData;
 };
-

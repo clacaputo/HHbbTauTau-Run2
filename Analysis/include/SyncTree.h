@@ -46,13 +46,13 @@
     SIMPLE_VAR(Float_t, eta_1) /* Eta */ \
     SIMPLE_VAR(Float_t, m_1) /* Mass */ \
     SIMPLE_VAR(Int_t, q_1) /* Charge */ \
-    SIMPLE_VAR(Float_t, iso_1) /* Delta Beta iso value */ \
-    SIMPLE_VAR(Float_t, mva_1) /* MVA id (when using electron) 0 otherwise */ \
+    SIMPLE_VAR(Float_t, mt_1) /* mT of  first lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, d0_1) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_1) /* dZ with respect to primary vertex */ \
+    SIMPLE_VAR(Float_t, iso_1) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
+    SIMPLE_VAR(Float_t, mva_1) /* MVA id (when using electron) 0 otherwise */ \
     SIMPLE_VAR(Bool_t, passid_1) /* Whether it passes id  (not necessarily iso) */ \
     SIMPLE_VAR(Bool_t, passiso_1) /* Whether it passes iso (not necessarily id) */ \
-    SIMPLE_VAR(Float_t, mt_1) /* mT of  first lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_1) /*  */ \
     SIMPLE_VAR(Float_t, againstElectronMVA3raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, byIsolationMVA2raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
@@ -65,13 +65,13 @@
     SIMPLE_VAR(Float_t, eta_2) /* Eta */ \
     SIMPLE_VAR(Float_t, m_2) /* Mass */ \
     SIMPLE_VAR(Int_t, q_2) /* Charge */ \
-    SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, mt_2) /* mT of 2nd lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, d0_2) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_2) /* dZ with respect to primary vertex */ \
+    SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, mva_2) /* MVA id (for anti electron id) */ \
     SIMPLE_VAR(Bool_t, passid_2) /* Whether it passes id  (not necessarily iso) */ \
     SIMPLE_VAR(Bool_t, passiso_2) /* Whether it passes iso (not necessarily id) */ \
-    SIMPLE_VAR(Float_t, mt_2) /* mT of 2nd lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_2) /*  */ \
     SIMPLE_VAR(Float_t, againstElectronMVA3raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, byIsolationMVA2raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
@@ -97,6 +97,9 @@
     SIMPLE_VAR(Float_t, mvacov01) /* mva met covariance matrix 01 */ \
     SIMPLE_VAR(Float_t, mvacov10) /* mva met covariance matrix 10 */ \
     SIMPLE_VAR(Float_t, mvacov11) /* mva met covariance matrix 11 */ \
+    /* number of jets passing jet id ( pt > 30 ) */ \
+    SIMPLE_VAR(Int_t, njets) /*  */ \
+    SIMPLE_VAR(Int_t, njetspt20) /*  */ \
     /* First Jet   : leading jet after applying Jet energy corrections (excluding hadronic Tau) */ \
     SIMPLE_VAR(Float_t, jpt_1) /* Jet Pt after corrections */ \
     SIMPLE_VAR(Float_t, jeta_1) /* Jet Eta */ \
@@ -117,6 +120,8 @@
     SIMPLE_VAR(Float_t, jlrm_2) /* Jet MVA id value */ \
     SIMPLE_VAR(Int_t, jctm_2) /* Jet MVA id value */ \
     SIMPLE_VAR(Bool_t, jpass_2) /* Whether jet passes PU Id Loose WP */ \
+    /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) */ \
+    SIMPLE_VAR(Int_t, nbtag) /*  */ \
     /* Candidate B Jets : leading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
     SIMPLE_VAR(Float_t, bpt_1) /* Corrected BTag Pt */ \
     SIMPLE_VAR(Float_t, beta_1) /* Btag Eta */ \
@@ -132,11 +137,6 @@
     SIMPLE_VAR(Float_t, beta_3) /* Btag Eta */ \
     SIMPLE_VAR(Float_t, bphi_3) /* Btag Phi */ \
     SIMPLE_VAR(Float_t, bcsv_3) /* Btag CSV */ \
-    /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) */ \
-    SIMPLE_VAR(Int_t, nbtag) /*  */ \
-    /* number of jets passing jet id ( pt > 30 ) */ \
-    SIMPLE_VAR(Int_t, njets) /*  */ \
-    SIMPLE_VAR(Int_t, njetspt20) /*  */ \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
@@ -157,3 +157,7 @@ TREE_CLASS_INITIALIZE(ntuple, SyncTree, SYNC_DATA)
 #undef SIMPLE_VAR
 #undef VECTOR_VAR
 #undef SYNC_DATA
+
+namespace ntuple {
+inline double DefaultFillValueForSyncTree() { return -10000; }
+}

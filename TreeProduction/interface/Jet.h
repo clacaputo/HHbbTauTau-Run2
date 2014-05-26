@@ -89,5 +89,11 @@ enum Id {
     kMedium = 1,
     kLoose  = 2
 };
+
+inline bool PassId(Int_t puIdBits, Id id) { return ( puIdBits & (1 << id) ) != 0; }
+inline bool PassLooseId(Int_t puIdBits) { return PassId(puIdBits, kLoose); }
+inline bool PassMediumId(Int_t puIdBits) { return PassId(puIdBits, kMedium); }
+inline bool PassTightId(Int_t puIdBits) { return PassId(puIdBits, kTight); }
+
 }
 }

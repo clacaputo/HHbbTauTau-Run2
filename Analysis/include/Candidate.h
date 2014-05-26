@@ -9,6 +9,7 @@
 #pragma once
 #include <TLorentzVector.h>
 #include <vector>
+#include "EventDescriptor.h"
 #include "Particles.h"
 
 namespace analysis {
@@ -37,13 +38,21 @@ public:
     CandidateVector daughters;
     CandidateVector finalStateDaughters;
     int charge;
+    TVector3 vertexPosition;
+
     static int UnknownCharge() { return std::numeric_limits<int>::max(); }
 
     Candidate() : type(Unknown), index(0), charge(UnknownCharge()){}
 
     template<typename NtupleObject>
-    Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject, int _charge = UnknownCharge()) :
-        type(_type), index(_index), charge(_charge) {
+    Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject) :
+        type(_type), index(_index), charge(ntupleObject.charge),
+        vertexPosition(ntupleObject.vx, ntupleObject.vy, ntupleObject.vz) {
+        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
+    }
+
+    Candidate(Type _type, size_t _index, const ntuple::Jet& ntupleObject) :
+        type(_type), index(_index), charge(UnknownCharge()) {
         momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
     }
 
