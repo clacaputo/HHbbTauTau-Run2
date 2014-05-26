@@ -110,7 +110,18 @@ protected:
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
             { return SelectBjet(id, _objectSelector, _anaData, _selection_label, higgs); };
-        return CollectObjects<analysis::Candidate>("bjets", base_selector, event.jets().size());
+        analysis::CandidateVector bjets =
+                CollectObjects<analysis::Candidate>("bjets", base_selector, event.jets().size());
+
+        const auto bjetsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
+        {
+            const ntuple::Jet& first_bjet = event.jets().at(first.index);
+            const ntuple::Jet& second_bjet = event.jets().at(second.index);
+
+            return first_bjet.combinedSecondaryVertexBJetTags > second_bjet.combinedSecondaryVertexBJetTags;
+        };
+        std::sort(bjets.begin(), bjets.end(), bjetsSelector);
+        return bjets;
     }
 
     virtual analysis::Candidate SelectBjet(size_t id, cuts::ObjectSelector* objectSelector,
@@ -154,6 +165,32 @@ protected:
 
         cut(true, ">0 jet cand");
         cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
+        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
+
+        return Candidate(analysis::Candidate::Jet, id, object);
+    }
+
+    analysis::CandidateVector CollectJetsPt20()
+    {
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
+            { return SelectJetPt20(id, _objectSelector, _anaData, _selection_label); };
+        return CollectObjects<analysis::Candidate>("jetsPt20", base_selector, event.jets().size());
+    }
+
+    virtual analysis::Candidate SelectJetPt20(size_t id, cuts::ObjectSelector* objectSelector,
+                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+    {
+        using namespace cuts::Htautau_Summer13::jetID;
+        const static double ptCut = 20.0;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Jet& object = event.jets().at(id);
+
+        cut(true, ">0 jet cand");
+        cut(X(pt) > ptCut, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
@@ -245,7 +282,7 @@ protected:
     }
 
 
-    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
+    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state, bool oneResonanceSelection)
     {
         static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
@@ -253,24 +290,24 @@ protected:
         genEvent.Initialize(event.genParticles());
 
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
-        if (resonances.size() != 1)
+
+        if(!resonances.size())
+            throw std::runtime_error("resonance not found");
+
+        if (oneResonanceSelection && resonances.size() != 1)
             throw std::runtime_error("not one resonance per event");
 
-        final_state.resonance = *resonances.begin();
-
-        analysis::GenParticlePtrVector resonanceDecayProducts;
-        if(!analysis::FindDecayProducts(*final_state.resonance, resonanceDecay,resonanceDecayProducts)) {
-
-//            genEvent.PrintChain(final_state.resonance);
-//            throw std::runtime_error("Resonance does not decay into 2 taus");
-            std::cerr << "event id = " << event.eventId().eventId
-                      << " Resonance does not decayed into 2 taus" << std::endl;
-            return false;
+        for (const GenParticle* resonance : resonances){
+            analysis::GenParticlePtrVector resonanceDecayProducts;
+            if(analysis::FindDecayProducts(*resonance, resonanceDecay,resonanceDecayProducts)){
+                final_state.taus = resonanceDecayProducts;
+                final_state.resonance = resonance;
+                return true;
+            }
         }
-
-        final_state.taus = resonanceDecayProducts;
-
-        return true;
+        std::cerr << "event id = " << event.eventId().eventId
+                  << " Resonance does not decayed into 2 taus" << std::endl;
+        return false;
     }
 
     void FillSyncTree(const Candidate& higgs, const Candidate& higgs_corr, const CandidateVector& jets,

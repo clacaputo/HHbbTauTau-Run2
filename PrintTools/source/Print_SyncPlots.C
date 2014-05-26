@@ -59,34 +59,102 @@ public:
 
         canvas.Print((file_name+"[").c_str());
 
-        //drawHistos("run", 200, 197000, 199000);
-        //drawHistos("run", 300, 170000, 173000);
-        //drawHistos("run", 200, 190000, 194000);
-        //drawHistos("run", 200, 190000, 210000);
+
+        drawHistos("run", 200, 0, 200000);
+        drawHistos("lumi", 2000, 0, 2000);
+        drawHistos("evt", 2000, 0, 2000);
+        drawHistos("npv", 50, 0, 50);
         drawHistos("npu", 50, 0, 50);
+        drawHistos("rho", 50, 0, 50);
+
+        //event weights
+        drawHistos("mcweight", 40, 0, 2);
+        drawHistos("puweight", 40, 0, 2);
+        drawHistos("trigweight_1", 25, 0.5, 1.5);
+        drawHistos("trigweight_2", 25, 0.5, 1.5);
+        drawHistos("idweight_1", 40, 0, 2);
+        drawHistos("idweight_2", 40, 0, 2);
+        drawHistos("isoweight_1", 40, 0, 2);
+        drawHistos("isoweight_2", 40, 0, 2);
+        drawHistos("fakeweight", 25, 0.5, 1.5);
+
+        drawHistos("effweight", 30, .8, 1.1);
+        drawHistos("weight", 30, .8, 1.1);
+        drawHistos("embeddedWeight", 50, 0, 1);
+        drawHistos("signalWeight", 30, 0, 2.0);
+
+        //SV Fit variables
+        drawHistos("mvis", 50, 0, 200);
+        drawHistos("m_sv", 60, 0, 300);
+        drawHistos("pt_sv", 100, 0, 100);
+        drawHistos("eta_sv", 60, -3, 3);
+        drawHistos("phi_sv", 30, -3.5, 3.5);
+        drawHistos("m_sv_Up", 60, 0, 300);
+        drawHistos("m_sv_Down", 60, 0, 300);
+
+        //  First lepton :  muon for mu Tau, electron for e Tau, electron for e mu, Leading (in pT) Tau for Tau Tau
         drawHistos("pt_1", 100, 0, 100);
         drawHistos("eta_1", 60, -3, 3);
+        drawHistos("phi_1", 30, -3.5, 3.5);
         drawHistos("iso_1", 200, 0., 2);
+        drawHistos("m_1", 20, 0, 2);
+        drawHistos("q_1", 3, -1, 1);
+        drawHistos("mva_1", 300, -1.5, 1.5);
+        drawHistos("d0_1", 50, 0.0, 0.5);
+        drawHistos("dZ_1", 600, 0.0, 60.0);
+        drawHistos("passid_1", 2, -0.5, 1.5);
+        drawHistos("passiso_1", 2, -0.5, 1.5);
+        drawHistos("mt_1", 50, 0, 200);
+        drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_1", 40, 0, 20);
+        drawHistos("againstElectronMVA3raw_1", 2, -0.5, 1.5);
+        drawHistos("byIsolationMVA2raw_1", 300, -1, 1);
+        drawHistos("againstMuonLoose2_1", 2, -0.5, 1.5);
+        drawHistos("againstMuonMedium2_1", 2, -0.5, 1.5);
+        drawHistos("againstMuonTight2_1", 2, -0.5, 1.5);
+
+        //Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau
         drawHistos("pt_2", 100, 0, 100);
         drawHistos("eta_2", 60, -3, 3);
+        drawHistos("phi_2", 30, -3.5, 3.5);
         drawHistos("iso_2", 200, 0., 2);
-        drawHistos("mvis", 50, 0, 200);
-        drawHistos("mt_1", 50, 0, 200);
+        drawHistos("m_2", 20, 0, 2);
+        drawHistos("q_2", 3, -1, 1);
+        drawHistos("d0_2", 50, 0.0, 0.5);
+        drawHistos("dZ_2", 600, 0.0, 60.0);
+        drawHistos("mva_2", 300, -1.5, 1.5);
+        drawHistos("passid_2", 2, -0.5, 1.5);
+        drawHistos("passiso_2", 2, -0.5, 1.5);
         drawHistos("mt_2", 50, 0, 200);
-//        drawHistos("met", 20, 0, 200);
-//        drawHistos("metphi", 30, -3.5, 3.5);
-//        drawHistos("metcov00", 40, 0, 1000);
-//        drawHistos("metcov01", 40, 0, 1000);
-//        drawHistos("metcov10", 40, 0, 1000);
-//        drawHistos("metcov11", 40, 0, 1000);
+        drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_2", 40, 0, 20);
+        drawHistos("againstElectronMVA3raw_2", 2, -0.5, 1.5);
+        drawHistos("byIsolationMVA2raw_2", 300, -1, 1);
+        drawHistos("againstMuonLoose2_2", 2, -0.5, 1.5);
+        drawHistos("againstMuonMedium2_2", 2, -0.5, 1.5);
+        drawHistos("againstMuonTight2_2", 2, -0.5, 1.5);
+
+        //Dilepton
+        drawHistos("pt_tt", 100, 0, 100);
+
+        //Met related variables
+
+        drawHistos("met", 20, 0, 200);
+        drawHistos("metphi", 30, -3.5, 3.5);
+        drawHistos("metcov00", 40, 0, 1000);
+        drawHistos("metcov01", 40, 0, 1000);
+        drawHistos("metcov10", 40, 0, 1000);
+        drawHistos("metcov11", 40, 0, 1000);
+
         drawHistos("mvamet", 30, 0, 150);
         drawHistos("mvametphi", 35, -3.5, 3.5);
         drawHistos("mvacov00", 40, 0, 1000);
         drawHistos("mvacov01", 40, 0, 1000);
         drawHistos("mvacov10", 40, 0, 1000);
         drawHistos("mvacov11", 40, 0, 1000);
-        drawHistos("m_sv", 60, 0, 300);
 
+        drawHistos("pzetavis", 300, 0, 300);
+        drawHistos("pzetamiss", 300, 0, 300);
+
+        std::cout << "after met" << std::endl;
 
         // Jets
         const std::vector<Int_t> my_njets = CollectValues<Int_t>(Tmine, "njets");
@@ -110,23 +178,32 @@ public:
             return other_njets.at(entry_id) >= 2;
         };
 
-        drawHistos("njets", 5, -0.5, 4.5);
+        //First Jet   : leading jet after applying Jet energy corrections (excluding hadronic Tau)
         drawHistos("jpt_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
         drawHistos("jeta_1", 50, -5, 5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
-        drawHistos("jpt_2", 50, 0, 200, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jphi_1", 30, -3.5, 3.5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jptraw_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jptunc_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jmva_1", 120, -60, 60, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jlrm_1", 120, -60, 60, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jctm_1", 120, -60, 60, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+        drawHistos("jpass_1" , 2, -0.5, 1.5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+
+            //Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau)
+        drawHistos("jpt_2", 50, 0, 300, atLeast2jets_my, atLeast2jets_other, "njets>=2");
         drawHistos("jeta_2", 50, -5, 5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("mjj", 50, 0, 3000, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("jdeta", 50, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("njetingap", 4, -0.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jphi_2", 30, -3.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jptraw_2", 50, 0, 300, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jptunc_2", 50, 0, 300, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jmva_2", 120, -60, 60, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jlrm_2", 120, -60, 60, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jctm_2", 120, -60, 60, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+        drawHistos("jpass_2" , 2, -0.5, 1.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
-        //drawHistos("visjeteta", 100, 0, 10, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("ptvis", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("jdphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("dijetpt", 100, 0, 500, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("hdijetphi", 100, 0, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-        //drawHistos("mva", 40, -1, 1.001, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 
-//        drawHistos("mvis", 50, 0, 200, noJets_my, noJets_other, "njets==0");
+            //number of jets passing jet id ( pt > 30 )
+        drawHistos("njets", 5, -0.5, 4.5);
+        drawHistos("njetspt20", 5, -0.5, 4.5);
 
 
         // b-jets
@@ -139,42 +216,44 @@ public:
             return other_nbjets.at(entry_id) >= 1;
         };
 
+        const auto atLeast2bjets_my = [&](size_t entry_id) -> bool {
+            return my_nbjets.at(entry_id) >= 2;
+        };
+        const auto atLeast2bjets_other = [&](size_t entry_id) -> bool {
+            return other_nbjets.at(entry_id) >= 2;
+        };
+
+        const auto atLeast3bjets_my = [&](size_t entry_id) -> bool {
+            return my_nbjets.at(entry_id) >= 3;
+        };
+        const auto atLeast3bjets_other = [&](size_t entry_id) -> bool {
+            return other_nbjets.at(entry_id) >= 3;
+        };
+
+
+            //Candidate B Jets : leading jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
+        drawHistos("bpt_1", 50, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+        drawHistos("beta_1", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+        drawHistos("bphi_1", 30, -3.5, 3.5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+        drawHistos("bcsv_1", 100, 0.0, 1.0, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+
+            //Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
+        drawHistos("bpt_2", 50, 0, 200, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("beta_2", 50, -5, 5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("bphi_2", 30, -3.5, 3.5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("bcsv_2", 100, 0.0, 1.0, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+
+            //Candidate B Jets : third jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
+        drawHistos("bpt_3", 50, 0, 200, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
+        drawHistos("beta_3", 50, -5, 5, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
+        drawHistos("bphi_3", 30, -3.5, 3.5, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
+        drawHistos("bcsv_3", 100, 0.0, 1.0, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
+
+            //number of btags passing btag id (medium CSV WP) ( pt > 20 )
         drawHistos("nbtag", 5, -0.5, 4.5);
-        drawHistos("bpt", 50, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
-        drawHistos("beta", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
 
-        drawHistos("puweight", 40, 0, 2);
-//        drawHistos("decaymodeweight", 20, 0.5, 1.5);
-        drawHistos("idweight_1", 40, 0, 2);
-        drawHistos("idweight_2", 40, 0, 2);
-        drawHistos("isoweight_1", 40, 0, 2);
-        drawHistos("isoweight_2", 40, 0, 2);
-        drawHistos("trigweight_1", 25, 0.5, 1.5);
-        drawHistos("trigweight_2", 25, 0.5, 1.5);
-        //drawHistos("effweight", 30, .8, 1.1);
-        //drawHistos("embeddedWeight", 50, 0, 1);
-        drawHistos("weight", 30, 0, 2.0);
 
-        //with puweight
-//        TString weight="(puweight)";
-//        selection=weight;
-//        drawHistos<Int_t>(&C,filename,TString("inclusive * ")+weight,Tmine,Tother,"npv",50,0,50,selection,myGroup,myRootFile,group,groupRootFile,mySel,groupSel);
-//        drawHistos<Double_t>(&C,filename,TString("inclusive * ")+weight,Tmine,Tother,"mvis",50,0,200,selection,myGroup,myRootFile,group,groupRootFile,mySel,groupSel);
 
-        //with trigger weight
-//        weight="(effweight)";
-//        selection=weight;
-//        drawHistos<Double_t>(&C,filename,TString("inclusive * ")+weight,Tmine,Tother,"mt_1",50,0,200,selection,myGroup,myRootFile,group,groupRootFile,mySel,groupSel);
-//        drawHistos<Double_t>(&C,filename,TString("inclusive * ")+weight,Tmine,Tother,"mvis",50,0,200,selection,myGroup,myRootFile,group,groupRootFile,mySel,groupSel);
-
-//        weight="(weight)";
-//        selection=weight;
-//        drawHistos<Double_t>(&C,filename,TString("inclusive * ")+weight,Tmine,Tother,"mt_1",50,0,200,selection,myGroup,myRootFile,group,groupRootFile,mySel,groupSel);
-
-        //with mTcut
-//        weight="(mt_1<50)";
-//        selection=weight;
-//        drawHistos<Double_t>(&C,filename,TString("inclusive * ")+weight,Tmine,Tother,"mvis",50,0,200,selection,myGroup,myRootFile,group,groupRootFile,mySel,groupSel);
 
         canvas.Print((file_name+"]").c_str());
     }
@@ -222,7 +301,17 @@ private:
                                                           40, -1.0, 1.0));
 
             TBranch* myBranch = Tmine->GetBranch(var.c_str());
+            if (!myBranch){
+                std::ostringstream ss;
+                ss << "My Branch '" << var << "' is not found.";
+                throw std::runtime_error(ss.str());
+            }
             TBranch* otherBranch = Tother->GetBranch(var.c_str());
+            if (!otherBranch){
+                std::ostringstream ss;
+                ss << "Other Branch '" << var << "' is not found.";
+                throw std::runtime_error(ss.str());
+            }
             TClass *myClass, *otherClass;
             EDataType myType, otherType;
             myBranch->GetExpectedType(myClass, myType);
