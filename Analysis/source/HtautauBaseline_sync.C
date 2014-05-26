@@ -43,7 +43,7 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
         finalState::TaujetTaujet tauTau;
-        if (useMCtruth && !FindAnalysisFinalState(tauTau)) return;
+        if (useMCtruth && !FindAnalysisFinalState(tauTau, true)) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");

@@ -282,7 +282,7 @@ protected:
     }
 
 
-    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
+    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state, bool oneResonanceSelection)
     {
         static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
@@ -290,24 +290,24 @@ protected:
         genEvent.Initialize(event.genParticles());
 
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
-        if (resonances.size() != 1)
+
+        if(!resonances.size())
+            throw std::runtime_error("resonance not found");
+
+        if (oneResonanceSelection && resonances.size() != 1)
             throw std::runtime_error("not one resonance per event");
 
-        final_state.resonance = *resonances.begin();
-
-        analysis::GenParticlePtrVector resonanceDecayProducts;
-        if(!analysis::FindDecayProducts(*final_state.resonance, resonanceDecay,resonanceDecayProducts)) {
-
-//            genEvent.PrintChain(final_state.resonance);
-//            throw std::runtime_error("Resonance does not decay into 2 taus");
-            std::cerr << "event id = " << event.eventId().eventId
-                      << " Resonance does not decayed into 2 taus" << std::endl;
-            return false;
+        for (const GenParticle* resonance : resonances){
+            analysis::GenParticlePtrVector resonanceDecayProducts;
+            if(analysis::FindDecayProducts(*resonance, resonanceDecay,resonanceDecayProducts)){
+                final_state.taus = resonanceDecayProducts;
+                final_state.resonance = resonance;
+                return true;
+            }
         }
-
-        final_state.taus = resonanceDecayProducts;
-
-        return true;
+        std::cerr << "event id = " << event.eventId().eventId
+                  << " Resonance does not decayed into 2 taus" << std::endl;
+        return false;
     }
 
     void FillSyncTree(const Candidate& higgs, const Candidate& higgs_corr, const CandidateVector& jets,
