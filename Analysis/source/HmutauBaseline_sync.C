@@ -85,21 +85,24 @@ protected:
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
 
-
+        const auto jetsPt20 = CollectJetsPt20();
         const auto jets = CollectJets();
 
         const auto filteredJets = FilterCompatibleObjects(jets,higgs,cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
 
 
         const auto bjets = CollectBJets(higgs);
-        const Candidate higgs_corr = ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+        ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
+        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
+        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
-        CalculateFullEventWeight(higgs_corr);
+        CalculateFullEventWeight(higgs_sv);
 
-        FillSyncTree(higgs, higgs_corr, filteredJets, bjets, vertices);
+        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, filteredJets, jetsPt20, bjets, vertices);
 
 //        postRecoilMET = correctedMET;
-//        FillSyncTree(higgs, higgs, filteredJets, bjets, vertices);
+//        FillSyncTree(higgs, higgs, higgs, higgs, filteredJets, jetsPt20, bjets, vertices);
 
     }
 
@@ -261,15 +264,16 @@ protected:
         IDweights.push_back(1);
     }
 
-    void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_corr,
-                      const analysis::CandidateVector& jets, const analysis::CandidateVector& bjets,
-                      const analysis::VertexVector& vertices)
+    void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_sv,
+                      const analysis::Candidate& higgs_sv_up, const analysis::Candidate& higgs_sv_down,
+                      const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
+                      const analysis::CandidateVector& bjets, const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
         const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, higgs_corr, jets, bjets, vertices, muon, tau);
+        H_BaseAnalyzer::FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, muon, tau);
 
         syncTree.iso_1() = ntuple_muon.pfRelIso;
         syncTree.mva_1() = 0;

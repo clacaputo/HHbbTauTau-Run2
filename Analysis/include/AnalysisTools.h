@@ -151,6 +151,12 @@ inline double Calculate_MT(const TLorentzVector& lepton_momentum, double met_pt,
     return std::sqrt( 2.0 * lepton_momentum.Pt() * met_pt * ( 1.0 - std::cos(delta_phi) ) );
 }
 
+// from DataFormats/TrackReco/interface/TrackBase.h
+inline double Calculate_dxy(const TVector3& legV, const TVector3& PV, const TLorentzVector& leg)
+{
+    return ( (legV.x()-PV.x()) * leg.Py() + (legV.y()-PV.y()) * leg.Px() ) / leg.Pt();
+}
+
 template<typename CandidateCollection>
 inline bool AllCandidatesHaveSameCharge(const CandidateCollection& candidates)
 {

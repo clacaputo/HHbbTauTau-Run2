@@ -18,7 +18,7 @@
 #include "HHbbTauTau/TreeProduction/interface/MET.h"
 
 namespace analysis {
-Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met)
+Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, const double tauESfactor)
 {
     if(higgsCandidate.type != Candidate::Higgs)
         throw std::runtime_error("Invalid candidate type for SVfit");
@@ -37,8 +37,10 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
         svFitStandalone::kDecayType decayType;
         if (daughter.type == Candidate::Electron || daughter.type == Candidate::Mu)
             decayType = svFitStandalone::kLepDecay;
-        else if (daughter.type == Candidate::Tau)
+        else if (daughter.type == Candidate::Tau){
             decayType = svFitStandalone::kHadDecay;
+            lepton *= tauESfactor;
+        }
         else
             throw std::runtime_error("final state daughters are not compatible with a leptonic or hadronic tau decay");
         measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayType, lepton));
@@ -64,11 +66,11 @@ Candidate CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET&
 
 template<typename Histogram>
 CandidateVector CorrectMassBySVfit(const CandidateVector& higgsCandidates, const ntuple::MET& met, Histogram& hist,
-                                   double weight = 1.0)
+                                   const double tauESfactordouble, double weight = 1.0)
 {
     CandidateVector result;
     for(const auto& candidate : higgsCandidates) {
-        const Candidate& correctedCandidate = CorrectMassBySVfit(candidate, met);
+        const Candidate& correctedCandidate = CorrectMassBySVfit(candidate, met, tauESfactordouble);
         hist.Fill(correctedCandidate.momentum.M(), weight);
         result.push_back(correctedCandidate);
     }

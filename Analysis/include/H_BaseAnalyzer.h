@@ -254,13 +254,12 @@ protected:
 
     }
 
-    Candidate ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
+    void ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         if (useMCtruth){
             postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
         }
         else postRecoilMET = correctedMET;
-        return CorrectMassBySVfit(higgs, postRecoilMET);
     }
 
     const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
@@ -310,7 +309,8 @@ protected:
         return false;
     }
 
-    void FillSyncTree(const Candidate& higgs, const Candidate& higgs_corr, const CandidateVector& jets,
+    void FillSyncTree(const Candidate& higgs, const Candidate& higgs_sv, const Candidate& higgs_sv_up,
+                      const Candidate& higgs_sv_down, const CandidateVector& jets, const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const VertexVector& vertices, const Candidate& leg1,
                       const Candidate& leg2)
     {
@@ -341,21 +341,21 @@ protected:
         //syncTree.signalWeight();
 
         syncTree.mvis() = higgs.momentum.M();
-        syncTree.m_sv() = higgs_corr.momentum.M();
-        syncTree.pt_sv() = higgs_corr.momentum.Pt();
-        syncTree.eta_sv() = higgs_corr.momentum.Eta();
-        syncTree.phi_sv() = higgs_corr.momentum.Phi();
-        //syncTree.m_sv_Up();
-        //syncTree.m_sv_Down();
+        syncTree.m_sv() = higgs_sv.momentum.M();
+        syncTree.pt_sv() = higgs_sv.momentum.Pt();
+        syncTree.eta_sv() = higgs_sv.momentum.Eta();
+        syncTree.phi_sv() = higgs_sv.momentum.Phi();
+        syncTree.m_sv_Up() = higgs_sv_up.momentum.M();
+        syncTree.m_sv_Down() = higgs_sv_down.momentum.M();
 
         syncTree.pt_1() = leg1.momentum.Pt();
         syncTree.phi_1() = leg1.momentum.Phi();
         syncTree.eta_1() = leg1.momentum.Eta();
         syncTree.m_1() = leg1.momentum.M();
         syncTree.q_1() = leg1.charge;
-        syncTree.mt_1() = analysis::Calculate_MT(leg1.momentum, correctedMET.pt, correctedMET.phi);
-        syncTree.d0_1() = (leg1.vertexPosition - primaryVertex.position).Perp();
-        syncTree.dZ_1() = std::abs(leg1.vertexPosition.Z() - primaryVertex.position.Z());
+        syncTree.mt_1() = analysis::Calculate_MT(leg1.momentum, postRecoilMET.pt, postRecoilMET.phi);
+        syncTree.d0_1() = analysis::Calculate_dxy(leg1.vertexPosition, primaryVertex.position,leg1.momentum);
+        syncTree.dZ_1() = leg1.vertexPosition.Z() - primaryVertex.position.Z();
 
         // leg1 lepton specific variable should be filled outside. Here all them set to the default value.
         syncTree.iso_1() = default_value;
@@ -374,9 +374,9 @@ protected:
         syncTree.eta_2() = leg2.momentum.Eta();
         syncTree.m_2() = leg2.momentum.M();
         syncTree.q_2() = leg2.charge;
-        syncTree.mt_2() = analysis::Calculate_MT(leg2.momentum, correctedMET.pt, correctedMET.phi);
-        syncTree.d0_2() = (leg2.vertexPosition - primaryVertex.position).Perp();
-        syncTree.dZ_2() = std::abs(leg2.vertexPosition.Z() - primaryVertex.position.Z());
+        syncTree.mt_2() = analysis::Calculate_MT(leg2.momentum, postRecoilMET.pt, postRecoilMET.phi);
+        syncTree.d0_2() = analysis::Calculate_dxy(leg2.vertexPosition, primaryVertex.position,leg2.momentum);
+        syncTree.dZ_2() = leg2.vertexPosition.Z() - primaryVertex.position.Z();
 
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
         syncTree.iso_2() = ntuple_tau_leg2.byIsolationMVAraw;
@@ -390,7 +390,9 @@ protected:
         syncTree.againstMuonMedium2_2() = ntuple_tau_leg2.againstMuonMedium2;
         syncTree.againstMuonTight2_2() = ntuple_tau_leg2.againstMuonTight2;
 
-        syncTree.pt_tt() = (leg1.momentum + leg2.momentum).Pt();
+        TLorentzVector postRecoilMetMomentum;
+        postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, postRecoilMET.eta, postRecoilMET.phi, 0.);
+        syncTree.pt_tt() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
 
         syncTree.met() = event.metPF().pt;
         syncTree.metphi() = event.metPF().phi;
@@ -410,7 +412,7 @@ protected:
         syncTree.mvacov11() = metMVAcov[1][1];
 
         syncTree.njets() = jets.size();
-        //syncTree.njetspt20();
+        syncTree.njetspt20() = jetsPt20.size();
 
         if (jets.size() >= 1) {
             const Candidate& jet = jets.at(0);
@@ -477,12 +479,17 @@ protected:
         }
 
         if (bjets.size() >= 2) {
-            const Candidate& bjet = bjets.at(1);
-            const ntuple::Jet& ntuple_bjet = event.jets().at(bjet.index);
-            syncTree.bpt_2() = bjet.momentum.Pt();
-            syncTree.beta_2() = bjet.momentum.Eta();
-            syncTree.bphi_2() = bjet.momentum.Phi();
+            const Candidate& lead_bjet = bjets.at(0);
+            const Candidate& subLead_bjet = bjets.at(1);
+            const ntuple::Jet& ntuple_bjet = event.jets().at(subLead_bjet.index);
+            syncTree.bpt_2() = subLead_bjet.momentum.Pt();
+            syncTree.beta_2() = subLead_bjet.momentum.Eta();
+            syncTree.bphi_2() = subLead_bjet.momentum.Phi();
             syncTree.bcsv_2() = ntuple_bjet.combinedSecondaryVertexBJetTags;
+            const Candidate higgs_bb(Candidate::Higgs,lead_bjet,subLead_bjet);
+            const Candidate resonance(Candidate::Resonance,higgs_sv,higgs_bb);
+            syncTree.m_bb() = higgs_bb.momentum.M();
+            syncTree.m_ttbb() = resonance.momentum.M();
         } else {
             syncTree.bpt_2() = default_value;
             syncTree.beta_2() = default_value;

@@ -137,6 +137,9 @@
     SIMPLE_VAR(Float_t, beta_3) /* Btag Eta */ \
     SIMPLE_VAR(Float_t, bphi_3) /* Btag Phi */ \
     SIMPLE_VAR(Float_t, bcsv_3) /* Btag CSV */ \
+    /**/ \
+    SIMPLE_VAR(Float_t, m_bb) /* Corrected BTag Pt */ \
+    SIMPLE_VAR(Float_t, m_ttbb) /* Btag Eta */ \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

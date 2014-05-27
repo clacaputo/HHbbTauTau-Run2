@@ -56,6 +56,12 @@ public:
         momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.energy);
     }
 
+    Candidate(Type _type, size_t _index, const ntuple::Muon& ntupleObject) :
+        type(_type), index(_index), charge(ntupleObject.charge) {
+        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, 0.1057);
+    }
+
+
     Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type),
         index(std::numeric_limits<size_t>::max()) {
         daughters.push_back(daughter1);
