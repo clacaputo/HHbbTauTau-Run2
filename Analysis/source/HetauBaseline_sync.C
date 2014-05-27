@@ -72,13 +72,13 @@ protected:
                 ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
-        ApplyTauCorrections(eTau,event.metMVAeTau(), true);
+        ApplyTauCorrections(eTau,event.metMVAeTau(), false);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
         const auto higgses = FindCompatibleObjects(electrons, taus, DeltaR_betweenSignalObjects,
-                                                   Candidate::Higgs, "H_e_tau");
+                                                   Candidate::Higgs, "H_e_tau", 0);
         cut(higgses.size(), "e_tau");
 
         const auto higgsTriggered = ApplyTriggerMatch(higgses, trigger::hltPaths,false);

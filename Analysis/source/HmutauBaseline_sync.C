@@ -69,14 +69,14 @@ protected:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
-        ApplyTauCorrections(muTau,event.metMVAmuTau(), true);
+        ApplyTauCorrections(muTau,event.metMVAmuTau(), false);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
 
         const auto higgses = FindCompatibleObjects(muons, taus, DeltaR_betweenSignalObjects,
-                                                   Candidate::Higgs, "H_mu_tau");
+                                                   Candidate::Higgs, "H_mu_tau", 0);
         cut(higgses.size(), "mu_tau");
 
 
