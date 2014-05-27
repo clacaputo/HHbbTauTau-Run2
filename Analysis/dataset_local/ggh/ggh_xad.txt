@@ -1,0 +1,16 @@
+/store/user/kandroso/GGH/TREE/ggh_xbw_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xbx_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xby_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xbz_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xca_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcb_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcc_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcd_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xce_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcf_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcg_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xch_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xci_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcj_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xck_Tree.root
+/store/user/kandroso/GGH/TREE/ggh_xcl_Tree.root
