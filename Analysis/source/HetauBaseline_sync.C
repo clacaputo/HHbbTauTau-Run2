@@ -41,7 +41,7 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::ETau;
         finalState::ETaujet eTau;
-        if (useMCtruth && !FindAnalysisFinalState(eTau,true)) return;
+        if (useMCtruth && !FindAnalysisFinalState(eTau,false)) return;
 
 
 
