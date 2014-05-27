@@ -319,8 +319,11 @@ private:
             EDataType myType, otherType;
             myBranch->GetExpectedType(myClass, myType);
             otherBranch->GetExpectedType(otherClass, otherType);
-            if(myClass || otherClass)
-                throw std::runtime_error("branches with complex objects are not supported.");
+            if(myClass || otherClass) {
+                std::ostringstream ss;
+                ss << "branches with complex objects are not supported for branch '" << var << "'.";
+                throw std::runtime_error(ss.str());
+            }
             if(myType == kFloat_t && otherType == kFloat_t)
                 FillAllHistograms<Float_t, Float_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
                                              *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
@@ -336,9 +339,18 @@ private:
             else if(myType == kInt_t && otherType == kInt_t)
                 FillAllHistograms<Int_t, Int_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
                                              *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
-            else
-                throw std::runtime_error("Unknown branch type combination.");
-
+            else if(myType == kBool_t && otherType == kBool_t)
+                FillAllHistograms<Bool_t, Bool_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kBool_t && otherType == kChar_t)
+                FillAllHistograms<Bool_t, Char_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else {
+                std::ostringstream ss;
+                ss << "Unknown branch type combination (" <<  myType << ", " << otherType
+                   << ") for branch '" << var << "'.";
+                throw std::runtime_error(ss.str());
+            }
             DrawSuperimposedHistograms(Hmine_all, Hother_all, selection_label + " (all)", var);
             DrawSuperimposedHistograms(Hmine_common, Hother_common, selection_label + " (common)", var);
             DrawSuperimposedHistograms(Hmine_diff, Hother_diff, selection_label + " (diff)", var);
@@ -407,7 +419,7 @@ private:
         pad1.Draw();
         pad2.Draw();
 
-        PrintCanvas();
+        PrintCanvas(var);
     }
 
     void Draw2DHistogram(std::shared_ptr<TH2F> Hmine_vs_other, const std::string& selection_label,
@@ -429,7 +441,7 @@ private:
         DrawTextLabels(n_events, n_events);
         canvas.Clear();
         pad1.Draw();
-        PrintCanvas();
+        PrintCanvas(var);
     }
 
     void DrawTextLabels(size_t n_events_mine, size_t n_events_other)
@@ -607,9 +619,11 @@ private:
         }
     }
 
-    void PrintCanvas()
+    void PrintCanvas(const std::string& page_name)
     {
-        canvas.Print(file_name.c_str());
+        std::ostringstream print_options;
+        print_options << "Title:" << page_name;
+        canvas.Print(file_name.c_str(), print_options.str().c_str());
     }
 
 private:
