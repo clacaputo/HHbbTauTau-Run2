@@ -167,7 +167,7 @@ protected:
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
+        const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
         cut(Y(passPUlooseID) == puLooseID, "puLooseID");
 
         return Candidate(analysis::Candidate::Jet, id, object);
@@ -193,7 +193,7 @@ protected:
         cut(X(pt) > ptCut, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
+        const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
         cut(Y(passPUlooseID) == puLooseID, "puLooseID");
 
         return Candidate(analysis::Candidate::Jet, id, object);
@@ -412,7 +412,7 @@ protected:
         syncTree.mvacov11() = metMVAcov[1][1];
 
         syncTree.njets() = jets.size();
-        syncTree.njetspt20() = jetsPt20.size();
+        syncTree.njetspt20() = jetsPt20.size() - jets.size();
 
         if (jets.size() >= 1) {
             const Candidate& jet = jets.at(0);

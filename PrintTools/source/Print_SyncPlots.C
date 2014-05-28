@@ -104,7 +104,7 @@ public:
         drawHistos("q_1", 3, -1, 1);
         drawHistos("mva_1", 300, -1.5, 1.5);
         drawHistos("d0_1", 100, -0.5, 0.5);
-        drawHistos("dZ_1", 600, -6.0, 6.0);
+        drawHistos("dZ_1", 200, -1.0, 1.0);
         drawHistos("passid_1", 2, -0.5, 1.5);
         drawHistos("passiso_1", 2, -0.5, 1.5);
         drawHistos("mt_1", 50, 0, 200);
@@ -123,7 +123,7 @@ public:
         drawHistos("m_2", 20, 0, 2);
         drawHistos("q_2", 3, -1, 1);
         drawHistos("d0_2", 100, -0.5, 0.5);
-        drawHistos("dZ_2", 600, -6.0, 6.0);
+        drawHistos("dZ_2", 200, -1.0, 1.0);
         drawHistos("mva_2", 300, -1.5, 1.5);
         drawHistos("passid_2", 2, -0.5, 1.5);
         drawHistos("passiso_2", 2, -0.5, 1.5);
