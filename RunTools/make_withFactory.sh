@@ -1,7 +1,8 @@
 #!/bin/bash
 
 SCRIPT_RUN_PATH=$1
-NAME=$2
+JOB_NAME=$2
+NAME=$3
 
 if [ "$CMSSW_BASE/" = "/" ] ; then
     SCRIPT_PATH="."
@@ -16,8 +17,8 @@ fi
 
 SOURCE=$( find $SCRIPT_PATH -name "${NAME}.C" )
 
-CODE_OUT="$SCRIPT_RUN_PATH/${NAME}.cpp"
-EXE_NAME="$SCRIPT_RUN_PATH/${NAME}"
+CODE_OUT="$SCRIPT_RUN_PATH/${JOB_NAME}.cpp"
+EXE_NAME="$SCRIPT_RUN_PATH/${JOB_NAME}"
 rm -f "$EXE_NAME"
 
 printf \

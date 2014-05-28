@@ -72,7 +72,7 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
     exit
 fi
 
-$MAKE_PATH $OUTPUT_PATH $ANALYZER_NAME
+$MAKE_PATH $OUTPUT_PATH $ANALYZER_NAME $ANALYZER_NAME
 echo "Executable file is compiled."
 
 i=0
@@ -81,19 +81,22 @@ n=0
 if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
         bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
-             -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" "${@:7}"
+             -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}"
     done
     echo "$N_JOBS have been submited in local in Pisa"
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
-        echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH  $OUTPUT_PATH/$ANALYZER_NAME yes ${@:7}" | \
+        echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME yes " \
+             "$FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 ${@:7}" | \
             qsub -q $QUEUE -N $NAME -o $OUTPUT_PATH -e $OUTPUT_PATH -
     done
     echo "$N_JOBS have been submited in local in Bari"
 elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
-             $OUTPUT_PATH/$ANALYZER_NAME "yes" "${@:7}" &
+             $OUTPUT_PATH/$ANALYZER_NAME "yes" \
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -107,8 +110,8 @@ elif [ "$QUEUE" = "fai5" ] ; then
 elif [ "$QUEUE" = "fai" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME \
-                                                        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
-                                                        $OUTPUT_PATH/$ANALYZER_NAME "yes" "${@:7}" &
+             $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -122,7 +125,8 @@ elif [ "$QUEUE" = "fai" ] ; then
 elif [ $STORAGE = "Local" ] ; then
     for NAME in $JOBS ; do
         $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME "dont_set_cmsenv" \
-                         $OUTPUT_PATH/$ANALYZER_NAME "yes" "${@:7}" &
+                         $OUTPUT_PATH/$ANALYZER_NAME "yes" \
+                         $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
         i=$(($i + 1))
         n=$(($n + 1))
         echo "job $n started"

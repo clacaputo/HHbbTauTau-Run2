@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -lt 5 ] ; then
-    echo "Usage: job_name working_path output_path exe_name set_cmsenv [args_for_analyzer]"
+    echo "Usage: job_name working_path output_path exe_name set_cmsenv [other_args_for_analyzer]"
     exit
 fi
 
