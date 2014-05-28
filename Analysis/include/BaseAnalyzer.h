@@ -346,3 +346,48 @@ protected:
 };
 
 } // analysis
+
+namespace make_tools {
+template<typename T>
+struct Factory {
+    static T* Make(int argc, char *argv[])
+    {
+        std::cout << "Command line: ";
+        for(int n = 0; n < argc; ++n)
+            std::cout << argv[n] << " ";
+        std::cout << std::endl;
+        if(argc < 4 || argc > 8)
+            throw std::runtime_error("Invalid number of command line arguments.");
+
+        int n = 1;
+        const std::string inputFileName = argv[++n];
+        const std::string outputFileName = argv[++n];
+        if(argc <= n)
+            return new T(inputFileName, outputFileName);
+
+        const std::string prefix = argv[++n];
+        if(argc <= n)
+            return new T(inputFileName, outputFileName, prefix);
+
+        char c;
+        size_t maxNumberOfEvents;
+        std::istringstream ss_nEvents(argv[++n]);
+        ss_nEvents >> c >> maxNumberOfEvents;
+        if(c != '@')
+            throw std::runtime_error("Bad command line format.");
+        if(argc <= n)
+            return new T(inputFileName, outputFileName, prefix, maxNumberOfEvents);
+
+        bool useMCtruth;
+        std::istringstream ss_useMC(argv[++n]);
+        ss_useMC >> std::boolalpha >> c >> useMCtruth;
+        if(c != '@')
+            throw std::runtime_error("Bad command line format.");
+        if(argc <= n)
+            return new T(inputFileName, outputFileName, prefix, maxNumberOfEvents, useMCtruth);
+
+        const std::string reweightFileName = argv[++n];
+        return new T(inputFileName, outputFileName, prefix, maxNumberOfEvents, useMCtruth, reweightFileName);
+    }
+};
+} // make_tools

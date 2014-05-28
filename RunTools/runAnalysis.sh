@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -lt 4 -o $# -gt 5 ] ; then
-    echo "Usage: job_name working_path output_path exe_name [set_cmsenv]"
+if [ $# -lt 5 ] ; then
+    echo "Usage: job_name working_path output_path exe_name set_cmsenv [args_for_analyzer]"
     exit
 fi
 
@@ -9,11 +9,7 @@ NAME=$1
 WORKING_PATH=$2
 OUTPUT_PATH=$3
 EXE_NAME=$4
-if [ $# -ge 5 ] ; then
-    SET_CMSENV=$5
-else
-    SET_CMSENV="yes"
-fi
+SET_CMSENV=$5
 
 cd $WORKING_PATH
 
@@ -25,7 +21,7 @@ if [ $SET_CMSENV = "yes" ] ; then
     echo "$NAME $( date )" >> $OUTPUT_PATH/job_cmsRun_start.log
 fi
 
-$EXE_NAME > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
+$EXE_NAME "${@:6}" > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
 RESULT=$?
 
 echo "$RESULT $NAME $( date )" >> $OUTPUT_PATH/job_result.log
