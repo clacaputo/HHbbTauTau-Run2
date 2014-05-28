@@ -92,10 +92,10 @@ pfMEtMVA = cms.EDProducer("PFMETProducerMVA",
     globalThreshold = cms.double(-1.),#pfMet.globalThreshold,
     minCorrJetPt = cms.double(-1.),
     inputFileNames = cms.PSet(
-        U     = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmet_53_June2013_type1.root'),
-        DPhi  = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmetphi_53_June2013_type1.root'),
-        CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root'),
-        CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root')
+        DPhi = cms.FileInPath('HHbbTauTau/PatProduction/data/gbrmetphi_53_Dec2012.root'),
+        CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root'),
+        U = cms.FileInPath('HHbbTauTau/PatProduction/data/gbrmet_53_Dec2012.root'),
+        CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root')
     ),
     loadMVAfromDB = cms.bool(False),
     is42 = cms.bool(False), # CV: set this flag to true if you are running mvaPFMET in CMSSW_4_2_x
