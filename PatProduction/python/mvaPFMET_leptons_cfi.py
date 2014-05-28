@@ -8,7 +8,8 @@ isomuons = cms.EDFilter(
     "PATMuonSelector",
     src = cms.InputTag('patMuonsWithEmbeddedVariables'),
     cut = cms.string(
-        "abs(eta) < 2.1 && pt > 17."
+        #"abs(eta) < 2.1 && pt > 17."
+        "abs(eta) < 2.6 && pt > 7."
         ),
     filter = cms.bool(False)
 )
@@ -43,10 +44,11 @@ isotausET = isotausTT.clone(cut = cms.string(
                                 '&& tauID("decayModeFinding") > 0.5 '
                                 ))
 isotausMT = isotausTT.clone(cut = cms.string(
-                                'abs(eta) < 2.3 && pt > 15.0 ' +
-                                '&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
+                                #'abs(eta) < 2.3 && pt > 15.0 ' +
+                                'abs(eta) < 2.6 && pt > 18.0 ' +
+                                #'&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
                                 '&& tauID("decayModeFinding") > 0.5 ' +
-                                '&& tauID("againstMuonTight") > 0.5 '
+                                #'&& tauID("againstMuonTight") > 0.5 '
                                 ))
 
 
