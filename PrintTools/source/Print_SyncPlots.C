@@ -72,13 +72,16 @@ public:
         drawHistos("puweight", 40, 0, 2);
         drawHistos("trigweight_1", 50, 0.90, 1.1);
         drawHistos("trigweight_2", 50, 0.90, 1.1);
-        drawHistos("idweight_1", 50, 0.95, 1.);
+        if (channel == "etau")
+            drawHistos("idweight_1", 50, 0.75, 1.);
+        if (channel == "mutau")
+            drawHistos("idweight_1", 50, 0.95, 1.);
         //drawHistos("idweight_2", 50, 0.95, 1.);
         drawHistos("isoweight_1", 100, 0.90, 1.);
         //drawHistos("isoweight_2", 100, 0.90, 1.);
         //drawHistos("fakeweight", 25, 0.5, 1.5);
 
-        drawHistos("effweight", 30, .8, 1.1);
+//        drawHistos("effweight", 30, .8, 1.1);
         drawHistos("weight", 30, .8, 1.1);
 //        drawHistos("embeddedWeight", 50, 0, 1);
 //        drawHistos("signalWeight", 30, 0, 2.0);
@@ -123,8 +126,8 @@ public:
         drawHistos("iso_2", 40, 0.6, 1.1);
         drawHistos("m_2", 40, 0, 2);
         drawHistos("q_2", 4, -2, 2);
-        drawHistos("d0_2", 40, -0.1, 0.1);
-        drawHistos("dZ_2", 40, -0.5, 0.5);
+//        drawHistos("d0_2", 40, -0.1, 0.1);
+//        drawHistos("dZ_2", 40, -0.5, 0.5);
 //        drawHistos("mva_2", 20, -0.5, 1.5);
 //        drawHistos("passid_2", 2, -0.5, 1.5);
 //        drawHistos("passiso_2", 2, -0.5, 1.5);
