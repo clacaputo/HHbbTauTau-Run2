@@ -18,11 +18,12 @@ isoelectrons = cms.EDFilter(
     "PATElectronSelector",
     src = cms.InputTag('patElectronsWithEmbeddedVariables'),
     cut = cms.string(
-        'abs(eta) < 2.1 && pt > 20.0 ' +
-        '&& gsfTrack.trackerExpectedHitsInner.numberOfHits == 0 ' +
-        '&& (abs(superCluster.eta)<0.8 && userFloat("mvaPOGNonTrig") > 0.925) ' +
-        '|| (abs(superCluster.eta)>0.8 && abs(superCluster.eta)<1.479 && userFloat("mvaPOGNonTrig") > 0.975) ' +
-        '|| (abs(superCluster.eta)>1.479 && userFloat("mvaPOGNonTrig") > 0.985) '
+        #'abs(eta) < 2.1 && pt > 20.0 ' +
+        'abs(eta) < 2.6 && pt > 10.0 '
+#        '&& gsfTrack.trackerExpectedHitsInner.numberOfHits == 0 ' +
+#        '&& (abs(superCluster.eta)<0.8 && userFloat("mvaPOGNonTrig") > 0.925) ' +
+#        '|| (abs(superCluster.eta)>0.8 && abs(superCluster.eta)<1.479 && userFloat("mvaPOGNonTrig") > 0.975) ' +
+#        '|| (abs(superCluster.eta)>1.479 && userFloat("mvaPOGNonTrig") > 0.985) '
     ),
     filter = cms.bool(False)
 )
@@ -39,15 +40,16 @@ isotausTT = cms.EDFilter(
 )
 
 isotausET = isotausTT.clone(cut = cms.string(
-                                'abs(eta) < 2.3 && pt > 15.0 ' +
-                                '&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
+#                                'abs(eta) < 2.3 && pt > 15.0 ' +
+                                'abs(eta) < 2.6 && pt > 18.0 ' +
+                                #'&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
                                 '&& tauID("decayModeFinding") > 0.5 '
                                 ))
 isotausMT = isotausTT.clone(cut = cms.string(
                                 #'abs(eta) < 2.3 && pt > 15.0 ' +
                                 'abs(eta) < 2.6 && pt > 18.0 ' +
                                 #'&& tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.0 ' +
-                                '&& tauID("decayModeFinding") > 0.5 ' +
+                                '&& tauID("decayModeFinding") > 0.5 '
                                 #'&& tauID("againstMuonTight") > 0.5 '
                                 ))
 
