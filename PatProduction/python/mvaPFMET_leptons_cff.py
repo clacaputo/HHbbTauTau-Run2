@@ -28,10 +28,10 @@ pfMEtMVAmuTau = cms.EDProducer("PFMETProducerMVA",
     # For PFMETAlgorithmMVA
     loadMVAfromDB = cms.bool(False),
     inputFileNames = cms.PSet(
-        DPhi = cms.FileInPath('HHbbTauTau/PatProduction/data/gbrmetphi_53_Dec2012.root'),
-        CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root'),
-        U = cms.FileInPath('HHbbTauTau/PatProduction/data/gbrmet_53_Dec2012.root'),
-        CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root')
+            U = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmet_53_June2013_type1.root'),
+            DPhi  = cms.FileInPath('RecoMET/METPUSubtraction/data/gbrmetphi_53_June2013_type1.root'),
+            CovU1 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru1cov_53_Dec2012.root'),
+            CovU2 = cms.FileInPath('RecoMET/METPUSubtraction/data/gbru2cov_53_Dec2012.root')
     ),
     is42 = cms.bool(False), # CV: set this flag to true if you are running mvaPFMET in CMSSW_4_2_x
     dZcut     = cms.double(0.1),
@@ -132,7 +132,7 @@ pfMEtMVA = cms.EDProducer("PFMETProducerMVA",
 )
 
 pfMEtMVAeTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isoelectrons","isotausET") )
-pfMEtMVAtauTau = pfMEtMVA.clone( srcLeptons = cms.VInputTag("isotausTT") )
+pfMEtMVAtauTau = pfMEtMVAmuTau.clone( srcLeptons = cms.VInputTag("isotausTT") )
 
 pfMEtMVAsequence  = cms.Sequence(
     (isomuonseq + isotauseq + isoelectronseq) *
