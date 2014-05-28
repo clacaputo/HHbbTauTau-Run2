@@ -356,10 +356,10 @@ struct Factory {
         for(int n = 0; n < argc; ++n)
             std::cout << argv[n] << " ";
         std::cout << std::endl;
-        if(argc < 4 || argc > 8)
+        if(argc < 3 || argc > 7)
             throw std::runtime_error("Invalid number of command line arguments.");
 
-        int n = 1;
+        int n = 0;
         const std::string inputFileName = argv[++n];
         const std::string outputFileName = argv[++n];
         if(argc <= n)
