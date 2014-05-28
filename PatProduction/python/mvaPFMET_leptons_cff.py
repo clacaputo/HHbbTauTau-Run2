@@ -4,6 +4,7 @@
 import FWCore.ParameterSet.Config as cms
 
 from HHbbTauTau.PatProduction.mvaPFMET_leptons_cfi import *
+from RecoJets.JetProducers.PileupJetIDParams_cfi import JetIdParams
 
 calibratedAK5PFJetsForPFMEtMVA = cms.EDProducer('PFJetCorrectionProducer',
     src = cms.InputTag('ak5PFJets'),
