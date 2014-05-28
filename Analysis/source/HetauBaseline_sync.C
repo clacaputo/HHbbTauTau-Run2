@@ -304,6 +304,7 @@ protected:
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
         const ntuple::Electron& ntuple_electron = event.electrons().at(electron.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
 
         H_BaseAnalyzer::
                 FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, electron, tau);
@@ -312,6 +313,8 @@ protected:
         syncTree.mva_1() = ntuple_electron.mvaPOGNonTrig;
         //syncTree.passid_2();
         //syncTree.passiso_2();
+
+        //syncTree.mva_2() = againstElectronMediumMVA3_Custom(ntuple_tau);
 
         syncTree.Fill();
     }

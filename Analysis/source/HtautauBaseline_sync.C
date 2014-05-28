@@ -285,6 +285,7 @@ protected:
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
+        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(subLeadTau.index);
 
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, leadTau, subLeadTau);
 
@@ -298,7 +299,7 @@ protected:
         syncTree.againstMuonLoose2_1() = ntuple_tau_leg1.againstMuonLoose2;
         syncTree.againstMuonMedium2_1() = ntuple_tau_leg1.againstMuonMedium2;
         syncTree.againstMuonTight2_1() = ntuple_tau_leg1.againstMuonTight2;
-
+        //syncTree.mva_2();
         syncTree.Fill();
     }
 

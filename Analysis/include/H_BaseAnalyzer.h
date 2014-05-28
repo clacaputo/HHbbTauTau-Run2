@@ -380,7 +380,6 @@ protected:
 
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
         syncTree.iso_2() = ntuple_tau_leg2.byIsolationMVAraw;
-        syncTree.mva_2() = ntuple_tau_leg2.againstElectronMVA3raw;
         //syncTree.passid_2();
         //syncTree.passiso_2();
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits;
@@ -431,10 +430,10 @@ protected:
             syncTree.jeta_1() = default_value;
             syncTree.jphi_1() = default_value;
             syncTree.jptraw_1() = default_value;
-            syncTree.jptunc_1() = default_value;
+            //syncTree.jptunc_1() = default_value;
             syncTree.jmva_1() = default_value;
-            syncTree.jlrm_1() = default_value;
-            syncTree.jctm_1() = default_value;
+//            syncTree.jlrm_1() = default_value;
+//            syncTree.jctm_1() = default_value;
             syncTree.jpass_1() = default_value;
         }
 
@@ -455,10 +454,10 @@ protected:
             syncTree.jeta_2() = default_value;
             syncTree.jphi_2() = default_value;
             syncTree.jptraw_2() = default_value;
-            syncTree.jptunc_2() = default_value;
+//            syncTree.jptunc_2() = default_value;
             syncTree.jmva_2() = default_value;
-            syncTree.jlrm_2() = default_value;
-            syncTree.jctm_2() = default_value;
+//            syncTree.jlrm_2() = default_value;
+//            syncTree.jctm_2() = default_value;
             syncTree.jpass_2() = default_value;
         }
 
