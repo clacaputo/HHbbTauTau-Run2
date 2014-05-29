@@ -1,13 +1,17 @@
 #ifndef RecoMET_METPUSubtraction_mvaMEtUtilities_h
 #define RecoMET_METPUSubtraction_mvaMEtUtilities_h
 
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/METReco/interface/CommonMETData.h"
-
 #include <vector>
 #include <utility>
+
+#include <TLorentzVector.h>
+
+//#include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+//#include "DataFormats/Candidate/interface/Candidate.h"
+
+#include "CommonMETData.h"
+
 
 class mvaMEtUtilities 
 {
@@ -20,7 +24,7 @@ class mvaMEtUtilities
 	dZ_(0.)
     {}
     ~pfCandInfo() {}    
-    reco::Candidate::LorentzVector p4_;
+    TLorentzVector p4_;
     double dZ_;
   };
 
@@ -31,7 +35,7 @@ class mvaMEtUtilities
 	chargedFrac_(0.)
     {}
     ~leptonInfo() {}    
-    reco::Candidate::LorentzVector p4_;
+    TLorentzVector p4_;
     double chargedFrac_;
   };
 
@@ -43,20 +47,20 @@ class mvaMEtUtilities
 	neutralEnFrac_(0.)
     {}
     ~JetInfo() {}
-    reco::Candidate::LorentzVector p4_;
+    TLorentzVector p4_;
     double mva_;
     double neutralEnFrac_;  
   };
 
-  mvaMEtUtilities(const edm::ParameterSet& cfg);
+  mvaMEtUtilities(/*const edm::ParameterSet& cfg*/);
   virtual ~mvaMEtUtilities();
 
   friend bool operator<(const JetInfo&, const JetInfo&);
 
-  bool passesMVA(const reco::Candidate::LorentzVector&, double);
+  bool passesMVA(const TLorentzVector&, double);
 
-  reco::Candidate::LorentzVector leadJetP4(const std::vector<JetInfo>&);
-  reco::Candidate::LorentzVector subleadJetP4(const std::vector<JetInfo>&);
+  TLorentzVector leadJetP4(const std::vector<JetInfo>&);
+  TLorentzVector subleadJetP4(const std::vector<JetInfo>&);
   unsigned numJetsAboveThreshold(const std::vector<JetInfo>&, double);
 
   std::vector<JetInfo> cleanJets(const std::vector<JetInfo>&, 
@@ -78,7 +82,7 @@ class mvaMEtUtilities
   void finalize(CommonMETData& metData);
  protected:
 
-  reco::Candidate::LorentzVector jetP4(const std::vector<JetInfo>&, unsigned);
+  TLorentzVector jetP4(const std::vector<JetInfo>&, unsigned);
 
   // cuts on jet Id. MVA output in bins of jet Pt and eta
   double mvaCut_[3][4][4]; 

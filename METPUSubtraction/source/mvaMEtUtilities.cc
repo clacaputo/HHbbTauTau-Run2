@@ -1,11 +1,11 @@
-#include "RecoMET/METPUSubtraction/interface/mvaMEtUtilities.h"
+#include "../interface/mvaMEtUtilities.h"
 
-#include "DataFormats/Math/interface/deltaR.h"
+//#include "DataFormats/Math/interface/deltaR.h"
 
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 
-mvaMEtUtilities::mvaMEtUtilities(const edm::ParameterSet& cfg) 
+mvaMEtUtilities::mvaMEtUtilities(/*const edm::ParameterSet& cfg*/)
 {
   // jet id
   /* ===> this code parses an xml it uses parameter set 
@@ -46,39 +46,39 @@ mvaMEtUtilities::~mvaMEtUtilities()
 // nothing to be done yet...
 }
 
-bool mvaMEtUtilities::passesMVA(const reco::Candidate::LorentzVector& jetP4, double mvaJetId) 
+bool mvaMEtUtilities::passesMVA(const TLorentzVector& jetP4, double mvaJetId)
 { 
   int ptBin = 0; 
-  if ( jetP4.pt() > 10. && jetP4.pt() < 20. ) ptBin = 1;
-  if ( jetP4.pt() > 20. && jetP4.pt() < 30. ) ptBin = 2;
-  if ( jetP4.pt() > 30.                     ) ptBin = 3;
+  if ( jetP4.Pt() > 10. && jetP4.Pt() < 20. ) ptBin = 1;
+  if ( jetP4.Pt() > 20. && jetP4.Pt() < 30. ) ptBin = 2;
+  if ( jetP4.Pt() > 30.                     ) ptBin = 3;
   
   int etaBin = 0;
-  if ( fabs(jetP4.eta()) > 2.5  && fabs(jetP4.eta()) < 2.75) etaBin = 1; 
-  if ( fabs(jetP4.eta()) > 2.75 && fabs(jetP4.eta()) < 3.0 ) etaBin = 2; 
-  if ( fabs(jetP4.eta()) > 3.0  && fabs(jetP4.eta()) < 5.0 ) etaBin = 3; 
+  if ( fabs(jetP4.Eta()) > 2.5  && fabs(jetP4.Eta()) < 2.75) etaBin = 1;
+  if ( fabs(jetP4.Eta()) > 2.75 && fabs(jetP4.Eta()) < 3.0 ) etaBin = 2;
+  if ( fabs(jetP4.Eta()) > 3.0  && fabs(jetP4.Eta()) < 5.0 ) etaBin = 3;
 
   return ( mvaJetId > mvaCut_[2][ptBin][etaBin] );
 }
 
-reco::Candidate::LorentzVector mvaMEtUtilities::leadJetP4(const std::vector<JetInfo>& jets) 
+TLorentzVector mvaMEtUtilities::leadJetP4(const std::vector<JetInfo>& jets)
 {
   return jetP4(jets, 0);
 }
 
-reco::Candidate::LorentzVector mvaMEtUtilities::subleadJetP4(const std::vector<JetInfo>& jets) 
+TLorentzVector mvaMEtUtilities::subleadJetP4(const std::vector<JetInfo>& jets)
 {
   return jetP4(jets, 1);
 }
 
 bool operator<(const mvaMEtUtilities::JetInfo& jet1, const mvaMEtUtilities::JetInfo& jet2)
 {
-  return jet1.p4_.pt() > jet2.p4_.pt();
+  return jet1.p4_.Pt() > jet2.p4_.Pt();
 } 
 
-reco::Candidate::LorentzVector mvaMEtUtilities::jetP4(const std::vector<JetInfo>& jets, unsigned idx) 
+TLorentzVector mvaMEtUtilities::jetP4(const std::vector<JetInfo>& jets, unsigned idx)
 {
-  reco::Candidate::LorentzVector retVal(0.,0.,0.,0.);
+  TLorentzVector retVal(0.,0.,0.,0.);
   if ( idx < jets.size() ) {
     std::vector<JetInfo> jets_sorted = jets;
     std::sort(jets_sorted.begin(), jets_sorted.end()); 
@@ -91,7 +91,7 @@ unsigned mvaMEtUtilities::numJetsAboveThreshold(const std::vector<JetInfo>& jets
   unsigned retVal = 0;
   for ( std::vector<JetInfo>::const_iterator jet = jets.begin();
 	jet != jets.end(); ++jet ) {
-    if ( jet->p4_.pt() > ptThreshold ) ++retVal;
+    if ( jet->p4_.Pt() > ptThreshold ) ++retVal;
   }
   return retVal;
 }
@@ -105,9 +105,9 @@ std::vector<mvaMEtUtilities::JetInfo> mvaMEtUtilities::cleanJets(const std::vect
     bool isOverlap = false;
     for ( std::vector<leptonInfo>::const_iterator lepton = leptons.begin();
 	  lepton != leptons.end(); ++lepton ) {
-      if ( deltaR(jet->p4_, lepton->p4_) < dRmatch ) isOverlap = true;	
+      if ( jet->p4_.DeltaR(lepton->p4_) < dRmatch ) isOverlap = true;
     }
-    if ( jet->p4_.pt() > ptThreshold && !isOverlap ) retVal.push_back(*jet);
+    if ( jet->p4_.Pt() > ptThreshold && !isOverlap ) retVal.push_back(*jet);
   }
   return retVal;
 }
@@ -122,7 +122,7 @@ std::vector<mvaMEtUtilities::pfCandInfo> mvaMEtUtilities::cleanPFCands(const std
     bool isOverlap = false;
     for ( std::vector<leptonInfo>::const_iterator lepton = leptons.begin();
 	  lepton != leptons.end(); ++lepton ) {
-      if ( deltaR(pfCandidate->p4_, lepton->p4_) < dRmatch ) isOverlap = true;
+      if ( pfCandidate->p4_.DeltaR(lepton->p4_) < dRmatch ) isOverlap = true;
     }
     if ( (!isOverlap && !invert) || (isOverlap && invert) ) retVal.push_back(*pfCandidate);
   }
@@ -152,9 +152,9 @@ CommonMETData mvaMEtUtilities::computePFCandSum(const std::vector<pfCandInfo>& p
     if ( pfCandidate->dZ_ < 0.    && dZflag != 2 ) continue;
     if ( pfCandidate->dZ_ > dZmax && dZflag == 0 ) continue;
     if ( pfCandidate->dZ_ < dZmax && dZflag == 1 ) continue;
-    retVal.mex   += pfCandidate->p4_.px();
-    retVal.mey   += pfCandidate->p4_.py();
-    retVal.sumet += pfCandidate->p4_.pt();
+    retVal.mex   += pfCandidate->p4_.Px();
+    retVal.mey   += pfCandidate->p4_.Py();
+    retVal.sumet += pfCandidate->p4_.Pt();
   }
   finalize(retVal);
   return retVal;
@@ -171,9 +171,9 @@ CommonMETData mvaMEtUtilities::computeSumLeptons(const std::vector<mvaMEtUtiliti
 	lepton != leptons.end(); ++lepton ) {
     double pChargedFrac = 1;
     if(iCharged) pChargedFrac = lepton->chargedFrac_;
-    retVal.mex   += lepton->p4_.px()*pChargedFrac;
-    retVal.mey   += lepton->p4_.py()*pChargedFrac;
-    retVal.sumet += lepton->p4_.pt()*pChargedFrac;
+    retVal.mex   += lepton->p4_.Px()*pChargedFrac;
+    retVal.mey   += lepton->p4_.Py()*pChargedFrac;
+    retVal.sumet += lepton->p4_.Pt()*pChargedFrac;
   }
   finalize(retVal);
   return retVal;
@@ -190,9 +190,9 @@ CommonMETData mvaMEtUtilities::computeJetSum_neutral(const std::vector<JetInfo>&
     bool passesMVAjetId = passesMVA(jet->p4_, jet->mva_);
     if (  passesMVAjetId && !mvaPassFlag ) continue;
     if ( !passesMVAjetId &&  mvaPassFlag ) continue;
-    retVal.mex   += jet->p4_.px()*jet->neutralEnFrac_;
-    retVal.mey   += jet->p4_.py()*jet->neutralEnFrac_;
-    retVal.sumet += jet->p4_.pt()*jet->neutralEnFrac_;
+    retVal.mex   += jet->p4_.Px()*jet->neutralEnFrac_;
+    retVal.mey   += jet->p4_.Py()*jet->neutralEnFrac_;
+    retVal.sumet += jet->p4_.Pt()*jet->neutralEnFrac_;
   }
   finalize(retVal);
   return retVal;

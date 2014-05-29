@@ -272,7 +272,7 @@ protected:
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
         const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
+//        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
 
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, muon, tau);
 

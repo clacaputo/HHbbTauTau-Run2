@@ -10,41 +10,44 @@
  *
  */
 
-#include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
-
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/VertexReco/interface/Vertex.h"
-
-#include "RecoMET/METPUSubtraction/interface/mvaMEtUtilities.h"
-
-#include <TMatrixD.h>
-
 #include <string>
 #include <vector>
 #include <ostream>
+
+#include <TMatrixD.h>
+
+//#include "FWCore/Framework/interface/EventSetup.h"
+//#include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+#include "GBRForest.h"
+
+//#include "DataFormats/Candidate/interface/Candidate.h"
+//#include "DataFormats/VertexReco/interface/Vertex.h"
+
+#include "mvaMEtUtilities.h"
+
+
 
 class PFMETAlgorithmMVA 
 {
  public:
 
-  PFMETAlgorithmMVA(const edm::ParameterSet& cfg);
+  PFMETAlgorithmMVA(double dZcut);
   ~PFMETAlgorithmMVA();
 
-  void initialize(const edm::EventSetup&);
+  void initialize(const std::string& inputFileNameU, const std::string& inputFileNameDPhi,
+                  const std::string& inputFileNameCovU1, const std::string& inputFileNameCovU2);
 
   void setHasPhotons(bool hasPhotons) { hasPhotons_ = hasPhotons; }
 
   void setInput(const std::vector<mvaMEtUtilities::leptonInfo>&,
 		const std::vector<mvaMEtUtilities::JetInfo>&,
 		const std::vector<mvaMEtUtilities::pfCandInfo>&,
-		const std::vector<reco::Vertex::Point>&);
+        const std::vector<TVector3>&);
 
   void evaluateMVA();
 
-  reco::Candidate::LorentzVector getMEt()    const { return mvaMEt_;    }
+  TLorentzVector getMEt()    const { return mvaMEt_;    }
   const TMatrixD&                getMEtCov() const { return mvaMEtCov_; }
 
   double getU()     const { return mvaOutputU_;    }
@@ -78,9 +81,9 @@ class PFMETAlgorithmMVA
   std::string mvaNameCovU1_;
   std::string mvaNameCovU2_;
 
-  int    mvaType_;
-  bool   is42_;
-  bool   isOld42_;
+//  int    mvaType_;
+//  bool   is42_;
+//  bool   isOld42_;
   bool   hasPhotons_;
   double dZcut_;
 
@@ -124,7 +127,7 @@ class PFMETAlgorithmMVA
   double chargedSumLeptonPx_;
   double chargedSumLeptonPy_;
 
-  reco::Candidate::LorentzVector mvaMEt_;
+  TLorentzVector mvaMEt_;
   TMatrixD mvaMEtCov_;
 
   const GBRForest* mvaReaderU_;
@@ -132,8 +135,8 @@ class PFMETAlgorithmMVA
   const GBRForest* mvaReaderCovU1_;
   const GBRForest* mvaReaderCovU2_;
 
-  bool loadMVAfromDB_;
+//  bool loadMVAfromDB_;
 
-  edm::ParameterSet cfg_;
+//  edm::ParameterSet cfg_;
 };
 #endif

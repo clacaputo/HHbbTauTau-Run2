@@ -1,10 +1,8 @@
 
+#include <TMVA/DecisionTreeNode.h>
+#include <TMVA/DecisionTree.h>
 
-#include "CondFormats/EgammaObjects/interface/GBRTree.h"
-
-using namespace std;
-#include "TMVA/DecisionTreeNode.h"
-#include "TMVA/DecisionTree.h"
+#include "../interface/GBRTree.h"
 
 //_______________________________________________________________________
 GBRTree::GBRTree()

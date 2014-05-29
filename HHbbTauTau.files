@@ -187,3 +187,13 @@ Analysis/config/histograms.cfg
 Analysis/include/Htautau_TriggerEfficiency.h
 RunTools/resubmitAna_jobs.sh
 RunTools/make_withFactory.sh
+METPUSubtraction/interface/CommonMETData.h
+METPUSubtraction/interface/GBRForest.h
+METPUSubtraction/interface/GBRTree.h
+METPUSubtraction/interface/mvaMEtUtilities.h
+METPUSubtraction/interface/PFMETAlgorithmMVA.h
+METPUSubtraction/source/GBRForest.cxx
+METPUSubtraction/source/GBRTree.cxx
+METPUSubtraction/source/mvaMEtUtilities.cc
+METPUSubtraction/source/PFMETAlgorithmMVA.cc
+Analysis/include/MvaMet.h
