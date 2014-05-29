@@ -1,9 +1,6 @@
 #include "../interface/GBRForest.h"
-//#include <iostream>
 #include "TMVA/DecisionTree.h"
 #include "TMVA/MethodBDT.h"
-
-
 
 //_______________________________________________________________________
 GBRForest::GBRForest() : 
@@ -35,7 +32,3 @@ GBRForest::GBRForest(const TMVA::MethodBDT *bdt)
   }
   
 }
-
-
-
-

@@ -1,29 +1,10 @@
 #include "../interface/mvaMEtUtilities.h"
 
-//#include "DataFormats/Math/interface/deltaR.h"
-
 #include <algorithm>
 #include <cmath>
 
-mvaMEtUtilities::mvaMEtUtilities(/*const edm::ParameterSet& cfg*/)
+mvaMEtUtilities::mvaMEtUtilities()
 {
-  // jet id
-  /* ===> this code parses an xml it uses parameter set 
-  edm::ParameterSet jetConfig = iConfig.getParameter<edm::ParameterSet>("JetIdParams");
-  for(int i0 = 0; i0 < 3; i0++) { 
-    std::string lCutType                            = "Tight";
-    if(i0 == PileupJetIdentifier::kMedium) lCutType = "Medium";
-    if(i0 == PileupJetIdentifier::kLoose)  lCutType = "Loose";
-    std::vector<double> pt010  = jetConfig.getParameter<std::vector<double> >(("Pt010_" +lCutType).c_str());
-    std::vector<double> pt1020 = jetConfig.getParameter<std::vector<double> >(("Pt1020_"+lCutType).c_str());
-    std::vector<double> pt2030 = jetConfig.getParameter<std::vector<double> >(("Pt2030_"+lCutType).c_str());
-    std::vector<double> pt3050 = jetConfig.getParameter<std::vector<double> >(("Pt3050_"+lCutType).c_str());
-    for(int i1 = 0; i1 < 4; i1++) mvacut_[i0][0][i1] = pt010 [i1];
-    for(int i1 = 0; i1 < 4; i1++) mvacut_[i0][1][i1] = pt1020[i1];
-    for(int i1 = 0; i1 < 4; i1++) mvacut_[i0][2][i1] = pt2030[i1];
-    for(int i1 = 0; i1 < 4; i1++) mvacut_[i0][3][i1] = pt3050[i1];
-    }
-  */
   //Tight Id => not used
   mvaCut_[0][0][0] =  0.5; mvaCut_[0][0][1] = 0.6; mvaCut_[0][0][2] = 0.6; mvaCut_[0][0][3] = 0.9;
   mvaCut_[0][1][0] = -0.2; mvaCut_[0][1][1] = 0.2; mvaCut_[0][1][2] = 0.2; mvaCut_[0][1][3] = 0.6;
@@ -39,11 +20,6 @@ mvaMEtUtilities::mvaMEtUtilities(/*const edm::ParameterSet& cfg*/)
   mvaCut_[2][1][0] = -0.2; mvaCut_[2][1][1] = -0.2; mvaCut_[2][1][2] = -0.5; mvaCut_[2][1][3] = -0.3;
   mvaCut_[2][2][0] = -0.2; mvaCut_[2][2][1] = -0.2; mvaCut_[2][2][2] = -0.2; mvaCut_[2][2][3] =  0.1;
   mvaCut_[2][3][0] = -0.2; mvaCut_[2][3][1] = -0.2; mvaCut_[2][3][2] =  0. ; mvaCut_[2][3][3] =  0.2;
-}
-
-mvaMEtUtilities::~mvaMEtUtilities() 
-{
-// nothing to be done yet...
 }
 
 bool mvaMEtUtilities::passesMVA(const TLorentzVector& jetP4, double mvaJetId)

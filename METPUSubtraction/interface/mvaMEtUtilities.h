@@ -3,15 +3,8 @@
 
 #include <vector>
 #include <utility>
-
 #include <TLorentzVector.h>
-
-//#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-//#include "DataFormats/Candidate/interface/Candidate.h"
-
 #include "CommonMETData.h"
-
 
 class mvaMEtUtilities 
 {
@@ -19,41 +12,27 @@ class mvaMEtUtilities
 
   struct pfCandInfo 
   {
-    pfCandInfo()
-      : p4_(0.,0.,0.,0.),
-	dZ_(0.)
-    {}
-    ~pfCandInfo() {}    
+    pfCandInfo() : p4_(0.,0.,0.,0.), dZ_(0.) {}
     TLorentzVector p4_;
     double dZ_;
   };
 
   struct leptonInfo 
   {
-    leptonInfo()
-      : p4_(0.,0.,0.,0.),
-	chargedFrac_(0.)
-    {}
-    ~leptonInfo() {}    
+    leptonInfo() : p4_(0.,0.,0.,0.), chargedFrac_(0.) {}
     TLorentzVector p4_;
     double chargedFrac_;
   };
 
   struct JetInfo 
   {
-    JetInfo()
-      : p4_(0.,0.,0.,0.),
-	mva_(0.),
-	neutralEnFrac_(0.)
-    {}
-    ~JetInfo() {}
+    JetInfo() : p4_(0.,0.,0.,0.), mva_(0.), neutralEnFrac_(0.) {}
     TLorentzVector p4_;
     double mva_;
     double neutralEnFrac_;  
   };
 
-  mvaMEtUtilities(/*const edm::ParameterSet& cfg*/);
-  virtual ~mvaMEtUtilities();
+  mvaMEtUtilities();
 
   friend bool operator<(const JetInfo&, const JetInfo&);
 

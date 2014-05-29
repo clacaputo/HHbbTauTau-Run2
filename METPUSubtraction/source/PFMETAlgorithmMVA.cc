@@ -3,30 +3,14 @@
 #include <TMath.h>
 
 #include "../interface/PFMETAlgorithmMVA.h"
-
-//#include "FWCore/ParameterSet/interface/FileInPath.h"
-//#include "FWCore/Utilities/interface/Exception.h"
-
-//#include "FWCore/ServiceRegistry/interface/Service.h"
-//#include "FWCore/Framework/interface/ESHandle.h"
-//#include "CondFormats/DataRecord/interface/GBRWrapperRcd.h"
-
 #include "../interface/CommonMETData.h"
-
-
-
-
-//enum MVAType { kBaseline = 0 };
 
 namespace
 {
   const GBRForest* loadMVAfromFile(const std::string& inputFileName, const std::string& mvaName)
   {
-//    if ( !inputFileName.isLocal()) throw cms::Exception("PFMETAlgorithmMVA::loadMVA")
-//      << " Failed to find File = " << inputFileName << " !!\n";
     TFile* inputFile = new TFile(inputFileName.c_str());
   
-    //const GBRForest* mva = dynamic_cast<GBRForest*>(inputFile->Get(mvaName.data())); // CV: dynamic_cast<GBRForest*> fails for some reason ?!
     const GBRForest* mva = (GBRForest*)inputFile->Get(mvaName.c_str());
     if ( !mva ) {
         std::ostringstream ss;
@@ -39,13 +23,6 @@ namespace
 
     return mva;
   }
-
-//  const GBRForest* loadMVAfromDB(const edm::EventSetup& es, const std::string& mvaName)
-//  {
-//    edm::ESHandle<GBRForest> mva;
-//    es.get<GBRWrapperRcd>().get(mvaName, mva);
-//    return mva.product();
-//  }
 }
 
 PFMETAlgorithmMVA::PFMETAlgorithmMVA(double dZcut)
@@ -60,16 +37,7 @@ PFMETAlgorithmMVA::PFMETAlgorithmMVA(double dZcut)
     mvaReaderCovU1_(0),
     mvaReaderCovU2_(0)/*,
     cfg_(cfg)*/
-{
-//  mvaType_ = kBaseline;
-
-//  dZcut_ = cfg.getParameter<double>("dZcut");
-//  isOld42_ = cfg.getParameter<bool>("useOld42");
-  
-//  loadMVAfromDB_ = cfg.getParameter<bool>("loadMVAfromDB");
-  
-//  is42_ = cfg.getParameter<bool>("is42");
-  
+{  
   mvaInputU_     = new Float_t[25];
   mvaInputDPhi_  = new Float_t[23];
   mvaInputCovU1_ = new Float_t[26];
@@ -78,51 +46,29 @@ PFMETAlgorithmMVA::PFMETAlgorithmMVA(double dZcut)
 
 PFMETAlgorithmMVA::~PFMETAlgorithmMVA()
 {
-  delete mvaInputU_;
-  delete mvaInputDPhi_;
-  delete mvaInputCovU1_;
-  delete mvaInputCovU2_;
+    delete mvaInputU_;
+    delete mvaInputDPhi_;
+    delete mvaInputCovU1_;
+    delete mvaInputCovU2_;
 
-//  if ( !loadMVAfromDB_ ) {
     delete mvaReaderU_;
     delete mvaReaderDPhi_;
     delete mvaReaderCovU1_;
     delete mvaReaderCovU2_;
-//  }
 }
 
 void PFMETAlgorithmMVA::initialize(const std::string& inputFileNameU, const std::string& inputFileNameDPhi,
                                    const std::string& inputFileNameCovU1, const std::string& inputFileNameCovU2)
-{
-//  if ( loadMVAfromDB_ ) {
-//    //std::cout << "<PFMETAlgorithmMVA::initialize>: loading BDTs from Database." << std::endl;
-//    edm::ParameterSet cfgInputRecords = cfg_.getParameter<edm::ParameterSet>("inputRecords");
-//    mvaNameU_       = cfgInputRecords.getParameter<std::string>("U");
-//    mvaReaderU_     = loadMVAfromDB(es, mvaNameU_);
-//    mvaNameDPhi_    = cfgInputRecords.getParameter<std::string>("DPhi");
-//    mvaReaderDPhi_  = loadMVAfromDB(es, mvaNameDPhi_);
-//    mvaNameCovU1_   = cfgInputRecords.getParameter<std::string>("CovU1");
-//    mvaReaderCovU1_ = loadMVAfromDB(es, mvaNameCovU1_);
-//    mvaNameCovU2_   = cfgInputRecords.getParameter<std::string>("CovU2");
-//    mvaReaderCovU2_ = loadMVAfromDB(es, mvaNameCovU2_);
-//  } else {
-    //std::cout << "<PFMETAlgorithmMVA::initialize>: loading BDTs from ROOT files." << std::endl;
-//    edm::ParameterSet cfgInputFileNames = cfg_.getParameter<edm::ParameterSet>("inputFileNames");
-    
+{    
     mvaNameU_      = "U1Correction";
     mvaNameDPhi_   = "PhiCorrection";
     mvaNameCovU1_  = "CovU1";
     mvaNameCovU2_  = "CovU2";
     
-//    edm::FileInPath inputFileNameU = cfgInputFileNames.getParameter<edm::FileInPath>("U");
     mvaReaderU_     = loadMVAfromFile(inputFileNameU, mvaNameU_);
-//    edm::FileInPath inputFileNameDPhi = cfgInputFileNames.getParameter<edm::FileInPath>("DPhi");
     mvaReaderDPhi_  = loadMVAfromFile(inputFileNameDPhi, mvaNameDPhi_);
-//    edm::FileInPath inputFileNameCovU1 = cfgInputFileNames.getParameter<edm::FileInPath>("CovU1");
     mvaReaderCovU1_ = loadMVAfromFile(inputFileNameCovU1, mvaNameCovU1_);
-//    edm::FileInPath inputFileNameCovU2 = cfgInputFileNames.getParameter<edm::FileInPath>("CovU2");
     mvaReaderCovU2_ = loadMVAfromFile(inputFileNameCovU2, mvaNameCovU2_);
-//  }
 }
 
 //-------------------------------------------------------------------------------
@@ -131,10 +77,6 @@ void PFMETAlgorithmMVA::setInput(const std::vector<mvaMEtUtilities::leptonInfo>&
 				 const std::vector<mvaMEtUtilities::pfCandInfo>& pfCandidates,
                  const std::vector<TVector3>& vertices)
 {
-  //std::vector<mvaMEtUtilities::pfCandInfo> pfCandidates_leptons = utils_.cleanPFCands(pfCandidates, leptons, 0.3, true);
-  ///CommonMETData sumLeptons = utils_.computePFCandSum(pfCandidates_leptons, dZcut_, 2);
-  //const std::vector<mvaMEtUtilities::pfCandInfo> pfCandidates_cleaned = utils_.cleanPFCands(pfCandidates, leptons, 0.3, false);
-
   CommonMETData        sumLeptons = utils_.computeSumLeptons(leptons, false);
   CommonMETData chargedSumLeptons = utils_.computeSumLeptons(leptons, true);
   
@@ -145,7 +87,6 @@ void PFMETAlgorithmMVA::setInput(const std::vector<mvaMEtUtilities::leptonInfo>&
   chargedSumLeptonPy_ = chargedSumLeptons.mey;
 
   double ptThreshold = -1000.;
-//  if ( is42_ ) ptThreshold = 1.;  //PH: For 42 training added a pT cut of 1 GeV on corrected Jets
   std::vector<mvaMEtUtilities::JetInfo> jets_cleaned = utils_.cleanJets(jets, leptons, ptThreshold, 0.5);
 
   CommonMETData pfRecoil_data  = utils_.computeNegPFRecoil   (sumLeptons       , pfCandidates,               dZcut_);

@@ -13,20 +13,9 @@
 #include <string>
 #include <vector>
 #include <ostream>
-
 #include <TMatrixD.h>
-
-//#include "FWCore/Framework/interface/EventSetup.h"
-//#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
 #include "GBRForest.h"
-
-//#include "DataFormats/Candidate/interface/Candidate.h"
-//#include "DataFormats/VertexReco/interface/Vertex.h"
-
 #include "mvaMEtUtilities.h"
-
-
 
 class PFMETAlgorithmMVA 
 {
@@ -81,9 +70,6 @@ class PFMETAlgorithmMVA
   std::string mvaNameCovU1_;
   std::string mvaNameCovU2_;
 
-//  int    mvaType_;
-//  bool   is42_;
-//  bool   isOld42_;
   bool   hasPhotons_;
   double dZcut_;
 
@@ -134,9 +120,5 @@ class PFMETAlgorithmMVA
   const GBRForest* mvaReaderDPhi_;
   const GBRForest* mvaReaderCovU1_;
   const GBRForest* mvaReaderCovU2_;
-
-//  bool loadMVAfromDB_;
-
-//  edm::ParameterSet cfg_;
 };
 #endif
