@@ -69,7 +69,8 @@ protected:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
-        ApplyTauCorrections(muTau,event.metMVAmuTau(), false);
+        //ApplyTauCorrections(muTau,event.metMVAmuTau(), false);
+        ApplyTauCorrections(muTau,event.metPF(), false);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
