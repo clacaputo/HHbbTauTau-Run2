@@ -30,7 +30,7 @@ applyJetParameters(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patMET import *
 applyMETParameters(process, options.isMC)
-applyMVAMETParamteres(process, options.isMC)
+#applyMVAMETParamteres(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patVertices import *
 applyVertexParameters(process)
@@ -76,8 +76,9 @@ process.p = cms.Path(
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
-    process.pfMEtMVAsequence *
-    process.patMETsMVAsequence *
+    process.patJetsWithEmbeddedVariables *
+    #process.pfMEtMVAsequence *
+    #process.patMETsMVAsequence *
     process.patVertices *
     process.bbttSkim *
     process.mainTreeContentSequence *
@@ -88,7 +89,7 @@ process.p = cms.Path(
 process.out.outputCommands = [
     'drop *',
     'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
-    'keep patJets_patJetsTriggerMatch_*_*',
+    'keep patJets_patJetsWithEmbeddedVariables_*_*',
     'keep patMETs_*_*_*',
     'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
     'keep patTaus_patTausTriggerMatch_*_*',

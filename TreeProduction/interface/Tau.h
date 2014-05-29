@@ -16,6 +16,7 @@
     SIMPLE_VAR(Float_t, phi) \
     SIMPLE_VAR(Float_t, pt) \
     SIMPLE_VAR(Float_t, energy) \
+    SIMPLE_VAR(Float_t, mass) \
     /* Charge */ \
     SIMPLE_VAR(Int_t, charge) \
     /* Decay mode */ \

@@ -75,6 +75,7 @@ void TauBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         tauTree.phi()    = patTau.phi();
         tauTree.pt()     = patTau.pt();
         tauTree.energy() = patTau.energy();
+        tauTree.mass() = patTau.mass();
         tauTree.charge() = patTau.charge();
         tauTree.decayMode() = patTau.decayMode();
 

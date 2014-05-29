@@ -23,6 +23,9 @@
     /* Jet identification in high PU environment */ \
     SIMPLE_VAR(Float_t, puIdMVA) \
     SIMPLE_VAR(Int_t, puIdBits) \
+    SIMPLE_VAR(Float_t, puIdMVA_met) \
+    SIMPLE_VAR(Int_t, puIdBits_met) \
+    SIMPLE_VAR(Float_t, correction) \
     /* Energy fraction information */ \
     SIMPLE_VAR(Float_t, chargedEmEnergyFraction) \
     SIMPLE_VAR(Float_t, chargedHadronEnergyFraction) \
