@@ -3,6 +3,7 @@
 import FWCore.ParameterSet.Config as cms
 
 from PhysicsTools.PatAlgos.tools.jetTools import *
+from RecoJets.JetProducers.PileupJetIDParams_cfi import JetIdParams
 
 def applyJetParameters(process, isMC):
     # Jet corrections
@@ -119,20 +120,51 @@ def applyJetParameters(process, isMC):
                 Pt3050_Tight = cms.vdouble(0.73, 0.05, -0.26, -0.42)
             ),
             impactParTkThreshold = cms.double(1.0)
-        )
+        ),
+            cms.PSet(
+                tmvaVariables = cms.vstring('nvtx',
+                    'jetPt',
+                    'jetEta',
+                    'jetPhi',
+                    'dZ',
+                    'beta',
+                    'betaStar',
+                    'nCharged',
+                    'nNeutrals',
+                    'dR2Mean',
+                    'ptD',
+                    'frac01',
+                    'frac02',
+                    'frac03',
+                    'frac04',
+                    'frac05'),
+                tmvaMethod = cms.string('JetID'),
+                cutBased = cms.bool(False),
+                tmvaWeights = cms.string('RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_MET_53X_Dec2012.weights.xml'),
+                tmvaSpectators = cms.vstring(),
+                label = cms.string('met'),
+                version = cms.int32(-1),
+                JetIdParams = JetIdParams,
+                impactParTkThreshold = cms.double(0.)
+            )
         )
     )
 
     # Embed into PAT jets as userdata
     process.patJets.userData.userFloats.src = cms.VInputTag(
-        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant')
-        #cms.InputTag('pileupJetIdProducer', 'cutbasedDiscriminant'),
+        cms.InputTag('pileupJetIdProducer', 'fullDiscriminant'),
+        cms.InputTag('pileupJetIdProducer', 'metDiscriminant')
         #cms.InputTag('pileupJetIdProducer', 'philv1Discriminant')
         )
     process.patJets.userData.userInts.src = cms.VInputTag(
-        cms.InputTag('pileupJetIdProducer', 'fullId')
-        #cms.InputTag('pileupJetIdProducer', 'cutbasedId'),
+        cms.InputTag('pileupJetIdProducer', 'fullId'),
+        cms.InputTag('pileupJetIdProducer', 'metId')
         #cms.InputTag('pileupJetIdProducer', 'philv1Id')
+        )
+
+    process.patJetsWithEmbeddedVariables = cms.EDProducer('JetUserEmbedder',
+        jetTag = cms.InputTag("patJetsTriggerMatch"),
+        corrector = cms.string("ak5PFL1Fastjet")
         )
 
     return

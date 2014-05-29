@@ -187,3 +187,4 @@ Analysis/config/histograms.cfg
 Analysis/include/Htautau_TriggerEfficiency.h
 RunTools/resubmitAna_jobs.sh
 RunTools/make_withFactory.sh
+PatProduction/plugins/JetUserEmbedder.cc

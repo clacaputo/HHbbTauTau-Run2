@@ -93,6 +93,9 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // Jet identification in high pile-up environment
       jetTree.puIdMVA() = jet.userFloat("pileupJetIdProducer:fullDiscriminant");
       jetTree.puIdBits() = jet.userInt("pileupJetIdProducer:fullId"); // Bits: 0:Tight,1:Medium,2:Loose
+      jetTree.puIdMVA_met() = jet.userFloat("pileupJetIdProducer:metDiscriminant");
+      jetTree.puIdBits_met() = jet.userInt("pileupJetIdProducer:metId"); // Bits: 0:Tight,1:Medium,2:Loose
+      jetTree.correction() = jet.userFloat("correction");
 
       jetTree.chargedEmEnergyFraction()     = jet.chargedEmEnergyFraction();
       jetTree.chargedHadronEnergyFraction() = jet.chargedHadronEnergyFraction();

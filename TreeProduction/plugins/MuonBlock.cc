@@ -96,6 +96,7 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       muonTree.pt()      = patMuon.pt();
       muonTree.ptError() = tk->ptError();
       muonTree.energy()  = patMuon.energy();
+      muonTree.mass() = patMuon.mass();
       muonTree.charge()  = patMuon.charge();
 
 

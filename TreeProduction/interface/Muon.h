@@ -23,6 +23,7 @@
     SIMPLE_VAR(Float_t, pt) \
     SIMPLE_VAR(Float_t, ptError) \
     SIMPLE_VAR(Float_t, energy) \
+    SIMPLE_VAR(Float_t, mass) \
     SIMPLE_VAR(Int_t, charge) \
     /* Track info */ \
     SIMPLE_VAR(Float_t, trkD0) \
