@@ -70,7 +70,7 @@ void JetUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         const JetCorrector* corrector = JetCorrector::getJetCorrector (corrector_, iSetup);
         const L1FastjetCorrector* l1fastJetCorrector = dynamic_cast<const L1FastjetCorrector*>(corrector);
-        const pat::Jet* uncorrJet = ajet.correctedJet("Uncorrected");
+        const pat::Jet uncorrJet = ajet.correctedJet("Uncorrected");
         float correction = l1fastJetCorrector->correction(*uncorrJet,iEvent,iSetup);
 
         ajet.addUserFloat("correction",correction);
