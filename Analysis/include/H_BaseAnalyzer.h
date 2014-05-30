@@ -232,7 +232,6 @@ protected:
             correctedMET = metMVA;
             return;
         }
-        correctedTaus.clear();
 
         TLorentzVector sumCorrectedTaus, sumTaus;
         for(const ntuple::Tau& tau : event.taus()) {

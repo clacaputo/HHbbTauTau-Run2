@@ -72,7 +72,10 @@ public:
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
           maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), eventWeight(1), PUweight(1), triggerWeight(1),
-          IDweight(1), IsoWeight(1)
+          IDweight(1), IsoWeight(1), mvaMetProducer(0.1,"Analysis/data/gbrmet_53_Dec2012.root",
+                                                    "Analysis/data/gbrmetphi_53_Dec2012.root",
+                                                    "Analysis/data/gbru1cov_53_Dec2012.root",
+                                                    "Analysis/data/gbru2cov_53_Dec2012.root")
     {
         TH1::SetDefaultSumw2();
         if (reweightFileName != "none")
@@ -345,6 +348,7 @@ protected:
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
     std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights;
     std::shared_ptr<TH1D> weights;
+    MvaMetProducer mvaMetProducer;
 };
 
 } // analysis

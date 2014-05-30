@@ -64,7 +64,7 @@ int main()
 g++ -std=c++0x -Wall -O3 \
         -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
         $( root-config --libs ) -lMathMore -lGenVector \
-        -o $EXE_NAME $CODE_OUT
+        -o $EXE_NAME $CODE_OUT METPUSubtraction/interface/GBRProjectDict.cxx
 
 RESULT=$?
 rm -f "$CODE_OUT"

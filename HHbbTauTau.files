@@ -201,3 +201,6 @@ Analysis/include/MvaMet.h
 TreeProduction/interface/PFCand.h
 TreeProduction/plugins/PFCandBlock.cc
 TreeProduction/python/PFCandBlock_cfi.py
+METPUSubtraction/interface/GBRProjectDict.cxx
+METPUSubtraction/interface/GBRProjectDict.h
+METPUSubtraction/interface/GBRProjectHeaders.h
