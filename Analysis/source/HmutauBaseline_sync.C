@@ -89,11 +89,10 @@ protected:
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
 
-        const analysis::MvaMetProducer mvaMetProducer(0.1,
-                                                      "Analysis/data/gbrmet_53_Dec2012.root",
-                                                      "Analysis/data/gbrmetphi_53_Dec2012.root",
-                                                      "Analysis/data/gbru1cov_53_Dec2012.root",
-                                                      "Analysis/data/gbru2cov_53_Dec2012.root");
+        analysis::MvaMetProducer mvaMetProducer(0.1,"Analysis/data/gbrmet_53_Dec2012.root",
+                                                "Analysis/data/gbrmetphi_53_Dec2012.root",
+                                                "Analysis/data/gbru1cov_53_Dec2012.root",
+                                                "Analysis/data/gbru2cov_53_Dec2012.root");
 
         const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
                                                                 vertices,event.taus());

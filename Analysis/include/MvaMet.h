@@ -33,7 +33,7 @@ public:
         const auto leptonInfo = ComputeLeptonInfo(signalCandidate, taus);
         auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex.position);
         const auto vertexInfo = ComputeVertexInfo(goodVertices);
-        const auto jetInfo = ComputeJetInfo(jets, vertexInfo, selectedVertex, leptonInfo, pfCandidateInfo);
+        const auto jetInfo = ComputeJetInfo(jets, leptonInfo, pfCandidateInfo);
         metAlgo.setInput(leptonInfo, jetInfo, pfCandidateInfo, vertexInfo);
         metAlgo.setHasPhotons(false);
         metAlgo.evaluateMVA();
@@ -67,7 +67,7 @@ private:
         std::vector<mvaMEtUtilities::pfCandInfo> candInfos;
         for(const ntuple::PFCand& candidate : pfCandidates) {
             mvaMEtUtilities::pfCandInfo info;
-            info.p4_.SetPtEtaPhiM(candidate.pt, candidate.eta, candidate.phi, candidate.m);
+            info.p4_.SetPtEtaPhiM(candidate.pt, candidate.eta, candidate.phi, candidate.mass);
             info.dZ_ = std::abs(candidate.vz - selectedVertex.z());
             candInfos.push_back(info);
         }
@@ -83,8 +83,6 @@ private:
     }
 
     std::vector<mvaMEtUtilities::JetInfo> ComputeJetInfo(const ntuple::JetVector& jets,
-                                                         const std::vector<TVector3>& vertices,
-                                                         const TVector3& selectedVertex,
                                                          const std::vector<mvaMEtUtilities::leptonInfo>& signalLeptons,
                                                          std::vector<mvaMEtUtilities::pfCandInfo>& pfCandidates)
     {
@@ -126,7 +124,7 @@ private:
     {
         if(candidate.type == Candidate::Mu || candidate.type == Candidate::Electron)
             return 1.0;
-        if(!candidate.type == Candidate::Tau)
+        if(candidate.type != Candidate::Tau)
             throw std::runtime_error("Unsupported candidate type to compute charged fraction.");
         const ntuple::Tau& tau = taus.at(candidate.index);
         double ptTotal = 0.0, ptCharged = 0.0;
