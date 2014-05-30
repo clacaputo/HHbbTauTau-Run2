@@ -20,6 +20,7 @@
 #include "TreeProduction/interface/TriggerObject.h"
 #include "TreeProduction/interface/MET.h"
 #include "TreeProduction/interface/GenMET.h"
+#include "TreeProduction/interface/PFCand.h"
 #include "EventId.h"
 
 namespace analysis{
@@ -29,6 +30,7 @@ typedef std::tuple< ntuple::Event,
                     ntuple::ElectronVector,
                     ntuple::MuonVector,
                     ntuple::TauVector,
+                    ntuple::PFCandVector,
                     ntuple::JetVector,
                     ntuple::VertexVector,
                     ntuple::GenParticleVector,
@@ -69,49 +71,50 @@ public:
     const ntuple::ElectronVector& electrons() const { return std::get<1>(_data); }
     const ntuple::MuonVector& muons() const { return std::get<2>(_data); }
     const ntuple::TauVector& taus() const { return std::get<3>(_data); }
-    const ntuple::JetVector& jets() const { return std::get<4>(_data); }
-    const ntuple::VertexVector& vertices() const { return std::get<5>(_data); }
-    const ntuple::GenParticleVector& genParticles() const { return std::get<6>(_data); }
-    const ntuple::TriggerVector& triggers() const { return std::get<7>(_data); }
-    const ntuple::TriggerObjectVector& triggerObjects() const { return std::get<8>(_data); }
+    const ntuple::PFCandVector& pfCandidates() const { return std::get<4>(_data); }
+    const ntuple::JetVector& jets() const { return std::get<5>(_data); }
+    const ntuple::VertexVector& vertices() const { return std::get<6>(_data); }
+    const ntuple::GenParticleVector& genParticles() const { return std::get<7>(_data); }
+    const ntuple::TriggerVector& triggers() const { return std::get<8>(_data); }
+    const ntuple::TriggerObjectVector& triggerObjects() const { return std::get<9>(_data); }
     const ntuple::MET& met() const {
-        const ntuple::METVector& metVector = std::get<9>(_data);
+        const ntuple::METVector& metVector = std::get<10>(_data);
         if (metVector.size() == 1)
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET in the event");
     }
     const ntuple::MET& metPF() const {
-        const ntuple::METVector& metVector = std::get<10>(_data);
+        const ntuple::METVector& metVector = std::get<11>(_data);
         if (metVector.size() == 1)
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET PF in the event");
     }
     const ntuple::MET& metTC() const {
-        const ntuple::METVector& metVector = std::get<11>(_data);
+        const ntuple::METVector& metVector = std::get<12>(_data);
         if (metVector.size() == 1)
             return metVector.at(0);
         throw std::runtime_error("more than 1 MET TC in the event");
     }
     const ntuple::GenMET& genMet() const {
-        const ntuple::GenMETVector& genMetVector = std::get<12>(_data);
+        const ntuple::GenMETVector& genMetVector = std::get<13>(_data);
         if (genMetVector.size() == 1)
             return genMetVector.at(0);
         throw std::runtime_error("more than 1 gen MET in the event");
     }
 //    const ntuple::MET& metMVAeTau() const {
-//        const ntuple::METVector& metVector = std::get<13>(_data);
-//        if (metVector.size() == 1)
-//            return metVector.at(0);
-//        throw std::runtime_error("more than 1 MET MVA in the event");
-//    }
-//    const ntuple::MET& metMVAmuTau() const {
 //        const ntuple::METVector& metVector = std::get<14>(_data);
 //        if (metVector.size() == 1)
 //            return metVector.at(0);
 //        throw std::runtime_error("more than 1 MET MVA in the event");
 //    }
-//    const ntuple::MET& metMVAtauTau() const {
+//    const ntuple::MET& metMVAmuTau() const {
 //        const ntuple::METVector& metVector = std::get<15>(_data);
+//        if (metVector.size() == 1)
+//            return metVector.at(0);
+//        throw std::runtime_error("more than 1 MET MVA in the event");
+//    }
+//    const ntuple::MET& metMVAtauTau() const {
+//        const ntuple::METVector& metVector = std::get<16>(_data);
 //        if (metVector.size() == 1)
 //            return metVector.at(0);
 //        throw std::runtime_error("more than 1 MET MVA in the event");

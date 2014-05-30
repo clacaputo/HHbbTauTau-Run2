@@ -26,7 +26,7 @@ public:
         metAlgo.initialize(inputFileNameU, inputFileNameDPhi, inputFileNameCovU1, inputFileNameCovU2);
     }
 
-    ntuple::MET ComputeMvaMet(const Candidate& signalCandidate, const ntuple::PFCandidateVector& pfCandidates,
+    ntuple::MET ComputeMvaMet(const Candidate& signalCandidate, const ntuple::PFCandVector& pfCandidates,
                               const ntuple::JetVector& jets, const Vertex& selectedVertex,
                               const ntuple::VertexVector& vertices, const ntuple::TauVector& taus)
     {
@@ -54,14 +54,14 @@ private:
         for(const Candidate& daughter : signalCandidate.finalStateDaughters) {
             mvaMEtUtilities::leptonInfo info;
             info.p4_ = daughter.momentum;
-            info.
-            leptonInfo.push_back();
-            daughter.
+            //info.
+            leptonInfos.push_back();
+            //daughter.
         }
         return leptonInfos;
     }
 
-    std::vector<mvaMEtUtilities::pfCandInfo> ComputePFCandidateInfo(const ntuple::PFCandidateVector& pfCandidates,
+    std::vector<mvaMEtUtilities::pfCandInfo> ComputePFCandidateInfo(const ntuple::PFCandVector& pfCandidates,
                                                                     const TVector3& selectedVertex)
     {
 
@@ -74,7 +74,7 @@ private:
 
     std::vector<mvaMEtUtilities::JetInfo> ComputeJetInfo(const ntuple::JetVector& jets,
                                                          const std::vector<TVector3>& vertices,
-                                                         const TVector3& selectedVertex,
+                                                         const Vertex& selectedVertex,
                                                          const std::vector<mvaMEtUtilities::leptonInfo>& signalLeptons,
                                                          std::vector<mvaMEtUtilities::pfCandInfo>& pfCandidates)
     {

@@ -18,7 +18,7 @@ namespace analysis {
 
 namespace detail {
 
-const std::vector<std::string> treeNames = {"events", "electrons", "muons", "taus", "jets",  "vertices", "genParticles",
+const std::vector<std::string> treeNames = {"events", "electrons", "muons", "taus", "PFCand", "jets",  "vertices", "genParticles",
                                            "triggers", "triggerObjects", "METs", /*"METsMVAeTau", "METsMVAmuTau",
                                             "METsMVAtauTau",*/ "METsPF", "METsTC",
                                            "genMETs"};
@@ -27,6 +27,7 @@ typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::ElectronTree>,
                     std::shared_ptr<ntuple::MuonTree>,
                     std::shared_ptr<ntuple::TauTree>,
+                    std::shared_ptr<ntuple::PFCandTree>,
                     std::shared_ptr<ntuple::JetTree>,
                     std::shared_ptr<ntuple::VertexTree>,
                     std::shared_ptr<ntuple::GenParticleTree>,

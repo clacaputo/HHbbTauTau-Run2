@@ -69,8 +69,11 @@ protected:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
+        //not more needed
         //ApplyTauCorrections(muTau,event.metMVAmuTau(), false);
-        ApplyTauCorrections(muTau,event.metPF(), false);
+        //ApplyTauCorrections(muTau,event.metPF(), false);
+
+        ApplyTauCorrections(muTau,false);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -86,6 +89,17 @@ protected:
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
 
+        const analysis::MvaMetProducer mvaMetProducer(0.1,
+                                                      "Analysis/data/gbrmet_53_Dec2012.root",
+                                                      "Analysis/data/gbrmetphi_53_Dec2012.root",
+                                                      "Analysis/data/gbru1cov_53_Dec2012.root",
+                                                      "Analysis/data/gbru2cov_53_Dec2012.root");
+
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
+                                                                vertices,event.taus());
+
+        ApplyTauCorrectionsToMVAMET(mvaMet);
+
         const auto jetsPt20 = CollectJetsPt20();
         const auto jets = CollectJets();
 
@@ -93,6 +107,7 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs);
+        //Apply Post Recoil Corrections
         ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
         const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
         const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);

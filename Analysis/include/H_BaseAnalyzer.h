@@ -199,23 +199,19 @@ protected:
         return Candidate(analysis::Candidate::Jet, id, object);
     }
 
-    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, const ntuple::MET& metMVA,
-                             bool useLegacyCorrections)
+    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, bool useLegacyCorrections)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
         if(!useMCtruth) {
             correctedTaus = event.taus();
-            correctedMET = metMVA;
             return;
         }
         correctedTaus.clear();
 
-        TLorentzVector sumCorrectedTaus, sumTaus;
         for(const ntuple::Tau& tau : event.taus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
-            sumTaus += momentum;
 
             const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
@@ -227,6 +223,27 @@ protected:
             correctedTau.phi = correctedMomentum.Phi();
             correctedTau.energy = correctedMomentum.E();
             correctedTaus.push_back(correctedTau);
+        }
+    }
+
+    void ApplyTauCorrectionsToMVAMET(const ntuple::MET& metMVA)
+    {
+        if(!useMCtruth) {
+            correctedMET = metMVA;
+            return;
+        }
+        correctedTaus.clear();
+
+        TLorentzVector sumCorrectedTaus, sumTaus;
+        for(const ntuple::Tau& tau : event.taus()) {
+            TLorentzVector momentum;
+            momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
+            sumTaus += momentum;
+        }
+
+        for (const ntuple::Tau& correctedTau : correctedTaus) {
+            TLorentzVector correctedMomentum;
+            correctedMomentum.SetPtEtaPhiE(correctedTau.pt, correctedTau.eta, correctedTau.phi,correctedTau.energy);
             sumCorrectedTaus += correctedMomentum;
         }
 
