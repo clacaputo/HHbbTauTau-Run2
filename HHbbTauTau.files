@@ -198,3 +198,6 @@ METPUSubtraction/source/GBRTree.cxx
 METPUSubtraction/source/mvaMEtUtilities.cc
 METPUSubtraction/source/PFMETAlgorithmMVA.cc
 Analysis/include/MvaMet.h
+TreeProduction/interface/PFCand.h
+TreeProduction/plugins/PFCandBlock.cc
+TreeProduction/python/PFCandBlock_cfi.py

@@ -20,6 +20,7 @@ def addTreeSequence(process, includeSim, treeOutput):
       + process.metBlock
       + process.muonBlock
       + process.tauBlock
+      + process.pfCandBlock
       + process.triggerBlock
       + process.triggerObjectBlock
     )
