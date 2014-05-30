@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -ne 9 ] ; then
-    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path global_tag is_mc include_sim prefix"
+if [ $# -ne 10 ] ; then
+    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path global_tag is_mc include_sim prefix n_events_per_job"
     exit
 fi
 
@@ -14,10 +14,11 @@ GLOBAL_TAG=$6
 IS_MC=$7
 INCLUDE_SIM=$8
 PREFIX=$9
+N_EVENTS=$10
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runPatProducer.sh
-N_EVENTS=-1
+
 
 if [ ! -d "$WORKING_PATH" ] ; then
     echo "ERROR: working path '$WORKING_PATH' does not exist."
