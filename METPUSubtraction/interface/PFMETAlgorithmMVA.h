@@ -36,7 +36,7 @@ class PFMETAlgorithmMVA
 
   void evaluateMVA();
 
-  TLorentzVector getMEt()    const { return mvaMEt_;    }
+  const TLorentzVector& getMEt()    const { return mvaMEt_;    }
   const TMatrixD&                getMEtCov() const { return mvaMEtCov_; }
 
   double getU()     const { return mvaOutputU_;    }
