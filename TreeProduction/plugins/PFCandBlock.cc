@@ -1,0 +1,86 @@
+/*!
+ * \file PFCandBlock.cc
+ * \author Original author: Subir Sarkar
+ * \author Contributing author: Konstantin Androsov (INFN Pisa, Siena University)
+ * \author Contributing author: Maria Teresa Grippo (INFN Pisa, Siena University)
+ */
+
+
+#include <iostream>
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/Ref.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
+
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+
+#include "Utilities/General/interface/FileInPath.h"
+
+#define SMART_TREE_FOR_CMSSW
+#include "HHbbTauTau/TreeProduction/interface/PFCand.h"
+#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
+
+class PFCandBlock : public edm::EDAnalyzer {
+public:
+    explicit PFCandBlock(const edm::ParameterSet& iConfig) :
+        _inputTag(iConfig.getParameter<edm::InputTag>("srcPFCandidates")) {}
+
+private:
+    virtual void endJob() { pfCandTree.Write(); }
+    virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+private:
+    edm::InputTag _inputTag;
+    ntuple::PFCandTree pfCandTree;
+};
+
+void PFCandBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+    pfCandTree.RunId() = iEvent.id().run();
+    pfCandTree.LumiBlock() = iEvent.id().luminosityBlock();
+    pfCandTree.EventId() = iEvent.id().event();
+
+    edm::Handle<reco::PFCandidateCollection> pfCandHandle;
+    iEvent.getByLabel(_inputTag, pfCandHandle);
+    const reco::PFCandidateCollection* pfCandidates = pfCandHandle.product();
+
+    if(!pfCandidates)
+        throw std::runtime_error("pfCandidates collection not found.");
+
+    edm::LogInfo("PFCandBlock") << "Total # PFCandidates: " << pfCandidates->size();
+
+    for (const reco::PFCandidate& PFCand : *pfCandidates) {
+        // Store Tau variables
+        pfCandTree.eta()    = PFCand.eta();
+        pfCandTree.phi()    = PFCand.phi();
+        pfCandTree.pt()     = PFCand.pt();
+        pfCandTree.energy() = PFCand.energy();
+        pfCandTree.mass() = PFCand.mass();
+        pfCandTree.charge() = PFCand.charge();
+
+        // Vertex information
+        const reco::PFCandidate::Point& vertex = PFCand.vertex();
+        pfCandTree.vx() = vertex.x();
+        pfCandTree.vy() = vertex.y();
+        pfCandTree.vz() = vertex.z();
+
+
+        pfCandTree.Fill();
+    }
+}
+
+#include "FWCore/Framework/interface/MakerMacros.h"
+DEFINE_FWK_MODULE(PFCandBlock);

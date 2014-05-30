@@ -7,6 +7,7 @@ from HHbbTauTau.TreeProduction.ElectronBlock_cfi import electronBlock
 from HHbbTauTau.TreeProduction.METBlock_cfi import metBlock
 from HHbbTauTau.TreeProduction.MuonBlock_cfi import muonBlock
 from HHbbTauTau.TreeProduction.TauBlock_cfi import tauBlock
+from HHbbTauTau.TreeProduction.PFCandBlock_cfi import pfCandBlock
 from HHbbTauTau.TreeProduction.GenParticleBlock_cfi import genParticleBlock
 from HHbbTauTau.TreeProduction.GenJetBlock_cfi import genJetBlock
 from HHbbTauTau.TreeProduction.GenMETBlock_cfi import genMETBlock
