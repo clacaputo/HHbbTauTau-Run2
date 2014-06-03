@@ -60,7 +60,11 @@ protected:
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
 
-        ApplyTauCorrections(tauTau, event.metMVAtauTau(), false);
+        //ApplyTauCorrections(tauTau, event.metMVAtauTau(), false);
+
+        //ApplyTauCorrections(tauTau,false);
+        correctedTaus = event.taus(); //no tau corrections
+
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
         cut(taus.size() >= 2, "at least 2 taus");
@@ -84,20 +88,27 @@ protected:
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
 
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
+                                                                vertices,event.taus());
+
+        //ApplyTauCorrectionsToMVAMET(mvaMet);
+
         const auto bjets = CollectBJets(higgs);
 
-        ApplyCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
+//        ApplyCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
 
-        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
-        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
-        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
+//        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
+//        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
+//        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
-        CalculateFullEventWeight(higgs_sv);
+//        CalculateFullEventWeight(higgs_sv);
 
-        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
+//        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
 
-//        postRecoilMET = correctedMET;
-//        FillSyncTree(higgs, higgs, higgs, higgs, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
+        //postRecoilMET = correctedMET; //with tau corrections
+        postRecoilMET = mvaMet;
+        CalculateFullEventWeight(higgs);
+        FillSyncTree(higgs, higgs, higgs, higgs, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
     }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
@@ -285,7 +296,7 @@ protected:
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
-        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(subLeadTau.index);
+//        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(subLeadTau.index);
 
         H_BaseAnalyzer::FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, leadTau, subLeadTau);
 
