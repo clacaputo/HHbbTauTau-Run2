@@ -59,7 +59,7 @@ public:
     Candidate(Type _type, size_t _index, const ntuple::Muon& ntupleObject) :
         type(_type), index(_index), charge(ntupleObject.charge),
         vertexPosition(ntupleObject.vx, ntupleObject.vy, ntupleObject.vz) {
-        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, 0.1057);
+        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
     }
 
 

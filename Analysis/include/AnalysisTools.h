@@ -16,7 +16,8 @@
 #include <TH1D.h>
 
 #include "Particles.h"
-#include "H_BaseAnalyzer.h"
+#include "EventDescriptor.h"
+#include "Htautau_Summer13.h"
 
 namespace analysis {
 
@@ -158,7 +159,8 @@ inline double Calculate_dxy(const TVector3& legV, const TVector3& PV, const TLor
 }
 
 // from DataFormats/TrackReco/interface/TrackBase.h
-inline double Calculate_dz(const TVector3& trkV, const TVector3& PV, const TVector3& trkP) const {
+inline double Calculate_dz(const TVector3& trkV, const TVector3& PV, const TVector3& trkP)
+{
   return (trkV.z() - PV.z()) - ( (trkV.x() - PV.x()) * trkP.x() + (trkV.y() - PV.y()) * trkP.y() ) / trkP.Pt()
                                * trkP.z() / trkP.Pt();
 }

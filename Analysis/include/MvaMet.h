@@ -14,6 +14,7 @@
 #include "HHbbTauTau/METPUSubtraction/source/PFMETAlgorithmMVA.cc"
 
 #include "Candidate.h"
+#include "AnalysisTools.h"
 
 namespace analysis {
 
@@ -48,6 +49,8 @@ public:
     }
 
 private:
+    static double DefaultDeltaZ() { return -999.; }
+
     std::vector<mvaMEtUtilities::leptonInfo> ComputeLeptonInfo(const Candidate& signalCandidate,
                                                                const ntuple::TauVector& taus)
     {
@@ -68,7 +71,14 @@ private:
         for(const ntuple::PFCand& candidate : pfCandidates) {
             mvaMEtUtilities::pfCandInfo info;
             info.p4_.SetPtEtaPhiM(candidate.pt, candidate.eta, candidate.phi, candidate.mass);
-            info.dZ_ = std::abs(candidate.vz - selectedVertex.z());
+            if(candidate.haveTrackInfo) {
+                const TVector3 trkV(candidate.trk_vx, candidate.trk_vy, candidate.trk_vz);
+                TVector3 trkP;
+                trkP.SetPtEtaPhi(candidate.trk_pt, candidate.trk_eta, candidate.trk_phi);
+                info.dZ_ = Calculate_dz(trkV, selectedVertex, trkP);
+            }
+            else
+                info.dZ_ = DefaultDeltaZ();
             candInfos.push_back(info);
         }
         return candInfos;
@@ -86,6 +96,10 @@ private:
                                                          const std::vector<mvaMEtUtilities::leptonInfo>& signalLeptons,
                                                          std::vector<mvaMEtUtilities::pfCandInfo>& pfCandidates)
     {
+        static const double MinDeltaRtoSignalObjects = 0.5;
+        static const double MinJetPtForPFcandCreation = 10.0;
+        static const double MaxJetEtaForNeutralEnFrac = 2.5;
+
         std::vector<mvaMEtUtilities::JetInfo> jetInfos;
         for(const ntuple::Jet& jet : jets) {
             if(!jet.passLooseID) continue;
@@ -99,12 +113,12 @@ private:
                 pType1Corr.SetPtEtaPhiM(lType1Corr, 0, jet.phi, 0);
                 bool pOnLepton = false;
                 for(const mvaMEtUtilities::leptonInfo& signal : signalLeptons) {
-                    if(signal.p4_.DeltaR(jetInfo.p4_) < 0.5) pOnLepton = true;
+                    if(signal.p4_.DeltaR(jetInfo.p4_) < MinDeltaRtoSignalObjects) pOnLepton = true;
                 }
-                if(jet.pt > 10 && !pOnLepton) {
+                if(jet.pt > MinJetPtForPFcandCreation && !pOnLepton) {
                     mvaMEtUtilities::pfCandInfo candInfo;
                     candInfo.p4_ = pType1Corr;
-                    candInfo.dZ_ = -999;
+                    candInfo.dZ_ = DefaultDeltaZ();
                     pfCandidates.push_back(candInfo);
                 }
                 lType1Corr = pCorr*jet.pt_raw - jet.pt_raw;
@@ -113,7 +127,7 @@ private:
             if(jetInfo.p4_.Pt() <= minCorrJetPt) continue;
             jetInfo.mva_ = jet.puIdMVA_met;
             jetInfo.neutralEnFrac_ = jet.neutralEmEnergyFraction + jet.neutralHadronEnergyFraction;
-            if(jet.eta > 2.5) jetInfo.neutralEnFrac_ = 1.0;
+            if(jet.eta > MaxJetEtaForNeutralEnFrac) jetInfo.neutralEnFrac_ = 1.0;
             if(useType1Correction) jetInfo.neutralEnFrac_ -= lType1Corr*jetInfo.neutralEnFrac_;
             jetInfos.push_back(jetInfo);
         }
