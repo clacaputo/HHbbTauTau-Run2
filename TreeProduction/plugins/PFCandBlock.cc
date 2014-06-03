@@ -26,6 +26,7 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 
 #include "Utilities/General/interface/FileInPath.h"
 
@@ -77,9 +78,9 @@ void PFCandBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         pfCandTree.vy() = vertex.y();
         pfCandTree.vz() = vertex.z();
 
-        reco::TrackBase* track = nullptr;
-        if(PFCand.trackRef().isNonnull()) track = PFCand.trackRef();
-        else if(PFCand.gsfTrackRef().isNonnull()) track = PFCand.gsfTrackRef();
+        const reco::TrackBase* track = nullptr;
+        if(PFCand.trackRef().isNonnull()) track = PFCand.trackRef().get();
+        else if(PFCand.gsfTrackRef().isNonnull()) track = PFCand.gsfTrackRef().get();
 
         pfCandTree.haveTrackInfo() = track != nullptr;
         if(track) {
