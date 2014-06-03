@@ -153,7 +153,8 @@ private:
             jetInfo.mva_ = jet.puIdMVA_met;
             jetInfo.neutralEnFrac_ = jet.neutralEmEnergyFraction + jet.neutralHadronEnergyFraction;
             if(jet.eta > MaxJetEtaForNeutralEnFrac) jetInfo.neutralEnFrac_ = 1.0;
-            if(useType1Correction) jetInfo.neutralEnFrac_ -= lType1Corr*jetInfo.neutralEnFrac_;
+//            if(useType1Correction) jetInfo.neutralEnFrac_ -= lType1Corr*jetInfo.neutralEnFrac_;
+            if(useType1Correction) jetInfo.neutralEnFrac_ += lType1Corr;
             if (debug)
                 std::cout << jetInfo.p4_ << ", mva= " << jetInfo.mva_ << ", neutralFrac= " << jetInfo.neutralEnFrac_
                           << ", pt_raw= " << jet.pt_raw << std::endl;
