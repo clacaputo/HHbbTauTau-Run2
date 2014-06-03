@@ -12,7 +12,7 @@
 #include "HHbbTauTau/METPUSubtraction/source/GBRTree.cxx"
 #include "HHbbTauTau/METPUSubtraction/source/mvaMEtUtilities.cc"
 #include "HHbbTauTau/METPUSubtraction/source/PFMETAlgorithmMVA.cc"
-
+#include "iostream_operators.h"
 #include "Candidate.h"
 #include "AnalysisTools.h"
 
@@ -31,6 +31,7 @@ public:
                               const ntuple::JetVector& jets, const Vertex& selectedVertex,
                               const std::vector<Vertex>& goodVertices, const ntuple::TauVector& taus)
     {
+        const static bool debug = true;
         const auto leptonInfo = ComputeLeptonInfo(signalCandidate, taus);
         auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex.position);
         const auto vertexInfo = ComputeVertexInfo(goodVertices);
@@ -45,6 +46,29 @@ public:
         mvaMET.phi = metMomentum.Phi();
         mvaMET.pt = metMomentum.Pt();
         mvaMET.significanceMatrix = ntuple::SignificanceMatrixToVector(metCov);
+        if (debug){
+            std::cout << "SIGNAL:\n";
+            for ( const auto& lepton : leptonInfo ){
+                std::cout << lepton.p4_ << ", charge fraction= " << lepton.chargedFrac_ << std::endl;
+            }
+            std::cout << "PFCandidates: " << pfCandidateInfo.size() << "\n";
+            for ( const auto& pfCand : pfCandidateInfo ){
+                std::cout << pfCand.p4_ << ", dZ= " << pfCand.dZ_ << std::endl;
+            }
+            std::cout << "Jets: " << jetInfo.size() << "\n";
+            for ( const auto& jet : jetInfo ){
+                std::cout << jet.p4_ << ", mva= " << jet.mva_ << ", neutralFrac= " << jet.neutralEnFrac_ << std::endl;
+            }
+            std::cout << "Vertices: " << vertexInfo.size() << "\n";
+            for ( const auto& vertex : vertexInfo ){
+                std::cout << vertex <<  std::endl;
+            }
+            std::cout << "MET:\n";
+            std::cout << metMomentum << std::endl;
+            std::cout << "Cov:\n";
+            metAlgo.getMEtCov().Print();
+            metAlgo.print(std::cout);
+        }
         return mvaMET;
     }
 
@@ -96,6 +120,7 @@ private:
                                                          const std::vector<mvaMEtUtilities::leptonInfo>& signalLeptons,
                                                          std::vector<mvaMEtUtilities::pfCandInfo>& pfCandidates)
     {
+        const static bool debug = true;
         static const double MinDeltaRtoSignalObjects = 0.5;
         static const double MinJetPtForPFcandCreation = 10.0;
         static const double MaxJetEtaForNeutralEnFrac = 2.5;
@@ -121,7 +146,7 @@ private:
                     candInfo.dZ_ = DefaultDeltaZ();
                     pfCandidates.push_back(candInfo);
                 }
-                lType1Corr = pCorr*jet.pt_raw - jet.pt_raw;
+                //lType1Corr = pCorr*jet.pt_raw - jet.pt_raw;
                 lType1Corr /= jet.pt;
             }
             if(jetInfo.p4_.Pt() <= minCorrJetPt) continue;
@@ -129,6 +154,10 @@ private:
             jetInfo.neutralEnFrac_ = jet.neutralEmEnergyFraction + jet.neutralHadronEnergyFraction;
             if(jet.eta > MaxJetEtaForNeutralEnFrac) jetInfo.neutralEnFrac_ = 1.0;
             if(useType1Correction) jetInfo.neutralEnFrac_ -= lType1Corr*jetInfo.neutralEnFrac_;
+            if (debug)
+                std::cout << jetInfo.p4_ << ", mva= " << jetInfo.mva_ << ", neutralFrac= " << jetInfo.neutralEnFrac_
+                          << ", pt_raw= " << jet.pt_raw << std::endl;
+
             jetInfos.push_back(jetInfo);
         }
         return jetInfos;
