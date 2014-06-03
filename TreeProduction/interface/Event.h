@@ -26,7 +26,7 @@
     SIMPLE_VAR(Bool_t, isPrimaryVertex) \
     VECTOR_VAR(Int_t, nPU) \
     VECTOR_VAR(Int_t, bunchCrossing) \
-    VECTOR_VAR(Float_t, trueNInt) \
+    VECTOR_VAR(Double_t, trueNInt) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

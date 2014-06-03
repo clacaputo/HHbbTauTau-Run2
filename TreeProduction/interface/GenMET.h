@@ -11,9 +11,9 @@
 #include "SmartTree.h"
 
 #define GENMET_DATA() \
-    SIMPLE_VAR(Float_t, met) \
-    SIMPLE_VAR(Float_t, metphi) \
-    SIMPLE_VAR(Float_t, sumet) \
+    SIMPLE_VAR(Double_t, met) \
+    SIMPLE_VAR(Double_t, metphi) \
+    SIMPLE_VAR(Double_t, sumet) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

@@ -11,12 +11,12 @@
 #include "SmartTree.h"
 
 #define GENJET_DATA() \
-    SIMPLE_VAR(Float_t, pt) \
-    SIMPLE_VAR(Float_t, eta) \
-    SIMPLE_VAR(Float_t, phi) \
-    SIMPLE_VAR(Float_t, energy) \
-    SIMPLE_VAR(Float_t, emEnergy) \
-    SIMPLE_VAR(Float_t, hadEnergy) \
+    SIMPLE_VAR(Double_t, pt) \
+    SIMPLE_VAR(Double_t, eta) \
+    SIMPLE_VAR(Double_t, phi) \
+    SIMPLE_VAR(Double_t, energy) \
+    SIMPLE_VAR(Double_t, emEnergy) \
+    SIMPLE_VAR(Double_t, hadEnergy) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

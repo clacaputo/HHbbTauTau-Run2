@@ -12,7 +12,7 @@
 
 #define GENEVENT_DATA() \
     SIMPLE_VAR(UInt_t, processID) \
-    SIMPLE_VAR(Float_t, ptHat) \
+    SIMPLE_VAR(Double_t, ptHat) \
     VECTOR_VAR(Double_t, pdfWeights) \
     /**/
 

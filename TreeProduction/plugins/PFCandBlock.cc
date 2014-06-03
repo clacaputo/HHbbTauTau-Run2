@@ -77,6 +77,20 @@ void PFCandBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         pfCandTree.vy() = vertex.y();
         pfCandTree.vz() = vertex.z();
 
+        reco::TrackBase* track = nullptr;
+        if(PFCand.trackRef().isNonnull()) track = PFCand.trackRef();
+        else if(PFCand.gsfTrackRef().isNonnull()) track = PFCand.gsfTrackRef();
+
+        pfCandTree.haveTrackInfo() = track != nullptr;
+        if(track) {
+            const reco::TrackBase::Point& trk_vertex = track->vertex();
+            pfCandTree.trk_eta()    = track->eta();
+            pfCandTree.trk_phi()    = track->phi();
+            pfCandTree.trk_pt()     = track->pt();
+            pfCandTree.trk_vx() = trk_vertex.x();
+            pfCandTree.trk_vy() = trk_vertex.y();
+            pfCandTree.trk_vz() = trk_vertex.z();
+        }
 
         pfCandTree.Fill();
     }

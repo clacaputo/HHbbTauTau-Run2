@@ -157,6 +157,12 @@ inline double Calculate_dxy(const TVector3& legV, const TVector3& PV, const TLor
     return ( (legV.x()-PV.x()) * leg.Py() + (legV.y()-PV.y()) * leg.Px() ) / leg.Pt();
 }
 
+// from DataFormats/TrackReco/interface/TrackBase.h
+inline double Calculate_dz(const TVector3& trkV, const TVector3& PV, const TVector3& trkP) const {
+  return (trkV.z() - PV.z()) - ( (trkV.x() - PV.x()) * trkP.x() + (trkV.y() - PV.y()) * trkP.y() ) / trkP.Pt()
+                               * trkP.z() / trkP.Pt();
+}
+
 template<typename CandidateCollection>
 inline bool AllCandidatesHaveSameCharge(const CandidateCollection& candidates)
 {

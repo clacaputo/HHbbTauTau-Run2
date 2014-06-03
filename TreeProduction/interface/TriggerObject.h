@@ -11,10 +11,10 @@
 #include "SmartTree.h"
 
 #define TRIGGER_OBJECT_DATA() \
-    SIMPLE_VAR(Float_t, energy) \
-    SIMPLE_VAR(Float_t, pt) \
-    SIMPLE_VAR(Float_t, eta) \
-    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Double_t, energy) \
+    SIMPLE_VAR(Double_t, pt) \
+    SIMPLE_VAR(Double_t, eta) \
+    SIMPLE_VAR(Double_t, phi) \
     SIMPLE_VAR(Int_t, pdgId) \
     VECTOR_VAR(std::string, pathNames) \
     VECTOR_VAR(UInt_t, pathValues) \
