@@ -91,8 +91,8 @@ protected:
         const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
                                                                 vertices,event.taus());
 
-//        ApplyTauCorrections(tauTau,false);
-//        ApplyTauCorrectionsToMVAMET(mvaMet);
+        ApplyTauCorrections(tauTau,false);
+        ApplyTauCorrectionsToMVAMET(mvaMet);
 
         const auto bjets = CollectBJets(higgs);
 
@@ -106,8 +106,8 @@ protected:
 
 //        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
 
-        //postRecoilMET = correctedMET; //with tau corrections
-        postRecoilMET = mvaMet;
+        postRecoilMET = correctedMET; //with tau corrections
+        //postRecoilMET = mvaMet;
         CalculateFullEventWeight(higgs);
         FillSyncTree(higgs, higgs, higgs, higgs, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
     }
@@ -318,3 +318,5 @@ protected:
 private:
     BaselineAnalyzerData anaData;
 };
+
+#include "METPUSubtraction/interface/GBRProjectDict.cxx"

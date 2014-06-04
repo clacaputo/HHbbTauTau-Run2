@@ -40,7 +40,7 @@
        std::vector<GBRTree> &Trees() { return fTrees; }
        const std::vector<GBRTree> &Trees() const { return fTrees; }
        
-    protected:
+    public:
       double               fInitialResponse;
       std::vector<GBRTree> fTrees;  
       

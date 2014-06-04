@@ -83,7 +83,7 @@ std::vector<mvaMEtUtilities::JetInfo> mvaMEtUtilities::cleanJets(const std::vect
 	  lepton != leptons.end(); ++lepton ) {
       if ( jet->p4_.DeltaR(lepton->p4_) < dRmatch ) isOverlap = true;
     }
-    if ( jet->p4_.Pt() > ptThreshold && !isOverlap /*&& std::abs(jet->p4_.Eta()) < 5.0*/) retVal.push_back(*jet);
+    if ( jet->p4_.Pt() > ptThreshold && !isOverlap && std::abs(jet->p4_.Eta()) < 5.0) retVal.push_back(*jet);
   }
   return retVal;
 }

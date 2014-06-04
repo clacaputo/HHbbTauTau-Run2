@@ -59,7 +59,7 @@
        
 
        
-    protected:      
+    public:
         unsigned int CountIntermediateNodes(const TMVA::DecisionTreeNode *node);
         unsigned int CountTerminalNodes(const TMVA::DecisionTreeNode *node);
       

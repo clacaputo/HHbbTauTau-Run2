@@ -81,7 +81,12 @@ private:
         std::vector<mvaMEtUtilities::leptonInfo> leptonInfos;
         for(const Candidate& daughter : signalCandidate.finalStateDaughters) {
             mvaMEtUtilities::leptonInfo info;
-            info.p4_ = daughter.momentum;
+            if (daughter.type == analysis::Candidate::Tau){
+                const ntuple::Tau& tau = taus.at(daughter.index);
+                info.p4_.SetPtEtaPhiE(tau.pt,tau.eta,tau.phi,tau.energy);
+            }
+            else
+                info.p4_ = daughter.momentum;
             info.chargedFrac_ = ComputeChargedFraction(daughter, taus);
             leptonInfos.push_back(info);
         }
@@ -120,14 +125,15 @@ private:
                                                          const std::vector<mvaMEtUtilities::leptonInfo>& signalLeptons,
                                                          std::vector<mvaMEtUtilities::pfCandInfo>& pfCandidates)
     {
-        const static bool debug = true;
+        const static bool debug = false;
         static const double MinDeltaRtoSignalObjects = 0.5;
         static const double MinJetPtForPFcandCreation = 10.0;
         static const double MaxJetEtaForNeutralEnFrac = 2.5;
 
         std::vector<mvaMEtUtilities::JetInfo> jetInfos;
         for(const ntuple::Jet& jet : jets) {
-            if(!jet.passLooseID) continue;
+            //if(!jet.passLooseID) continue;
+            if(!passPFLooseId(jet)) continue;
             mvaMEtUtilities::JetInfo jetInfo;
             jetInfo.p4_.SetPtEtaPhiE(jet.pt, jet.eta, jet.phi, jet.energy);
             double lType1Corr = 0;
@@ -152,7 +158,7 @@ private:
             if(jetInfo.p4_.Pt() <= minCorrJetPt) continue;
             jetInfo.mva_ = jet.puIdMVA_met;
             jetInfo.neutralEnFrac_ = jet.neutralEmEnergyFraction + jet.neutralHadronEnergyFraction;
-            if(jet.eta > MaxJetEtaForNeutralEnFrac) jetInfo.neutralEnFrac_ = 1.0;
+            if(std::abs(jet.eta) > MaxJetEtaForNeutralEnFrac) jetInfo.neutralEnFrac_ = 1.0;
 //            if(useType1Correction) jetInfo.neutralEnFrac_ -= lType1Corr*jetInfo.neutralEnFrac_;
             if(useType1Correction) jetInfo.neutralEnFrac_ += lType1Corr;
             if (debug)
@@ -183,6 +189,18 @@ private:
         if(!ptTotal) ptTotal = 1.0;
         return ptCharged / ptTotal;
     }
+
+    bool passPFLooseId(const ntuple::Jet& jet) {
+      if(jet.energy == 0)                                  return false;
+      if(jet.neutralHadronEnergyFraction > 0.99)   return false;
+      if(jet.neutralEmEnergyFraction     > 0.99)   return false;
+      if(jet.nConstituents <  2)                          return false;
+      if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
+      if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
+      if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
+      return true;
+    }
+
 
 private:
     PFMETAlgorithmMVA metAlgo;
