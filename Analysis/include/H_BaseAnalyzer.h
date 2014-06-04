@@ -226,11 +226,11 @@ protected:
         }
     }
 
-    void ApplyTauCorrectionsToMVAMET(const ntuple::MET& metMVA)
+    Candidate ApplyTauCorrectionsToMVAMETandHiggs(const ntuple::MET& metMVA, const Candidate& higgs)
     {
         if(!useMCtruth) {
             correctedMET = metMVA;
-            return;
+            return higgs;
         }
 
         TLorentzVector sumCorrectedTaus, sumTaus;
@@ -253,6 +253,15 @@ protected:
         correctedMET.pt = metCorrected.Pt();
         correctedMET.eta = metCorrected.Eta();
         correctedMET.phi = metCorrected.Phi();
+
+        CandidateVector signalObjects;
+        for (const Candidate& daughter : higgs.finalStateDaughters){
+            if (daughter.type == Candidate::Tau)
+                signalObjects.push_back(Candidate(Candidate::Tau,daughter.index,correctedTaus.at(daughter.index)));
+            else
+                signalObjects.push_back(daughter);
+        }
+        return Candidate(Candidate::Higgs, signalObjects.at(0), signalObjects.at(1));
     }
 
     analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
@@ -270,7 +279,7 @@ protected:
 
     }
 
-    void ApplyCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
+    void ApplyPostRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         if (useMCtruth){
             postRecoilMET = ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
