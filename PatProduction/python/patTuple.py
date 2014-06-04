@@ -101,7 +101,8 @@ process.out.outputCommands = [
     'keep L1GlobalTriggerReadoutRecord_*_*_*',
     'keep GenFilterInfo_*_*_*',
     'keep *_patTrigger_*_*',
-    'keep patTriggerEvent_*_*_*'
+    'keep patTriggerEvent_*_*_*',
+    'keep *_particleFlow_*_*'
                              ]
 
 if options.includeSim:

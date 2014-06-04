@@ -93,7 +93,8 @@ protected:
         const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
                                                                 vertices,event.taus());
 
-        //ApplyTauCorrectionsToMVAMET(mvaMet);
+//        ApplyTauCorrections(muTau,false);
+//        ApplyTauCorrectionsToMVAMET(mvaMet);
 
         const auto jetsPt20 = CollectJetsPt20();
         const auto jets = CollectJets();

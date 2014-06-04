@@ -99,7 +99,7 @@ private:
                 const TVector3 trkV(candidate.trk_vx, candidate.trk_vy, candidate.trk_vz);
                 TVector3 trkP;
                 trkP.SetPtEtaPhi(candidate.trk_pt, candidate.trk_eta, candidate.trk_phi);
-                info.dZ_ = Calculate_dz(trkV, selectedVertex, trkP);
+                info.dZ_ = std::abs(Calculate_dz(trkV, selectedVertex, trkP));
             }
             else
                 info.dZ_ = DefaultDeltaZ();
