@@ -22,7 +22,7 @@ class MvaMetProducer {
 public:
     MvaMetProducer(double dZcut, const std::string& inputFileNameU, const std::string& inputFileNameDPhi,
                    const std::string& inputFileNameCovU1, const std::string& inputFileNameCovU2)
-        : metAlgo(dZcut), useType1Correction(true), minCorrJetPt(-1)
+        : metAlgo(dZcut), useType1Correction(false), minCorrJetPt(-1)
     {
         metAlgo.initialize(inputFileNameU, inputFileNameDPhi, inputFileNameCovU1, inputFileNameCovU2);
     }
@@ -94,7 +94,7 @@ private:
         std::vector<mvaMEtUtilities::pfCandInfo> candInfos;
         for(const ntuple::PFCand& candidate : pfCandidates) {
             mvaMEtUtilities::pfCandInfo info;
-            info.p4_.SetPtEtaPhiM(candidate.pt, candidate.eta, candidate.phi, candidate.mass);
+            info.p4_.SetPtEtaPhiM(candidate.pt, candidate.eta, candidate.phi, candidate.mass); //with energy is the same
             if(candidate.haveTrackInfo) {
                 const TVector3 trkV(candidate.trk_vx, candidate.trk_vy, candidate.trk_vz);
                 TVector3 trkP;
@@ -180,7 +180,7 @@ private:
             ptTotal += pt;
         for(double pt : tau.signalGammaCand_Pt)
             ptTotal += pt;
-        if(ptTotal) ptTotal = 1.0;
+        if(!ptTotal) ptTotal = 1.0;
         return ptCharged / ptTotal;
     }
 
