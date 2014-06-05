@@ -31,7 +31,7 @@ public:
                               const ntuple::JetVector& jets, const Vertex& selectedVertex,
                               const std::vector<Vertex>& goodVertices, const ntuple::TauVector& taus)
     {
-        const static bool debug = true;
+        const static bool debug = false;
         const auto leptonInfo = ComputeLeptonInfo(signalCandidate, taus);
         auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex.position);
         const auto vertexInfo = ComputeVertexInfo(goodVertices);

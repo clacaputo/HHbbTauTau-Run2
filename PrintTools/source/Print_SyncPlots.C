@@ -88,7 +88,7 @@ public:
 
 //        //SV Fit variables
 //        drawHistos("mvis", 50, 0, 200);
-////        drawHistos("m_sv", 60, 0, 300);
+        drawHistos("m_sv", 60, 0, 300);
 ////        drawHistos("pt_sv", 100, 0, 100);
 ////        drawHistos("eta_sv", 60, -3, 3);
 ////        drawHistos("phi_sv", 30, -3.5, 3.5);
@@ -355,9 +355,9 @@ private:
                    << ") for branch '" << var << "'.";
                 throw std::runtime_error(ss.str());
             }
-            DrawSuperimposedHistograms(Hmine_all, Hother_all, selection_label + " (all)", var);
+//            DrawSuperimposedHistograms(Hmine_all, Hother_all, selection_label + " (all)", var);
             DrawSuperimposedHistograms(Hmine_common, Hother_common, selection_label + " (common)", var);
-            DrawSuperimposedHistograms(Hmine_diff, Hother_diff, selection_label + " (diff)", var);
+//            DrawSuperimposedHistograms(Hmine_diff, Hother_diff, selection_label + " (diff)", var);
             Draw2DHistogram(Hmine_vs_other, selection_label, var);
 
         } catch(std::runtime_error& e){
@@ -487,7 +487,7 @@ private:
                               const MySelector& my_selector, const OtherSelector& other_selector,
                               Histogram& my_histogram, Histogram& other_histogram, Histogram2D& histogram2D)
     {
-        std::cout << "MVA MET bad events:\n";
+//        std::cout << "MVA MET bad events:\n";
         for(const auto& event_entry_pair : common_event_to_entry_pair_map) {
             const size_t my_entry = event_entry_pair.second.first;
             const size_t other_entry = event_entry_pair.second.second;
@@ -499,12 +499,12 @@ private:
             other_histogram.Fill(other_value);
             if(other_value) {
                 const auto y_value = (other_value - my_value)/other_value;
-                const double diff = other_value - my_value;
-                if (std::abs(diff) > 5 ){
+//                const double diff = other_value - my_value;
+//                if (std::abs(diff) > 5 ){
 
-                    std::cout << event_entry_pair.first << ", mva met diff= " << diff
-                              << std::endl;
-                }
+//                    std::cout << event_entry_pair.first << ", mva met diff= " << diff
+//                              << std::endl;
+//                }
                 histogram2D.Fill(my_value, y_value);
             }
         }
