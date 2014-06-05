@@ -18,7 +18,7 @@ ntuple::MET ApplyPostRecoilCorrection(const ntuple::MET& originalMET, const TLor
                                       const TLorentzVector& resonantMomentumMC, const size_t njets)
 {
     //from Riccardo
-    static const std::string fileCorrectTo = "RecoilCorrector_v7/recoilfits/recoilfit_ztt53X_20pv_njet.root";
+    static const std::string fileCorrectTo = "RecoilCorrector_v7/recoilfits/recoilfit_htt53X_20pv_njet.root";
     static const std::string fileZmmData = "RecoilCorrector_v7/recoilfits/recoilfit_datamm53XRR_2012_njet.root";
     static const std::string fileZmmMC = "RecoilCorrector_v7/recoilfits/recoilfit_zmm53XRR_2012_njet.root";
     double iU1, iU2;
