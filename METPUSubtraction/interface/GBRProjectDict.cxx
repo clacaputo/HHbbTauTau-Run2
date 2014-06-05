@@ -34,7 +34,7 @@ namespace std {} using namespace std;
 namespace {
    static struct DictInit {
       DictInit() {
-         ROOT::RegisterModule();
+      //   ROOT::RegisterModule();
       }
    } __TheDictionaryInitializer;
 }
