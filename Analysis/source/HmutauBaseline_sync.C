@@ -88,13 +88,14 @@ protected:
         const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
-        const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        const Candidate higgs_withoutTauCorrections = SelectSemiLeptonicHiggs(higgsTriggered);
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs_withoutTauCorrections,event.pfCandidates(),
+                                                                event.jets(),primaryVertex,
                                                                 vertices,event.taus());
 
-//        ApplyTauCorrections(muTau,false);
-//        ApplyTauCorrectionsToMVAMET(mvaMet);
+        ApplyTauCorrections(muTau,false);
+        const Candidate higgs = ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs_withoutTauCorrections);
 
         const auto jetsPt20 = CollectJetsPt20();
         const auto jets = CollectJets();
@@ -104,7 +105,7 @@ protected:
 
         const auto bjets = CollectBJets(higgs);
         //Apply Post Recoil Corrections
-//        ApplyCorrections(higgs, muTau.resonance, filteredJets.size());
+//        ApplyPostRecoilCorrections(higgs, muTau.resonance, filteredJets.size());
 //        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 //        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
 //        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
@@ -113,8 +114,9 @@ protected:
 
 //        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, filteredJets, jetsPt20, bjets, vertices);
 
-        //postRecoilMET = correctedMET; //tau corrections
-        postRecoilMET = mvaMet;
+        //postRecoilMET = mvaMet;
+        postRecoilMET = correctedMET; //tau corrections
+
         CalculateFullEventWeight(higgs);
         FillSyncTree(higgs, higgs, higgs, higgs, filteredJets, jetsPt20, bjets, vertices);
 
@@ -302,3 +304,4 @@ private:
     BaselineAnalyzerData anaData;
 };
 
+#include "METPUSubtraction/interface/GBRProjectDict.cxx"
