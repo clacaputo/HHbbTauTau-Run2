@@ -1,1 +1,1 @@
-/store/user/kandroso/Radion/Radion_HH_TauTauBB_LHC8_M500/PAT/Radion_M500_PAT.root
+/store/user/kandroso/Radion/PAT/Radion500_Pat.root

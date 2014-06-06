@@ -43,7 +43,7 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
         finalState::TaujetTaujet tauTau;
-        if (useMCtruth && !FindAnalysisFinalState(tauTau, true)) return;
+        if (useMCtruth && !FindAnalysisFinalState(tauTau, false)) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -105,7 +105,7 @@ protected:
 
         CalculateFullEventWeight(higgs_sv);
 
-        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
+        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs_withoutTauCorrections), jetsPt20, bjets, vertices);
 
         //postRecoilMET = mvaMet;
 //        postRecoilMET = correctedMET; //with tau corrections
