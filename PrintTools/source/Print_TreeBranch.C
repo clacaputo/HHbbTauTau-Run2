@@ -63,6 +63,8 @@ public:
         page.side.xRange = xRange;
         page.side.fit_range_x = false;
         page.side.layout.has_legend = false;
+        page.side.axis_titleX = "P_{T}(#tau) [GeV]";
+        page.side.axis_titleY = "N entries";
 
         Print(treeName, title);
     }

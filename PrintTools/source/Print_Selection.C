@@ -37,16 +37,13 @@ public:
         page.side.use_log_scaleY = true;
         page.side.layout.has_legend = false;
 
-        PrintAll("EventSelection", "Event selection");
-        PrintAll("MuonSelection", "Muon selection");
-        PrintAll("TauSelection", "Tau selection");
-        PrintAll("ElectronSelection", "Electron selection");
-        PrintAll("BJetSelection", "b-jet selection", "bjets_loose");
+        PrintAll("Selection_event", "Event selection");
+        PrintAll("Selection_muons", "Muon selection");
+        PrintAll("Selection_taus", "Tau selection");
+        PrintAll("Selection_electrons_bkg", "Bkg Electron selection");
+        PrintAll("Selection_bjets", "b-jet selection");
 
-        PrintAll("MuonSelectionBkg", "Background muon selection");
-        PrintAll("TauSelectionBkg", "Background tau selection");
-        PrintAll("ElectronSelectionBkg", "Background electron selection");
-        PrintAll("BJetSelectionBkg", "Background b-jet selection", "bjet_bkg");
+
     }
 
 private:
