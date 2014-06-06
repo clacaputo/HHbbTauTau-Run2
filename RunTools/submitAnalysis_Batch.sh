@@ -124,8 +124,7 @@ elif [ "$QUEUE" = "fai" ] ; then
     echo "$N_JOBS finished on fai"
 elif [ $STORAGE = "Local" ] ; then
     for NAME in $JOBS ; do
-        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$NAME "dont_set_cmsenv" \
-                         $OUTPUT_PATH/$ANALYZER_NAME "yes" \
+        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "dont_set_cmsenv" \
                          $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
         i=$(($i + 1))
         n=$(($n + 1))

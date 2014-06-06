@@ -63,8 +63,8 @@ namespace MuTau {
         const int pixHits = 0; // > def of isTightMuon
         const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
         const double dz = 0.2; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
-        const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
 
+        const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
         const double pFRelIso = 0.1; // < twiki SWGuideMuonId#Muon_Isolation_AN1
     }
 
