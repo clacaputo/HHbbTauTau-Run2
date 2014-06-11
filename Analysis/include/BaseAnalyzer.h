@@ -90,12 +90,12 @@ public:
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor.ExtractNext(event); ++n) {
             timer.Report(n);
             //if (event.eventId().eventId != 263199) continue;
-            if (event.eventId().eventId != 1950) continue;
+            //if (event.eventId().eventId != 1665) continue;
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&){}
             GetAnaData().Selection("event").fill_selection(eventWeight);
-            break;
+            //break;
         }
         timer.Report(n, true);
         runReport.Report();
