@@ -75,7 +75,10 @@ public:
           IDweight(1), IsoWeight(1), mvaMetProducer(0.1,"Analysis/data/gbrmet_53_Dec2012.root",
                                                     "Analysis/data/gbrmetphi_53_Dec2012.root",
                                                     "Analysis/data/gbru1cov_53_Dec2012.root",
-                                                    "Analysis/data/gbru2cov_53_Dec2012.root")
+                                                    "Analysis/data/gbru2cov_53_Dec2012.root"),
+          postRecoilCorrectionProducer("RecoilCorrector_v7/recoilfits/recoilfit_htt53X_20pv_njet.root",
+                                       "RecoilCorrector_v7/recoilfits/recoilfit_datamm53XRR_2012_njet.root",
+                                       "RecoilCorrector_v7/recoilfits/recoilfit_zmm53XRR_2012_njet.root")
     {
         TH1::SetDefaultSumw2();
         if (reweightFileName != "none")
@@ -350,6 +353,7 @@ protected:
     std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights;
     std::shared_ptr<TH1D> weights;
     MvaMetProducer mvaMetProducer;
+    PostRecoilCorrectionProducer postRecoilCorrectionProducer;
 };
 
 } // analysis
