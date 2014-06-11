@@ -286,7 +286,7 @@ namespace tauCorrections {
                                       bool useLegacyCorrections)
     {
         if(!hasMCmatch) return 1.0;
-        if(decayMode == ntuple::tau_id::kOneProng1PiZero) {
+        if(decayMode == ntuple::tau_id::kOneProng1PiZero || decayMode == ntuple::tau_id::kOneProng2PiZero) {
             if(useLegacyCorrections)
                 return 1.025 + 0.001 * std::min(std::max(pt - 45.0, 0.0), 10.0);
             return 1.012;

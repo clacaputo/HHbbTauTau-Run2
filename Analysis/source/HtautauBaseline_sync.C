@@ -104,7 +104,7 @@ protected:
 
         const auto bjets = CollectBJets(higgs);
 
-        //ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs_withoutTauCorrections).size());
+        ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
 //        postRecoilMET = correctedMET; //with tau corrections
 
 //        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
@@ -116,7 +116,7 @@ protected:
 //        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs_withoutTauCorrections), jetsPt20, bjets, vertices);
 
         //postRecoilMET = mvaMet;
-        postRecoilMET = correctedMET; //with tau corrections
+//        postRecoilMET = correctedMET; //with tau corrections
 
         CalculateFullEventWeight(higgs);
         FillSyncTree(higgs, higgs, higgs, higgs, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
