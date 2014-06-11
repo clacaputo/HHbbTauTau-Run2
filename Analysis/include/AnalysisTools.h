@@ -129,6 +129,17 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
     return false;
 }
 
+bool passPFLooseId(const ntuple::Jet& jet) {
+  if(jet.energy == 0)                                  return false;
+  if(jet.neutralHadronEnergyFraction > 0.99)   return false;
+  if(jet.neutralEmEnergyFraction     > 0.99)   return false;
+  if(jet.nConstituents <  2)                          return false;
+  if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
+  if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
+  if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
+  return true;
+}
+
 inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )
 {
     std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));

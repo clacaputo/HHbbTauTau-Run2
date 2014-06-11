@@ -166,7 +166,9 @@ protected:
         cut(true, ">0 jet cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        //cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        const bool pfLooseID = analysis::passPFLooseId(object);
+        cut(Y(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
         cut(Y(passPUlooseID) == puLooseID, "puLooseID");
 
@@ -192,7 +194,9 @@ protected:
         cut(true, ">0 jet cand");
         cut(X(pt) > ptCut, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        //cut(X(passLooseID) == pfLooseID, "pfLooseID");
+        const bool pfLooseID = analysis::passPFLooseId(object);
+        cut(Y(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
         cut(Y(passPUlooseID) == puLooseID, "puLooseID");
 

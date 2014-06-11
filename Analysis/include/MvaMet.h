@@ -133,7 +133,7 @@ private:
         std::vector<mvaMEtUtilities::JetInfo> jetInfos;
         for(const ntuple::Jet& jet : jets) {
             //if(!jet.passLooseID) continue;
-            if(!passPFLooseId(jet)) continue;
+            if(!analysis::passPFLooseId(jet)) continue;
             mvaMEtUtilities::JetInfo jetInfo;
             jetInfo.p4_.SetPtEtaPhiE(jet.pt, jet.eta, jet.phi, jet.energy);
             double lType1Corr = 0;
@@ -190,16 +190,7 @@ private:
         return ptCharged / ptTotal;
     }
 
-    bool passPFLooseId(const ntuple::Jet& jet) {
-      if(jet.energy == 0)                                  return false;
-      if(jet.neutralHadronEnergyFraction > 0.99)   return false;
-      if(jet.neutralEmEnergyFraction     > 0.99)   return false;
-      if(jet.nConstituents <  2)                          return false;
-      if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
-      if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
-      if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
-      return true;
-    }
+
 
 
 private:
