@@ -49,7 +49,7 @@ namespace svFitStandalone
 
   /**
      \typedef SVfitStandalone::Vector
-     \brief   spacial momentum vector (equivalent to reco::Candidate::Vector)
+     \brief   spacial momentum vector (equivalent to Vector)
   */
   typedef ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<double> > Vector;
   /**

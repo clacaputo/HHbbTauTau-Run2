@@ -136,9 +136,10 @@ protected:
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
-        cut(X(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passPUlooseID = (object.puIdBits & (1 << ntuple::JetID_MVA::kLoose)) != 0;
-        cut(Y(passPUlooseID) == puLooseID, "puLooseId");
+        const bool passLooseID = analysis::passPFLooseId(object);
+        cut(Y(passLooseID) == pfLooseID, "pfLooseID");
+        const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
+        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
         const Candidate bjet(Candidate::Bjet, id, object);
         for (const Candidate& daughter : higgs.finalStateDaughters){
             const double DeltaR = bjet.momentum.DeltaR(daughter.momentum);
@@ -338,8 +339,8 @@ protected:
         return false;
     }
 
-    void FillSyncTree(const Candidate& higgs, const Candidate& higgs_sv, const Candidate& higgs_sv_up,
-                      const Candidate& higgs_sv_down, const CandidateVector& jets, const CandidateVector& jetsPt20,
+    void FillSyncTree(const Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
+                      const CandidateVector& jets, const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const VertexVector& vertices, const Candidate& leg1,
                       const Candidate& leg2)
     {
@@ -370,12 +371,12 @@ protected:
         //syncTree.signalWeight();
 
         syncTree.mvis() = higgs.momentum.M();
-        syncTree.m_sv() = higgs_sv.momentum.M();
-        syncTree.pt_sv() = higgs_sv.momentum.Pt();
-        syncTree.eta_sv() = higgs_sv.momentum.Eta();
-        syncTree.phi_sv() = higgs_sv.momentum.Phi();
-        syncTree.m_sv_Up() = higgs_sv_up.momentum.M();
-        syncTree.m_sv_Down() = higgs_sv_down.momentum.M();
+        syncTree.m_sv() = m_sv;
+        syncTree.pt_sv() = default_value;
+        syncTree.eta_sv() = default_value;
+        syncTree.phi_sv() = default_value;
+        syncTree.m_sv_Up() = m_sv_up;
+        syncTree.m_sv_Down() = m_sv_down;
 
         syncTree.pt_1() = leg1.momentum.Pt();
         syncTree.phi_1() = leg1.momentum.Phi();
@@ -440,7 +441,7 @@ protected:
         syncTree.mvacov11() = metMVAcov[1][1];
 
         syncTree.njets() = jets.size();
-        syncTree.njetspt20() = jetsPt20.size() - jets.size();
+        syncTree.njetspt20() = jetsPt20.size();
 
         if (jets.size() >= 1) {
             const Candidate& jet = jets.at(0);
@@ -515,14 +516,16 @@ protected:
             syncTree.bphi_2() = subLead_bjet.momentum.Phi();
             syncTree.bcsv_2() = ntuple_bjet.combinedSecondaryVertexBJetTags;
             const Candidate higgs_bb(Candidate::Higgs,lead_bjet,subLead_bjet);
-            const Candidate resonance(Candidate::Resonance,higgs_sv,higgs_bb);
+            const Candidate resonance(Candidate::Resonance,higgs,higgs_bb);
             syncTree.m_bb() = higgs_bb.momentum.M();
-            syncTree.m_ttbb() = resonance.momentum.M();
+            syncTree.m_ttbb() = (resonance.momentum + postRecoilMetMomentum).M();
         } else {
             syncTree.bpt_2() = default_value;
             syncTree.beta_2() = default_value;
             syncTree.bphi_2() = default_value;
             syncTree.bcsv_2() = default_value;
+            syncTree.m_bb() = default_value;
+            syncTree.m_ttbb() = default_value;
         }
 
         if (bjets.size() >= 3){

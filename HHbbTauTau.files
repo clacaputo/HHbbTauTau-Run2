@@ -205,3 +205,13 @@ METPUSubtraction/interface/GBRProjectDict.cxx
 METPUSubtraction/interface/GBRProjectDict.h
 METPUSubtraction/interface/GBRProjectHeaders.h
 PrintTools/source/Print_TreeBranch.C
+SVfit/interface/generalAuxFunctions.h
+SVfit/interface/LikelihoodFunctions.h
+SVfit/interface/NSVfitStandaloneAlgorithm.h
+SVfit/interface/NSVfitStandaloneLikelihood.h
+SVfit/interface/svFitAuxFunctions.h
+SVfit/source/generalAuxFunctions.cc
+SVfit/source/LikelihoodFunctions.cc
+SVfit/source/NSVfitStandaloneAlgorithm.cc
+SVfit/source/NSVfitStandaloneLikelihood.cc
+SVfit/source/svFitAuxFunctions.cc

@@ -107,13 +107,14 @@ protected:
         ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
 //        postRecoilMET = correctedMET; //with tau corrections
 
-        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
-        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
-        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
+        const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
+//        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
+//        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
-        CalculateFullEventWeight(higgs_sv);
+        CalculateFullEventWeight(higgs);
 
-        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
+//        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
+        FillSyncTree(higgs, m_sv, m_sv, m_sv, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
 
         //postRecoilMET = mvaMet;
 //        postRecoilMET = correctedMET; //with tau corrections
@@ -299,8 +300,7 @@ protected:
         DMweights.push_back(subLeadWeight);
     }
 
-    void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_sv,
-                      const analysis::Candidate& higgs_sv_up, const analysis::Candidate& higgs_sv_down,
+    void FillSyncTree(const analysis::Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets, const analysis::VertexVector& vertices)
     {
@@ -309,7 +309,7 @@ protected:
         const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
 //        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(subLeadTau.index);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, leadTau, subLeadTau);
+        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, m_sv_up, m_sv_down, jets, jetsPt20, bjets, vertices, leadTau, subLeadTau);
 
         syncTree.iso_1() = ntuple_tau_leg1.byIsolationMVAraw;
         syncTree.mva_1() = 0;
