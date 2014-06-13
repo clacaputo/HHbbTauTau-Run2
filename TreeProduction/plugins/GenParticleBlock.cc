@@ -76,14 +76,14 @@ void GenParticleBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
     for(unsigned n = 0; n < genParticles.size(); ++n)
     {
-        const auto& particle = genParticles.at(n);
+        const reco::GenParticle& particle = genParticles.at(n);
         genParticleTree.PdgId() = particle.pdgId();
         genParticleTree.Status() = particle.status();
         genParticleTree.Charge() = particle.charge();
-        genParticleTree.E() = particle.energy();
-        genParticleTree.Px() = particle.px();
-        genParticleTree.Py() = particle.py();
-        genParticleTree.Pz() = particle.pz();
+        genParticleTree.pt() = particle.pt();
+        genParticleTree.eta() = particle.eta();
+        genParticleTree.phi() = particle.phi();
+        genParticleTree.mass() = particle.mass();
         genParticleTree.X() = particle.vx();
         genParticleTree.Y() = particle.vy();
         genParticleTree.Z() = particle.vz();

@@ -12,29 +12,29 @@
 
 #define JET_DATA() \
     /* 4-momentum */ \
-    SIMPLE_VAR(Double_t, pt) \
-    SIMPLE_VAR(Double_t, pt_raw) \
-    SIMPLE_VAR(Double_t, eta) \
-    SIMPLE_VAR(Double_t, phi) \
-    SIMPLE_VAR(Double_t, energy) \
-    SIMPLE_VAR(Double_t, energy_raw) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, eta) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, mass) \
+    SIMPLE_VAR(Float_t, pt_raw) \
+    SIMPLE_VAR(Float_t, energy_raw) \
     /* Jet energy correction */ \
     SIMPLE_VAR(Int_t, partonFlavour) \
     /* Jet identification in high PU environment */ \
-    SIMPLE_VAR(Double_t, puIdMVA) \
+    SIMPLE_VAR(Float_t, puIdMVA) \
     SIMPLE_VAR(Int_t, puIdBits) \
-    SIMPLE_VAR(Double_t, puIdMVA_met) \
+    SIMPLE_VAR(Float_t, puIdMVA_met) \
     SIMPLE_VAR(Int_t, puIdBits_met) \
-    SIMPLE_VAR(Double_t, correction) \
+    SIMPLE_VAR(Float_t, correction) \
     /* Energy fraction information */ \
-    SIMPLE_VAR(Double_t, chargedEmEnergyFraction) \
-    SIMPLE_VAR(Double_t, chargedHadronEnergyFraction) \
-    SIMPLE_VAR(Double_t, chargedMuEnergyFraction) \
-    SIMPLE_VAR(Double_t, electronEnergyFraction) \
-    SIMPLE_VAR(Double_t, muonEnergyFraction) \
-    SIMPLE_VAR(Double_t, neutralEmEnergyFraction) \
-    SIMPLE_VAR(Double_t, neutralHadronEnergyFraction) \
-    SIMPLE_VAR(Double_t, photonEnergyFraction) \
+    SIMPLE_VAR(Float_t, chargedEmEnergyFraction) \
+    SIMPLE_VAR(Float_t, chargedHadronEnergyFraction) \
+    SIMPLE_VAR(Float_t, chargedMuEnergyFraction) \
+    SIMPLE_VAR(Float_t, electronEnergyFraction) \
+    SIMPLE_VAR(Float_t, muonEnergyFraction) \
+    SIMPLE_VAR(Float_t, neutralEmEnergyFraction) \
+    SIMPLE_VAR(Float_t, neutralHadronEnergyFraction) \
+    SIMPLE_VAR(Float_t, photonEnergyFraction) \
     /* Multiplicity information */ \
     SIMPLE_VAR(Int_t, chargedHadronMultiplicity) \
     SIMPLE_VAR(Int_t, chargedMultiplicity) \
@@ -53,16 +53,16 @@
     /**/
 
 #define B_TAG_DATA() \
-    SIMPLE_VAR(Double_t, trackCountingHighEffBJetTags) \
-    SIMPLE_VAR(Double_t, trackCountingHighPurBJetTags) \
-    SIMPLE_VAR(Double_t, simpleSecondaryVertexHighEffBJetTags) \
-    SIMPLE_VAR(Double_t, simpleSecondaryVertexHighPurBJetTags) \
-    SIMPLE_VAR(Double_t, jetProbabilityBJetTags) \
-    SIMPLE_VAR(Double_t, jetBProbabilityBJetTags) \
-    SIMPLE_VAR(Double_t, combinedSecondaryVertexBJetTags) \
-    SIMPLE_VAR(Double_t, combinedSecondaryVertexMVABJetTags) \
-    SIMPLE_VAR(Double_t, combinedInclusiveSecondaryVertexBJetTags) \
-    SIMPLE_VAR(Double_t, combinedMVABJetTags) \
+    SIMPLE_VAR(Float_t, trackCountingHighEffBJetTags) \
+    SIMPLE_VAR(Float_t, trackCountingHighPurBJetTags) \
+    SIMPLE_VAR(Float_t, simpleSecondaryVertexHighEffBJetTags) \
+    SIMPLE_VAR(Float_t, simpleSecondaryVertexHighPurBJetTags) \
+    SIMPLE_VAR(Float_t, jetProbabilityBJetTags) \
+    SIMPLE_VAR(Float_t, jetBProbabilityBJetTags) \
+    SIMPLE_VAR(Float_t, combinedSecondaryVertexBJetTags) \
+    SIMPLE_VAR(Float_t, combinedSecondaryVertexMVABJetTags) \
+    SIMPLE_VAR(Float_t, combinedInclusiveSecondaryVertexBJetTags) \
+    SIMPLE_VAR(Float_t, combinedMVABJetTags) \
     /**/
 
 

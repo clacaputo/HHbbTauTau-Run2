@@ -12,8 +12,8 @@
 
 #define GENEVENT_DATA() \
     SIMPLE_VAR(UInt_t, processID) \
-    SIMPLE_VAR(Double_t, ptHat) \
-    VECTOR_VAR(Double_t, pdfWeights) \
+    SIMPLE_VAR(Float_t, ptHat) \
+    VECTOR_VAR(Float_t, pdfWeights) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

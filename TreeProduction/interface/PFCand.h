@@ -12,25 +12,17 @@
 
 #define PFCANDIDATE_DATA() \
     /* 4-momentum */ \
-    SIMPLE_VAR(Double_t, eta) \
-    SIMPLE_VAR(Double_t, phi) \
-    SIMPLE_VAR(Double_t, pt) \
-    SIMPLE_VAR(Double_t, energy) \
-    SIMPLE_VAR(Double_t, mass) \
+    SIMPLE_VAR(Float_t, eta) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, mass) \
     /* Charge */ \
     SIMPLE_VAR(Int_t, charge) \
-    /* Vertex */ \
-    SIMPLE_VAR(Double_t, vx) \
-    SIMPLE_VAR(Double_t, vy) \
-    SIMPLE_VAR(Double_t, vz) \
     /* track info */ \
     SIMPLE_VAR(Bool_t, haveTrackInfo) \
-    SIMPLE_VAR(Double_t, trk_eta) \
-    SIMPLE_VAR(Double_t, trk_phi) \
-    SIMPLE_VAR(Double_t, trk_pt) \
-    SIMPLE_VAR(Double_t, trk_vx) \
-    SIMPLE_VAR(Double_t, trk_vy) \
-    SIMPLE_VAR(Double_t, trk_vz) \
+    SIMPLE_VAR(Float_t, trk_vx) \
+    SIMPLE_VAR(Float_t, trk_vy) \
+    SIMPLE_VAR(Float_t, trk_vz) \
     /**/
 
 

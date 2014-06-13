@@ -90,9 +90,8 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       electronTree.eta() = patElectron.eta();
       electronTree.phi() = patElectron.phi();
       electronTree.pt() = patElectron.pt();
-      electronTree.hasGsfTrack() = hasGsfTrack;
-      electronTree.energy() = patElectron.energy();
       electronTree.mass() = patElectron.mass();
+      electronTree.hasGsfTrack() = hasGsfTrack;
       electronTree.caloEnergy() = patElectron.ecalEnergy();
       electronTree.caloEnergyError() = patElectron.ecalEnergyError();
       electronTree.charge() = patElectron.charge();

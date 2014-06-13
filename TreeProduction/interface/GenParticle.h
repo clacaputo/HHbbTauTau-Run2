@@ -14,13 +14,13 @@
     SIMPLE_VAR(Int_t, PdgId) \
     SIMPLE_VAR(Int_t, Status) \
     SIMPLE_VAR(Int_t, Charge) \
-    SIMPLE_VAR(Double_t, E) \
-    SIMPLE_VAR(Double_t, Px) \
-    SIMPLE_VAR(Double_t, Py) \
-    SIMPLE_VAR(Double_t, Pz) \
-    SIMPLE_VAR(Double_t, X) \
-    SIMPLE_VAR(Double_t, Y) \
-    SIMPLE_VAR(Double_t, Z) \
+    SIMPLE_VAR(Float_t, eta) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, mass) \
+    SIMPLE_VAR(Float_t, X) \
+    SIMPLE_VAR(Float_t, Y) \
+    SIMPLE_VAR(Float_t, Z) \
     VECTOR_VAR(UInt_t, Mother_Indexes) \
     /**/
 

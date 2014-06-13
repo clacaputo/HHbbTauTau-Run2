@@ -73,7 +73,6 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         for (const pat::MET& MET : *mets) {
             METTree.pt() = MET.pt();
             METTree.phi() = MET.phi();
-            METTree.eta() = MET.eta();
             METTree.sumEt()  = MET.sumEt();
             METTree.pt_uncorrected() = MET.uncorrectedPt(pat::MET::uncorrALL);
             METTree.phi_uncorrected() = MET.uncorrectedPhi(pat::MET::uncorrALL);

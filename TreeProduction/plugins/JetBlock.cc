@@ -85,8 +85,8 @@ void JetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       jetTree.eta()        = jet.eta();
       jetTree.phi()        = jet.phi();
       jetTree.pt()         = jet.pt();
+      jetTree.mass()     = jet.mass();
       jetTree.pt_raw()     = jet.correctedJet("Uncorrected").pt();
-      jetTree.energy()     = jet.energy();
       jetTree.energy_raw() = jet.correctedJet("Uncorrected").energy();
       jetTree.partonFlavour() = jet.partonFlavour();
 

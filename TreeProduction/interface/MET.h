@@ -12,14 +12,13 @@
 #include "TMatrixD.h"
 
 #define MET_DATA() \
-    SIMPLE_VAR(Double_t, pt) \
-    SIMPLE_VAR(Double_t, phi) \
-    SIMPLE_VAR(Double_t, eta) \
-    SIMPLE_VAR(Double_t, sumEt) \
-    SIMPLE_VAR(Double_t, pt_uncorrected) \
-    SIMPLE_VAR(Double_t, phi_uncorrected) \
-    SIMPLE_VAR(Double_t, sumEt_uncorrected) \
-    VECTOR_VAR(Double_t, significanceMatrix) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, sumEt) \
+    SIMPLE_VAR(Float_t, pt_uncorrected) \
+    SIMPLE_VAR(Float_t, phi_uncorrected) \
+    SIMPLE_VAR(Float_t, sumEt_uncorrected) \
+    VECTOR_VAR(Float_t, significanceMatrix) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
@@ -43,11 +42,11 @@ TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, METTree, MET_DATA)
 
 
 namespace ntuple {
-    std::vector<Double_t> SignificanceMatrixToVector(const TMatrixD& m)
+    std::vector<Float_t> SignificanceMatrixToVector(const TMatrixD& m)
     {
         if(m.GetNrows() != 2 || m.GetNcols() != 2)
             throw std::runtime_error("invalid matrix dimensions");
-        std::vector<Double_t> v(4);
+        std::vector<Float_t> v(4);
         v[0] = m[0][0];
         v[1] = m[0][1];
         v[2] = m[1][0];
@@ -55,7 +54,7 @@ namespace ntuple {
         return v;
     }
 
-    TMatrixD VectorToSignificanceMatrix(const std::vector<Double_t>& v)
+    TMatrixD VectorToSignificanceMatrix(const std::vector<Float_t>& v)
     {
         if(v.size() != 4)
             throw std::runtime_error("invalid input vector for significance matrix");

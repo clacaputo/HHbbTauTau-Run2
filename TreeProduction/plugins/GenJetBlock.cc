@@ -60,7 +60,7 @@ void GenJetBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         genJetTree.pt()     = genJet.pt();
         genJetTree.eta()    = genJet.eta();
         genJetTree.phi()    = genJet.phi();
-        genJetTree.energy() = genJet.energy();
+        genJetTree.mass() = genJet.mass();
         genJetTree.emEnergy()    = genJet.emEnergy();
         genJetTree.hadEnergy()   = genJet.hadEnergy();
 

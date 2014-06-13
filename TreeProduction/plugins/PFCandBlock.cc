@@ -68,15 +68,8 @@ void PFCandBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         pfCandTree.eta()    = PFCand.eta();
         pfCandTree.phi()    = PFCand.phi();
         pfCandTree.pt()     = PFCand.pt();
-        pfCandTree.energy() = PFCand.energy();
         pfCandTree.mass() = PFCand.mass();
         pfCandTree.charge() = PFCand.charge();
-
-        // Vertex information
-        const reco::PFCandidate::Point& vertex = PFCand.vertex();
-        pfCandTree.vx() = vertex.x();
-        pfCandTree.vy() = vertex.y();
-        pfCandTree.vz() = vertex.z();
 
         const reco::TrackBase* track = nullptr;
         if(PFCand.trackRef().isNonnull()) track = PFCand.trackRef().get();
@@ -85,9 +78,6 @@ void PFCandBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         pfCandTree.haveTrackInfo() = track != nullptr;
         if(track) {
             const reco::TrackBase::Point& trk_vertex = track->vertex();
-            pfCandTree.trk_eta()    = track->eta();
-            pfCandTree.trk_phi()    = track->phi();
-            pfCandTree.trk_pt()     = track->pt();
             pfCandTree.trk_vx() = trk_vertex.x();
             pfCandTree.trk_vy() = trk_vertex.y();
             pfCandTree.trk_vz() = trk_vertex.z();

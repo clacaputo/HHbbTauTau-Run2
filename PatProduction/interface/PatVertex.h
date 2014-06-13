@@ -31,8 +31,8 @@ public:
                 trackWeights.push_back(trackWeight(*iter));
             }
         }
-        _sumPt = __momentum().pt();
-        _sumPtSquared = __sumPtSquared();
+        _sumPt = __momentum(0.13957018, -1).pt();
+        _sumPtSquared = __sumPtSquared(-1);
     }
 
     double sumPt() const { return _sumPt; }

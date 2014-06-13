@@ -18,19 +18,18 @@
     SIMPLE_VAR(Bool_t, isTightMuon) \
     SIMPLE_VAR(Bool_t, isHighPtMuon) \
     /* 4-momentum */ \
-    SIMPLE_VAR(Double_t, eta) \
-    SIMPLE_VAR(Double_t, phi) \
-    SIMPLE_VAR(Double_t, pt) \
-    SIMPLE_VAR(Double_t, ptError) \
-    SIMPLE_VAR(Double_t, energy) \
-    SIMPLE_VAR(Double_t, mass) \
+    SIMPLE_VAR(Float_t, eta) \
+    SIMPLE_VAR(Float_t, phi) \
+    SIMPLE_VAR(Float_t, pt) \
+    SIMPLE_VAR(Float_t, mass) \
+    SIMPLE_VAR(Float_t, ptError) \
     SIMPLE_VAR(Int_t, charge) \
     /* Track info */ \
-    SIMPLE_VAR(Double_t, trkD0) \
-    SIMPLE_VAR(Double_t, trkD0Error) \
-    SIMPLE_VAR(Double_t, trkDz) \
-    SIMPLE_VAR(Double_t, trkDzError) \
-    SIMPLE_VAR(Double_t, globalChi2) \
+    SIMPLE_VAR(Float_t, trkD0) \
+    SIMPLE_VAR(Float_t, trkD0Error) \
+    SIMPLE_VAR(Float_t, trkDz) \
+    SIMPLE_VAR(Float_t, trkDzError) \
+    SIMPLE_VAR(Float_t, globalChi2) \
     SIMPLE_VAR(Bool_t, passID) \
     SIMPLE_VAR(Int_t, pixHits) \
     SIMPLE_VAR(Int_t, trkHits) \
@@ -38,25 +37,25 @@
     SIMPLE_VAR(Int_t, matches) \
     SIMPLE_VAR(Int_t, trackerLayersWithMeasurement) \
     /* Isolation */ \
-    SIMPLE_VAR(Double_t, trkIso) \
-    SIMPLE_VAR(Double_t, ecalIso) \
-    SIMPLE_VAR(Double_t, hcalIso) \
-    SIMPLE_VAR(Double_t, hoIso) \
-    SIMPLE_VAR(Double_t, relIso) \
-    SIMPLE_VAR(Double_t, pfRelIso) \
+    SIMPLE_VAR(Float_t, trkIso) \
+    SIMPLE_VAR(Float_t, ecalIso) \
+    SIMPLE_VAR(Float_t, hcalIso) \
+    SIMPLE_VAR(Float_t, hoIso) \
+    SIMPLE_VAR(Float_t, relIso) \
+    SIMPLE_VAR(Float_t, pfRelIso) \
     /* Vertex */ \
-    SIMPLE_VAR(Double_t, vtxDist3D) \
+    SIMPLE_VAR(Float_t, vtxDist3D) \
     SIMPLE_VAR(Int_t, vtxIndex) \
-    SIMPLE_VAR(Double_t, vtxDistZ) \
-    SIMPLE_VAR(Double_t, vx) \
-    SIMPLE_VAR(Double_t, vy) \
-    SIMPLE_VAR(Double_t, vz)\
+    SIMPLE_VAR(Float_t, vtxDistZ) \
+    SIMPLE_VAR(Float_t, vx) \
+    SIMPLE_VAR(Float_t, vy) \
+    SIMPLE_VAR(Float_t, vz)\
     /* PV2D*/ \
-    SIMPLE_VAR(Double_t, dB) \
-    SIMPLE_VAR(Double_t, edB) \
+    SIMPLE_VAR(Float_t, dB) \
+    SIMPLE_VAR(Float_t, edB) \
     /* PV3D */ \
-    SIMPLE_VAR(Double_t, dB3d) \
-    SIMPLE_VAR(Double_t, edB3d) \
+    SIMPLE_VAR(Float_t, dB3d) \
+    SIMPLE_VAR(Float_t, edB3d) \
     /* UW Recommendation*/ \
     SIMPLE_VAR(Bool_t, isAllArbitrated) \
     SIMPLE_VAR(Int_t, nChambers) \
@@ -67,19 +66,19 @@
     SIMPLE_VAR(UInt_t, stationGapMaskPull) \
     SIMPLE_VAR(Int_t, muonID) \
     /* MVA */ \
-    SIMPLE_VAR(Double_t, idMVA) \
-    SIMPLE_VAR(Double_t, isoRingsMVA) \
-    SIMPLE_VAR(Double_t, isoRingsRadMVA) \
-    SIMPLE_VAR(Double_t, idIsoCombMVA) \
+    SIMPLE_VAR(Float_t, idMVA) \
+    SIMPLE_VAR(Float_t, isoRingsMVA) \
+    SIMPLE_VAR(Float_t, isoRingsRadMVA) \
+    SIMPLE_VAR(Float_t, idIsoCombMVA) \
     /* Iso variables*/ \
-    SIMPLE_VAR(Double_t, pfRelIso03v1) \
-    SIMPLE_VAR(Double_t, pfRelIso03v2) \
-    SIMPLE_VAR(Double_t, pfRelIsoDB03v1) \
-    SIMPLE_VAR(Double_t, pfRelIsoDB03v2) \
-    SIMPLE_VAR(Double_t, pfRelIso04v1) \
-    SIMPLE_VAR(Double_t, pfRelIso04v2) \
-    SIMPLE_VAR(Double_t, pfRelIsoDB04v1) \
-    SIMPLE_VAR(Double_t, pfRelIsoDB04v2) \
+    SIMPLE_VAR(Float_t, pfRelIso03v1) \
+    SIMPLE_VAR(Float_t, pfRelIso03v2) \
+    SIMPLE_VAR(Float_t, pfRelIsoDB03v1) \
+    SIMPLE_VAR(Float_t, pfRelIsoDB03v2) \
+    SIMPLE_VAR(Float_t, pfRelIso04v1) \
+    SIMPLE_VAR(Float_t, pfRelIso04v2) \
+    SIMPLE_VAR(Float_t, pfRelIsoDB04v1) \
+    SIMPLE_VAR(Float_t, pfRelIsoDB04v2) \
     /* Trigger match information */ \
     VECTOR_VAR(std::string, matchedTriggerPaths)
     /**/

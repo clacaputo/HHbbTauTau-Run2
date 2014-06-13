@@ -103,7 +103,7 @@ void TriggerObjectBlock::analyze(const edm::Event& iEvent, const edm::EventSetup
     pat::TriggerObjectRefVector myObjects(triggerEvent->objectRefs());
     for (pat::TriggerObjectRefVector::const_iterator it  = myObjects.begin(); it != myObjects.end(); ++it) {
         pat::TriggerPathRefVector myPaths = triggerEvent->objectPaths((*it));
-        std::map <std::string, unsigned int> pathInfoMap;
+        std::map <std::string, bool> pathInfoMap;
 
         for (pat::TriggerPathRefVector::const_iterator ipath  = myPaths.begin(); ipath != myPaths.end(); ++ipath) {
             std::string name = (**ipath).name();
@@ -119,9 +119,9 @@ void TriggerObjectBlock::analyze(const edm::Event& iEvent, const edm::EventSetup
                     if ( triggerEvent->objectInFilter( (*it), lastFilter->label() ) ) matched = true;
                 }
                 if (matched) {
-                    unsigned int val = 0;
-                    if (triggerEvent->path(name)->wasRun() && triggerEvent->path(name)->wasAccept()) val = 1;
-                    pathInfoMap.insert(std::pair<std::string, unsigned int> (name, val));
+                    bool val = false;
+                    if (triggerEvent->path(name)->wasRun() && triggerEvent->path(name)->wasAccept()) val = true;
+                    pathInfoMap.insert(std::pair<std::string, bool> (name, val));
                 }
             }
         }
@@ -131,7 +131,7 @@ void TriggerObjectBlock::analyze(const edm::Event& iEvent, const edm::EventSetup
         triggerObjectTree.eta()    = (**it).eta();
         triggerObjectTree.phi()    = (**it).phi();
         triggerObjectTree.pt()     = (**it).pt();
-        triggerObjectTree.energy() = (**it).energy();
+        triggerObjectTree.mass() = (**it).mass();
         triggerObjectTree.pdgId() = (**it).pdgId();
 
         for (const auto& imap : pathInfoMap) {
