@@ -26,7 +26,7 @@
 namespace analysis {
 double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, double tauESfactor)
 {
-    static const bool debug = true;
+    static const bool debug = false;
 
     if(higgsCandidate.type != Candidate::Higgs)
         throw std::runtime_error("Invalid candidate type for SVfit");

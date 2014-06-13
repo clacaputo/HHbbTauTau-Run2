@@ -23,6 +23,7 @@
 #include <TLine.h>
 #include <TPad.h>
 #include <Rtypes.h>
+#include <TError.h>
 
 class Print_SyncPlots {
 public:
@@ -51,6 +52,8 @@ public:
         std::cout << "Other: " << Fother->GetName() << std::endl;
 
         file_name = std::string("PlotsDiff_") + channel + "_" + myGroup + "_" + group + ".pdf";
+
+        gErrorIgnoreLevel = kWarning;
     }
 
     void Run()

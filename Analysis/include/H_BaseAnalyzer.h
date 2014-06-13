@@ -317,6 +317,7 @@ protected:
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
 
         genEvent.Initialize(event.genParticles());
+//        genEvent.Print();
 
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
