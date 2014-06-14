@@ -26,23 +26,3 @@ def applyMETParameters(process, isMC):
     )
 
     return
-
-def applyMVAMETParamteres(process, isMC):
-    #process.load('RecoMET.METPUSubtraction.mvaPFMET_leptons_cff')
-    process.load('HHbbTauTau.PatProduction.mvaPFMET_leptons_cff')
-    if isMC:
-        process.calibratedAK5PFJetsForPFMEtMVA.correctors = cms.vstring("ak5PFL1FastL2L3")
-    else:
-        process.calibratedAK5PFJetsForPFMEtMVA.correctors = cms.vstring("ak5PFL1FastL2L3Residual")
-
-    process.patMETsMVAmuTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAmuTau') )
-    process.patMETsMVAeTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAeTau') )
-    process.patMETsMVAtauTau = process.patMETs.clone( metSource = cms.InputTag('pfMEtMVAtauTau') )
-
-    process.patMETsMVAsequence = cms.Sequence(
-        process.patMETsMVAmuTau *
-        process.patMETsMVAeTau *
-        process.patMETsMVAtauTau
-    )
-
-    return

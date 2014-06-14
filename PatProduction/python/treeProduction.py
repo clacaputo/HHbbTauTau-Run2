@@ -3,13 +3,7 @@
 import FWCore.ParameterSet.Config as cms
 
 def addTreeSequence(process, includeSim, treeOutput):
-    #-------------
-    # Output ROOT file
-    #-------------
     process.TFileService = cms.Service("TFileService", fileName = cms.string(treeOutput) )
-    #--------------------------------------------------
-    # VHTauTau Tree Specific
-    #--------------------------------------------------
     process.load("HHbbTauTau.TreeProduction.TreeContentConfig_cff")
 
     process.mainTreeContentSequence = cms.Sequence(

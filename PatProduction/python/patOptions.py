@@ -20,6 +20,10 @@ def parseAndApplyOptions(process) :
                       VarParsing.varType.string, "Prefix to add to input file names.")
     options.register ('includeSim', False, VarParsing.multiplicity.singleton,
                       VarParsing.varType.bool, "Include Sim information.")
+    options.register ('keepPat', False, VarParsing.multiplicity.singleton,
+                      VarParsing.varType.bool, "Keep PAT information in the output file.")
+    options.register ('runTree', True, VarParsing.multiplicity.singleton,
+                      VarParsing.varType.bool, "Run TREE production sequence.")
     options.register ('treeOutput', 'Tree.root', VarParsing.multiplicity.singleton,
                       VarParsing.varType.string, "Tree root file.")
 

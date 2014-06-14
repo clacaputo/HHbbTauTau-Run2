@@ -154,28 +154,15 @@ def applyJetParameters(process, isMC):
     process.patJets.userData.userFloats.src = cms.VInputTag(
         cms.InputTag('pileupJetIdProducer', 'fullDiscriminant'),
         cms.InputTag('pileupJetIdProducer', 'metDiscriminant')
-        #cms.InputTag('pileupJetIdProducer', 'philv1Discriminant')
-        )
+    )
     process.patJets.userData.userInts.src = cms.VInputTag(
         cms.InputTag('pileupJetIdProducer', 'fullId'),
         cms.InputTag('pileupJetIdProducer', 'metId')
-        #cms.InputTag('pileupJetIdProducer', 'philv1Id')
-        )
+    )
 
     process.patJetsWithEmbeddedVariables = cms.EDProducer('JetUserEmbedder',
         jetTag = cms.InputTag("patJetsTriggerMatch"),
         corrector = cms.string("ak5PFL1Fastjet")
-        )
+    )
 
     return
-
-#    process.load("RecoJets.JetProducers.PileupJetID_cfi")
-#    process.pileupJetIdProducer.jets = cms.InputTag('ak5PFJets')
-#    process.pileupJetIdProducerChs.jets = cms.InputTag('ak5PFJets')
-#    process.pileupJetIdProducer.applyJec = cms.bool(True)
-#    process.pileupJetIdProducer.inputIsCorrected = cms.bool(False)
-#    process.full_5x_wp.Pt2030_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
-#    process.full_5x_wp.Pt3050_Loose = cms.vdouble(-0.63,-0.60,-0.55,-0.45)
-#    process.pileupJetIdProducer.residualsTxt = cms.FileInPath('HHbbTauTau/PatProduction/data/dummy.txt')
-
-#    return

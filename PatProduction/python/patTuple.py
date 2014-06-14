@@ -30,7 +30,6 @@ applyJetParameters(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patMET import *
 applyMETParameters(process, options.isMC)
-#applyMVAMETParamteres(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patVertices import *
 applyVertexParameters(process)
@@ -41,23 +40,21 @@ applyTriggerParameters(process)
 from HHbbTauTau.PatProduction.skimFilter import *
 applySkim(process)
 
-from HHbbTauTau.PatProduction.treeProduction import *
-addTreeSequence(process, options.includeSim, options.treeOutput)
+if options.runTree:
+    from HHbbTauTau.PatProduction.treeProduction import *
+    addTreeSequence(process, options.includeSim, options.treeOutput)
+else:
+    process.mainTreeContentSequence = cms.Sequence()
+    process.simTreeContentSequence = cms.Sequence()
 
 ## Remove MC matching from the default sequence
 if not options.isMC:
     removeMCMatching(process, ['All'])
-#    removeMCMatching(process, ['METs'], "TC")
-#    removeMCMatching(process, ['METs'], "PF")
     process.patDefaultSequence.remove(process.patJetPartonMatch)
-    #process.patDefaultSequence.remove(process.patJetPartonMatchAK5PF)
-    #process.patDefaultSequence.remove(process.patJetGenJetMatchAK5PF)
     process.patDefaultSequence.remove(process.patJetFlavourId)
     process.patDefaultSequence.remove(process.patJetPartons)
     process.patDefaultSequence.remove(process.patJetPartonAssociation)
-    #process.patDefaultSequence.remove(process.patJetPartonAssociationAK5PF)
     process.patDefaultSequence.remove(process.patJetFlavourAssociation)
-    #process.patDefaultSequence.remove(process.patJetFlavourAssociationAK5PF)
     runOnData(process)
 
 
@@ -77,8 +74,6 @@ process.p = cms.Path(
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
     process.patJetsWithEmbeddedVariables *
-    #process.pfMEtMVAsequence *
-    #process.patMETsMVAsequence *
     process.patVertices *
     process.bbttSkim *
     process.mainTreeContentSequence *
@@ -86,27 +81,31 @@ process.p = cms.Path(
 )
 
 ## Output selection.
-process.out.outputCommands = [
-    'drop *',
-    'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
-    'keep patJets_patJetsWithEmbeddedVariables_*_*',
-    'keep patMETs_*_*_*',
-    'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
-    'keep patTaus_patTausTriggerMatch_*_*',
-    'keep patVertexs_patVertices_*_*',
-    'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
-    'keep PileupSummaryInfos_*_*_*',
-    'keep *_offlineBeamSpot_*_*',
-    'keep *_TriggerResults_*_HLT',
-    'keep L1GlobalTriggerReadoutRecord_*_*_*',
-    'keep GenFilterInfo_*_*_*',
-    'keep *_patTrigger_*_*',
-    'keep patTriggerEvent_*_*_*',
-    'keep *_particleFlow_*_*'
-                             ]
+process.out.outputCommands = [ 'drop *' ]
+
+if options.keepPat:
+    process.out.outputCommands.extend([
+        'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
+        'keep patJets_patJetsWithEmbeddedVariables_*_*',
+        'keep patMETs_*_*_*',
+        'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
+        'keep patTaus_patTausTriggerMatch_*_*',
+        'keep patVertexs_patVertices_*_*',
+        'keep recoVertexs_offlinePrimaryVerticesWithBS_*_*',
+        'keep PileupSummaryInfos_*_*_*',
+        'keep *_offlineBeamSpot_*_*',
+        'keep *_TriggerResults_*_HLT',
+        'keep L1GlobalTriggerReadoutRecord_*_*_*',
+        'keep GenFilterInfo_*_*_*',
+        'keep *_patTrigger_*_*',
+        'keep patTriggerEvent_*_*_*',
+        'keep *_particleFlow_*_*'
+    ])
 
 if options.includeSim:
-    process.out.outputCommands.extend(['keep recoGenParticles_genParticles_*_*'])
-    process.out.outputCommands.extend(['keep *_genMetTrue_*_*'])
+    process.out.outputCommands.extend([
+        'keep recoGenParticles_genParticles_*_*',
+        'keep *_genMetTrue_*_*'
+    ])
 
 #print process.dumpPython()
