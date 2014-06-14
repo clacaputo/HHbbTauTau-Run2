@@ -71,7 +71,8 @@ void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if (pdfWeightsHandle.isValid()) {
 	edm::LogInfo("GenEventBlock") << "Success >> obtained PDF handle for label: " 
                                       << _pdfWeightsInputTag;
-    genEventTree.pdfWeights() = *pdfWeightsHandle;
+	for(double weight : *pdfWeightsHandle)
+		genEventTree.pdfWeights().push_back(weight);
       } 
       else {
 	edm::LogError("GenEventBlock") << "Error >>  Failed to get PDF handle for label: " 
