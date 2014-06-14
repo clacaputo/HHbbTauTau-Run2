@@ -242,11 +242,11 @@ namespace jetID {
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
     const double pt = 30; // >
     const double eta = 4.7; // <
-    const double puLooseID = true; // =
+    const bool puLooseID = true; // =
     const double deltaR_signalObjects = 0.5; // >
 
     // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
-    const double pfLooseID = true; // =
+    const bool pfLooseID = true; // =
 }
 
 namespace btag {
@@ -260,8 +260,8 @@ namespace btag {
     const double eta = 2.4; // <
     const double CSV = CSVM; // >
     // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
-    const double puLooseID = true; // =
-    const double pfLooseID = true; // =
+    const bool puLooseID = true; // =
+    const bool pfLooseID = true; // =
     const double deltaR_signalObjects = 0.5; // >
 }
 
