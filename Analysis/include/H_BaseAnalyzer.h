@@ -52,6 +52,13 @@ protected:
         DMweights.push_back(1);
     }
 
+    virtual void CalculateFakeWeights(const Candidate& candidate) override
+    {
+        fakeWeights.clear();
+        fakeWeights.push_back(1);
+        fakeWeights.push_back(1);
+    }
+
     virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
                                                          root_ext::AnalyzerData& _anaData,
                                                          const std::string& selection_label) override
@@ -364,7 +371,7 @@ protected:
         syncTree.idweight_2() = IDweights.at(1);
         syncTree.isoweight_1() = IsoWeights.at(0);
         syncTree.isoweight_2() = IsoWeights.at(1);
-        //syncTree.fakeweight();
+        syncTree.fakeweight() = fakeWeights.at(1);
         //syncTree.effweight();
         syncTree.weight() = eventWeight;
         //syncTree.embeddedWeight();

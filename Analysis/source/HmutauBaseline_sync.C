@@ -292,6 +292,18 @@ protected:
         IDweights.push_back(1);
     }
 
+    virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
+    {
+        fakeWeights.clear();
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        const double tau_pt = tau.momentum.Pt();
+        const double fake_weight =
+                (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
+        // first mu, second tau
+        fakeWeights.push_back(1);
+        fakeWeights.push_back(fake_weight);
+    }
+
     void FillSyncTree(const analysis::Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets, const analysis::VertexVector& vertices)
