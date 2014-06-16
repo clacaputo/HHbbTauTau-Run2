@@ -216,7 +216,7 @@ protected:
 
         for(const ntuple::Tau& tau : event.taus()) {
             TLorentzVector momentum;
-            momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
+            momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
 
             const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
@@ -226,7 +226,7 @@ protected:
             correctedTau.pt = correctedMomentum.Pt();
             correctedTau.eta = correctedMomentum.Eta();
             correctedTau.phi = correctedMomentum.Phi();
-            correctedTau.energy = correctedMomentum.E();
+            correctedTau.mass = correctedMomentum.M();
             correctedTaus.push_back(correctedTau);
         }
     }
@@ -241,22 +241,21 @@ protected:
         TLorentzVector sumCorrectedTaus, sumTaus;
         for(const ntuple::Tau& tau : event.taus()) {
             TLorentzVector momentum;
-            momentum.SetPtEtaPhiE(tau.pt, tau.eta, tau.phi, tau.energy);
+            momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
             sumTaus += momentum;
         }
 
         for (const ntuple::Tau& correctedTau : correctedTaus) {
             TLorentzVector correctedMomentum;
-            correctedMomentum.SetPtEtaPhiE(correctedTau.pt, correctedTau.eta, correctedTau.phi,correctedTau.energy);
+            correctedMomentum.SetPtEtaPhiM(correctedTau.pt, correctedTau.eta, correctedTau.phi,correctedTau.mass);
             sumCorrectedTaus += correctedMomentum;
         }
 
         TLorentzVector met, metCorrected;
-        met.SetPtEtaPhiM(metMVA.pt, metMVA.eta, metMVA.phi, 0.);
+        met.SetPtEtaPhiM(metMVA.pt, 0, metMVA.phi, 0.);
         metCorrected = met + sumTaus - sumCorrectedTaus;
         correctedMET = metMVA;
         correctedMET.pt = metCorrected.Pt();
-        correctedMET.eta = metCorrected.Eta();
         correctedMET.phi = metCorrected.Phi();
 
         CandidateVector signalObjects;
@@ -421,7 +420,7 @@ protected:
         syncTree.againstMuonTight2_2() = ntuple_tau_leg2.againstMuonTight2;
 
         TLorentzVector postRecoilMetMomentum;
-        postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, postRecoilMET.eta, postRecoilMET.phi, 0.);
+        postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, 0, postRecoilMET.phi, 0.);
         syncTree.pt_tt() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
 
         syncTree.met() = event.metPF().pt;

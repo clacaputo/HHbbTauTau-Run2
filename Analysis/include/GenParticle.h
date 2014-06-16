@@ -48,7 +48,7 @@ public:
 //            throw std::runtime_error("bad index");
         pdg = particles::PdgParticle(ntupleGenParticle.PdgId);
         status = particles::NameProvider<particles::Status>::Convert(ntupleGenParticle.Status);
-        momentum.SetXYZT(ntupleGenParticle.Px, ntupleGenParticle.Py,ntupleGenParticle.Pz,ntupleGenParticle.E);
+        momentum.SetPtEtaPhiM(ntupleGenParticle.pt, ntupleGenParticle.eta, ntupleGenParticle.phi, ntupleGenParticle.mass);
         vertex = TVector3(ntupleGenParticle.X, ntupleGenParticle.Y, ntupleGenParticle.Z);
     }
 

@@ -42,7 +42,6 @@ public:
         const TLorentzVector& metMomentum = metAlgo.getMEt();
         const TMatrix& metCov = metAlgo.getMEtCov();
         ntuple::MET mvaMET;
-        mvaMET.eta = metMomentum.Eta();
         mvaMET.phi = metMomentum.Phi();
         mvaMET.pt = metMomentum.Pt();
         mvaMET.significanceMatrix = ntuple::SignificanceMatrixToVector(metCov);
@@ -83,7 +82,7 @@ private:
             mvaMEtUtilities::leptonInfo info;
             if (daughter.type == analysis::Candidate::Tau){
                 const ntuple::Tau& tau = taus.at(daughter.index);
-                info.p4_.SetPtEtaPhiE(tau.pt,tau.eta,tau.phi,tau.energy);
+                info.p4_.SetPtEtaPhiM(tau.pt,tau.eta,tau.phi,tau.mass);
             }
             else
                 info.p4_ = daughter.momentum;
@@ -103,7 +102,7 @@ private:
             if(candidate.haveTrackInfo) {
                 const TVector3 trkV(candidate.trk_vx, candidate.trk_vy, candidate.trk_vz);
                 TVector3 trkP;
-                trkP.SetPtEtaPhi(candidate.trk_pt, candidate.trk_eta, candidate.trk_phi);
+                trkP.SetPtEtaPhi(candidate.pt, candidate.eta, candidate.phi);
                 info.dZ_ = std::abs(Calculate_dz(trkV, selectedVertex, trkP));
             }
             else
@@ -135,7 +134,7 @@ private:
             //if(!jet.passLooseID) continue;
             if(!analysis::passPFLooseId(jet)) continue;
             mvaMEtUtilities::JetInfo jetInfo;
-            jetInfo.p4_.SetPtEtaPhiE(jet.pt, jet.eta, jet.phi, jet.energy);
+            jetInfo.p4_.SetPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
             double lType1Corr = 0;
             if(useType1Correction) {
                 double pCorr = jet.correction;

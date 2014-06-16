@@ -14,6 +14,7 @@
 
 #include <TFile.h>
 #include <TH1D.h>
+#include <TLorentzVector.h>
 
 #include "Particles.h"
 #include "EventDescriptor.h"
@@ -58,7 +59,7 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
 
     for (const ntuple::TriggerObject& triggerObject : triggerObjects){
         TLorentzVector triggerObjectMomentum;
-        triggerObjectMomentum.SetPtEtaPhiE(triggerObject.pt, triggerObject.eta, triggerObject.phi, triggerObject.energy);
+        triggerObjectMomentum.SetPtEtaPhiM(triggerObject.pt, triggerObject.eta, triggerObject.phi, triggerObject.mass);
         for (unsigned n = 0; n < triggerObject.pathNames.size(); ++n){
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
@@ -129,15 +130,18 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
     return false;
 }
 
-bool passPFLooseId(const ntuple::Jet& jet) {
-  if(jet.energy == 0)                                  return false;
-  if(jet.neutralHadronEnergyFraction > 0.99)   return false;
-  if(jet.neutralEmEnergyFraction     > 0.99)   return false;
-  if(jet.nConstituents <  2)                          return false;
-  if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
-  if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
-  if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
-  return true;
+inline bool passPFLooseId(const ntuple::Jet& jet)
+{
+    TLorentzVector momentum;
+    momentum.SetPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
+    if(momentum.E() == 0)                                  return false;
+    if(jet.neutralHadronEnergyFraction > 0.99)   return false;
+    if(jet.neutralEmEnergyFraction     > 0.99)   return false;
+    if(jet.nConstituents <  2)                          return false;
+    if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
+    if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
+    if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
+    return true;
 }
 
 inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )
