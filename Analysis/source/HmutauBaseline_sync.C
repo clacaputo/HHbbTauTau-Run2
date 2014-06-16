@@ -106,16 +106,17 @@ protected:
 
         ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
 
-        const auto jetsPt20 = CollectJetsPt20();
-        const auto jets = CollectJets();
+        const auto looseJets = CollectLooseJets();
 
-        const auto filteredJets = FilterCompatibleObjects(jets,higgs,cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
+        const auto filteredLooseJets = FilterCompatibleObjects(looseJets, higgs,
+                                                               cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
 
 
-        const auto bjets = CollectBJets(higgs);
+        const auto jets = CollectJets(filteredLooseJets);
+        const auto bjets = CollectBJets(filteredLooseJets);
 
         //Apply Post Recoil Corrections
-        ApplyPostRecoilCorrections(higgs, muTau.resonance, filteredJets.size());
+        ApplyPostRecoilCorrections(higgs, muTau.resonance, jets.size());
         //postRecoilMET = correctedMET; //tau corrections
 
         const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
@@ -125,7 +126,7 @@ protected:
         CalculateFullEventWeight(higgs);
 
 //        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, filteredJets, jetsPt20, bjets, vertices);
-        FillSyncTree(higgs, m_sv, m_sv, m_sv, filteredJets, jetsPt20, bjets, vertices);
+        FillSyncTree(higgs, m_sv, m_sv, m_sv, jets, looseJets, bjets, vertices);
 
         //postRecoilMET = mvaMet;
 //        postRecoilMET = correctedMET; //tau corrections

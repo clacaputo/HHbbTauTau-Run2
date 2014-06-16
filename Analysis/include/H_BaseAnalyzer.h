@@ -105,13 +105,18 @@ protected:
         return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
 
-    analysis::CandidateVector CollectBJets(const Candidate& higgs)
+    CandidateVector CollectBJets(const CandidateVector& looseJets)
     {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectBjet(id, _objectSelector, _anaData, _selection_label, higgs); };
-        analysis::CandidateVector bjets =
-                CollectObjects<analysis::Candidate>("bjets", base_selector, event.jets().size());
+        using namespace cuts::Htautau_Summer13::btag;
+        analysis::CandidateVector bjets;
+        for(const Candidate& looseJetCandidate : looseJets) {
+            const ntuple::Jet& looseJet = event.jets().at(looseJetCandidate.index);
+            if(looseJet.pt <= pt || std::abs(looseJet.eta) >= eta) continue;
+            if(useMCtruth && !analysis::btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, 0, 0, CSV))
+                continue;
+
+            bjets.push_back(looseJetCandidate);
+        }
 
         const auto bjetsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
         {
@@ -120,88 +125,46 @@ protected:
 
             return first_bjet.combinedSecondaryVertexBJetTags > second_bjet.combinedSecondaryVertexBJetTags;
         };
+
         std::sort(bjets.begin(), bjets.end(), bjetsSelector);
         return bjets;
     }
 
-    virtual analysis::Candidate SelectBjet(size_t id, cuts::ObjectSelector* objectSelector,
-                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label,
-                                           const Candidate& higgs)
+    CandidateVector CollectLooseJets()
     {
-        using namespace cuts::Htautau_Summer13::btag;
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Candidate
+            { return SelectLooseJet(id, _objectSelector, _anaData, _selection_label); };
+        return CollectObjects<Candidate>("jets", base_selector, event.jets().size());
+    }
+
+    virtual Candidate SelectLooseJet(size_t id, cuts::ObjectSelector* objectSelector,
+                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+    {
+        using namespace cuts::Htautau_Summer13::jetID;
         cuts::Cutter cut(objectSelector);
         const ntuple::Jet& object = event.jets().at(id);
 
-        cut(true, ">0 mu cand");
-        cut(X(pt) > pt, "pt");
+        cut(true, ">0 jet cand");
+        cut(X(pt) > pt_loose, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(combinedSecondaryVertexBJetTags) > CSV, "CSV");
         const bool passLooseID = analysis::passPFLooseId(object);
         cut(Y(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
         cut(Y(passPUlooseID) == puLooseID, "puLooseID");
-        const Candidate bjet(Candidate::Bjet, id, object);
-        for (const Candidate& daughter : higgs.finalStateDaughters){
-            const double DeltaR = bjet.momentum.DeltaR(daughter.momentum);
-            cut(Y(DeltaR) > deltaR_signalObjects, "DR_signalLeptons");
+
+        return Candidate(analysis::Candidate::Jet, id, object);
+    }
+
+    CandidateVector CollectJets(const CandidateVector& looseJets)
+    {
+        using namespace cuts::Htautau_Summer13::jetID;
+        analysis::CandidateVector jets;
+        for(const Candidate& looseJet : looseJets) {
+            if(looseJet.momentum.Pt() > pt)
+                jets.push_back(looseJet);
         }
-
-        return bjet;
-    }
-
-    analysis::CandidateVector CollectJets()
-    {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectJet(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("jets", base_selector, event.jets().size());
-    }
-
-    virtual analysis::Candidate SelectJet(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::jetID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Jet& object = event.jets().at(id);
-
-        cut(true, ">0 jet cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        //cut(X(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passLooseID = analysis::passPFLooseId(object);
-        cut(Y(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
-        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
-
-        return Candidate(analysis::Candidate::Jet, id, object);
-    }
-
-    analysis::CandidateVector CollectJetsPt20()
-    {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectJetPt20(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("jetsPt20", base_selector, event.jets().size());
-    }
-
-    virtual analysis::Candidate SelectJetPt20(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData, const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::jetID;
-        const static double ptCut = 20.0;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Jet& object = event.jets().at(id);
-
-        cut(true, ">0 jet cand");
-        cut(X(pt) > ptCut, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        //cut(X(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passLooseID = analysis::passPFLooseId(object);
-        cut(Y(passLooseID) == pfLooseID, "pfLooseID");
-        const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
-        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
-
-        return Candidate(analysis::Candidate::Jet, id, object);
+        return jets;
     }
 
     void ApplyTauCorrections(const finalState::TauTau& mcFinalState, bool useLegacyCorrections)

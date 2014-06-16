@@ -30,6 +30,7 @@
 #include "Tools.h"
 #include "AnalysisTools.h"
 #include "Htautau_TriggerEfficiency.h"
+#include "BTagWeight.h"
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \

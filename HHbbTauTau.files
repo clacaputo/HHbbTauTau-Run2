@@ -213,3 +213,4 @@ SVfit/source/LikelihoodFunctions.cc
 SVfit/source/NSVfitStandaloneAlgorithm.cc
 SVfit/source/NSVfitStandaloneLikelihood.cc
 SVfit/source/svFitAuxFunctions.cc
+Analysis/include/BTagWeight.h

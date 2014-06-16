@@ -247,6 +247,8 @@ namespace jetID {
 
     // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
     const bool pfLooseID = true; // =
+
+    const double pt_loose = 20; // >
 }
 
 namespace btag {
