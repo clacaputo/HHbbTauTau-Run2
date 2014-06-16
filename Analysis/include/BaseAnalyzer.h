@@ -140,6 +140,7 @@ protected:
         CalculateIsoWeights(candidate);
         CalculateIdWeights(candidate);
         CalculateDMWeights(candidate);
+        CalculateFakeWeights(candidate);
         for (double weight : triggerWeights){
             eventWeight *= weight;
         }
@@ -149,15 +150,19 @@ protected:
         for (double weight : IDweights){
             eventWeight *= weight;
         }
-        for (double weight : DMweights){
-            eventWeight *= weight;
-        }
+//        for (double weight : DMweights){
+//            eventWeight *= weight;
+//        }
+//        for (double weight : fakeWeights){
+//            eventWeight *= weight;
+//        }
     }
 
     virtual void CalculateTriggerWeights(const Candidate& candidate) = 0;
     virtual void CalculateIsoWeights(const Candidate& candidate) = 0;
     virtual void CalculateIdWeights(const Candidate& candidate) = 0;
     virtual void CalculateDMWeights(const Candidate& candidate) = 0;
+    virtual void CalculateFakeWeights(const Candidate& candidate) = 0;
 
     bool HaveTriggerFired(const std::vector<std::string>& interestinghltPaths) const
     {
@@ -351,7 +356,7 @@ protected:
     GenEvent genEvent;
     Vertex primaryVertex;
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
-    std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights;
+    std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
     std::shared_ptr<TH1D> weights;
     MvaMetProducer mvaMetProducer;
     PostRecoilCorrectionProducer postRecoilCorrectionProducer;

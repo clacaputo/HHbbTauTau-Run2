@@ -603,11 +603,17 @@ public:
 //    if(fabs(eta)<1.5)  return efficiency(pt,18.88740627,0.10718873,0.12277723,1.60581265,0.95041892);
 //    else               return efficiency(pt,18.30439676,1.44360240,3.79358997,1.07560564,0.93103925);
 //  }
+    //old
+//    double effTau_muTau_MC_2012ABCD(double pt, double eta) {
+//        if(fabs(eta)<1.5)  return efficiency(pt, 18.537441,    1.385790,    3.102076,    1.002486,    6.275127);
+//        else               return efficiency(pt, 18.393366,    1.526254,    2.021678,    124.741631,    0.894280);
+//    }
 
     double effTau_muTau_MC_2012ABCD(double pt, double eta) {
-        if(fabs(eta)<1.5)  return efficiency(pt, 18.537441,    1.385790,    3.102076,    1.002486,    6.275127);
-        else               return efficiency(pt, 18.393366,    1.526254,    2.021678,    124.741631,    0.894280);
+        if(fabs(eta)<1.5)  return efficiency(pt, 18.532997, 1.027880, 2.262950, 1.003322, 5.297292);
+        else               return efficiency(pt, 18.212782, 0.338119, 0.122828, 12.577926, 0.893975);
     }
+
 
 
   //********************************
