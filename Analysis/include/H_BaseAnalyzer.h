@@ -112,14 +112,16 @@ protected:
         return analysis::Candidate(analysis::Candidate::Mu, id, object);
     }
 
-    CandidateVector CollectBJets(const CandidateVector& looseJets)
+    CandidateVector CollectBJets(const CandidateVector& looseJets, bool doReTag)
     {
         using namespace cuts::Htautau_Summer13::btag;
         analysis::CandidateVector bjets;
         for(const Candidate& looseJetCandidate : looseJets) {
             const ntuple::Jet& looseJet = event.jets().at(looseJetCandidate.index);
             if(looseJet.pt <= pt || std::abs(looseJet.eta) >= eta) continue;
-            if(useMCtruth && !analysis::btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, 0, 0, CSV))
+            if(doReTag && !analysis::btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, 0, 0, CSV))
+                continue;
+            else if(!doReTag && looseJet.combinedSecondaryVertexBJetTags <= CSV)
                 continue;
 
             bjets.push_back(looseJetCandidate);
@@ -311,8 +313,8 @@ protected:
 
     void FillSyncTree(const Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
                       const CandidateVector& jets, const CandidateVector& jetsPt20,
-                      const CandidateVector& bjets, const VertexVector& vertices, const Candidate& leg1,
-                      const Candidate& leg2)
+                      const CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
+                      const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2)
     {
         static const double default_value = ntuple::DefaultFillValueForSyncTree();
         syncTree.run() = event.eventInfo().run;
@@ -461,7 +463,7 @@ protected:
             syncTree.jpass_2() = default_value;
         }
 
-        syncTree.nbtag() = bjets.size();
+        syncTree.nbtag() = retagged_bjets.size();
 
         if (bjets.size() >= 1) {
             const Candidate& bjet = bjets.at(0);

@@ -113,7 +113,8 @@ protected:
 
 
         const auto jets = CollectJets(filteredLooseJets);
-        const auto bjets = CollectBJets(filteredLooseJets);
+        const auto bjets = CollectBJets(filteredLooseJets, false);
+        const auto retagged_bjets = CollectBJets(filteredLooseJets, useMCtruth);
 
         //Apply Post Recoil Corrections
         ApplyPostRecoilCorrections(higgs, muTau.resonance, jets.size());
@@ -126,7 +127,7 @@ protected:
         CalculateFullEventWeight(higgs);
 
 //        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, filteredJets, jetsPt20, bjets, vertices);
-        FillSyncTree(higgs, m_sv, m_sv, m_sv, jets, looseJets, bjets, vertices);
+        FillSyncTree(higgs, m_sv, m_sv, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices);
 
         //postRecoilMET = mvaMet;
 //        postRecoilMET = correctedMET; //tau corrections
@@ -307,14 +308,16 @@ protected:
 
     void FillSyncTree(const analysis::Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets, const analysis::VertexVector& vertices)
+                      const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
+                      const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
         const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 //        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, m_sv_up, m_sv_down, jets, jetsPt20, bjets, vertices, muon, tau);
+        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, m_sv_up, m_sv_down, jets, jetsPt20, bjets, retagged_bjets,
+                                     vertices, muon, tau);
 
         syncTree.iso_1() = ntuple_muon.pfRelIso;
         syncTree.mva_1() = 0;

@@ -48,12 +48,12 @@ public:
     Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject) :
         type(_type), index(_index), charge(ntupleObject.charge),
         vertexPosition(ntupleObject.vx, ntupleObject.vy, ntupleObject.vz) {
-        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
+        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
     }
 
     Candidate(Type _type, size_t _index, const ntuple::Jet& ntupleObject) :
         type(_type), index(_index), charge(UnknownCharge()) {
-        momentum.SetPtEtaPhiE(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
+        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
     }
 
     Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type),

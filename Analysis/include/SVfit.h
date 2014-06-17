@@ -71,7 +71,11 @@ double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& me
 //                                             algo.mass());
 
     if(debug) {
-        std::cout << "SVfit mass = " << algo.mass() << ", SVfit pt = " << algo.pt() << std::endl;
+        std::cout << "original mass = " << higgsCandidate.momentum.M()
+                  << "\nOriginal momentum = " << higgsCandidate.momentum
+                  << "\nFirst daughter momentum = " << higgsCandidate.daughters.at(0).momentum
+                  << "\nSecond daughter momentum = " << higgsCandidate.daughters.at(1).momentum
+                  << "\nSVfit mass = " << algo.mass() << ", SVfit pt = " << algo.pt() << std::endl;
     }
     return algo.mass();
 //    return correctedCandidate;
