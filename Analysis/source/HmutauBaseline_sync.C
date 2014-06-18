@@ -144,6 +144,7 @@ protected:
         using namespace cuts::Htautau_Summer13::MuTau::muonID;
         cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
@@ -156,11 +157,11 @@ protected:
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (mu_vertex - primaryVertex.position).Perp();
+        const double dB_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
         cut(std::abs( Y(dB_PV) ) < dB, "dB");
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
 
-        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(event.triggerObjects(), trigger::hltPaths,muon);
 //        cut(Y(haveTriggerMatch), "triggerMatch");
@@ -208,6 +209,7 @@ protected:
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
@@ -215,13 +217,13 @@ protected:
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
+        const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(isTrackerMuon) == isTrackerMuon, "trackerMuon");
         cut(X(isPFMuon) == isPFMuon, "PFMuon");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        return muon;
     }
 
 
