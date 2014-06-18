@@ -80,7 +80,8 @@ public:
         if (channel == "mutau")
             drawHistos("idweight_1", 50, 0.95, 1.);
         //drawHistos("idweight_2", 50, 0.95, 1.);
-        drawHistos("isoweight_1", 100, 0.90, 1.);
+        if (channel == "etau" || channel == "mutau")
+            drawHistos("isoweight_1", 100, 0.90, 1.);
         //drawHistos("isoweight_2", 100, 0.90, 1.);
         //drawHistos("fakeweight", 25, 0.5, 1.5);
 
@@ -347,6 +348,12 @@ private:
             else if(myType == kInt_t && otherType == kInt_t)
                 FillAllHistograms<Int_t, Int_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
                                              *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kInt_t && otherType == kDouble_t)
+                FillAllHistograms<Int_t, Double_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
+            else if(myType == kDouble_t && otherType == kInt_t)
+                FillAllHistograms<Double_t, Int_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
+                                             *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
             else if(myType == kBool_t && otherType == kBool_t)
                 FillAllHistograms<Bool_t, Bool_t>(var, my_selector, other_selector, *Hmine_all, *Hother_all,
                                              *Hmine_common, *Hother_common, *Hmine_vs_other, *Hmine_diff, *Hother_diff);
@@ -481,8 +488,8 @@ private:
                              Hmine_common, Hother_common, Hmine_vs_other);
         FillInclusiveHistogram(my_values, my_selector, Hmine_all);
         FillInclusiveHistogram(other_values, other_selector, Hother_all);
-        FillExclusiveHistogram(my_values, my_selector, Hmine_diff, my_events_only_map);
-        FillExclusiveHistogram(other_values, other_selector, Hother_diff, other_events_only_map);
+
+        FillExclusiveHistogram(my_values, other_values, my_selector, other_selector, Hmine_diff, Hother_diff);
     }
 
     template<typename MyVarType, typename OtherVarType, typename MySelector, typename OtherSelector,
@@ -521,14 +528,34 @@ private:
         }
     }
 
-    template<typename VarType, typename Histogram, typename Selector>
-    void FillExclusiveHistogram(const std::vector<VarType>& values, const Selector& selector,
-                                Histogram& histogram, const EventToEntryMap& exclusive_event_to_entry_map)
+    template<typename MyVarType, typename OtherVarType, typename Histogram, typename MySelector, typename OtherSelector>
+    void FillExclusiveHistogram(const std::vector<MyVarType>& my_values,
+                                const std::vector<OtherVarType>& other_values,
+                                const MySelector& my_selector, const OtherSelector& other_selector,
+                                Histogram& my_histogram, Histogram& other_histogram)
     {
-        for(const auto& event_entry : exclusive_event_to_entry_map) {
-            if(selector(event_entry.second)) {
-                const VarType& value = values.at(event_entry.second);
-                histogram.Fill(value);
+        for (const auto& event_entry_pair : common_event_to_entry_pair_map){
+            const size_t my_entry = event_entry_pair.second.first;
+            const size_t other_entry = event_entry_pair.second.second;
+            if(my_selector(my_entry) && !other_selector(other_entry)){
+                const MyVarType& my_value = my_values.at(my_entry);
+                my_histogram.Fill(my_value);
+            }
+            if(!my_selector(my_entry) && other_selector(other_entry)){
+                const OtherVarType& other_value = other_values.at(other_entry);
+                other_histogram.Fill(other_value);
+            }
+        }
+        for(const auto& event_entry : my_events_only_map) {
+            if(my_selector(event_entry.second)) {
+                const MyVarType& value = my_values.at(event_entry.second);
+                my_histogram.Fill(value);
+            }
+        }
+        for(const auto& event_entry : other_events_only_map) {
+            if(other_selector(event_entry.second)) {
+                const OtherVarType& value = other_values.at(event_entry.second);
+                other_histogram.Fill(value);
             }
         }
     }
