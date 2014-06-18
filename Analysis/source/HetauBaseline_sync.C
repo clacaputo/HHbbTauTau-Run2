@@ -41,9 +41,7 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::ETau;
         finalState::ETaujet eTau;
-        if (useMCtruth && !FindAnalysisFinalState(eTau,false)) return;
-
-
+        if (useMCtruth && !FindAnalysisFinalState(eTau,false,true)) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -56,8 +54,7 @@ protected:
 
         const auto z_electrons = CollectZelectrons();
 //        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
-        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,
-                                                                 Candidate::Z, "Z_e_e", 0);
+        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,Candidate::Z, "Z_e_e", 0);
         cut(!z_electron_candidates.size(), "z_ee_veto");
 
         const auto muons_bkg = CollectBackgroundMuons();
@@ -72,7 +69,7 @@ protected:
                 ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
-        ApplyTauCorrections(eTau,event.metMVAeTau(), false);
+        ApplyTauCorrections(eTau, false);
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -102,24 +99,29 @@ protected:
 //            cut(maxDeltaR < 0.03, "DR_eleTau");
 //        }
 
-        const auto jetsPt20 = CollectJetsPt20();
-        const auto jets = CollectJets();
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),
+                                                                        event.jets(),primaryVertex,
+                                                                        vertices,event.taus());
 
-        const auto filteredJets = FilterCompatibleObjects(jets,higgs,cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
+        ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+
+        const auto looseJets = CollectLooseJets();
+
+        const auto filteredLooseJets = FilterCompatibleObjects(looseJets, higgs,
+                                                               cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
 
 
-        const auto bjets = CollectBJets(higgs);
-        ApplyCorrections(higgs, eTau.resonance, filteredJets.size());
-        const Candidate higgs_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
-        const Candidate higgs_sv_up = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
-        const Candidate higgs_sv_down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
+        const auto jets = CollectJets(filteredLooseJets);
+        const auto bjets = CollectBJets(filteredLooseJets, false);
+        const auto retagged_bjets = CollectBJets(filteredLooseJets, useMCtruth);
 
-        CalculateFullEventWeight(higgs_sv);
+        ApplyPostRecoilCorrections(higgs, eTau.resonance, jets.size());
+        const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 
-        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, filteredJets, jetsPt20, bjets, vertices);
+        CalculateFullEventWeight(higgs);
 
-//        postRecoilMET = correctedMET;
-//        FillSyncTree(higgs, higgs, higgs, higgs, filteredJets, jetsPt20, bjets, vertices);
+        FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices);
+
 
     }
 
@@ -226,23 +228,24 @@ protected:
         return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
-//    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
-//    {
-//        if(!H_BaseAnalyzer::FindAnalysisFinalState(final_state))
-//            return false;
+    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state, bool oneResonanceSelection, bool inclusive)
+    {
+        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state, oneResonanceSelection);
+        if(inclusive || !base_result)
+            return base_result;
 
-//        final_state.electron = final_state.tau_jet = nullptr;
-//        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-//            analysis::GenParticlePtrVector tauProducts;
-//            if (analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
-//                final_state.electron = tauProducts.at(0);
-//            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
-//                final_state.tau_jet = tau_MC;
-//        }
+        final_state.electron = final_state.tau_jet = nullptr;
+        for (const analysis::GenParticle* tau_MC : final_state.taus) {
+            analysis::GenParticlePtrVector tauProducts;
+            if (analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
+                final_state.electron = tauProducts.at(0);
+            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
+                final_state.tau_jet = tau_MC;
+        }
 
-//        if (!final_state.electron || !final_state.tau_jet) return false;
-//        return true;
-//    }
+        if (!final_state.electron || !final_state.tau_jet) return false;
+        return true;
+    }
 
     virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
@@ -296,18 +299,17 @@ protected:
     }
 
 
-    void FillSyncTree(const analysis::Candidate& higgs, const analysis::Candidate& higgs_sv,
-                      const analysis::Candidate& higgs_sv_up, const analysis::Candidate& higgs_sv_down,
+    void FillSyncTree(const analysis::Candidate& higgs, double m_sv,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets, const analysis::VertexVector& vertices)
+                      const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
+                      const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
         const ntuple::Electron& ntuple_electron = event.electrons().at(electron.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& ntuple_tau = event.taus().at(tau.index);
 
         H_BaseAnalyzer::
-                FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, jets, jetsPt20, bjets, vertices, electron, tau);
+                FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, electron, tau);
 
         syncTree.iso_1() = ntuple_electron.pfRelIso;
         syncTree.mva_1() = ntuple_electron.mvaPOGNonTrig;
@@ -323,3 +325,4 @@ private:
     BaselineAnalyzerData anaData;
 };
 
+#include "METPUSubtraction/interface/GBRProjectDict.cxx"
