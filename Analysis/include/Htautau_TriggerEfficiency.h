@@ -816,9 +816,15 @@ public:
 //    if(fabs(eta)<1.5)  return efficiency(pt,18.686211,    1.993524,    3.202713,    3.612693,    0.871640);
 //    else               return efficiency(pt,18.472954,    1.606388,    3.468975,    55.629620,    0.828977);
 //  }
+//  double effTau_eTau_Data_2012ABCD(double pt, double eta) {
+//    if(fabs(eta)<1.5)  return efficiency(pt, 18.538229,    0.651562,    0.324869,    13.099048,    0.902365);
+//    else               return efficiency(pt, 18.756548,    0.230732,    0.142859,    3.358497,    0.851919);
+//  }
+
+  //rebecca
   double effTau_eTau_Data_2012ABCD(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt, 18.538229,    0.651562,    0.324869,    13.099048,    0.902365);
-    else               return efficiency(pt, 18.756548,    0.230732,    0.142859,    3.358497,    0.851919);
+    if(fabs(eta)<1.5)  return efficiency(pt, 18.604910, 0.276042, 0.137039, 2.698437, 0.940721);
+    else               return efficiency(pt, 18.701715, 0.216523, 0.148111, 2.245081, 0.895320);
   }
 
   // original
@@ -826,9 +832,14 @@ public:
 //    if(fabs(eta)<1.5)  return efficiency(pt,18.431118,    1.572877,    3.301699,    4.760769,    0.899620);
 //    else               return efficiency(pt,18.257217,    1.632443,    9.283116,    40.219585,    0.858643);
 //  }
+//  double effTau_eTau_MC_2012ABCD(double pt, double eta) {
+//    if(fabs(eta)<1.5)  return efficiency(pt, 18.525766,    0.275904,    0.126185,    4.957594,    0.915910);
+//    else               return efficiency(pt, 18.552006,    0.632002,    0.426891,    133.934952,    0.866543);
+//  }
+
   double effTau_eTau_MC_2012ABCD(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt, 18.525766,    0.275904,    0.126185,    4.957594,    0.915910);
-    else               return efficiency(pt, 18.552006,    0.632002,    0.426891,    133.934952,    0.866543);
+    if(fabs(eta)<1.5)  return efficiency(pt, 18.605055, 0.264062, 0.139561, 4.792849, 0.915035);
+    else               return efficiency(pt, 18.557810, 0.280908, 0.119282, 17.749043, 0.865756);
   }
 
 
