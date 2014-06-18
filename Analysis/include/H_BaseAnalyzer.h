@@ -313,7 +313,7 @@ protected:
         return false;
     }
 
-    void FillSyncTree(const Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
+    void FillSyncTree(const Candidate& higgs, double m_sv,
                       const CandidateVector& jets, const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2)
@@ -349,8 +349,8 @@ protected:
         syncTree.pt_sv() = default_value;
         syncTree.eta_sv() = default_value;
         syncTree.phi_sv() = default_value;
-        syncTree.m_sv_Up() = m_sv_up;
-        syncTree.m_sv_Down() = m_sv_down;
+        syncTree.m_sv_Up() = default_value;
+        syncTree.m_sv_Down() = default_value;
 
         syncTree.pt_1() = leg1.momentum.Pt();
         syncTree.phi_1() = leg1.momentum.Phi();
