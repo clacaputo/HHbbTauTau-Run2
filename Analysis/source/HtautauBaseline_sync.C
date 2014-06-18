@@ -78,10 +78,11 @@ protected:
 
         cut(higgses_tautau.size(), "tau_tau selection");
 
-        const auto jetsPt20 = CollectJetsPt20();
-        const auto jets = CollectJets();
+        const auto looseJets = CollectLooseJets();
+        const auto jets = CollectJets(looseJets);
 
         const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses_tautau,jets);
+        const Higgs_JetsMap higgs_looseJetsMap = MatchedHiggsAndJets(higgses_tautau, looseJets);
 
         const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
@@ -102,7 +103,8 @@ protected:
         ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
 
 
-        const auto bjets = CollectBJets(higgs);
+        const auto bjets = CollectBJets(higgs_looseJetsMap.at(higgs), false);
+        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), useMCtruth);
 
         ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
 //        postRecoilMET = correctedMET; //with tau corrections
@@ -114,7 +116,8 @@ protected:
         CalculateFullEventWeight(higgs);
 
 //        FillSyncTree(higgs, higgs_sv, higgs_sv_up, higgs_sv_down, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
-        FillSyncTree(higgs, m_sv, m_sv, m_sv, higgs_JetsMap.at(higgs), jetsPt20, bjets, vertices);
+        FillSyncTree(higgs, m_sv, m_sv, m_sv, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs), bjets,
+                     retagged_bjets, vertices);
 
         //postRecoilMET = mvaMet;
 //        postRecoilMET = correctedMET; //with tau corrections
@@ -202,7 +205,8 @@ protected:
                 bool jetMatched = false;
                 if(jetTriggerRequest) {
                     for (const auto& jet : jets){
-                        if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, jet)){
+                        if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(),
+                                                                                     interestingPath, jet)){
                             jetMatched = true;
                             break;
                         }
@@ -302,14 +306,16 @@ protected:
 
     void FillSyncTree(const analysis::Candidate& higgs, double m_sv, double m_sv_up, double m_sv_down,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets, const analysis::VertexVector& vertices)
+                      const analysis::CandidateVector& bjets,  const analysis::CandidateVector& retagged_bjets,
+                      const analysis::VertexVector& vertices)
     {
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
 //        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(subLeadTau.index);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, m_sv_up, m_sv_down, jets, jetsPt20, bjets, vertices, leadTau, subLeadTau);
+        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, m_sv_up, m_sv_down, jets, jetsPt20, bjets, retagged_bjets, vertices,
+                                     leadTau, subLeadTau);
 
         syncTree.iso_1() = ntuple_tau_leg1.byIsolationMVAraw;
         syncTree.mva_1() = 0;
