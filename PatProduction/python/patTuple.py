@@ -101,11 +101,12 @@ if options.keepPat:
         'keep patTriggerEvent_*_*_*',
         'keep *_particleFlow_*_*'
     ])
-
-if options.includeSim:
-    process.out.outputCommands.extend([
-        'keep recoGenParticles_genParticles_*_*',
-        'keep *_genMetTrue_*_*'
-    ])
+    if options.includeSim:
+        process.out.outputCommands.extend([
+            'keep recoGenParticles_genParticles_*_*',
+            'keep *_genMetTrue_*_*'
+        ])
+else:
+    process.out.dropMetaData = cms.untracked.string('ALL')
 
 #print process.dumpPython()
