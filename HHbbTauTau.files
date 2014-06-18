@@ -46,7 +46,7 @@ PatProduction/crab/crab_cern.cfg
 PatProduction/crab/multicrab.cfg
 PatProduction/crab/multicrab_DY.cfg
 PatProduction/crab/multicrab_Embedded.cfg
-PatProduction/crab/multicrab_TT_W.cfg
+PatProduction/crab/multicrab_TT.cfg
 PatProduction/crab/multicrab_Tau.cfg
 PatProduction/crab/multicrab_TauPlusX.cfg
 PatProduction/crab/multicrab_VV.cfg
@@ -214,3 +214,5 @@ SVfit/source/NSVfitStandaloneAlgorithm.cc
 SVfit/source/NSVfitStandaloneLikelihood.cc
 SVfit/source/svFitAuxFunctions.cc
 Analysis/include/BTagWeight.h
+PatProduction/crab/multicrab_Wjets.cfg
+PatProduction/crab/multicrab_SM_Higgs.cfg
