@@ -66,7 +66,7 @@ protected:
         using namespace cuts::Htautau_Summer13::electronVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Electron& object = event.electrons().at(id);
-        const analysis::Candidate electron(analysis::Candidate::Mu, id, object);
+        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
 
         cut(true, ">0 ele cand");
         cut(X(pt) > pt, "pt");
@@ -75,7 +75,7 @@ protected:
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum);; // same as dB
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;

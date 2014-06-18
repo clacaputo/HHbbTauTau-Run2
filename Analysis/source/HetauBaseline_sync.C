@@ -133,6 +133,7 @@ protected:
         using namespace cuts::Htautau_Summer13::ETau::electronID;
         cuts::Cutter cut(objectSelector);
         const ntuple::Electron& object = event.electrons().at(id);
+        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
 
         cut(true, ">0 ele cand");
         cut(X(pt) > pt, "pt");
@@ -143,8 +144,8 @@ protected:
         cut(X(missingHits) < missingHits, "missingHits");
         cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (ele_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
@@ -173,9 +174,9 @@ protected:
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
-        const TVector3 tau_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = (tau_vertex - primaryVertex.position).Perp();
-        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+//        const TVector3 tau_vertex(object.vx, object.vy, object.vz);
+//        const double dB_PV = (tau_vertex - primaryVertex.position).Perp();
+//        cut(std::abs( Y(dB_PV) ) < dB, "dB");
 
 
 //        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);

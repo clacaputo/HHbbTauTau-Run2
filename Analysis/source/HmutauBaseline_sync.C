@@ -151,6 +151,9 @@ protected:
         cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+
 
         const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
 

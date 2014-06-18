@@ -76,6 +76,9 @@ namespace MuTau {
         const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
                                                       // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+
+        // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/HiggsHTohh/test/HiggsHTohh.cpp#L1086
+        const double dz = 0.2; // <
    }
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
@@ -123,7 +126,7 @@ namespace ETau {
         const double dz = 0.2; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
         const int missingHits = 1; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
         const bool hasMatchedConversion = false; // =  HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double dB = 0.045; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double d0 = 0.045; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
         const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Muon_Isolation
         const double scEta_min[2] = { 0.8, 1.479 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
         const double MVApogNonTrig[3] = { 0.925, 0.975, 0.985 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
@@ -145,8 +148,9 @@ namespace ETau {
             0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95,0.897,0.958,0.955,0.942
         };
         // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauEleAnalyzer.py#L187
-        const double dz = 0.2;
-        const double dB = 0.045;
+        // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/HiggsHTohh/test/HiggsHTohh.cpp#L1060 (no dB)
+        const double dz = 0.2; // <
+        const double dB = 0.045; // <
     }
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
