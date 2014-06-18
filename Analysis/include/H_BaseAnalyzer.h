@@ -66,6 +66,7 @@ protected:
         using namespace cuts::Htautau_Summer13::electronVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Electron& object = event.electrons().at(id);
+        const analysis::Candidate electron(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 ele cand");
         cut(X(pt) > pt, "pt");
@@ -74,7 +75,7 @@ protected:
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = (ele_vertex - primaryVertex.position).Perp(); // same as dB
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum);; // same as dB
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t pt_index = object.pt < ref_pt ? 0 : 1;
@@ -83,7 +84,7 @@ protected:
         cut(X(missingHits) < missingHits, "missingHits");
         cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
 
-        return analysis::Candidate(analysis::Candidate::Electron, id, object);
+        return electron;
     }
 
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
@@ -93,6 +94,7 @@ protected:
         using namespace cuts::Htautau_Summer13::muonVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event.muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
@@ -100,7 +102,7 @@ protected:
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = (mu_vertex - primaryVertex.position).Perp();
+        const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
         cut(X(isPFMuon) == isPFMuon, "PF");
@@ -109,7 +111,7 @@ protected:
         cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
 
-        return analysis::Candidate(analysis::Candidate::Mu, id, object);
+        return muon;
     }
 
     CandidateVector CollectBJets(const CandidateVector& looseJets, bool doReTag)

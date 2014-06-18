@@ -170,7 +170,7 @@ inline double Calculate_MT(const TLorentzVector& lepton_momentum, double met_pt,
 // from DataFormats/TrackReco/interface/TrackBase.h
 inline double Calculate_dxy(const TVector3& legV, const TVector3& PV, const TLorentzVector& leg)
 {
-    return ( (legV.x()-PV.x()) * leg.Py() + (legV.y()-PV.y()) * leg.Px() ) / leg.Pt();
+    return ( - (legV.x()-PV.x()) * leg.Py() + (legV.y()-PV.y()) * leg.Px() ) / leg.Pt();
 }
 
 // from DataFormats/TrackReco/interface/TrackBase.h
