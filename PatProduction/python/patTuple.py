@@ -50,13 +50,13 @@ else:
 ## Remove MC matching from the default sequence
 if not options.isMC:
     # workaround for ill-written removeMCMatching code...
-    patJetsTriggerMatch.addGenPartonMatch   = cms.bool(False)
-    patJetsTriggerMatch.embedGenPartonMatch = cms.bool(False)
-    patJetsTriggerMatch.genPartonMatch      = cms.InputTag('')
-    patJetsTriggerMatch.addGenJetMatch      = cms.bool(False)
-    patJetsTriggerMatch.genJetMatch         = cms.InputTag('')
-    patJetsTriggerMatch.getJetMCFlavour     = cms.bool(False)
-    patJetsTriggerMatch.JetPartonMapSource  = cms.InputTag('')
+    process.patJetsTriggerMatch.addGenPartonMatch   = cms.bool(False)
+    process.patJetsTriggerMatch.embedGenPartonMatch = cms.bool(False)
+    process.patJetsTriggerMatch.genPartonMatch      = cms.InputTag('')
+    process.patJetsTriggerMatch.addGenJetMatch      = cms.bool(False)
+    process.patJetsTriggerMatch.genJetMatch         = cms.InputTag('')
+    process.patJetsTriggerMatch.getJetMCFlavour     = cms.bool(False)
+    process.patJetsTriggerMatch.JetPartonMapSource  = cms.InputTag('')
 
     removeMCMatching(process, ['All'])
     process.patDefaultSequence.remove(process.patJetPartonMatch)
