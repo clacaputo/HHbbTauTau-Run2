@@ -73,7 +73,7 @@ process.p = cms.Path(
     process.patDefaultSequence *
     process.patMuonsWithEmbeddedVariables *
     process.patElectronsWithEmbeddedVariables *
-    process.patJetsWithEmbeddedVariables *
+    process.PatJetsWithEmbeddedVariables *
     process.patVertices *
     process.bbttSkim *
     process.mainTreeContentSequence *
@@ -86,7 +86,7 @@ process.out.outputCommands = [ 'drop *' ]
 if options.keepPat:
     process.out.outputCommands.extend([
         'keep patElectrons_patElectronsWithEmbeddedVariables_*_*',
-        'keep patJets_patJetsWithEmbeddedVariables_*_*',
+        'keep patJets_PatJetsWithEmbeddedVariables_*_*',
         'keep patMETs_*_*_*',
         'keep patMuons_patMuonsWithEmbeddedVariables_*_*',
         'keep patTaus_patTausTriggerMatch_*_*',

@@ -160,7 +160,7 @@ def applyJetParameters(process, isMC):
         cms.InputTag('pileupJetIdProducer', 'metId')
     )
 
-    process.patJetsWithEmbeddedVariables = cms.EDProducer('JetUserEmbedder',
+    process.PatJetsWithEmbeddedVariables = cms.EDProducer('JetUserEmbedder',
         jetTag = cms.InputTag("patJetsTriggerMatch"),
         corrector = cms.string("ak5PFL1Fastjet")
     )

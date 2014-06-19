@@ -10,7 +10,7 @@ def applyTriggerParameters(process):
 
     ## PAT trigger matching
     ## muons
-    process.patMuonsHLTMatch = cms.EDProducer(
+    process.HLTMatchPatMuons = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -30,7 +30,7 @@ def applyTriggerParameters(process):
       )
 
     ## electrons
-    process.patElectronsHLTMatch = cms.EDProducer(
+    process.HLTMatchPatElectrons = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -50,7 +50,7 @@ def applyTriggerParameters(process):
     )
 
     ## taus
-    process.patTausHLTMatch = cms.EDProducer(
+    process.HLTMatchPatTaus = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -77,7 +77,7 @@ def applyTriggerParameters(process):
       )
 
     ## jets
-    process.patJetsHLTMatch = cms.EDProducer(
+    process.HLTMatchPatJets = cms.EDProducer(
         # matching in DeltaR, sorting by best DeltaR
         "PATTriggerMatcherDRLessByR"
         # matcher input collections
@@ -98,10 +98,10 @@ def applyTriggerParameters(process):
       )
 
     switchOnTriggerMatchEmbedding(process, triggerMatchers = [
-                  'patMuonsHLTMatch',
-                  'patElectronsHLTMatch',
-                  'patTausHLTMatch',
-                  'patJetsHLTMatch'
+                  'HLTMatchPatMuons',
+                  'HLTMatchPatElectrons',
+                  'HLTMatchPatTaus',
+                  'HLTMatchPatJets'
           ])
 
     return
