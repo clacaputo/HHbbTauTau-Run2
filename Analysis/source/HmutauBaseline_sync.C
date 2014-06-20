@@ -214,17 +214,10 @@ protected:
 
     virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
-        triggerWeights.clear();
+        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::MuTau;
         const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        analysis::Htautau_Summer13::TriggerEfficiency efficiency;
-        const double eff_data_Mu = efficiency.effMu_muTau_Data_2012ABCD(mu.momentum.Pt(), mu.momentum.Eta());
-        const double eff_data_Tau = efficiency.effTau_muTau_Data_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
-        const double eff_mc_Mu = efficiency.effMu_muTau_MC_2012ABCD(mu.momentum.Pt(), mu.momentum.Eta());
-        const double eff_mc_tau = efficiency.effTau_muTau_MC_2012ABCD(tau.momentum.Pt(), tau.momentum.Eta());
-        // first mu, second tau
-        triggerWeights.push_back(eff_data_Mu/eff_mc_Mu);
-        triggerWeights.push_back(eff_data_Tau/eff_mc_tau);
+        triggerWeights = CalculateWeights(mu.momentum, tau.momentum);
     }
 
     virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override

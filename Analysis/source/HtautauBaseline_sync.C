@@ -245,17 +245,10 @@ protected:
 
     virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
-        triggerWeights.clear();
+        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::TauTau;
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
-        analysis::Htautau_Summer13::TriggerEfficiency efficiency;
-        const double eff_data_leadTau = efficiency.eff2012IsoParkedTau19fb_Simone(leadTau.momentum.Pt(), leadTau.momentum.Eta());
-        const double eff_data_subLeadTau = efficiency.eff2012IsoParkedTau19fb_Simone(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
-        const double eff_mc_leadTau = efficiency.eff2012IsoParkedTau19fbMC_Simone(leadTau.momentum.Pt(), leadTau.momentum.Eta());
-        const double eff_mc_subLeadTau = efficiency.eff2012IsoParkedTau19fbMC_Simone(subLeadTau.momentum.Pt(), subLeadTau.momentum.Eta());
-        // first leadTau, second subLeadTau
-        triggerWeights.push_back(eff_data_leadTau/eff_mc_leadTau);
-        triggerWeights.push_back(eff_data_subLeadTau/eff_mc_subLeadTau);
+        triggerWeights = CalculateWeights(leadTau.momentum, subLeadTau.momentum);
     }
 
     virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
