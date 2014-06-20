@@ -210,23 +210,35 @@ protected:
         using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Electron& object = event.electrons().at(id);
+        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
 
         cut(true, ">0 mu cand");
+//        std::cout << "Z ee" <<  std::endl;
+//        std::cout << "q = " << object.charge << std::endl;
+//        std::cout << "pt = " << object.pt << std::endl;
         cut(X(pt) > pt, "pt");
+//        std::cout << "eta = " << object.eta  << ", phi="<< object.phi << std::endl;
         cut(std::abs( X(eta) ) < eta, "eta");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+//        std::cout << "dz = " << DeltaZ << std::endl;
         cut(Y(DeltaZ)  < dz, "dz");
-//        const TVector3 e_vertex(object.vx, object.vy, object.vz);
-//        const double d0_PV = (e_vertex - primaryVertex.position).Perp();
-//        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+//        std::cout << "d0 = " << d0_PV << std::endl;
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+//        std::cout << "pfRelIso = " << object.pfRelIso << std::endl;
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
         const size_t eta_index = eta <= barrel_eta_high ? barrel_index : endcap_index;
+//        std::cout << "sigmaIEtaIEta = " << object.sigmaIEtaIEta << std::endl;
         cut(X(sigmaIEtaIEta) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
+//        std::cout << "deltaEtaTrkSC = " << object.deltaEtaTrkSC << std::endl;
         cut(X(deltaEtaTrkSC) < delta_eta[eta_index], "deltaEtaSC");
+//        std::cout << "deltaPhiTrkSC = " << object.deltaPhiTrkSC << std::endl;
         cut(X(deltaPhiTrkSC) < delta_phi[eta_index], "deltaPhiSC");
+//        std::cout << "eSuperClusterOverP = " << object.eSuperClusterOverP << std::endl;
         cut(X(eSuperClusterOverP) < HoverE[eta_index], "HoverE");
 
-        return analysis::Candidate(analysis::Candidate::Electron, id, object);
+        return electron;
     }
 
     bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state, bool oneResonanceSelection, bool inclusive)
