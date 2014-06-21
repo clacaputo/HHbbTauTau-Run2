@@ -1,0 +1,7 @@
+/store/user/kandroso/Tbar_tW/TREE/Tree_38_1_b9T.root
+/store/user/kandroso/Tbar_tW/TREE/Tree_42_1_Z72.root
+/store/user/kandroso/Tbar_tW/TREE/Tree_41_1_ESI.root
+/store/user/kandroso/Tbar_tW/TREE/Tree_29_1_tvh.root
+/store/user/kandroso/Tbar_tW/TREE/Tree_9_1_wxh.root
+/store/user/kandroso/Tbar_tW/TREE/Tree_11_2_5UG.root
+/store/user/kandroso/Tbar_tW/TREE/Tree_30_2_CEJ.root
