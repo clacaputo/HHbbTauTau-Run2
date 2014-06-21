@@ -1,3 +1,0 @@
-/store/user/kandroso/DYToMuMu_M20_8TeV/TREE/DYmumu_xbn_Tree.root
-/store/user/kandroso/DYToMuMu_M20_8TeV/TREE/DYmumu_xbp_Tree.root
-/store/user/kandroso/DYToMuMu_M20_8TeV/TREE/DYmumu_xeo_Tree.root

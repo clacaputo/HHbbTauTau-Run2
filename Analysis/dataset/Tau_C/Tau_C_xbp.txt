@@ -1,4 +1,0 @@
-/store/user/kandroso/Tau/Run2012C-22Jan2013-v1/TREE/Tau_C_xgy_Tree.root
-/store/user/kandroso/Tau/Run2012C-22Jan2013-v1/TREE/Tau_C_xgx_Tree.root
-/store/user/kandroso/Tau/Run2012C-22Jan2013-v1/TREE/Tau_C_xgr_Tree.root
-/store/user/kandroso/Tau/Run2012C-22Jan2013-v1/TREE/Tau_C_xgo_Tree.root

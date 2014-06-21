@@ -1,3 +1,0 @@
-/store/user/kandroso/WZ_8TeV/TREE/WZ_xae_Tree.root
-/store/user/kandroso/WZ_8TeV/TREE/WZ_xaf_Tree.root
-/store/user/kandroso/WZ_8TeV/TREE/WZ_xau_Tree.root

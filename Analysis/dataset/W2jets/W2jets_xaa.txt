@@ -1,4 +1,0 @@
-/store/user/kandroso/W2JetsToLNu_8TeV/TREE/W2jets_xai_Tree.root
-/store/user/kandroso/W2JetsToLNu_8TeV/TREE/W2jets_xam_Tree.root
-/store/user/kandroso/W2JetsToLNu_8TeV/TREE/W2jets_xae_Tree.root
-/store/user/kandroso/W2JetsToLNu_8TeV/TREE/W2jets_xaa_Tree.root
