@@ -1,4 +1,0 @@
-/store/user/grippo/VBF/TREE/vbf_xcm_Tree.root
-/store/user/grippo/VBF/TREE/vbf_xcn_Tree.root
-/store/user/grippo/VBF/TREE/vbf_xco_Tree.root
-/store/user/grippo/VBF/TREE/vbf_xcp_Tree.root
