@@ -1,4 +1,0 @@
-/store/user/kandroso/GGH/TREE/ggh_xay_Tree.root
-/store/user/kandroso/GGH/TREE/ggh_xaz_Tree.root
-/store/user/kandroso/GGH/TREE/ggh_xba_Tree.root
-/store/user/kandroso/GGH/TREE/ggh_xbb_Tree.root

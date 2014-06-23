@@ -1,0 +1,6 @@
+/store/user/kandroso/TTJets_FullLeptMGDecays/TREE/Tree_827_1_u2t.root
+/store/user/kandroso/TTJets_FullLeptMGDecays/TREE/Tree_213_1_lwG.root
+/store/user/kandroso/TTJets_FullLeptMGDecays/TREE/Tree_64_2_I9t.root
+/store/user/kandroso/TTJets_FullLeptMGDecays/TREE/Tree_869_1_f2W.root
+/store/user/kandroso/TTJets_FullLeptMGDecays/TREE/Tree_78_2_DFs.root
+/store/user/kandroso/TTJets_FullLeptMGDecays/TREE/Tree_930_1_dwW.root
