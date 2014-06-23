@@ -6,6 +6,7 @@ if [ $# -le 2 -o $# -ge 5 ] ; then
 fi
 
 INPUT_PATH=$1
+mkdir -p $(dirname $2)
 OUT_DIR=$(echo $(cd $(dirname $2); pwd))
 OUT_FILE_NAME=$(basename $2)
 OUT_FILE=$OUT_DIR/$OUT_FILE_NAME
