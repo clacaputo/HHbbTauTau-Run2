@@ -4,6 +4,9 @@
  * \author Konstantin Androsov (INFN Pisa, Siena University)
  * \author Maria Teresa Grippo (INFN Pisa, Siena University)
  * \date 2014-04-28 created
+ *
+ * Command line to compile standalone version:
+ * g++ -o Print_SyncPlots -std=c++0x -I$( root-config --incdir ) $( root-config --libs ) -D STANDALONE Print_SyncPlots.C
  */
 
 #include <set>
@@ -25,21 +28,62 @@
 #include <Rtypes.h>
 #include <TError.h>
 
+struct EventId{
+    unsigned runId;
+    unsigned lumiBlock;
+    unsigned eventId;
+    static const EventId& Undef_event() {
+        static const EventId undef_event;
+        return undef_event;
+    }
+
+    EventId() : runId(std::numeric_limits<UInt_t>::max()), lumiBlock(std::numeric_limits<UInt_t>::max()),
+                eventId(std::numeric_limits<UInt_t>::max()){}
+
+    EventId(unsigned _runId, unsigned _lumiBlock, unsigned _eventId) : runId(_runId), lumiBlock(_lumiBlock),
+                eventId(_eventId){}
+
+    bool operator == (const EventId& other) const
+    {
+        return !(*this != other);
+    }
+
+    bool operator != (const EventId& other) const
+    {
+        return runId != other.runId || lumiBlock != other.lumiBlock || eventId != other.eventId;
+    }
+
+    bool operator < (const EventId& other) const
+    {
+        if(runId < other.runId) return true;
+        if(runId > other.runId) return false;
+        if(lumiBlock < other.lumiBlock) return true;
+        if(lumiBlock > other.lumiBlock) return false;
+        return eventId < other.eventId;
+    }
+};
+
+std::ostream& operator <<(std::ostream& s, const EventId& event)
+{
+    s << "run = " << event.runId << ", lumi =" << event.lumiBlock << ", evt = " << event.eventId;
+    return s;
+}
+
 class Print_SyncPlots {
 public:
-    typedef std::set<Int_t> EventSet;
-    typedef std::vector<Int_t> EventVector;
-    typedef std::map<Int_t, size_t> EventToEntryMap;
+    typedef std::set<EventId> EventSet;
+    typedef std::vector<EventId> EventVector;
+    typedef std::map<EventId, size_t> EventToEntryMap;
     typedef std::pair<size_t, size_t> EntryPair;
-    typedef std::map<Int_t, EntryPair> EventToEntryPairMap;
+    typedef std::map<EventId, EntryPair> EventToEntryPairMap;
 
-    Print_SyncPlots(const std::string& _channel,
+    Print_SyncPlots(const std::string& _channel, const std::string& _sample,
                     const std::string& _myGroup, const std::string& _myRootFile, const std::string& _myTree,
                     const std::string& _group, const std::string& _groupRootFile, const std::string& _groupTree)
-        : channel(_channel), myGroup(_myGroup), myRootFile(_myRootFile), myTree(_myTree),
+        : channel(_channel), sample(_sample), myGroup(_myGroup), myRootFile(_myRootFile), myTree(_myTree),
           group(_group), groupRootFile(_groupRootFile), groupTree(_groupTree), isFirstPage(true), isLastDraw(false)
     {
-        std::cout << channel << std::endl;
+        std::cout << channel << " " << sample << std::endl;
         std::cout << myGroup << "  " << myRootFile << "  " << myTree << std::endl;
         std::cout << group << "  " << groupRootFile << "  " << groupTree << std::endl;
 
@@ -51,7 +95,7 @@ public:
         std::cout << "Mine: " << Fmine->GetName() << std::endl;
         std::cout << "Other: " << Fother->GetName() << std::endl;
 
-        file_name = std::string("PlotsDiff_") + channel + "_" + myGroup + "_" + group + ".pdf";
+        file_name = std::string("PlotsDiff_") + channel + "_" + sample + "_" + myGroup + "_" + group + ".pdf";
 
         gErrorIgnoreLevel = kWarning;
     }
@@ -59,9 +103,6 @@ public:
     void Run()
     {
         using namespace std;
-
-//        canvas.Print((file_name+"[").c_str());
-
 
         //drawHistos("run", 200, 0, 200000);
         //drawHistos("lumi", 2000, 0, 2000);
@@ -263,11 +304,6 @@ public:
             //number of btags passing btag id (medium CSV WP) ( pt > 20 )
         isLastDraw = true;
         drawHistos("nbtag", 5, -0.5, 4.5);
-
-
-
-
-//        canvas.Print((file_name+"]").c_str());
     }
 
 private:
@@ -372,7 +408,7 @@ private:
             Draw2DHistogram(Hmine_vs_other, selection_label, var);
 
         } catch(std::runtime_error& e){
-            std::cerr << "ERROR: " << e.what() << std::endl;
+            std::cerr << "WARNING: " << e.what() << std::endl;
         }
     }
 
@@ -562,9 +598,9 @@ private:
 
     void CollectEvents(TTree* my_tree, TTree* other_tree)
     {
-        my_events = CollectValues<Int_t>(my_tree, "evt");
+        my_events = CollectEventIds(my_tree);
         const EventSet my_events_set(my_events.begin(), my_events.end());
-        other_events = CollectValues<Int_t>(other_tree, "evt");
+        other_events = CollectEventIds(other_tree);
         const EventSet other_events_set(other_events.begin(), other_events.end());
 
         EventSet intersection, my_events_only, other_events_only;
@@ -653,6 +689,18 @@ private:
         return result;
     }
 
+    EventVector CollectEventIds(TTree* tree)
+    {
+        const std::vector<Int_t> run = CollectValues<Int_t>(tree, "run");
+        const std::vector<Int_t> lumi = CollectValues<Int_t>(tree, "lumi");
+        const std::vector<Int_t> evt = CollectValues<Int_t>(tree, "evt");
+
+        EventVector events;
+        for(size_t n = 0; n < evt.size(); ++n)
+            events.push_back(EventId(run.at(n), lumi.at(n), evt.at(n)));
+        return events;
+    }
+
     void EnableBranch(TTree* tree, const std::string& name, bool enable)
     {
         UInt_t n_found = 0;
@@ -678,7 +726,7 @@ private:
     }
 
 private:
-    std::string channel, myGroup, myRootFile, myTree, group, groupRootFile, groupTree;
+    std::string channel, sample, myGroup, myRootFile, myTree, group, groupRootFile, groupTree;
     std::shared_ptr<TFile> Fmine, Fother;
     TTree *Tmine, *Tother;
 
@@ -690,3 +738,53 @@ private:
     std::string file_name;
     bool isFirstPage, isLastDraw;
 };
+
+namespace make_tools {
+template<typename T>
+struct Factory;
+
+template<>
+struct Factory<Print_SyncPlots> {
+    static Print_SyncPlots* Make(int argc, char *argv[])
+    {
+        if(argc != 9) {
+            std::cerr << "Usage: channel sample myGroup myRootFile myTree group groupRootFile groupTree" << std::endl;
+            throw std::runtime_error("Invalid number of command line arguments.");
+        }
+
+        int n = 0;
+        const std::string channel = argv[++n];
+        const std::string sample = argv[++n];
+        const std::string myGroup = argv[++n];
+        const std::string myRootFile = argv[++n];
+        const std::string myTree = argv[++n];
+        const std::string group = argv[++n];
+        const std::string groupRootFile = argv[++n];
+        const std::string groupTree = argv[++n];
+
+        return new Print_SyncPlots(channel, sample, myGroup, myRootFile, myTree, group, groupRootFile, groupTree);
+    }
+};
+} // make_tools
+
+#ifdef STANDALONE
+
+#include <TROOT.h>
+#include <iostream>
+#include <memory>
+
+int main(int argc, char *argv[])
+{
+        try {
+                gROOT->ProcessLine("#include <vector>");
+                std::unique_ptr<Print_SyncPlots> a( make_tools::Factory<Print_SyncPlots>::Make(argc, argv) );
+                a->Run();
+        }
+        catch(std::exception& e) {
+                std::cerr << "ERROR: " << e.what() << std::endl;
+                return 1;
+        }
+        return 0;
+}
+
+#endif
