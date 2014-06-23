@@ -9,6 +9,7 @@
 #pragma once
 
 #include <limits>
+#include <iostream>
 
 namespace analysis {
 
@@ -29,13 +30,28 @@ struct EventId{
 
     bool operator == (const EventId& other) const
     {
-        return runId == other.runId && lumiBlock == other.lumiBlock && eventId == other.eventId;
+        return !(*this != other);
     }
 
     bool operator != (const EventId& other) const
     {
         return runId != other.runId || lumiBlock != other.lumiBlock || eventId != other.eventId;
     }
+
+    bool operator < (const EventId& other) const
+    {
+        if(runId < other.runId) return true;
+        if(runId > other.runId) return false;
+        if(lumiBlock < other.lumiBlock) return true;
+        if(lumiBlock > other.lumiBlock) return false;
+        return eventId < other.eventId;
+    }
 };
 
 } // analysis
+
+inline std::ostream& operator <<(std::ostream& s, const analysis::EventId& event)
+{
+    s << "run = " << event.runId << ", lumi =" << event.lumiBlock << ", evt = " << event.eventId;
+    return s;
+}

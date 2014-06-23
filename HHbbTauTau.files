@@ -216,3 +216,4 @@ SVfit/source/svFitAuxFunctions.cc
 Analysis/include/BTagWeight.h
 PatProduction/crab/multicrab_Wjets.cfg
 PatProduction/crab/multicrab_SM_Higgs.cfg
+PrintTools/source/Makefile.Print_SyncPlots
