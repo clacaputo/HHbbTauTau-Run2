@@ -149,9 +149,9 @@ protected:
         for (double weight : IDweights){
             eventWeight *= weight;
         }
-//        for (double weight : DMweights){
-//            eventWeight *= weight;
-//        }
+        for (double weight : DMweights){
+            eventWeight *= weight;
+        }
 //        for (double weight : fakeWeights){
 //            eventWeight *= weight;
 //        }

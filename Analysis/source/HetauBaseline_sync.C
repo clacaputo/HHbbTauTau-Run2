@@ -304,6 +304,18 @@ protected:
         IDweights.push_back(1);
     }
 
+    virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
+    {
+        DMweights.clear();
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        const ntuple::Tau& tau_leg = correctedTaus.at(tau.index);
+        const double weight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ?
+                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
+        // first electron, second tau
+        DMweights.push_back(1);
+        DMweights.push_back(weight);
+    }
+
 
     void FillSyncTree(const analysis::Candidate& higgs, double m_sv,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,

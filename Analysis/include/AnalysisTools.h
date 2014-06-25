@@ -130,6 +130,7 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
     return false;
 }
 
+//https://github.com/ajgilbert/ICHiggsTauTau/blob/38f0bedebe1e7ff432bdcbd7753f38cfaf95405f/plugins/MVAMETPairProducer.cc#L410
 inline bool passPFLooseId(const ntuple::Jet& jet)
 {
     TLorentzVector momentum;
