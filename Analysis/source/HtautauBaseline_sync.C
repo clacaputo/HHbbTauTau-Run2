@@ -18,9 +18,9 @@ public:
 class HtautauBaseline_sync : public analysis::H_BaseAnalyzer {
 public:
     HtautauBaseline_sync(const std::string& inputFileName, const std::string& outputFileName,
-                          const std::string& _prefix = "none", Long64_t _maxNumberOfEvents = 0,
-                          bool _useMCtruth = false, const std::string& reweightFileName = "none")
-        : H_BaseAnalyzer(inputFileName,outputFileName,_prefix,_maxNumberOfEvents,_useMCtruth, reweightFileName),
+                         const std::string& configFileName, const std::string& _prefix = "none",
+                         size_t _maxNumberOfEvents = 0)
+        : H_BaseAnalyzer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents),
           anaData(*outputFile)
     {
         anaData.getOutputFile().cd();

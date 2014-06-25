@@ -217,3 +217,7 @@ Analysis/include/BTagWeight.h
 PatProduction/crab/multicrab_Wjets.cfg
 PatProduction/crab/multicrab_SM_Higgs.cfg
 PrintTools/source/Makefile.Print_SyncPlots
+Analysis/include/BaseConfig.h
+Analysis/include/exception.h
+Analysis/include/Config.h
+Analysis/config/signal.cfg

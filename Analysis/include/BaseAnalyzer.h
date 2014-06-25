@@ -31,6 +31,7 @@
 #include "AnalysisTools.h"
 #include "Htautau_TriggerEfficiency.h"
 #include "BTagWeight.h"
+#include "Config.h"
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \
@@ -65,14 +66,15 @@ public:
 
 class BaseAnalyzer {
 public:
-    BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
-                 const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0, bool _useMCtruth = false,
-                 const std::string& reweightFileName = "none")
-        : timer(10), treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, _useMCtruth),
+    BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
+                 const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
+        : config(configFileName), timer(10),
+          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.UseMCtruth()),
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(_useMCtruth), eventWeight(1), PUweight(1), triggerWeight(1),
+          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(config.UseMCtruth()),
+          eventWeight(1), PUweight(1), triggerWeight(1),
           IDweight(1), IsoWeight(1), mvaMetProducer(0.1,"Analysis/data/gbrmet_53_Dec2012.root",
                                                     "Analysis/data/gbrmetphi_53_Dec2012.root",
                                                     "Analysis/data/gbru1cov_53_Dec2012.root",
@@ -82,8 +84,8 @@ public:
                                        "RecoilCorrector_v7/recoilfits/recoilfit_zmm53XRR_2012_njet.root")
     {
         TH1::SetDefaultSumw2();
-        if (reweightFileName != "none")
-            weights = LoadPUWeights(reweightFileName, outputFile);
+        if (config.ReweightFileName() != "none")
+            weights = LoadPUWeights(config.ReweightFileName(), outputFile);
     }
 
     virtual ~BaseAnalyzer() {}
@@ -344,6 +346,7 @@ protected:
 
 
 protected:
+    Config config;
     tools::Timer timer;
     EventDescriptor event;
     TreeExtractor treeExtractor;
@@ -372,18 +375,19 @@ struct Factory {
         for(int n = 0; n < argc; ++n)
             std::cout << argv[n] << " ";
         std::cout << std::endl;
-        if(argc < 3 || argc > 7)
+        if(argc < 4 || argc > 6)
             throw std::runtime_error("Invalid number of command line arguments.");
 
         int n = 0;
         const std::string inputFileName = argv[++n];
         const std::string outputFileName = argv[++n];
+        const std::string configFileName = argv[++n];
         if(argc <= n)
-            return new T(inputFileName, outputFileName);
+            return new T(inputFileName, outputFileName, configFileName);
 
         const std::string prefix = argv[++n];
         if(argc <= n)
-            return new T(inputFileName, outputFileName, prefix);
+            return new T(inputFileName, outputFileName, configFileName, prefix);
 
         char c;
         size_t maxNumberOfEvents;
@@ -391,19 +395,8 @@ struct Factory {
         ss_nEvents >> c >> maxNumberOfEvents;
         if(c != '@')
             throw std::runtime_error("Bad command line format.");
-        if(argc <= n)
-            return new T(inputFileName, outputFileName, prefix, maxNumberOfEvents);
 
-        bool useMCtruth;
-        std::istringstream ss_useMC(argv[++n]);
-        ss_useMC >> std::boolalpha >> c >> useMCtruth;
-        if(c != '@')
-            throw std::runtime_error("Bad command line format.");
-        if(argc <= n)
-            return new T(inputFileName, outputFileName, prefix, maxNumberOfEvents, useMCtruth);
-
-        const std::string reweightFileName = argv[++n];
-        return new T(inputFileName, outputFileName, prefix, maxNumberOfEvents, useMCtruth, reweightFileName);
+        return new T(inputFileName, outputFileName, configFileName, prefix, maxNumberOfEvents);
     }
 };
 } // make_tools

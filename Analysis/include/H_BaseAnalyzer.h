@@ -16,9 +16,9 @@ namespace analysis {
 class H_BaseAnalyzer : public BaseAnalyzer {
 public:
     H_BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName,
-                 const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0, bool _useMCtruth = false,
-                 const std::string& reweightFileName = "none")
-        : BaseAnalyzer(inputFileName, outputFileName, _prefix, _maxNumberOfEvents, _useMCtruth, reweightFileName),
+                   const std::string& configFileName, const std::string& _prefix = "none",
+                   size_t _maxNumberOfEvents = 0)
+        : BaseAnalyzer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents),
           syncTree("syncTree")
     {}
 
