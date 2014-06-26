@@ -33,6 +33,9 @@ public:
 
     ANA_CONFIG_PARAMETER(std::string, ReweightFileName, "none")
     ANA_CONFIG_PARAMETER(bool, UseMCtruth, false)
+    ANA_CONFIG_PARAMETER(bool, ApplyTauESCorrection, false)
+    ANA_CONFIG_PARAMETER(bool, ApplyPostRecoilCorrection, false)
+    ANA_CONFIG_PARAMETER(bool, ExpectedOneResonanceToTauTau, false)
 
 };
 
