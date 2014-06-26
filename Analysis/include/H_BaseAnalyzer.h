@@ -200,17 +200,13 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
-        if(!useMCtruth) {
-            correctedTaus = event.taus();
-            return;
-        }
         correctedTaus.clear();
 
         for(const ntuple::Tau& tau : event.taus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
 
-            const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.taus, deltaR).size() != 0;
+            const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.hadronic_taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
                                    ntuple::tau_id::ConvertToHadronicDecayMode(tau.decayMode), useLegacyCorrections);
             const TLorentzVector correctedMomentum = momentum * scaleFactor;
@@ -225,10 +221,6 @@ protected:
 
     Candidate ApplyTauCorrectionsToMVAMETandHiggs(const ntuple::MET& metMVA, const Candidate& higgs)
     {
-        if(!useMCtruth) {
-            correctedMET = metMVA;
-            return higgs;
-        }
 
         TLorentzVector sumCorrectedTaus, sumTaus;
         for(const ntuple::Tau& tau : event.taus()) {
@@ -277,10 +269,8 @@ protected:
 
     void ApplyPostRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
-        if (useMCtruth){
-            postRecoilMET = recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
-        }
-        else postRecoilMET = correctedMET;
+        postRecoilMET =
+                recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
     }
 
     const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
@@ -302,7 +292,7 @@ protected:
     }
 
 
-    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state, bool oneResonanceSelection)
+    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state, analysis::GenParticlePtrVector& resonancesToTauTau)
     {
         static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
@@ -312,22 +302,41 @@ protected:
 
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
-        if(!resonances.size())
-            throw std::runtime_error("resonance not found");
-
-        if (oneResonanceSelection && resonances.size() != 1)
-            throw std::runtime_error("not one resonance per event");
-
         for (const GenParticle* resonance : resonances){
             analysis::GenParticlePtrVector resonanceDecayProducts;
             if(analysis::FindDecayProducts(*resonance, resonanceDecay,resonanceDecayProducts)){
                 final_state.taus = resonanceDecayProducts;
                 final_state.resonance = resonance;
-                return true;
+                resonancesToTauTau.push_back(resonance);
             }
         }
-        std::cerr << "event id = " << event.eventId().eventId
-                  << " Resonance does not decayed into 2 taus" << std::endl;
+
+        if(resonancesToTauTau.size() == 0){
+            if(config.ExpectedOneResonanceToTauTau())
+                throw exception("resonance to tautau not found");
+            else
+                return false;
+        }
+
+        if (resonancesToTauTau.size() == 1){
+            if(config.ExpectedOneResonanceToTauTau()){
+
+                for (const analysis::GenParticle* tau_MC : final_state.taus) {
+                    analysis::GenParticlePtrVector TauProducts;
+                    if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
+                            && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
+                        final_state.hadronic_taus.push_back(tau_MC);
+                }
+                return true;
+            }
+            else
+                throw exception("resonance to tautau not expected but found");
+        }
+
+
+        if (resonancesToTauTau.size() > 1)
+            throw exception("more than one resonance to tautau per event");
+
         return false;
     }
 

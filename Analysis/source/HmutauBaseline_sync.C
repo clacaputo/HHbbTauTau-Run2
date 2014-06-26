@@ -60,7 +60,8 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
-        if (useMCtruth && !FindAnalysisFinalState(muTau, false, true)) return;
+        analysis::GenParticlePtrVector resonancesToTauTau;
+        if (!FindAnalysisFinalState(muTau, resonancesToTauTau)) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -87,7 +88,11 @@ protected:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
-        ApplyTauCorrections(muTau,false);
+        if (config.ApplyTauESCorrection())
+            ApplyTauCorrections(muTau,false);
+        else
+            correctedTaus = event.taus();
+
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
 
@@ -105,7 +110,10 @@ protected:
                                                                 event.jets(),primaryVertex,
                                                                 vertices,event.taus());
 
-        ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+        if (config.ApplyTauESCorrection())
+            ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+        else
+            correctedMET = mvaMet;
 
         const auto looseJets = CollectLooseJets();
 
@@ -115,9 +123,13 @@ protected:
 
         const auto jets = CollectJets(filteredLooseJets);
         const auto bjets = CollectBJets(filteredLooseJets, false);
-        const auto retagged_bjets = CollectBJets(filteredLooseJets, useMCtruth);
+        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.extractMCtruth());
 
-        ApplyPostRecoilCorrections(higgs, muTau.resonance, jets.size());
+        if (config.ApplyRecoilCorrection())
+            ApplyPostRecoilCorrections(higgs, muTau.resonance, jets.size());
+        else
+            postRecoilMET = correctedMET;
+
         const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 
         CalculateFullEventWeight(higgs);
@@ -211,10 +223,10 @@ protected:
     }
 
 
-    bool FindAnalysisFinalState(analysis::finalState::MuTaujet& final_state, bool oneResonanceSelection, bool inclusive)
+    bool FindAnalysisFinalState(analysis::finalState::MuTaujet& final_state, analysis::GenParticlePtrVector& resonancesToTauTau)
     {
-        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state, oneResonanceSelection);
-        if(inclusive || !base_result)
+        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state, resonancesToTauTau);
+        if(config.RequireSpecificFinalState() || !base_result)
             return base_result;
 
         final_state.muon = final_state.tau_jet = nullptr;

@@ -87,11 +87,11 @@ public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()),
-          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.UseMCtruth()),
+          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, configFileName),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(config.UseMCtruth()),
+          maxNumberOfEvents(_maxNumberOfEvents),
           eventWeight(1), PUweight(1), triggerWeight(1), IDweight(1), IsoWeight(1),
           mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
@@ -370,7 +370,6 @@ protected:
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
     RunReport runReport;
     size_t maxNumberOfEvents;
-    bool useMCtruth;
     GenEvent genEvent;
     Vertex primaryVertex;
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;

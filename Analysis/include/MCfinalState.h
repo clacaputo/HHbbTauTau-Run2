@@ -69,6 +69,7 @@ struct bbTaujetTaujet : public bbTauTau {
 struct TauTau {
     const GenParticle* resonance;
     GenParticlePtrVector taus;
+    GenParticlePtrVector hadronic_taus;
     TauTau() : resonance(nullptr) {}
     virtual ~TauTau() {}
 };
