@@ -221,3 +221,5 @@ Analysis/include/BaseConfig.h
 Analysis/include/exception.h
 Analysis/include/Config.h
 Analysis/config/signal.cfg
+LICENSE
+README.md
