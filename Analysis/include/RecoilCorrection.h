@@ -15,9 +15,9 @@
 
 namespace analysis {
 
-class PostRecoilCorrectionProducer{
+class RecoilCorrectionProducer{
 public:
-    PostRecoilCorrectionProducer(const std::string& fileCorrectTo, const std::string& fileZmmData,
+    RecoilCorrectionProducer(const std::string& fileCorrectTo, const std::string& fileZmmData,
                                  const std::string& fileZmmMC)
         : corrector(fileCorrectTo)
     {
@@ -25,8 +25,8 @@ public:
         corrector.addMCFile(fileZmmMC);
     }
 
-    ntuple::MET ApplyPostRecoilCorrection(const ntuple::MET& originalMET, const TLorentzVector& resonantMomentum,
-                                          const TLorentzVector& resonantMomentumMC, size_t njets)
+    ntuple::MET ApplyCorrection(const ntuple::MET& originalMET, const TLorentzVector& resonantMomentum,
+                                const TLorentzVector& resonantMomentumMC, size_t njets)
     {
         static const bool debug = false;
         //from Riccardo

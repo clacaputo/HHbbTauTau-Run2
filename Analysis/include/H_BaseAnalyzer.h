@@ -260,7 +260,7 @@ protected:
     void ApplyPostRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         if (useMCtruth){
-            postRecoilMET = postRecoilCorrectionProducer.ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+            postRecoilMET = recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
         }
         else postRecoilMET = correctedMET;
     }
