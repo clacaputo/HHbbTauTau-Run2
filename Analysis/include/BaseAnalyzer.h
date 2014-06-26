@@ -69,7 +69,7 @@ public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()),
-          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, configFileName),
+          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),

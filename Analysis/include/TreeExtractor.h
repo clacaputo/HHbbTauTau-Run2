@@ -13,7 +13,6 @@
 #include <queue>
 #include <fstream>
 #include "EventDescriptor.h"
-#include "Config.h"
 
 namespace analysis {
 
@@ -113,8 +112,8 @@ ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
 
 class TreeExtractor{
 public:
-    TreeExtractor(const std::string& prefix, const std::string& input, const std::string& configFileName)
-        :  config(configFileName)
+    TreeExtractor(const std::string& prefix, const std::string& input, bool _extractMCtruth)
+        :  extractMCtruth(_extractMCtruth)
 
     {
         if (input.find(".root") != std::string::npos)
@@ -144,7 +143,7 @@ public:
     }
 
 private:
-    Config config;
+    bool extractMCtruth;
     std::shared_ptr<TFile> inputFile;
     std::queue<std::string> inputFileNames;
     std::shared_ptr<detail::Forest> forest;
@@ -167,7 +166,7 @@ private:
         }
         std::cout << "File " << fileName << " is opened." << std::endl;
         current_entry = -1;
-        detail::CreateForest(*forest, *inputFile, config.extractMCtruth());
+        detail::CreateForest(*forest, *inputFile, extractMCtruth);
         return true;
     }
 };

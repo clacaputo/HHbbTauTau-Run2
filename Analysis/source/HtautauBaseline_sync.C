@@ -43,8 +43,7 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
         finalState::TaujetTaujet tauTau;
-        analysis::GenParticlePtrVector resonancesToTauTau;
-        if (!FindAnalysisFinalState(tauTau,resonancesToTauTau)) return;
+        if (!FindAnalysisFinalState(tauTau) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -62,7 +61,7 @@ protected:
         cut(!muons_bkg.size(), "no_muon");
 
         if (config.ApplyTauESCorrection())
-            ApplyTauCorrections(tauTau,false);
+            ApplyTauCorrections(tauTau.hadronic_taus,false);
         else
             correctedTaus = event.taus();
 
@@ -94,22 +93,16 @@ protected:
                                                                 vertices,event.taus());
 
         if (config.ApplyTauESCorrection())
-            ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+            ApplyTauCorrectionsToMVAMET(mvaMet);
         else
             correctedMET = mvaMet;
 
 
         const auto bjets = CollectBJets(higgs_looseJetsMap.at(higgs), false);
-        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.extractMCtruth());
+        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.isMC());
 
-        if (config.ApplyRecoilCorrection()){
-            //for W - not implemented
-//            if(resonancesToTauTau.size() == 0 && !config.ExpectedOneResonanceToTauTau()){
-//                ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
-//            }
-//            else if (resonancesToTauTau.size() == 1 && config.ExpectedOneResonanceToTauTau())
-                ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
-        }
+        if (config.ApplyRecoilCorrection())
+            ApplyRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
         else
             postRecoilMET = correctedMET;
 
@@ -231,10 +224,10 @@ protected:
         return *std::min_element(higgses.begin(), higgses.end(), higgsSelector);
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::TaujetTaujet& final_state, analysis::GenParticlePtrVector& resonancesToTauTau)
+    bool FindAnalysisFinalState(analysis::finalState::TaujetTaujet& final_state)
     {
-        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state,resonancesToTauTau);
-        if(config.RequireSpecificFinalState() || !base_result)
+        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state);
+        if(!base_result)
             return base_result;
 
         unsigned n_hadronic_taus = 0;

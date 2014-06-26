@@ -178,7 +178,7 @@ protected:
         return jets;
     }
 
-    void ApplyTauCorrections(const finalState::TauTau& mcFinalState, bool useLegacyCorrections)
+    void ApplyTauCorrections(const GenParticlePtrVector& hadronic_taus, bool useLegacyCorrections)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
@@ -188,7 +188,7 @@ protected:
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
 
-            const bool hasMCmatch = FindMatchedParticles(momentum, mcFinalState.hadronic_taus, deltaR).size() != 0;
+            const bool hasMCmatch = FindMatchedParticles(momentum, hadronic_taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
                                    ntuple::tau_id::ConvertToHadronicDecayMode(tau.decayMode), useLegacyCorrections);
             const TLorentzVector correctedMomentum = momentum * scaleFactor;
@@ -201,7 +201,7 @@ protected:
         }
     }
 
-    Candidate ApplyTauCorrectionsToMVAMETandHiggs(const ntuple::MET& metMVA, const Candidate& higgs)
+    void ApplyTauCorrectionsToMVAMET(const ntuple::MET& metMVA)
     {
 
         TLorentzVector sumCorrectedTaus, sumTaus;
@@ -224,14 +224,6 @@ protected:
         correctedMET.pt = metCorrected.Pt();
         correctedMET.phi = metCorrected.Phi();
 
-        CandidateVector signalObjects;
-        for (const Candidate& daughter : higgs.finalStateDaughters){
-            if (daughter.type == Candidate::Tau)
-                signalObjects.push_back(Candidate(Candidate::Tau,daughter.index,correctedTaus.at(daughter.index)));
-            else
-                signalObjects.push_back(daughter);
-        }
-        return Candidate(Candidate::Higgs, signalObjects.at(0), signalObjects.at(1));
     }
 
     analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
@@ -249,11 +241,40 @@ protected:
 
     }
 
-    void ApplyPostRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
+    void ApplyRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
-        postRecoilMET =
-                recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+        //for W - not implemented
+//        if(resonancesToTauTau.size() == 0 && !config.ExpectedOneResonanceToTauTau()){
+//            const GenParticle* resonance = FindWboson();
+//            postRecoilMET =
+//                    recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+//        }
+//        else if (resonancesToTauTau.size() == 1 && config.ExpectedOneResonanceToTauTau()){
+            postRecoilMET =
+                    recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+//        }
     }
+
+//    GenParticle* FindWboson()
+//    {
+//        GenParticle* Wboson;
+
+//        static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
+//        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
+
+//        genEvent.Initialize(event.genParticles());
+////        genEvent.Print();
+
+//        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+
+//        for (const GenParticle* resonance : resonances){
+//            analysis::GenParticlePtrVector resonanceDecayProducts;
+//            if(analysis::FindDecayProducts(*resonance, resonanceDecay,resonanceDecayProducts)){
+//                Wboson = resonance;
+//            }
+//        }
+//        return Wboson;
+//    }
 
     const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
     {
@@ -274,7 +295,7 @@ protected:
     }
 
 
-    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state, analysis::GenParticlePtrVector& resonancesToTauTau)
+    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
     {
         static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
@@ -283,6 +304,8 @@ protected:
 //        genEvent.Print();
 
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+
+        analysis::GenParticlePtrVector resonancesToTauTau;
 
         for (const GenParticle* resonance : resonances){
             analysis::GenParticlePtrVector resonanceDecayProducts;
@@ -293,6 +316,9 @@ protected:
             }
         }
 
+        if (resonancesToTauTau.size() > 1)
+            throw exception("more than one resonance to tautau per event");
+
         if(resonancesToTauTau.size() == 0){
             if(config.ExpectedOneResonanceToTauTau())
                 throw exception("resonance to tautau not found");
@@ -300,26 +326,13 @@ protected:
                 return false;
         }
 
-        if (resonancesToTauTau.size() == 1){
-            if(config.ExpectedOneResonanceToTauTau()){
-
-                for (const analysis::GenParticle* tau_MC : final_state.taus) {
-                    analysis::GenParticlePtrVector TauProducts;
-                    if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
-                            && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
-                        final_state.hadronic_taus.push_back(tau_MC);
-                }
-                return true;
-            }
-            else
-                throw exception("resonance to tautau not expected but found");
+        for (const analysis::GenParticle* tau_MC : final_state.taus) {
+            analysis::GenParticlePtrVector TauProducts;
+            if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
+                    && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
+                final_state.hadronic_taus.push_back(tau_MC);
         }
-
-
-        if (resonancesToTauTau.size() > 1)
-            throw exception("more than one resonance to tautau per event");
-
-        return false;
+        return true;
     }
 
     void FillSyncTree(const Candidate& higgs, double m_sv,

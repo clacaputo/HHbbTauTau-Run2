@@ -61,7 +61,7 @@ public:
     bool extractMCtruth()
     {
         return ApplyTauESCorrection() || ApplyRecoilCorrection() ||
-                !RequireSpecificFinalState() || ExpectedOneResonanceToTauTau();
+                RequireSpecificFinalState() || ExpectedOneResonanceToTauTau();
     }
 
 };
