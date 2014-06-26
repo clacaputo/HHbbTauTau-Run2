@@ -36,6 +36,7 @@ public:
     ANA_CONFIG_PARAMETER(bool, ApplyTauESCorrection, false)
     ANA_CONFIG_PARAMETER(bool, ApplyPostRecoilCorrection, false)
     ANA_CONFIG_PARAMETER(bool, ExpectedOneResonanceToTauTau, false)
+    ANA_CONFIG_PARAMETER(bool, RequireSpecificFinalState, false)
 
 };
 

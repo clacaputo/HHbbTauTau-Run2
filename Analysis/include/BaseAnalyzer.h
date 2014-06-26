@@ -73,7 +73,7 @@ public:
           outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
-          maxNumberOfEvents(_maxNumberOfEvents), useMCtruth(config.UseMCtruth()),
+          maxNumberOfEvents(_maxNumberOfEvents),
           eventWeight(1), PUweight(1), triggerWeight(1),
           IDweight(1), IsoWeight(1), mvaMetProducer(0.1,"Analysis/data/gbrmet_53_Dec2012.root",
                                                     "Analysis/data/gbrmetphi_53_Dec2012.root",
@@ -354,7 +354,6 @@ protected:
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
     RunReport runReport;
     size_t maxNumberOfEvents;
-    bool useMCtruth;
     GenEvent genEvent;
     Vertex primaryVertex;
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
