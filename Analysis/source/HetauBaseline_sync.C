@@ -41,7 +41,8 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::ETau;
         finalState::ETaujet eTau;
-        if (useMCtruth && !FindAnalysisFinalState(eTau,false,true)) return;
+        analysis::GenParticlePtrVector resonancesToTauTau;
+        if (!FindAnalysisFinalState(eTau,resonancesToTauTau)) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -69,7 +70,10 @@ protected:
                 ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
-        ApplyTauCorrections(eTau, false);
+        if (config.ApplyTauESCorrection())
+            ApplyTauCorrections(eTau,false);
+        else
+            correctedTaus = event.taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -103,7 +107,10 @@ protected:
                                                                         event.jets(),primaryVertex,
                                                                         vertices,event.taus());
 
-        ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+        if (config.ApplyTauESCorrection())
+            ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+        else
+            correctedMET = mvaMet;
 
         const auto looseJets = CollectLooseJets();
 
@@ -113,9 +120,13 @@ protected:
 
         const auto jets = CollectJets(filteredLooseJets);
         const auto bjets = CollectBJets(filteredLooseJets, false);
-        const auto retagged_bjets = CollectBJets(filteredLooseJets, useMCtruth);
+        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.extractMCtruth());
 
-        ApplyPostRecoilCorrections(higgs, eTau.resonance, jets.size());
+        if (config.ApplyRecoilCorrection())
+            ApplyPostRecoilCorrections(higgs, eTau.resonance, jets.size());
+        else
+            postRecoilMET = correctedMET;
+
         const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 
         CalculateFullEventWeight(higgs);
@@ -241,10 +252,10 @@ protected:
         return electron;
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state, bool oneResonanceSelection, bool inclusive)
+    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state, analysis::GenParticlePtrVector& resonancesToTauTau)
     {
-        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state, oneResonanceSelection);
-        if(inclusive || !base_result)
+        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state, resonancesToTauTau);
+        if(config.RequireSpecificFinalState() || !base_result)
             return base_result;
 
         final_state.electron = final_state.tau_jet = nullptr;
