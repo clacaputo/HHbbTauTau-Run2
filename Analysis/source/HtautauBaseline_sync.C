@@ -119,10 +119,9 @@ protected:
         const auto bjets = CollectBJets(higgs_looseJetsMap.at(higgs), false);
         const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.isMC());
 
-        if (config.ApplyRecoilCorrection())
-            ApplyRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
-        else
-            postRecoilMET = correctedMET;
+
+        ApplyRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
+
 
         const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 

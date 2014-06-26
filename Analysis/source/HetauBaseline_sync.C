@@ -59,8 +59,8 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::ETau;
         finalState::ETaujet eTau;
-        analysis::GenParticlePtrVector resonancesToTauTau;
-        if (!FindAnalysisFinalState(eTau,resonancesToTauTau)) return;
+
+        if (!FindAnalysisFinalState(eTau) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -89,7 +89,7 @@ protected:
         cut(!have_bkg_electron, "no_bkg_electron");
 
         if (config.ApplyTauESCorrection())
-            ApplyTauCorrections(eTau,false);
+            ApplyTauCorrections(eTau.hadronic_taus,false);
         else
             correctedTaus = event.taus();
 
@@ -126,7 +126,7 @@ protected:
                                                                         vertices,event.taus());
 
         if (config.ApplyTauESCorrection())
-            ApplyTauCorrectionsToMVAMETandHiggs(mvaMet,higgs);
+            ApplyTauCorrectionsToMVAMET(mvaMet);
         else
             correctedMET = mvaMet;
 
@@ -138,12 +138,11 @@ protected:
 
         const auto jets = CollectJets(filteredLooseJets);
         const auto bjets = CollectBJets(filteredLooseJets, false);
-        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.extractMCtruth());
+        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC());
 
-        if (config.ApplyRecoilCorrection())
-            ApplyPostRecoilCorrections(higgs, eTau.resonance, jets.size());
-        else
-            postRecoilMET = correctedMET;
+
+        ApplyRecoilCorrections(higgs, eTau.resonance, jets.size());
+
 
         const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 
@@ -270,10 +269,10 @@ protected:
         return electron;
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state, analysis::GenParticlePtrVector& resonancesToTauTau)
+    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
     {
-        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state, resonancesToTauTau);
-        if(config.RequireSpecificFinalState() || !base_result)
+        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state);
+        if(!base_result)
             return base_result;
 
         final_state.electron = final_state.tau_jet = nullptr;

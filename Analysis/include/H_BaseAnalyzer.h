@@ -262,37 +262,39 @@ protected:
     void ApplyRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         //for W - not implemented
-//        if(resonancesToTauTau.size() == 0 && !config.ExpectedOneResonanceToTauTau()){
-//            const GenParticle* resonance = FindWboson();
-//            postRecoilMET =
-//                    recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
-//        }
-//        else if (resonancesToTauTau.size() == 1 && config.ExpectedOneResonanceToTauTau()){
-            postRecoilMET =
-                    recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
-//        }
+        if (config.ApplyRecoilCorrection()){
+            if(!resonance)
+                resonance = FindWboson();
+            if(resonance)
+                postRecoilMET =
+                        recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+            else
+                postRecoilMET = correctedMET;
+        }
+        else
+            postRecoilMET = correctedMET;
+
     }
 
-//    GenParticle* FindWboson()
-//    {
-//        GenParticle* Wboson;
+    const GenParticle* FindWboson()
+    {
+        static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
+        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
 
-//        static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
-//        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
+        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
-//        genEvent.Initialize(event.genParticles());
-////        genEvent.Print();
+        if (resonances.size() > 1)
+            throw exception("more than 1 W in the event");
 
-//        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+        const GenParticle* Wboson = *resonances.begin();
 
-//        for (const GenParticle* resonance : resonances){
-//            analysis::GenParticlePtrVector resonanceDecayProducts;
-//            if(analysis::FindDecayProducts(*resonance, resonanceDecay,resonanceDecayProducts)){
-//                Wboson = resonance;
-//            }
-//        }
-//        return Wboson;
-//    }
+        analysis::GenParticlePtrVector resonanceDecayProducts;
+        if(analysis::FindDecayProducts(*Wboson, resonanceDecay,resonanceDecayProducts)){
+            return Wboson;
+        }
+
+        return nullptr;
+    }
 
     const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
     {
