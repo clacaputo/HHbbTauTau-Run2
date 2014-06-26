@@ -13,6 +13,7 @@
 #include <queue>
 #include <fstream>
 #include "EventDescriptor.h"
+#include "Config.h"
 
 namespace analysis {
 
@@ -42,7 +43,8 @@ typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::GenMETTree> > Forest;
 
 template<typename Tree>
-inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile, const std::string& treeName ,bool extractMCtruth)
+inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile,
+                       const std::string& treeName ,bool extractMCtruth)
 {
     tree = Tree::IsMCtruth() && !extractMCtruth ? std::shared_ptr<Tree>()
                                                 : std::shared_ptr<Tree>( new Tree(inputFile, treeName) );
@@ -111,8 +113,8 @@ ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
 
 class TreeExtractor{
 public:
-    TreeExtractor(const std::string& prefix, const std::string& input, bool _extractMCtruth)
-        :  extractMCtruth(_extractMCtruth)
+    TreeExtractor(const std::string& prefix, const std::string& input, const std::string& configFileName)
+        :  config(configFileName)
 
     {
         if (input.find(".root") != std::string::npos)
@@ -142,12 +144,14 @@ public:
     }
 
 private:
+    Config config;
     std::shared_ptr<TFile> inputFile;
     std::queue<std::string> inputFileNames;
     std::shared_ptr<detail::Forest> forest;
     Long64_t current_entry;
     std::string prefix;
-    bool extractMCtruth;
+
+
 
     bool OpenNextFile()
     {
@@ -163,7 +167,7 @@ private:
         }
         std::cout << "File " << fileName << " is opened." << std::endl;
         current_entry = -1;
-        detail::CreateForest(*forest, *inputFile, extractMCtruth);
+        detail::CreateForest(*forest, *inputFile, config.extractMCtruth());
         return true;
     }
 };

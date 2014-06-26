@@ -21,7 +21,7 @@
 #include "MCfinalState.h"
 #include "Candidate.h"
 #include "custom_cuts.h"
-#include "PostRecoilCorrection.h"
+#include "RecoilCorrection.h"
 #include "SVfit.h"
 #include "MvaMet.h"
 #include <iomanip>
@@ -68,24 +68,24 @@ class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
-        : config(configFileName), timer(10),
-          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.UseMCtruth()),
-          outputFile(new TFile(outputFileName.c_str(),"RECREATE")),
+        : config(configFileName), timer(config.ReportInterval()),
+          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, configFileName),
+          outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
           maxNumberOfEvents(_maxNumberOfEvents),
-          eventWeight(1), PUweight(1), triggerWeight(1),
-          IDweight(1), IsoWeight(1), mvaMetProducer(0.1,"Analysis/data/gbrmet_53_Dec2012.root",
-                                                    "Analysis/data/gbrmetphi_53_Dec2012.root",
-                                                    "Analysis/data/gbru1cov_53_Dec2012.root",
-                                                    "Analysis/data/gbru2cov_53_Dec2012.root"),
-          postRecoilCorrectionProducer("RecoilCorrector_v7/recoilfits/recoilfit_htt53X_20pv_njet.root",
-                                       "RecoilCorrector_v7/recoilfits/recoilfit_datamm53XRR_2012_njet.root",
-                                       "RecoilCorrector_v7/recoilfits/recoilfit_zmm53XRR_2012_njet.root")
+          eventWeight(1), PUweight(1), triggerWeight(1), IDweight(1), IsoWeight(1),
+          mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
+                         config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
     {
         TH1::SetDefaultSumw2();
-        if (config.ReweightFileName() != "none")
-            weights = LoadPUWeights(config.ReweightFileName(), outputFile);
+        if(config.ApplyPUreweight())
+            pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
+        if(config.ApplyRecoilCorrection())
+            recoilCorrectionProducer = std::shared_ptr<RecoilCorrectionProducer>(
+                        new RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo(),
+                                                     config.RecoilCorrection_fileZmmData(),
+                                                     config.RecoilCorrection_fileZmmMC()));
     }
 
     virtual ~BaseAnalyzer() {}
@@ -95,12 +95,12 @@ public:
         size_t n = 0;
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor.ExtractNext(event); ++n) {
             timer.Report(n);
-            //if (event.eventId().eventId != 15550) continue;
+            if(config.RunSingleEvent() && event.eventId().eventId != config.SingleEventId()) continue;
             try {
                 ProcessEvent();
             } catch(cuts::cut_failed&){}
             GetAnaData().Selection("event").fill_selection(eventWeight);
-            //break;
+            if(config.RunSingleEvent()) break;
         }
         timer.Report(n, true);
         runReport.Report();
@@ -113,7 +113,7 @@ protected:
     {
         eventWeight = 1;
         runReport.AddEvent(event.eventId());
-        if (weights){
+        if (pu_weights){
             const ntuple::Event& eventInfo = event.eventInfo();
             const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
             if(bxIndex >= eventInfo.bunchCrossing.size())
@@ -126,13 +126,11 @@ protected:
 
     void SetPUWeight(float nPU)
     {
-        static const float maxAvailablePU = 60;
-        static const double defaultWeight = 0.0;
-        if (!weights) return;
-        const Int_t bin = weights->FindBin(nPU);
-		const Int_t maxBin = weights->FindBin(maxAvailablePU);
+        if (!pu_weights) return;
+        const Int_t bin = pu_weights->FindBin(nPU);
+        const Int_t maxBin = pu_weights->FindBin(config.PUreweight_maxAvailablePU());
         const bool goodBin = bin >= 1 && bin <= maxBin;
-        PUweight = goodBin ? weights->GetBinContent(bin) : defaultWeight;
+        PUweight = goodBin ? pu_weights->GetBinContent(bin) : config.PUreweight_defaultWeight();
     }
 
     void CalculateFullEventWeight(const Candidate& candidate)
@@ -358,9 +356,9 @@ protected:
     Vertex primaryVertex;
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
     std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
-    std::shared_ptr<TH1D> weights;
+    std::shared_ptr<TH1D> pu_weights;
     MvaMetProducer mvaMetProducer;
-    PostRecoilCorrectionProducer postRecoilCorrectionProducer;
+    std::shared_ptr<RecoilCorrectionProducer> recoilCorrectionProducer;
 };
 
 } // analysis

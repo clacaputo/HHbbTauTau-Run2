@@ -100,9 +100,9 @@ protected:
 
 
         const auto bjets = CollectBJets(higgs_looseJetsMap.at(higgs), false);
-        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), useMCtruth);
+        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.extractMCtruth());
 
-        if (config.ApplyPostRecoilCorrection()){
+        if (config.ApplyRecoilCorrection()){
             //for W - not implemented
 //            if(resonancesToTauTau.size() == 0 && !config.ExpectedOneResonanceToTauTau()){
 //                ApplyPostRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());

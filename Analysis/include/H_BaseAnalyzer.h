@@ -252,7 +252,7 @@ protected:
     void ApplyPostRecoilCorrections(const Candidate& higgs, const GenParticle* resonance, const size_t njets)
     {
         postRecoilMET =
-                postRecoilCorrectionProducer.ApplyPostRecoilCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+                recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
     }
 
     const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
