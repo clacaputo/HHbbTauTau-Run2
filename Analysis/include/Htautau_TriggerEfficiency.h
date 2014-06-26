@@ -2,7 +2,7 @@
  * \file Htautau_TriggerEfficiency.h
  * \brief Definition of functions to calculate trigger efficiencies.Higgs.
  *
- * Code copied from CMG Tools:
+ * Original code copied from CMG Tools:
  *   https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/interface/TriggerEfficiency.h
  *   https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/src/TriggerEfficiency.cc
  *
