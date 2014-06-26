@@ -225,3 +225,5 @@ LICENSE
 README.md
 Analysis/config/background.cfg
 Analysis/config/Wjets.cfg
+Analysis/config/dyjets.cfg
+Analysis/config/data.cfg
