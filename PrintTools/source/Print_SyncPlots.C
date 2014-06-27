@@ -34,6 +34,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <memory>
 #include <TFile.h>
 #include <TTree.h>
 #include <TString.h>
