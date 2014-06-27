@@ -98,7 +98,7 @@ public:
     {
         TH1::SetDefaultSumw2();
         if(config.ApplyPUreweight()){
-            std::cout << "I'm here" << std::endl;
+            //std::cout << "I'm here" << std::endl;
             pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
         }
         if(config.ApplyRecoilCorrection())

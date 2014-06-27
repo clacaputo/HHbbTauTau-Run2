@@ -30,6 +30,12 @@ class BaselineAnalyzerData : public analysis::BaseAnalyzerData {
 public:
     BaselineAnalyzerData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
 
+
+    TH2D_ENTRY(PFmet_comparison, 300, 0.0, 300.0, 100, -1, 1)
+    TH2D_ENTRY(PFmetType1_comparison, 300, 0.0, 300.0, 100, -1, 1)
+    TH1D_ENTRY(DeltaPhi_PFmet, 100, -4.0, 4.0)
+    TH1D_ENTRY(DeltaPhi_PFmetType1, 100, -4.0, 4.0)
+
 };
 
 class HmutauBaseline_sync : public analysis::H_BaseAnalyzer {
@@ -61,6 +67,7 @@ protected:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
+
 
         if (!FindAnalysisFinalState(muTau) && config.RequireSpecificFinalState()) return;
 
@@ -133,7 +140,15 @@ protected:
 
         CalculateFullEventWeight(higgs);
 
-        FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices);
+        const ntuple::MET pfMET = config.isMC() ? event.metPF() : mvaMetProducer.ComputePFMet(event.pfCandidates(), primaryVertex);
+        anaData.PFmet_comparison().Fill(event.metPF().pt, std::abs(pfMET.pt - event.metPF().pt)/event.metPF().pt);
+        anaData.PFmetType1_comparison().Fill(event.met().pt, std::abs(pfMET.pt - event.met().pt)/event.met().pt);
+        const double DeltaPhi_PFmet = TVector2::Phi_mpi_pi(event.metPF().phi - pfMET.phi);
+        const double DeltaPhi_PFmetType1 = TVector2::Phi_mpi_pi(event.met().phi - pfMET.phi);
+        anaData.DeltaPhi_PFmet().Fill(std::abs(DeltaPhi_PFmet));
+        anaData.DeltaPhi_PFmetType1().Fill(std::abs(DeltaPhi_PFmetType1));
+
+        FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
@@ -312,13 +327,13 @@ protected:
     void FillSyncTree(const analysis::Candidate& higgs, double m_sv,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
-                      const analysis::VertexVector& vertices)
+                      const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
         const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, muon, tau);
+        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, muon, tau, pfMET);
 
         syncTree.iso_1() = ntuple_muon.pfRelIso;
         syncTree.mva_1() = 0;

@@ -89,6 +89,19 @@ public:
         return mvaMET;
     }
 
+    ntuple::MET ComputePFMet(const ntuple::PFCandVector& pfCandidates, const Vertex& selectedVertex)
+    {
+        auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex.position);
+        mvaMEtUtilities metUtilities;
+        CommonMETData pfCandSum = metUtilities.computePFCandSum(pfCandidateInfo, 0.1, 2);
+        const TVector2 vectorialMET(-pfCandSum.mex,-pfCandSum.mey);
+        ntuple::MET pfMET;
+        pfMET.sumEt = pfCandSum.sumet;
+        pfMET.phi = vectorialMET.Phi();
+        pfMET.pt = std::sqrt(vectorialMET.Px()*vectorialMET.Px() + vectorialMET.Py()*vectorialMET.Py());
+        return pfMET;
+    }
+
 private:
     static double DefaultDeltaZ() { return -999.; }
 

@@ -360,7 +360,8 @@ protected:
     void FillSyncTree(const Candidate& higgs, double m_sv,
                       const CandidateVector& jets, const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
-                      const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2)
+                      const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
+                      const ntuple::MET& pfMET)
     {
         static const double default_value = ntuple::DefaultFillValueForSyncTree();
         syncTree.run() = event.eventInfo().run;
@@ -443,17 +444,17 @@ protected:
         postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, 0, postRecoilMET.phi, 0.);
         syncTree.pt_tt() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
 
-        syncTree.met() = event.metPF().pt;
-        syncTree.metphi() = event.metPF().phi;
+        syncTree.met() = pfMET.pt;
+        syncTree.metphi() = pfMET.phi;
         syncTree.mvamet() = postRecoilMET.pt;
         syncTree.mvametphi() = postRecoilMET.phi;
         //syncTree.pzetavis();
         //syncTree.pzetamiss();
-        const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(event.metPF().significanceMatrix);
-        syncTree.metcov00() = metPFcov[0][0];
-        syncTree.metcov01() = metPFcov[0][1];
-        syncTree.metcov10() = metPFcov[1][0];
-        syncTree.metcov11() = metPFcov[1][1];
+//        const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(event.metPF().significanceMatrix);
+//        syncTree.metcov00() = metPFcov[0][0];
+//        syncTree.metcov01() = metPFcov[0][1];
+//        syncTree.metcov10() = metPFcov[1][0];
+//        syncTree.metcov11() = metPFcov[1][1];
         const TMatrixD metMVAcov = ntuple::VectorToSignificanceMatrix(postRecoilMET.significanceMatrix);
         syncTree.mvacov00() = metMVAcov[0][0];
         syncTree.mvacov01() = metMVAcov[0][1];
