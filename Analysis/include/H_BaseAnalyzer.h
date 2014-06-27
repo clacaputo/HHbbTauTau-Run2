@@ -450,11 +450,13 @@ protected:
         syncTree.mvametphi() = postRecoilMET.phi;
         //syncTree.pzetavis();
         //syncTree.pzetamiss();
-//        const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(event.metPF().significanceMatrix);
-//        syncTree.metcov00() = metPFcov[0][0];
-//        syncTree.metcov01() = metPFcov[0][1];
-//        syncTree.metcov10() = metPFcov[1][0];
-//        syncTree.metcov11() = metPFcov[1][1];
+        if(pfMET.significanceMatrix.size()) {
+            const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(pfMET.significanceMatrix);
+            syncTree.metcov00() = metPFcov[0][0];
+            syncTree.metcov01() = metPFcov[0][1];
+            syncTree.metcov10() = metPFcov[1][0];
+            syncTree.metcov11() = metPFcov[1][1];
+        }
         const TMatrixD metMVAcov = ntuple::VectorToSignificanceMatrix(postRecoilMET.significanceMatrix);
         syncTree.mvacov00() = metMVAcov[0][0];
         syncTree.mvacov01() = metMVAcov[0][1];

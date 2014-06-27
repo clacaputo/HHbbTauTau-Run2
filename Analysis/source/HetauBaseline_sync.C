@@ -148,9 +148,8 @@ protected:
 
         CalculateFullEventWeight(higgs);
 
-        FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices);
-
-
+        const ntuple::MET pfMET = config.isMC() ? event.metPF() : mvaMetProducer.ComputePFMet(event.pfCandidates(), primaryVertex);
+        FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
 
     virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector,
@@ -348,14 +347,14 @@ protected:
     void FillSyncTree(const analysis::Candidate& higgs, double m_sv,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
-                      const analysis::VertexVector& vertices)
+                      const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
         const ntuple::Electron& ntuple_electron = event.electrons().at(electron.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
         H_BaseAnalyzer::
-                FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, electron, tau);
+                FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, electron, tau, pfMET);
 
         syncTree.iso_1() = ntuple_electron.pfRelIso;
         syncTree.mva_1() = ntuple_electron.mvaPOGNonTrig;

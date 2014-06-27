@@ -141,12 +141,14 @@ protected:
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event.metPF() : mvaMetProducer.ComputePFMet(event.pfCandidates(), primaryVertex);
-        anaData.PFmet_comparison().Fill(event.metPF().pt, std::abs(pfMET.pt - event.metPF().pt)/event.metPF().pt);
-        anaData.PFmetType1_comparison().Fill(event.met().pt, std::abs(pfMET.pt - event.met().pt)/event.met().pt);
-        const double DeltaPhi_PFmet = TVector2::Phi_mpi_pi(event.metPF().phi - pfMET.phi);
-        const double DeltaPhi_PFmetType1 = TVector2::Phi_mpi_pi(event.met().phi - pfMET.phi);
-        anaData.DeltaPhi_PFmet().Fill(std::abs(DeltaPhi_PFmet));
-        anaData.DeltaPhi_PFmetType1().Fill(std::abs(DeltaPhi_PFmetType1));
+        if(config.isMC()) {
+            anaData.PFmet_comparison().Fill(event.metPF().pt, std::abs(pfMET.pt - event.metPF().pt)/event.metPF().pt);
+            anaData.PFmetType1_comparison().Fill(event.met().pt, std::abs(pfMET.pt - event.met().pt)/event.met().pt);
+            const double DeltaPhi_PFmet = TVector2::Phi_mpi_pi(event.metPF().phi - pfMET.phi);
+            const double DeltaPhi_PFmetType1 = TVector2::Phi_mpi_pi(event.met().phi - pfMET.phi);
+            anaData.DeltaPhi_PFmet().Fill(std::abs(DeltaPhi_PFmet));
+            anaData.DeltaPhi_PFmetType1().Fill(std::abs(DeltaPhi_PFmetType1));
+        }
 
         FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }

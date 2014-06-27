@@ -40,7 +40,7 @@ WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
 MAKE_PATH=$WORKING_PATH/RunTools/make_withFactory.sh
 
-MAX_N_EVENTS=10
+MAX_N_EVENTS=0
 
 if [ $STORAGE = "Pisa" ] ; then
     PREFIX=/gpfs/ddn/cms/user/androsov
@@ -106,7 +106,7 @@ n=0
 
 if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
-        bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
+        bsub -q $QUEUE -m borah -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
              -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
              $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS
     done
