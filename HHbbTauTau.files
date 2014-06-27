@@ -227,3 +227,5 @@ Analysis/config/background.cfg
 Analysis/config/Wjets.cfg
 Analysis/config/dyjets.cfg
 Analysis/config/data.cfg
+Analysis/config/dataset.cfg
+Analysis/config/analyzers.cfg

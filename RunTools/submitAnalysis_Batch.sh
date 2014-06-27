@@ -40,6 +40,8 @@ WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
 MAKE_PATH=$WORKING_PATH/RunTools/make_withFactory.sh
 
+MAX_N_EVENTS=10
+
 if [ $STORAGE = "Pisa" ] ; then
     PREFIX=/gpfs/ddn/cms/user/androsov
 #    PREFIX="/gpfs/ddn/srm/cms"
@@ -106,13 +108,13 @@ if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
         bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
              -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS
     done
     echo "$N_JOBS have been submited in local in Pisa"
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
         echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME yes " \
-             "$FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 " | \
+             "$FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS " | \
             qsub -q $QUEUE -N $NAME -o $OUTPUT_PATH -e $OUTPUT_PATH -
     done
     echo "$N_JOBS have been submited in local in Bari"
@@ -120,7 +122,7 @@ elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
              $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 &
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -135,7 +137,7 @@ elif [ "$QUEUE" = "fai" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME \
              $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 &
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -149,7 +151,7 @@ elif [ "$QUEUE" = "fai" ] ; then
 elif [ $STORAGE = "Local" ] ; then
     for NAME in $JOBS ; do
         $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "dont_set_cmsenv" \
-                         $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 &
+                         $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS &
         i=$(($i + 1))
         n=$(($n + 1))
         echo "job $n started"
