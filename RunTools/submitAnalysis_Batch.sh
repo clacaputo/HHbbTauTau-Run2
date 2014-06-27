@@ -43,8 +43,8 @@ MAKE_PATH=$WORKING_PATH/RunTools/make_withFactory.sh
 MAX_N_EVENTS=0
 
 if [ $STORAGE = "Pisa" ] ; then
-    PREFIX=/gpfs/ddn/cms/user/androsov
-#    PREFIX="/gpfs/ddn/srm/cms"
+#    PREFIX=/gpfs/ddn/cms/user/androsov
+    PREFIX="/gpfs/ddn/srm/cms"
 elif [ $STORAGE = "Bari" ] ; then
     PREFIX="/lustre/cms"
 elif [ $STORAGE = "Local" ] ; then
