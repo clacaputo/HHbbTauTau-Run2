@@ -286,6 +286,8 @@ protected:
         if (resonances.size() > 1)
             throw exception("more than 1 W in the event");
 
+        if (resonances.size() == 0) return nullptr;
+
         const GenParticle* Wboson = *resonances.begin();
 
         analysis::GenParticlePtrVector resonanceDecayProducts;
@@ -366,10 +368,12 @@ protected:
         syncTree.evt() = event.eventInfo().EventId;
 
         syncTree.npv() = vertices.size();
-        const size_t bxIndex = tools::find_index(event.eventInfo().bunchCrossing, 0);
-        if(bxIndex >= event.eventInfo().bunchCrossing.size())
-            throw std::runtime_error("in-time BX not found");
-        syncTree.npu() = event.eventInfo().trueNInt.at(bxIndex);
+        if (config.ApplyPUreweight()){
+            const size_t bxIndex = tools::find_index(event.eventInfo().bunchCrossing, 0);
+            if(bxIndex >= event.eventInfo().bunchCrossing.size())
+                throw std::runtime_error("in-time BX not found");
+            syncTree.npu() = event.eventInfo().trueNInt.at(bxIndex);
+        }
         //syncTree.rho();
 
         //syncTree.mcweight();

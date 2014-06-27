@@ -151,8 +151,9 @@ public:
 inline bool FindDecayProducts(const GenParticle& genParticle, const particles::ParticleCodes& particleCodes,
                               GenParticlePtrVector& decayProducts)
 {
-    if (genParticle.status != particles::Decayed_or_fragmented)
+    if (genParticle.status != particles::Decayed_or_fragmented){
         throw std::runtime_error("particle type not supported");
+    }
 
     decayProducts.clear();
     const GenParticlePtrVector* daughters = &genParticle.daughters;

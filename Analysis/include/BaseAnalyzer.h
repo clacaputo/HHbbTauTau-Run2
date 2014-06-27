@@ -97,8 +97,10 @@ public:
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
     {
         TH1::SetDefaultSumw2();
-        if(config.ApplyPUreweight())
+        if(config.ApplyPUreweight()){
+            std::cout << "I'm here" << std::endl;
             pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
+        }
         if(config.ApplyRecoilCorrection())
             recoilCorrectionProducer = std::shared_ptr<RecoilCorrectionProducer>(
                         new RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo(),
