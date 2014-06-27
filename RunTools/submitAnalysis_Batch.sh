@@ -23,8 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-if [ $# -lt 6 ] ; then
-    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path analyzer_name args_for_make"
+if [ $# -ne 7 ] ; then
+    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path analyzer_name config_name"
     exit
 fi
 
@@ -34,6 +34,7 @@ MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
 OUTPUT_PATH=$5
 ANALYZER_NAME=$6
+CONFIG_NAME=$7
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
@@ -105,13 +106,13 @@ if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
     for NAME in $JOBS ; do
         bsub -q $QUEUE -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
              -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}"
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0
     done
     echo "$N_JOBS have been submited in local in Pisa"
 elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
     for NAME in $JOBS ; do
         echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME yes " \
-             "$FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 ${@:7}" | \
+             "$FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 " | \
             qsub -q $QUEUE -N $NAME -o $OUTPUT_PATH -e $OUTPUT_PATH -
     done
     echo "$N_JOBS have been submited in local in Bari"
@@ -119,7 +120,7 @@ elif [ "$QUEUE" = "fai5" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
              $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -134,7 +135,7 @@ elif [ "$QUEUE" = "fai" ] ; then
     for NAME in $JOBS ; do
         bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME \
              $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
+             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 &
         i=$(($i + 1))
 		n=$(($n + 1))
 		echo "job $n started"
@@ -148,7 +149,7 @@ elif [ "$QUEUE" = "fai" ] ; then
 elif [ $STORAGE = "Local" ] ; then
     for NAME in $JOBS ; do
         $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "dont_set_cmsenv" \
-                         $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $PREFIX @0 "${@:7}" &
+                         $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @0 &
         i=$(($i + 1))
         n=$(($n + 1))
         echo "job $n started"
