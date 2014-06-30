@@ -34,14 +34,14 @@
 
 class H_BaselineSync {
 public:
-    H_BaselineSync(const std::string& inputFileName, const std::string& outputMuTauFile, /*const std::string& outputETauFile,
-                   const std::string& outputTauTauFile,*/ const std::string& configFileName,
+    H_BaselineSync(const std::string& inputFileName, const std::string& outputMuTauFile, const std::string& outputETauFile,
+                   const std::string& outputTauTauFile, const std::string& configFileName,
                    const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()), maxNumberOfEvents(_maxNumberOfEvents),
           treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()),
-          HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents)/*,*/
-//          HetauAnalyzer(inputFileName, outputETauFile, configFileName, "external", _maxNumberOfEvents),
-//          HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents),
+          HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents),
+          HetauAnalyzer(inputFileName, outputETauFile, configFileName, "external", _maxNumberOfEvents),
+          HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents)
     { }
 
     virtual void Run()
@@ -53,10 +53,12 @@ public:
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
                 HmutauAnalyzer.ProcessEvent(_event);
-//                HetauAnalyzer.ProcessEvent(_event);
-//                HtautauAnalyzer.ProcessEvent(_event);
+                HetauAnalyzer.ProcessEvent(_event);
+                HtautauAnalyzer.ProcessEvent(_event);
             } catch(cuts::cut_failed&){}
             HmutauAnalyzer.GetAnaData().Selection("event").fill_selection(HmutauAnalyzer.GetEventWeight());
+            HetauAnalyzer.GetAnaData().Selection("event").fill_selection(HetauAnalyzer.GetEventWeight());
+            HtautauAnalyzer.GetAnaData().Selection("event").fill_selection(HtautauAnalyzer.GetEventWeight());
             if(config.RunSingleEvent()) break;
         }
         timer.Report(n, true);
@@ -70,8 +72,8 @@ private:
     std::shared_ptr<const analysis::EventDescriptor> event;
     analysis::TreeExtractor treeExtractor;
     HmutauBaseline_sync HmutauAnalyzer;
-//    HetauBaseline_sync HetauAnalyzer;
-//    HtautauBaseline_sync HtautauAnalyzer;
+    HetauBaseline_sync HetauAnalyzer;
+    HtautauBaseline_sync HtautauAnalyzer;
     double eventWeight;
 };
 
@@ -94,11 +96,11 @@ struct Factory<H_BaselineSync> {
         const std::string outputTauTauFile = argv[++n];
         const std::string configFileName = argv[++n];
         if(argc <= n)
-            return new H_BaselineSync(inputFileName, outputMuTauFile, /*outputETauFile, outputTauTauFile,*/ configFileName);
+            return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile, configFileName);
 
         const std::string prefix = argv[++n];
         if(argc <= n)
-            return new H_BaselineSync(inputFileName, outputMuTauFile, /*outputETauFile, outputTauTauFile,*/
+            return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
                                       configFileName, prefix);
 
         char c;
@@ -108,7 +110,7 @@ struct Factory<H_BaselineSync> {
         if(c != '@')
             throw std::runtime_error("Bad command line format.");
 
-        return new H_BaselineSync(inputFileName, outputMuTauFile, /*outputETauFile, outputTauTauFile,*/
+        return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
                                   configFileName, prefix, maxNumberOfEvents);
     }
 };
