@@ -27,9 +27,9 @@
 #include "../include/H_BaseAnalyzer.h"
 #include "../include/SyncTree.h"
 
-class BaselineAnalyzerData : public analysis::BaseAnalyzerData {
+class AnalyzerDataTauTau : public analysis::BaseAnalyzerData {
 public:
-    BaselineAnalyzerData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
+    AnalyzerDataTauTau(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
 };
 
 class HtautauBaseline_sync : public analysis::H_BaseAnalyzer {
@@ -49,9 +49,7 @@ public:
         syncTree.Write();
     }
 
-protected:
     typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
-    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
@@ -130,6 +128,10 @@ protected:
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         FillSyncTree(higgs, m_sv, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs), bjets, retagged_bjets, vertices,pfMET);
     }
+
+protected:
+
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
                                           root_ext::AnalyzerData& _anaData,
@@ -321,7 +323,7 @@ protected:
     }
 
 private:
-    BaselineAnalyzerData anaData;
+    AnalyzerDataTauTau anaData;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

@@ -4,6 +4,8 @@
 // Do NOT change. Changes will be lost next time file is generated
 //
 
+#pragma once
+
 #define R__DICTIONARY_FILENAME GBRProjectDict
 #include "RConfig.h" //rootcint 4834
 #if !defined(R__ACCESS_IN_SYMBOL)
