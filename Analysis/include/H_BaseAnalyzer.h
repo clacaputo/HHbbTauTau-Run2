@@ -83,7 +83,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::electronVeto;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event.electrons().at(id);
+        const ntuple::Electron& object = event->electrons().at(id);
         const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
 
         cut(true, ">0 ele cand");
@@ -111,7 +111,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::muonVeto;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event.muons().at(id);
+        const ntuple::Muon& object = event->muons().at(id);
         const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 mu cand");
@@ -137,7 +137,7 @@ protected:
         using namespace cuts::Htautau_Summer13::btag;
         analysis::CandidateVector bjets;
         for(const Candidate& looseJetCandidate : looseJets) {
-            const ntuple::Jet& looseJet = event.jets().at(looseJetCandidate.index);
+            const ntuple::Jet& looseJet = event->jets().at(looseJetCandidate.index);
             if(looseJet.pt <= pt || std::abs(looseJet.eta) >= eta) continue;
             if(doReTag && !analysis::btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, 0, 0, CSV))
                 continue;
@@ -149,8 +149,8 @@ protected:
 
         const auto bjetsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
         {
-            const ntuple::Jet& first_bjet = event.jets().at(first.index);
-            const ntuple::Jet& second_bjet = event.jets().at(second.index);
+            const ntuple::Jet& first_bjet = event->jets().at(first.index);
+            const ntuple::Jet& second_bjet = event->jets().at(second.index);
 
             return first_bjet.combinedSecondaryVertexBJetTags > second_bjet.combinedSecondaryVertexBJetTags;
         };
@@ -164,7 +164,7 @@ protected:
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Candidate
             { return SelectLooseJet(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<Candidate>("jets", base_selector, event.jets().size());
+        return CollectObjects<Candidate>("jets", base_selector, event->jets().size());
     }
 
     virtual Candidate SelectLooseJet(size_t id, cuts::ObjectSelector* objectSelector,
@@ -172,7 +172,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::jetID;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Jet& object = event.jets().at(id);
+        const ntuple::Jet& object = event->jets().at(id);
 
         cut(true, ">0 jet cand");
         cut(X(pt) > pt_loose, "pt");
@@ -202,7 +202,7 @@ protected:
 
         correctedTaus.clear();
 
-        for(const ntuple::Tau& tau : event.taus()) {
+        for(const ntuple::Tau& tau : event->taus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
 
@@ -223,7 +223,7 @@ protected:
     {
 
         TLorentzVector sumCorrectedTaus, sumTaus;
-        for(const ntuple::Tau& tau : event.taus()) {
+        for(const ntuple::Tau& tau : event->taus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
             sumTaus += momentum;
@@ -250,9 +250,9 @@ protected:
     {
         analysis::CandidateVector triggeredHiggses;
         for (const auto& higgs : higgses){
-            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(), hltPaths, higgs))
+            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs))
                 triggeredHiggses.push_back(higgs);
-            if (useStandardTriggerMatch && analysis::HaveTriggerMatched(event,hltPaths,higgs))
+            if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event,hltPaths,higgs))
                 triggeredHiggses.push_back(higgs);
         }
         return triggeredHiggses;
@@ -281,6 +281,7 @@ protected:
         static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
 
+        //genEvent.Print();
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
         if (resonances.size() > 1)
@@ -322,7 +323,7 @@ protected:
         static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
 
-        genEvent.Initialize(event.genParticles());
+        genEvent.Initialize(event->genParticles());
 //        genEvent.Print();
 
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
@@ -364,16 +365,16 @@ protected:
                       const ntuple::MET& pfMET)
     {
         static const double default_value = ntuple::DefaultFillValueForSyncTree();
-        syncTree.run() = event.eventInfo().run;
-        syncTree.lumi() = event.eventInfo().lumis;
-        syncTree.evt() = event.eventInfo().EventId;
+        syncTree.run() = event->eventInfo().run;
+        syncTree.lumi() = event->eventInfo().lumis;
+        syncTree.evt() = event->eventInfo().EventId;
 
         syncTree.npv() = vertices.size();
         if (config.ApplyPUreweight()){
-            const size_t bxIndex = tools::find_index(event.eventInfo().bunchCrossing, 0);
-            if(bxIndex >= event.eventInfo().bunchCrossing.size())
+            const size_t bxIndex = tools::find_index(event->eventInfo().bunchCrossing, 0);
+            if(bxIndex >= event->eventInfo().bunchCrossing.size())
                 throw std::runtime_error("in-time BX not found");
-            syncTree.npu() = event.eventInfo().trueNInt.at(bxIndex);
+            syncTree.npu() = event->eventInfo().trueNInt.at(bxIndex);
         }
         //syncTree.rho();
 
@@ -468,7 +469,7 @@ protected:
 
         if (jets.size() >= 1) {
             const Candidate& jet = jets.at(0);
-            const ntuple::Jet& ntuple_jet = event.jets().at(jet.index);
+            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
             syncTree.jpt_1() = jet.momentum.Pt();
             syncTree.jeta_1() = jet.momentum.Eta();
             syncTree.jphi_1() = jet.momentum.Phi();
@@ -492,7 +493,7 @@ protected:
 
         if (jets.size() >= 2) {
             const Candidate& jet = jets.at(1);
-            const ntuple::Jet& ntuple_jet = event.jets().at(jet.index);
+            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
             syncTree.jpt_2() = jet.momentum.Pt();
             syncTree.jeta_2() = jet.momentum.Eta();
             syncTree.jphi_2() = jet.momentum.Phi();
@@ -518,7 +519,7 @@ protected:
 
         if (bjets.size() >= 1) {
             const Candidate& bjet = bjets.at(0);
-            const ntuple::Jet& ntuple_bjet = event.jets().at(bjet.index);
+            const ntuple::Jet& ntuple_bjet = event->jets().at(bjet.index);
             syncTree.bpt_1() = bjet.momentum.Pt();
             syncTree.beta_1() = bjet.momentum.Eta();
             syncTree.bphi_1() = bjet.momentum.Phi();
@@ -533,7 +534,7 @@ protected:
         if (bjets.size() >= 2) {
             const Candidate& lead_bjet = bjets.at(0);
             const Candidate& subLead_bjet = bjets.at(1);
-            const ntuple::Jet& ntuple_bjet = event.jets().at(subLead_bjet.index);
+            const ntuple::Jet& ntuple_bjet = event->jets().at(subLead_bjet.index);
             syncTree.bpt_2() = subLead_bjet.momentum.Pt();
             syncTree.beta_2() = subLead_bjet.momentum.Eta();
             syncTree.bphi_2() = subLead_bjet.momentum.Phi();
@@ -553,7 +554,7 @@ protected:
 
         if (bjets.size() >= 3){
             const Candidate& bjet = bjets.at(2);
-            const ntuple::Jet& ntuple_bjet = event.jets().at(bjet.index);
+            const ntuple::Jet& ntuple_bjet = event->jets().at(bjet.index);
             syncTree.bpt_3() = bjet.momentum.Pt();
             syncTree.beta_3() = bjet.momentum.Eta();
             syncTree.bphi_3() = bjet.momentum.Phi();

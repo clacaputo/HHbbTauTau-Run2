@@ -62,7 +62,7 @@ public:
         for(; !maxNumberOfEvents || n < maxNumberOfEvents; ++n) {
             if(!treeExtractor.ExtractNext(event))
                 break;
-            const ntuple::Event& eventInfo = event.eventInfo();
+            const ntuple::Event& eventInfo = event->eventInfo();
             for (unsigned n = 0; n < eventInfo.bunchCrossing.size(); ++n){
                 if (eventInfo.bunchCrossing.at(n) == 0){
                     if(mode == "true")

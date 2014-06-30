@@ -52,9 +52,9 @@ public:
 protected:
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent() override
+    virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
-        H_BaseAnalyzer::ProcessEvent();
+        H_BaseAnalyzer::ProcessEvent(_event);
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::ETau;
@@ -91,7 +91,7 @@ protected:
         if (config.ApplyTauESCorrection())
             ApplyTauCorrections(eTau.hadronic_taus,false);
         else
-            correctedTaus = event.taus();
+            correctedTaus = event->taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -121,9 +121,9 @@ protected:
 //            cut(maxDeltaR < 0.03, "DR_eleTau");
 //        }
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),
-                                                                        event.jets(),primaryVertex,
-                                                                        vertices,event.taus());
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
+                                                                        event->jets(),primaryVertex,
+                                                                        vertices,event->taus());
 
         if (config.ApplyTauESCorrection())
             ApplyTauCorrectionsToMVAMET(mvaMet);
@@ -148,7 +148,7 @@ protected:
 
         CalculateFullEventWeight(higgs);
 
-        const ntuple::MET pfMET = config.isMC() ? event.metPF() : mvaMetProducer.ComputePFMet(event.pfCandidates(), primaryVertex);
+        const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
 
@@ -159,7 +159,7 @@ protected:
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::electronID;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event.electrons().at(id);
+        const ntuple::Electron& object = event->electrons().at(id);
         const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
 
         cut(true, ">0 ele cand");
@@ -227,7 +227,7 @@ protected:
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
             { return SelectZelectron(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("z_electrons", base_selector, event.electrons().size());
+        return CollectObjects<analysis::Candidate>("z_electrons", base_selector, event->electrons().size());
     }
 
     virtual analysis::Candidate SelectZelectron(size_t id, cuts::ObjectSelector* objectSelector,
@@ -236,7 +236,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event.electrons().at(id);
+        const ntuple::Electron& object = event->electrons().at(id);
         const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
 
         cut(true, ">0 mu cand");
@@ -350,7 +350,7 @@ protected:
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
-        const ntuple::Electron& ntuple_electron = event.electrons().at(electron.index);
+        const ntuple::Electron& ntuple_electron = event->electrons().at(electron.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
         H_BaseAnalyzer::

@@ -59,16 +59,16 @@ public:
 protected:
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent() override
+    virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
 
-        H_BaseAnalyzer::ProcessEvent();
+        H_BaseAnalyzer::ProcessEvent(_event);
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
 
-
+        //std::cout << event->eventId().eventId << std::endl;
         if (!FindAnalysisFinalState(muTau) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
@@ -99,7 +99,7 @@ protected:
         if (config.ApplyTauESCorrection())
             ApplyTauCorrections(muTau.hadronic_taus,false);
         else
-            correctedTaus = event.taus();
+            correctedTaus = event->taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -114,9 +114,9 @@ protected:
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),
-                                                                event.jets(),primaryVertex,
-                                                                vertices,event.taus());
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
+                                                                event->jets(),primaryVertex,
+                                                                vertices,event->taus());
 
         if (config.ApplyTauESCorrection())
             ApplyTauCorrectionsToMVAMET(mvaMet);
@@ -140,12 +140,12 @@ protected:
 
         CalculateFullEventWeight(higgs);
 
-        const ntuple::MET pfMET = config.isMC() ? event.metPF() : mvaMetProducer.ComputePFMet(event.pfCandidates(), primaryVertex);
+        const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         if(config.isMC()) {
-            anaData.PFmet_comparison().Fill(event.metPF().pt, std::abs(pfMET.pt - event.metPF().pt)/event.metPF().pt);
-            anaData.PFmetType1_comparison().Fill(event.met().pt, std::abs(pfMET.pt - event.met().pt)/event.met().pt);
-            const double DeltaPhi_PFmet = TVector2::Phi_mpi_pi(event.metPF().phi - pfMET.phi);
-            const double DeltaPhi_PFmetType1 = TVector2::Phi_mpi_pi(event.met().phi - pfMET.phi);
+            anaData.PFmet_comparison().Fill(event->metPF().pt, std::abs(pfMET.pt - event->metPF().pt)/event->metPF().pt);
+            anaData.PFmetType1_comparison().Fill(event->met().pt, std::abs(pfMET.pt - event->met().pt)/event->met().pt);
+            const double DeltaPhi_PFmet = TVector2::Phi_mpi_pi(event->metPF().phi - pfMET.phi);
+            const double DeltaPhi_PFmetType1 = TVector2::Phi_mpi_pi(event->met().phi - pfMET.phi);
             anaData.DeltaPhi_PFmet().Fill(std::abs(DeltaPhi_PFmet));
             anaData.DeltaPhi_PFmetType1().Fill(std::abs(DeltaPhi_PFmetType1));
         }
@@ -160,7 +160,7 @@ protected:
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::muonID;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event.muons().at(id);
+        const ntuple::Muon& object = event->muons().at(id);
         const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 mu cand");
@@ -211,7 +211,7 @@ protected:
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
             { return SelectZmuon(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event.muons().size());
+        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event->muons().size());
     }
 
     virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
@@ -220,7 +220,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event.muons().at(id);
+        const ntuple::Muon& object = event->muons().at(id);
         const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
 
         cut(true, ">0 mu cand");
@@ -332,7 +332,7 @@ protected:
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
-        const ntuple::Muon& ntuple_muon = event.muons().at(muon.index);
+        const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
         H_BaseAnalyzer::FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, muon, tau, pfMET);

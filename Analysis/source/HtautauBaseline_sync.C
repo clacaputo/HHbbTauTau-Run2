@@ -53,9 +53,9 @@ protected:
     typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
-    virtual void ProcessEvent() override
+    virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
-        H_BaseAnalyzer::ProcessEvent();
+        H_BaseAnalyzer::ProcessEvent(_event);
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
@@ -80,7 +80,7 @@ protected:
         if (config.ApplyTauESCorrection())
             ApplyTauCorrections(tauTau.hadronic_taus,false);
         else
-            correctedTaus = event.taus();
+            correctedTaus = event->taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -106,8 +106,8 @@ protected:
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event.pfCandidates(),event.jets(),primaryVertex,
-                                                                vertices,event.taus());
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),event->jets(),primaryVertex,
+                                                                vertices,event->taus());
 
         if (config.ApplyTauESCorrection())
             ApplyTauCorrectionsToMVAMET(mvaMet);
@@ -127,7 +127,7 @@ protected:
         CalculateFullEventWeight(higgs);
 
 
-        const ntuple::MET pfMET = config.isMC() ? event.metPF() : mvaMetProducer.ComputePFMet(event.pfCandidates(), primaryVertex);
+        const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         FillSyncTree(higgs, m_sv, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs), bjets, retagged_bjets, vertices,pfMET);
     }
 
@@ -193,21 +193,21 @@ protected:
                 const std::string& interestingPath = interestingPathIter.first;
                 const bool jetTriggerRequest = interestingPathIter.second;
 
-                if(!useStandardTriggerMatch && !analysis::HaveTriggerMatched(event.triggerObjects(), interestingPath, higgs))
+                if(!useStandardTriggerMatch && !analysis::HaveTriggerMatched(event->triggerObjects(), interestingPath, higgs))
                     continue;
 
-                if (useStandardTriggerMatch && !analysis::HaveTriggerMatched(event,interestingPath,higgs))
+                if (useStandardTriggerMatch && !analysis::HaveTriggerMatched(*event,interestingPath,higgs))
                     continue;
 
                 bool jetMatched = false;
                 if(jetTriggerRequest) {
                     for (const auto& jet : jets){
-                        if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event.triggerObjects(),
+                        if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(),
                                                                                      interestingPath, jet)){
                             jetMatched = true;
                             break;
                         }
-                        if (useStandardTriggerMatch && analysis::HaveTriggerMatched(event, interestingPath, jet)){
+                        if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event, interestingPath, jet)){
                             jetMatched = true;
                             break;
                         }

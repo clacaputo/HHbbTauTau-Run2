@@ -1,6 +1,6 @@
 /*!
  * \file EventDescriptor.h
- * \brief Definition of EventDescriptor class that contains all ntuple data for one event.
+ * \brief Definition of EventDescriptor class that contains all ntuple data for one event->
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \date 2014-03-28 created

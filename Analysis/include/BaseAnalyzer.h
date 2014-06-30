@@ -87,7 +87,6 @@ public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()),
-          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
@@ -96,6 +95,9 @@ public:
           mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
     {
+        if ( _prefix != "external" )
+            treeExtractor = std::shared_ptr<TreeExtractor>(
+                        new TreeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()));
         TH1::SetDefaultSumw2();
         if(config.ApplyPUreweight()){
             //std::cout << "I'm here" << std::endl;
@@ -113,11 +115,12 @@ public:
     virtual void Run()
     {
         size_t n = 0;
-        for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor.ExtractNext(event); ++n) {
+        auto _event = std::shared_ptr<EventDescriptor>(new EventDescriptor());
+        for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor->ExtractNext(*_event); ++n) {
             timer.Report(n);
-            if(config.RunSingleEvent() && event.eventId().eventId != config.SingleEventId()) continue;
+            if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
-                ProcessEvent();
+                ProcessEvent(_event);
             } catch(cuts::cut_failed&){}
             GetAnaData().Selection("event").fill_selection(eventWeight);
             if(config.RunSingleEvent()) break;
@@ -126,15 +129,14 @@ public:
         runReport.Report();
     }
 
-protected:
-    virtual BaseAnalyzerData& GetAnaData() = 0;
 
-    virtual void ProcessEvent()
+    virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)
     {
+        event = _event;
         eventWeight = 1;
-        runReport.AddEvent(event.eventId());
+        runReport.AddEvent(event->eventId());
         if (pu_weights){
-            const ntuple::Event& eventInfo = event.eventInfo();
+            const ntuple::Event& eventInfo = event->eventInfo();
             const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
             if(bxIndex >= eventInfo.bunchCrossing.size())
                 throw std::runtime_error("in-time BX not found");
@@ -143,6 +145,9 @@ protected:
         }
         eventWeight *= PUweight;
     }
+
+protected:
+    virtual BaseAnalyzerData& GetAnaData() = 0;
 
     void SetPUWeight(float nPU)
     {
@@ -185,7 +190,7 @@ protected:
 
     bool HaveTriggerFired(const std::vector<std::string>& interestinghltPaths) const
     {
-        for (const ntuple::Trigger& trigger : event.triggers()){
+        for (const ntuple::Trigger& trigger : event->triggers()){
             for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPaths, n); ++n){
                 if (trigger.hltresults.at(n) == 1 && trigger.hltprescales.at(n) == 1)
                     return true;
@@ -222,7 +227,7 @@ protected:
 
     CandidateVector CollectMuons()
     {
-        return CollectCandidateObjects("muons", &BaseAnalyzer::SelectMuon, event.muons().size());
+        return CollectCandidateObjects("muons", &BaseAnalyzer::SelectMuon, event->muons().size());
     }
 
     virtual Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
@@ -233,7 +238,7 @@ protected:
 
     CandidateVector CollectBackgroundMuons()
     {
-        return CollectCandidateObjects("muons_bkg", &BaseAnalyzer::SelectBackgroundMuon, event.muons().size());
+        return CollectCandidateObjects("muons_bkg", &BaseAnalyzer::SelectBackgroundMuon, event->muons().size());
     }
 
     virtual Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
@@ -244,7 +249,7 @@ protected:
 
     CandidateVector CollectTaus()
     {
-        return CollectCandidateObjects("taus", &BaseAnalyzer::SelectTau, event.taus().size());
+        return CollectCandidateObjects("taus", &BaseAnalyzer::SelectTau, event->taus().size());
     }
 
     virtual Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
@@ -256,7 +261,7 @@ protected:
 
     CandidateVector CollectElectrons()
     {
-        return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectElectron, event.electrons().size());
+        return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectElectron, event->electrons().size());
     }
 
     virtual Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
@@ -268,7 +273,7 @@ protected:
     CandidateVector CollectBackgroundElectrons()
     {
         return CollectCandidateObjects("electrons_bkg", &BaseAnalyzer::SelectBackgroundElectron,
-                                       event.electrons().size());
+                                       event->electrons().size());
     }
 
     virtual Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
@@ -282,7 +287,7 @@ protected:
         const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
                 root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Vertex
             { return SelectVertex(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<Vertex>("vertices", base_selector, event.vertices().size());
+        return CollectObjects<Vertex>("vertices", base_selector, event->vertices().size());
     }
 
     Vertex SelectVertex(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
@@ -290,7 +295,7 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::vertex;
         cuts::Cutter cut(objectSelector);
-        const ntuple::Vertex& object = event.vertices().at(id);
+        const ntuple::Vertex& object = event->vertices().at(id);
 
         cut(true, ">0 vertex");
         cut(X(ndf) > ndf, "ndf");
@@ -366,8 +371,8 @@ protected:
 protected:
     Config config;
     tools::Timer timer;
-    EventDescriptor event;
-    TreeExtractor treeExtractor;
+    std::shared_ptr<const EventDescriptor> event;
+    std::shared_ptr<TreeExtractor> treeExtractor;
     std::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
     RunReport runReport;
