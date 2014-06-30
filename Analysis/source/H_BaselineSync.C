@@ -34,14 +34,14 @@
 
 class H_BaselineSync {
 public:
-    H_BaselineSync(const std::string& inputFileName, const std::string& outputMuTauFile, const std::string& outputETauFile,
-                   const std::string& outputTauTauFile, const std::string& configFileName,
+    H_BaselineSync(const std::string& inputFileName, const std::string& outputMuTauFile, /*const std::string& outputETauFile,
+                   const std::string& outputTauTauFile,*/ const std::string& configFileName,
                    const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()), maxNumberOfEvents(_maxNumberOfEvents),
           treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()),
-          HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents),
-          HetauAnalyzer(inputFileName, outputETauFile, configFileName, "external", _maxNumberOfEvents),
-          HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents)
+          HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents)/*,*/
+//          HetauAnalyzer(inputFileName, outputETauFile, configFileName, "external", _maxNumberOfEvents),
+//          HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents)
     { }
 
     virtual void Run()
@@ -53,8 +53,8 @@ public:
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
                 HmutauAnalyzer.ProcessEvent(_event);
-                HetauAnalyzer.ProcessEvent(_event);
-                HtautauAnalyzer.ProcessEvent(_event);
+//                HetauAnalyzer.ProcessEvent(_event);
+//                HtautauAnalyzer.ProcessEvent(_event);
             } catch(cuts::cut_failed&){}
             if(config.RunSingleEvent()) break;
         }
@@ -69,7 +69,7 @@ private:
     std::shared_ptr<const analysis::EventDescriptor> event;
     analysis::TreeExtractor treeExtractor;
     HmutauBaseline_sync HmutauAnalyzer;
-    HetauBaseline_sync HetauAnalyzer;
-    HtautauBaseline_sync HtautauAnalyzer;
+//    HetauBaseline_sync HetauAnalyzer;
+//    HtautauBaseline_sync HtautauAnalyzer;
 };
 

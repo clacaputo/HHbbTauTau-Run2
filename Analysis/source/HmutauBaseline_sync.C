@@ -55,7 +55,7 @@ public:
         syncTree.Write();
     }
 
-
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
@@ -152,7 +152,7 @@ public:
     }
 
 protected:
-    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
+
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                            root_ext::AnalyzerData& _anaData,
