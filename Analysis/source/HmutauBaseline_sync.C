@@ -68,7 +68,7 @@ protected:
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
 
-
+        //std::cout << event.eventId().eventId << std::endl;
         if (!FindAnalysisFinalState(muTau) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));

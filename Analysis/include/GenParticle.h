@@ -154,6 +154,8 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     if (genParticle.status != particles::Decayed_or_fragmented){
         throw std::runtime_error("particle type not supported");
     }
+//    std::cout << "I'm in FindDecayProducts" << std::endl;
+//    std::cout << "gen particle index = " << genParticle.pdg << ", index = " << genParticle.index << std::endl;
 
     decayProducts.clear();
     const GenParticlePtrVector* daughters = &genParticle.daughters;
@@ -182,7 +184,8 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
                 bool grandDaughter_found = false;
                 for (const GenParticle* grandDaughter : daughter->daughters){
                     if (grandDaughter->pdg == daughter->pdg &&
-                            grandDaughter->status == particles::Decayed_or_fragmented){
+                            (grandDaughter->status == particles::Decayed_or_fragmented ||
+                             grandDaughter->status == particles::FinalStateParticle) ){
                         grandDaughter_found = true;
                         daughter = grandDaughter;
                         break;

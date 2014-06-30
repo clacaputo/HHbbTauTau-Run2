@@ -281,6 +281,7 @@ protected:
         static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
 
+        //genEvent.Print();
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
         if (resonances.size() > 1)
