@@ -19,9 +19,6 @@ Analysis/legacy/Print_PU.C
 Analysis/legacy/VHAnalyzer_WH_New.C
 Analysis/legacy/VHAnalyzer_WH_New.h
 Analysis/legacy/stack_upgrade.C
-Analysis/source/HHbb2Taujet_analyzer.C
-Analysis/source/HHbbETaujet_analyzer.C
-Analysis/source/HHbbMuTaujet_analyzer.C
 Analysis/source/PileUp.C
 Analysis/source/VHAnalyzer_WH_New.C
 Analysis/source/VHAnalyzer_WH_New.h
@@ -177,7 +174,6 @@ Analysis/include/Tools.h
 Analysis/source/HetauBaseline_sync.C
 Analysis/source/HmutauBaseline_sync.C
 Analysis/include/AnalysisTools.h
-Analysis/include/HH_BaseAnalyzer.h
 Analysis/include/H_BaseAnalyzer.h
 RunTools/python/skimRiccardo.py
 RunTools/python/tree_trimmer.py
@@ -230,3 +226,4 @@ Analysis/config/data.cfg
 Analysis/config/dataset.cfg
 Analysis/config/analyzers.cfg
 Analysis/source/H_BaselineSync.C
+RunTools/batch.sh
