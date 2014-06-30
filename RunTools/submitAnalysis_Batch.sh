@@ -81,7 +81,6 @@ if [ ! -f "$MAKE_PATH" ] ; then
 fi
 
 JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -print0 | xargs -0 -n 1 basename | sed "s/\.txt//" )
-#JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -printf "%f\n" | sed "s/\.txt//" )
 
 if [ "x$JOBS" = "x" ] ; then
 	echo "ERROR: directory '$FILE_LIST_PATH' does not contains any job description."
@@ -104,54 +103,19 @@ echo "Executable file is compiled."
 i=0
 n=0
 
-if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
-    for NAME in $JOBS ; do
-        bsub -q $QUEUE -m borah -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
-             -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS
-    done
-    echo "$N_JOBS have been submited in local in Pisa"
-elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
-    for NAME in $JOBS ; do
-        echo "$RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME yes " \
-             "$FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS " | \
-            qsub -q $QUEUE -N $NAME -o $OUTPUT_PATH -e $OUTPUT_PATH -
-    done
-    echo "$N_JOBS have been submited in local in Bari"
-elif [ "$QUEUE" = "fai5" ] ; then
-    for NAME in $JOBS ; do
-        bsub -Is -q $QUEUE -J $NAME $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
-             $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS &
-        i=$(($i + 1))
-		n=$(($n + 1))
-		echo "job $n started"
-        if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
-                wait
-                i=0
-        fi
-    done
-    wait
-    echo "$N_JOBS finished on fai5"
-elif [ "$QUEUE" = "fai" ] ; then
-    for NAME in $JOBS ; do
-        bsub -Is -q $QUEUE -R "select[defined(fai)]" -J $NAME \
-             $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "yes" \
-             $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS &
-        i=$(($i + 1))
-		n=$(($n + 1))
-		echo "job $n started"
-        if [[ $i == $MAX_N_PARALLEL_JOBS ]] ; then
-                wait
-                i=0
-        fi
-    done
-    wait
-    echo "$N_JOBS finished on fai"
-elif [ $STORAGE = "Local" ] ; then
-    for NAME in $JOBS ; do
-        $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH $OUTPUT_PATH/$ANALYZER_NAME "dont_set_cmsenv" \
-                         $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root $CONFIG_NAME $PREFIX @$MAX_N_EVENTS &
+source $WORKING_PATH/RunTools/batch.sh
+
+if [ $STORAGE = "Local" ] ; then
+    SET_CMS_ENV="dont_set_cmsenv"
+else
+    SET_CMS_ENV="yes"
+fi
+
+for NAME in $JOBS ; do
+    submit_batch $QUEUE $STORAGE $NAME $OUTPUT_PATH $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
+                 $OUTPUT_PATH/$ANALYZER_NAME $SET_CMS_ENV $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root \
+                 $CONFIG_NAME $PREFIX @$MAX_N_EVENTS
+    if [ $MAX_N_PARALLEL_JOBS -ne 0 ] ; then
         i=$(($i + 1))
         n=$(($n + 1))
         echo "job $n started"
@@ -159,9 +123,12 @@ elif [ $STORAGE = "Local" ] ; then
                 wait
                 i=0
         fi
-    done
-    wait
-    echo "$N_JOBS finished on local"
+    fi
+done
+
+if [ $MAX_N_PARALLEL_JOBS -ne 0 ] ; then
+    echo "$N_JOBS have been submited."
 else
-    echo "unknow queue"
+    wait
+    echo "$N_JOBS finished on fai5"
 fi
