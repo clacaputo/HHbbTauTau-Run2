@@ -140,9 +140,9 @@ for NAME in $JOBS ; do
     fi
 done
 
-if [ $MAX_N_PARALLEL_JOBS -ne 0 ] ; then
-    echo "$N_JOBS have been submited."
+if [ $MAX_N_PARALLEL_JOBS -eq 0 ] ; then
+    echo "$N_JOBS have been submitted."
 else
     wait
-    echo "$N_JOBS finished on fai5"
+    echo "$N_JOBS finished"
 fi
