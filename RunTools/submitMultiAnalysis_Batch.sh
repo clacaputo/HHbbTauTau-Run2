@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #  \file submitAnalysis_Batch.sh
-#  \brief Submit analysis jobs for a given dataset on batch.
+#  \brief Submit analysis jobs for a given dataset on batch for all analysis channels.
 #  \author Konstantin Androsov (Siena University, INFN Pisa)
 #  \author Maria Teresa Grippo (Siena University, INFN Pisa)
 #
@@ -23,8 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-if [ $# -lt 7 -o $# -gt 8 ] ; then
-    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path analyzer_name config_name [exe_name]"
+if [ $# -ne 9 ] ; then
+    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path_1 output_path_2 output_path_3 config_name exe_name"
     exit
 fi
 
@@ -32,14 +32,14 @@ QUEUE=$1
 STORAGE=$2
 MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
-OUTPUT_PATH=$5
-ANALYZER_NAME=$6
-CONFIG_NAME=$7
-EXE_NAME=$8
+OUTPUT_PATH_1=$5
+OUTPUT_PATH_2=$6
+OUTPUT_PATH_3=$7
+CONFIG_NAME=$8
+EXE_NAME=$9
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
-MAKE_PATH=$WORKING_PATH/RunTools/make_withFactory.sh
 
 MAX_N_EVENTS=0
 
@@ -64,11 +64,23 @@ if [ ! -d "$WORKING_PATH/$FILE_LIST_PATH" ] ; then
 	exit
 fi
 
-if [ ! -d "$OUTPUT_PATH" ] ; then
-    echo "ERROR: output path '$OUTPUT_PATH' does not exist."
+if [ ! -d "$OUTPUT_PATH_1" ] ; then
+    echo "ERROR: output path 1 '$OUTPUT_PATH_1' does not exist."
 	exit
 fi
-OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
+OUTPUT_PATH_1=$( cd "$OUTPUT_PATH_1" ; pwd )
+
+if [ ! -d "$OUTPUT_PATH_2" ] ; then
+    echo "ERROR: output path 2 '$OUTPUT_PATH_2' does not exist."
+    exit
+fi
+OUTPUT_PATH_2=$( cd "$OUTPUT_PATH_2" ; pwd )
+
+if [ ! -d "$OUTPUT_PATH_3" ] ; then
+    echo "ERROR: output path 3 '$OUTPUT_PATH_3' does not exist."
+    exit
+fi
+OUTPUT_PATH_3=$( cd "$OUTPUT_PATH_3" ; pwd )
 
 if [ ! -f "$RUN_SCRIPT_PATH" ] ; then
 	echo "ERROR: script '$RUN_SCRIPT_PATH' does not exist."
@@ -97,13 +109,7 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
     exit
 fi
 
-if [ $EXE_NAME = "" ] ; then
-    $MAKE_PATH $OUTPUT_PATH $ANALYZER_NAME $ANALYZER_NAME
-    EXE_NAME=$OUTPUT_PATH/$ANALYZER_NAME
-    echo "Executable file is compiled."
-else
-    echo "Using pre-compiled executable $EXE_NAME."
-fi
+echo "Using pre-compiled executable $EXE_NAME."
 
 i=0
 n=0
@@ -118,7 +124,8 @@ fi
 
 for NAME in $JOBS ; do
     submit_batch $QUEUE $STORAGE $NAME $OUTPUT_PATH $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
-                 $EXE_NAME $SET_CMS_ENV $FILE_LIST_PATH/${NAME}.txt $OUTPUT_PATH/${NAME}.root \
+                 $EXE_NAME $SET_CMS_ENV $FILE_LIST_PATH/${NAME}.txt \
+                 $OUTPUT_PATH_1/${NAME}.root $OUTPUT_PATH_2/${NAME}.root $OUTPUT_PATH_3/${NAME}.root \
                  $CONFIG_NAME $PREFIX @$MAX_N_EVENTS
     if [ $MAX_N_PARALLEL_JOBS -ne 0 ] ; then
         i=$(($i + 1))

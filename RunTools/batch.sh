@@ -36,17 +36,6 @@ function submit_batch {
     OUTPUT_PATH=$4
     RUN_SCRIPT_PATH=$5
 
-    if [ $STORAGE = "Pisa" ] ; then
-        PREFIX="/gpfs/ddn/srm/cms"
-    elif [ $STORAGE = "Bari" ] ; then
-        PREFIX="/lustre/cms"
-    elif [ $STORAGE = "Local" ] ; then
-        PREFIX=$CMS_STORE
-    else
-        echo "ERROR: unknown storage"
-        exit 1
-    fi
-
     if [ ! -f "$RUN_SCRIPT_PATH" ] ; then
         echo "ERROR: script '$RUN_SCRIPT_PATH' does not exist."
         exit 1
