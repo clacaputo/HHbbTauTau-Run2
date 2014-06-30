@@ -53,7 +53,11 @@ public:
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
                 HmutauAnalyzer.ProcessEvent(_event);
+                } catch(cuts::cut_failed&){}
+            try {
                 HetauAnalyzer.ProcessEvent(_event);
+            } catch(cuts::cut_failed&){}
+            try {
                 HtautauAnalyzer.ProcessEvent(_event);
             } catch(cuts::cut_failed&){}
             HmutauAnalyzer.GetAnaData().Selection("event").fill_selection(HmutauAnalyzer.GetEventWeight());
