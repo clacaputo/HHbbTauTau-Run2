@@ -26,9 +26,9 @@
 
 #include "../include/H_BaseAnalyzer.h"
 
-class BaselineAnalyzerData : public analysis::BaseAnalyzerData {
+class AnalyzerDataMuTau : public analysis::BaseAnalyzerData {
 public:
-    BaselineAnalyzerData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
+    AnalyzerDataMuTau(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
 
 
     TH2D_ENTRY(PFmet_comparison, 300, 0.0, 300.0, 100, -1, 1)
@@ -56,8 +56,6 @@ public:
     }
 
 
-protected:
-    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
@@ -152,6 +150,9 @@ protected:
 
         FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
+
+protected:
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                            root_ext::AnalyzerData& _anaData,
@@ -346,7 +347,7 @@ protected:
     }
 
 private:
-    BaselineAnalyzerData anaData;
+    AnalyzerDataMuTau anaData;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

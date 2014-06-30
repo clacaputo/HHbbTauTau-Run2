@@ -225,5 +225,6 @@ Analysis/config/dyjets.cfg
 Analysis/config/data.cfg
 Analysis/config/dataset.cfg
 Analysis/config/analyzers.cfg
+Analysis/source/H_BaselineSync.C
 RunTools/batch.sh
 RunTools/submitMultiAnalysis_Batch.sh

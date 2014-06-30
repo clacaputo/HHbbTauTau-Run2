@@ -86,18 +86,21 @@ class BaseAnalyzer {
 public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
-        : config(configFileName), timer(config.ReportInterval()),
+        : config(configFileName),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          anaDataFinalSelection(*outputFile, "final_selection"), runReport(outputFileName + ".txt"),
+          anaDataFinalSelection(*outputFile, "final_selection"),
           maxNumberOfEvents(_maxNumberOfEvents),
           eventWeight(1), PUweight(1), triggerWeight(1), IDweight(1), IsoWeight(1),
           mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
     {
-        if ( _prefix != "external" )
+        if ( _prefix != "external" ){
+            timer = std::shared_ptr<tools::Timer>(new tools::Timer(config.ReportInterval()));
             treeExtractor = std::shared_ptr<TreeExtractor>(
                         new TreeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()));
+
+        }
         TH1::SetDefaultSumw2();
         if(config.ApplyPUreweight()){
             //std::cout << "I'm here" << std::endl;
@@ -116,8 +119,10 @@ public:
     {
         size_t n = 0;
         auto _event = std::shared_ptr<EventDescriptor>(new EventDescriptor());
+        if (!treeExtractor || !timer)
+            throw exception("treeExtractor not initialized");
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor->ExtractNext(*_event); ++n) {
-            timer.Report(n);
+            timer->Report(n);
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
                 ProcessEvent(_event);
@@ -125,16 +130,15 @@ public:
             GetAnaData().Selection("event").fill_selection(eventWeight);
             if(config.RunSingleEvent()) break;
         }
-        timer.Report(n, true);
-        runReport.Report();
+        timer->Report(n, true);
     }
 
 
     virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)
     {
         event = _event;
+        GetAnaData().getOutputFile().cd();
         eventWeight = 1;
-        runReport.AddEvent(event->eventId());
         if (pu_weights){
             const ntuple::Event& eventInfo = event->eventInfo();
             const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
@@ -370,12 +374,11 @@ protected:
 
 protected:
     Config config;
-    tools::Timer timer;
+    std::shared_ptr<tools::Timer> timer;
     std::shared_ptr<const EventDescriptor> event;
     std::shared_ptr<TreeExtractor> treeExtractor;
     std::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
-    RunReport runReport;
     size_t maxNumberOfEvents;
     GenEvent genEvent;
     Vertex primaryVertex;
