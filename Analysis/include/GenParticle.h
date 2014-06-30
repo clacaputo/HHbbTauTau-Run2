@@ -160,10 +160,10 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     size_t expected_nDaughters = particleCodes.size();
     if (daughters->size() == 0){
         if(genParticle.mothers.size() != 1)
-            throw std::runtime_error("cannot find decay products");
+            throw std::runtime_error("more than one mother per a gen particle is not supported");
         const GenParticle& mother = *genParticle.mothers.front();
         if(mother.status != particles::HardInteractionProduct || mother.pdg != genParticle.pdg)
-            throw std::runtime_error("cannot find decay products");
+            throw std::runtime_error("direct mother for a gen particle is not a hard interation product");
         daughters = &mother.daughters;
         ++expected_nDaughters;
     }
@@ -189,7 +189,7 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
                     }
                 }
                 if (!grandDaughter_found)
-                    throw std::runtime_error("cannot find decay products");
+                    throw std::runtime_error("grand daughter not found");
             }
 
             decayProducts.push_back(daughter);
