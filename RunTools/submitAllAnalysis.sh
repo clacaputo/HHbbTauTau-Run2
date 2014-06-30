@@ -42,6 +42,7 @@ if [ -d "$OUTPUT_PATH" ] ; then
     echo "ERROR: working path '$OUTPUT_PATH' already exists."
     exit
 fi
+mkdir -p $OUTPUT_PATH
 OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
 
 QUEUE=$4
@@ -65,7 +66,7 @@ if [ $USE_MULTI_ANA = "yes" ] ; then
     MULTI_ANA_NAME="H_BaselineSync"
 
     $MAKE_PATH $OUTPUT_PATH $MULTI_ANA_NAME $MULTI_ANA_NAME
-    EXE_NAME=$OUTPUT_PATH/$MULTI_ANA_NAME/$MULTI_ANA_NAME
+    EXE_NAME=$OUTPUT_PATH/$MULTI_ANA_NAME
     echo "Executable file $EXE_NAME is compiled."
 
     for (( i=0; i<$N_DATASET; i++ )) ; do
@@ -86,7 +87,7 @@ if [ $USE_MULTI_ANA = "yes" ] ; then
         mkdir -p $ANA_OUTPUT_PATH_3
 
         yes | ./RunTools/submitMultiAnalysis_Batch.sh $QUEUE $STORAGE $MAX_N_PARALLEL_JOBS $INPUT_PATH \
-            $ANA_OUTPUT_PATH_1 $ANA_OUTPUT_PATH_2 $ANA_OUTPUT_PATH_3 \
+            $OUTPUT_PATH $ANA_OUTPUT_PATH_1 $ANA_OUTPUT_PATH_2 $ANA_OUTPUT_PATH_3 \
             $ANA_FOLDER $REFERENCE_CFG_PATH/${CFG_ARRAY[i]} $EXE_NAME
     done
 
