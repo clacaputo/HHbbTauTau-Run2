@@ -23,8 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-if [ $# -ne 9 ] ; then
-    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path_1 output_path_2 output_path_3 config_name exe_name"
+if [ $# -ne 10 ] ; then
+    echo "Usage: queue storage max_n_parallel_jobs file_list_path output_path_ref output_path_1 output_path_2 output_path_3 config_name exe_name"
     exit
 fi
 
@@ -32,11 +32,12 @@ QUEUE=$1
 STORAGE=$2
 MAX_N_PARALLEL_JOBS=$3
 FILE_LIST_PATH=$4
-OUTPUT_PATH_1=$5
-OUTPUT_PATH_2=$6
-OUTPUT_PATH_3=$7
-CONFIG_NAME=$8
-EXE_NAME=$9
+OUTPUT_PATH_REF=$5
+OUTPUT_PATH_1=$6
+OUTPUT_PATH_2=$7
+OUTPUT_PATH_3=$8
+CONFIG_NAME=$9
+EXE_NAME=${10}
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 RUN_SCRIPT_PATH=$WORKING_PATH/RunTools/runAnalysis.sh
@@ -64,6 +65,12 @@ if [ ! -d "$WORKING_PATH/$FILE_LIST_PATH" ] ; then
 	exit
 fi
 
+if [ ! -d "$OUTPUT_PATH_REF" ] ; then
+    echo "ERROR: output ref path '$OUTPUT_PATH_REF' does not exist."
+    exit
+fi
+OUTPUT_PATH_REF=$( cd "$OUTPUT_PATH_REF" ; pwd )
+
 if [ ! -d "$OUTPUT_PATH_1" ] ; then
     echo "ERROR: output path 1 '$OUTPUT_PATH_1' does not exist."
 	exit
@@ -85,11 +92,6 @@ OUTPUT_PATH_3=$( cd "$OUTPUT_PATH_3" ; pwd )
 if [ ! -f "$RUN_SCRIPT_PATH" ] ; then
 	echo "ERROR: script '$RUN_SCRIPT_PATH' does not exist."
 	exit
-fi
-
-if [ ! -f "$MAKE_PATH" ] ; then
-        echo "ERROR: script '$MAKE_PATH' does not exist."
-        exit
 fi
 
 JOBS=$( find $WORKING_PATH/$FILE_LIST_PATH -maxdepth 1 -name "*.txt" -print0 | xargs -0 -n 1 basename | sed "s/\.txt//" )
@@ -123,7 +125,7 @@ else
 fi
 
 for NAME in $JOBS ; do
-    submit_batch $QUEUE $STORAGE $NAME $OUTPUT_PATH $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH \
+    submit_batch $QUEUE $STORAGE $NAME $OUTPUT_PATH_REF $RUN_SCRIPT_PATH $NAME $WORKING_PATH $OUTPUT_PATH_REF \
                  $EXE_NAME $SET_CMS_ENV $FILE_LIST_PATH/${NAME}.txt \
                  $OUTPUT_PATH_1/${NAME}.root $OUTPUT_PATH_2/${NAME}.root $OUTPUT_PATH_3/${NAME}.root \
                  $CONFIG_NAME $PREFIX @$MAX_N_EVENTS

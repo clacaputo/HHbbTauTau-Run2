@@ -73,3 +73,41 @@ private:
     HtautauBaseline_sync HtautauAnalyzer;
 };
 
+namespace make_tools {
+template<>
+struct Factory<H_BaselineSync> {
+    static H_BaselineSync* Make(int argc, char *argv[])
+    {
+        std::cout << "Command line: ";
+        for(int n = 0; n < argc; ++n)
+            std::cout << argv[n] << " ";
+        std::cout << std::endl;
+        if(argc < 6 || argc > 8)
+            throw std::runtime_error("Invalid number of command line arguments.");
+
+        int n = 0;
+        const std::string inputFileName = argv[++n];
+        const std::string outputMuTauFile = argv[++n];
+        const std::string outputETauFile = argv[++n];
+        const std::string outputTauTauFile = argv[++n];
+        const std::string configFileName = argv[++n];
+        if(argc <= n)
+            return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile, configFileName);
+
+        const std::string prefix = argv[++n];
+        if(argc <= n)
+            return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+                                      configFileName, prefix);
+
+        char c;
+        size_t maxNumberOfEvents;
+        std::istringstream ss_nEvents(argv[++n]);
+        ss_nEvents >> c >> maxNumberOfEvents;
+        if(c != '@')
+            throw std::runtime_error("Bad command line format.");
+
+        return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+                                  configFileName, prefix, maxNumberOfEvents);
+    }
+};
+} // make_tools
