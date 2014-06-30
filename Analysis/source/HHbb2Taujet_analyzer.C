@@ -112,7 +112,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::TauTau;
         const std::string selection_label = "tau";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = event->taus().at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt_sublead, "pt");
@@ -143,7 +143,7 @@ protected:
                 leading_tau = higgs.daughters.at(1);
                 subleading_tau = higgs.daughters.at(0);
             }
-            const ntuple::Tau& ntuple_subleadingTau = event.taus().at(subleading_tau->index);
+            const ntuple::Tau& ntuple_subleadingTau = event->taus().at(subleading_tau->index);
             if(ntuple_subleadingTau.againstElectronLooseMVA5 > againstElectronLooseMVA5
                     && leading_tau->momentum.Pt() > pt_lead)
                 result.push_back(higgs);

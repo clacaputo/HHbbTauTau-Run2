@@ -68,7 +68,7 @@ protected:
 //        finalState::bbMuTaujet muTauJet;
 //        if (useMCtruth && !FindAnalysisFinalState(muTauJet)) return;
 
-        //std::cout << "event.triggers() size= " << event.triggers().size() << std::endl;
+        //std::cout << "event->triggers() size= " << event->triggers().size() << std::endl;
 
         cuts::Cutter cut(anaData.EventSelection());
 
@@ -100,7 +100,7 @@ protected:
                                                           analysis::Candidate::Higgs, "H_mu_tau", 0);
         cut(Higgses_mu_tau.size(), "H_mu_tau");
 
-//        analysis::CorrectMassBySVfit(Higgses_mu_tau, event.metMVA(), anaData.Mass("H_mu_tau_corr"), weight);
+//        analysis::CorrectMassBySVfit(Higgses_mu_tau, event->metMVA(), anaData.Mass("H_mu_tau_corr"), weight);
 
 //        const auto b_jets = CollectBJets(cuts::Htautau_Summer13::btag::CSVL, "loose");
 //        cut(b_jets.size() >= 2, ">=2b_loose");
@@ -126,7 +126,7 @@ protected:
         using namespace cuts::Htautau_Summer13::muonID::MuTau;
         const std::string selection_label = "muon";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Muon& object = event.muons().at(id);
+        const ntuple::Muon& object = event->muons().at(id);
 
         cut(true, ">0 mu cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -152,7 +152,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::MuTau;
         const std::string selection_label = "tau";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = event->taus().at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");

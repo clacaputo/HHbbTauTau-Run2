@@ -64,7 +64,7 @@ protected:
         const auto base_selector = signal ? base_selector_signal : base_selector_bkg;
         auto& objectSelector = signal ? GetAnaData().BJetSelection(selection_label)
                                           : GetAnaData().BJetSelectionBkg(selection_label);
-        return CollectObjects<Candidate>(objectSelector, event.jets().size(), base_selector, "bjets");
+        return CollectObjects<Candidate>(objectSelector, event->jets().size(), base_selector, "bjets");
     }
 
     Candidate SelectBJet(size_t id, cuts::ObjectSelector& objectSelector, bool enabled, root_ext::AnalyzerData& _anaData,
@@ -73,7 +73,7 @@ protected:
         using namespace cuts::Htautau_Summer13::btag::signal;
         cuts::Cutter cut(objectSelector, enabled);
         const std::string selection_label = "bjet_" + _selection_label;
-        const ntuple::Jet& object = event.jets().at(id);
+        const ntuple::Jet& object = event->jets().at(id);
         cut(true, ">0 b-jet cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
@@ -89,7 +89,7 @@ protected:
         const std::string selection_label = "bjet_bkg";
         cuts::Cutter cut(objectSelector, enabled);
 
-        const ntuple::Jet& object = event.jets().at(id);
+        const ntuple::Jet& object = event->jets().at(id);
         cut(true, ">0 b-jet cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
         cut(std::abs( X(eta, 120, -6.0, 6.0) ) < eta, "eta");
@@ -105,7 +105,7 @@ protected:
         using namespace cuts::Htautau_Summer13::electronID::veto;
         const std::string selection_label = "electron_bkg";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Electron& object = event.electrons().at(id);
+        const ntuple::Electron& object = event->electrons().at(id);
 
         cut(true, ">0 ele cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -128,7 +128,7 @@ protected:
         using namespace cuts::Htautau_Summer13::muonID::veto;
         const std::string selection_label = "muon_bkg";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Muon& object = event.muons().at(id);
+        const ntuple::Muon& object = event->muons().at(id);
 
         cut(true, ">0 mu cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -147,7 +147,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::veto;
         const std::string selection_label = "tau_bkg";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = event->taus().at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -243,19 +243,19 @@ protected:
             }
 //            GetAnaData().Mass("Final_H_tautau").Fill(resonance.daughters.at(0)->momentum.M(),weight);
 //            GetAnaData().Mass("Final_H_bb").Fill(resonance.daughters.at(1)->momentum.M(),weight);
-//            const Candidate corrected_h_tautua = CorrectMassBySVfit(*resonance.daughters.at(0), event.metMVA());
+//            const Candidate corrected_h_tautua = CorrectMassBySVfit(*resonance.daughters.at(0), event->metMVA());
 //            GetAnaData().Mass("Final_H_tautau_corr").Fill(corrected_h_tautua.momentum.M(), weight);
             GetAnaData().Mass("Final_H_tautau").Fill(resonance.momentum.M(), weight);
-            genEvent.Initialize(event.genParticles());
+            genEvent.Initialize(event->genParticles());
             const auto higgsesMC = genEvent.GetParticles( { particles::Higgs } );
             //std::cerr << "N higgses" << higgsesMC.size() << std::endl;
             if(higgsesMC.size() != 1) {
 
                 throw std::runtime_error("More then 1 MC higgs per event!");
             }
-            const ntuple::MET correctedMET = ApplyPostRecoilCorrection(event.metMVA(), resonance.momentum,
+            const ntuple::MET correctedMET = ApplyPostRecoilCorrection(event->metMVA(), resonance.momentum,
                                                                        (*higgsesMC.begin())->momentum);
-            //const Candidate corrected_h_tautua = CorrectMassBySVfit(resonance, event.metMVA());
+            //const Candidate corrected_h_tautua = CorrectMassBySVfit(resonance, event->metMVA());
             const Candidate corrected_h_tautua = CorrectMassBySVfit(resonance, correctedMET);
             GetAnaData().Mass("Final_H_tautau_corr").Fill(corrected_h_tautua.momentum.M(), weight);
         }
@@ -268,7 +268,7 @@ protected:
         static const particles::ParticleCodes2D HiggsDecays = { { particles::b, particles::b },
                                                                 { particles::tau, particles::tau } };
 
-        genEvent.Initialize(event.genParticles());
+        genEvent.Initialize(event->genParticles());
 
         const GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
         if (resonances.size() != 1)

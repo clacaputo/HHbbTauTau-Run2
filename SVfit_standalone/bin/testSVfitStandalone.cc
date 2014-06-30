@@ -4,7 +4,7 @@
    \brief Basic example of the use of the standalone version of SVfit
 
    This is an example executable to show the use of the standalone version of SVfit 
-   from a flat n-tuple or single event.
+   from a flat n-tuple or single event->
 */
 
 #include "HHbbTauTau/SVfit_standalone/interface/SVfitStandaloneAlgorithm.h"

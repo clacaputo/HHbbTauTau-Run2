@@ -114,7 +114,7 @@ protected:
         using namespace cuts::Htautau_Summer13::electronID::ETau;
         const std::string selection_label = "electron";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Electron& object = event.electrons().at(id);
+        const ntuple::Electron& object = event->electrons().at(id);
 
         cut(true, ">0 ele cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
@@ -141,7 +141,7 @@ protected:
         using namespace cuts::Htautau_Summer13::tauID::ETau;
         const std::string selection_label = "tau";
         cuts::Cutter cut(objectSelector, enabled);
-        const ntuple::Tau& object = event.taus().at(id);
+        const ntuple::Tau& object = event->taus().at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt, 1000, 0.0, 1000.0) > pt, "pt");
