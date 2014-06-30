@@ -41,7 +41,7 @@ public:
           treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()),
           HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents)/*,*/
 //          HetauAnalyzer(inputFileName, outputETauFile, configFileName, "external", _maxNumberOfEvents),
-//          HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents)
+//          HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents),
     { }
 
     virtual void Run()
@@ -56,6 +56,7 @@ public:
 //                HetauAnalyzer.ProcessEvent(_event);
 //                HtautauAnalyzer.ProcessEvent(_event);
             } catch(cuts::cut_failed&){}
+            HmutauAnalyzer.GetAnaData().Selection("event").fill_selection(HmutauAnalyzer.GetEventWeight());
             if(config.RunSingleEvent()) break;
         }
         timer.Report(n, true);
@@ -71,6 +72,7 @@ private:
     HmutauBaseline_sync HmutauAnalyzer;
 //    HetauBaseline_sync HetauAnalyzer;
 //    HtautauBaseline_sync HtautauAnalyzer;
+    double eventWeight;
 };
 
 namespace make_tools {
@@ -92,11 +94,11 @@ struct Factory<H_BaselineSync> {
         const std::string outputTauTauFile = argv[++n];
         const std::string configFileName = argv[++n];
         if(argc <= n)
-            return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile, configFileName);
+            return new H_BaselineSync(inputFileName, outputMuTauFile, /*outputETauFile, outputTauTauFile,*/ configFileName);
 
         const std::string prefix = argv[++n];
         if(argc <= n)
-            return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+            return new H_BaselineSync(inputFileName, outputMuTauFile, /*outputETauFile, outputTauTauFile,*/
                                       configFileName, prefix);
 
         char c;
@@ -106,7 +108,7 @@ struct Factory<H_BaselineSync> {
         if(c != '@')
             throw std::runtime_error("Bad command line format.");
 
-        return new H_BaselineSync(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+        return new H_BaselineSync(inputFileName, outputMuTauFile, /*outputETauFile, outputTauTauFile,*/
                                   configFileName, prefix, maxNumberOfEvents);
     }
 };

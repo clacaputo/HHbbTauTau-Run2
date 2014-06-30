@@ -150,6 +150,11 @@ public:
         eventWeight *= PUweight;
     }
 
+    double GetEventWeight() const
+    {
+        return eventWeight;
+    }
+
 protected:
     virtual BaseAnalyzerData& GetAnaData() = 0;
 
