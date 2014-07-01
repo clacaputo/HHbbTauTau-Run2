@@ -284,17 +284,40 @@ protected:
         //genEvent.Print();
         const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
-        if (resonances.size() > 1)
-            throw exception("more than 1 W in the event");
-
         if (resonances.size() == 0) return nullptr;
 
-        const GenParticle* Wboson = *resonances.begin();
+        if (resonances.size() == 1){
+            const GenParticle* Wboson = *resonances.begin();
 
-        analysis::GenParticlePtrVector resonanceDecayProducts;
-        if(analysis::FindDecayProducts(*Wboson, resonanceDecay,resonanceDecayProducts)){
-            return Wboson;
+            analysis::GenParticlePtrVector resonanceDecayProducts;
+            if(analysis::FindDecayProducts(*Wboson, resonanceDecay,resonanceDecayProducts)){
+                return Wboson;
+            }
         }
+
+        if (resonances.size() == 2){
+            const GenParticle* first_resonance = *resonances.begin();
+            const GenParticle* second_resonance = *resonances.end();
+            const GenParticle* W_mother;
+            const GenParticle* W_daughter;
+            if (first_resonance->mothers.size() == 0 && second_resonance->mothers.size() == 0)
+                throw exception("both resonances don't have mothers");
+            if (first_resonance->mothers.size() == 0 && first_resonance->daughters.size() != 0){
+                W_mother = first_resonance;
+                W_daughter = second_resonance;
+            }
+            if (first_resonance->mothers.size() != 0 && first_resonance->daughters.size() == 0){
+                W_mother = second_resonance;
+                W_daughter = first_resonance;
+            }
+            analysis::GenParticlePtrVector resonanceDecayProducts;
+            if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
+                return W_daughter;
+            }
+        }
+
+        if (resonances.size() > 2)
+            throw exception("more than 2 W in the event");
 
         return nullptr;
     }
