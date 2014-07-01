@@ -286,6 +286,9 @@ protected:
 
         if (resonances.size() == 0) return nullptr;
 
+        if (resonances.size() > 2)
+            throw exception("more than 2 W in the event");
+
         if (resonances.size() == 1){
             const GenParticle* Wboson = *resonances.begin();
 
@@ -295,29 +298,28 @@ protected:
             }
         }
 
-        if (resonances.size() == 2){
-            const GenParticle* first_resonance = *resonances.begin();
-            const GenParticle* second_resonance = *resonances.end();
-            const GenParticle* W_mother;
-            const GenParticle* W_daughter;
-            if (first_resonance->mothers.size() == 0 && second_resonance->mothers.size() == 0)
-                throw exception("both resonances don't have mothers");
-            if (first_resonance->mothers.size() == 0 && first_resonance->daughters.size() != 0){
-                W_mother = first_resonance;
-                W_daughter = second_resonance;
-            }
-            if (first_resonance->mothers.size() != 0 && first_resonance->daughters.size() == 0){
-                W_mother = second_resonance;
-                W_daughter = first_resonance;
-            }
-            analysis::GenParticlePtrVector resonanceDecayProducts;
-            if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
-                return W_daughter;
-            }
-        }
 
-        if (resonances.size() > 2)
-            throw exception("more than 2 W in the event");
+        const GenParticle* first_resonance = *resonances.begin();
+        const GenParticle* second_resonance = *std::next(resonances.begin());
+        const GenParticle* W_mother;
+        const GenParticle* W_daughter;
+
+
+        if (first_resonance->daughters.size() == 1 && first_resonance->daughters.at(0) == second_resonance){
+            W_mother = first_resonance;
+            W_daughter = second_resonance;
+        }
+        else if (second_resonance->daughters.size() == 1 && second_resonance->daughters.at(0) == first_resonance){
+            W_mother = second_resonance;
+            W_daughter = first_resonance;
+        }
+        else
+            throw exception("both resonances are in relationship");
+
+        analysis::GenParticlePtrVector resonanceDecayProducts;
+        if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
+            return W_daughter;
+        }
 
         return nullptr;
     }
