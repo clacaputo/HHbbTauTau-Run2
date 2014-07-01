@@ -296,6 +296,7 @@ protected:
             if(analysis::FindDecayProducts(*Wboson, resonanceDecay,resonanceDecayProducts)){
                 return Wboson;
             }
+            return nullptr;
         }
 
 
@@ -314,7 +315,7 @@ protected:
             W_daughter = first_resonance;
         }
         else
-            throw exception("both resonances are in relationship");
+            throw exception("both resonances are not in relationship");
 
         analysis::GenParticlePtrVector resonanceDecayProducts;
         if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
