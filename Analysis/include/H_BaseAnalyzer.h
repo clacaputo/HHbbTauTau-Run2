@@ -281,8 +281,14 @@ protected:
         static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
 
-        //genEvent.Print();
-        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+//        genEvent.Print();
+        const analysis::GenParticleSet all_resonances = genEvent.GetParticles(resonanceCodes);
+
+        analysis::GenParticleSet resonances;
+        for(const GenParticle* w : all_resonances) {
+            if(w->mothers.size() == 1 && w->mothers.at(0)->pdg.Code != particles::tau)
+                resonances.insert(w);
+        }
 
         if (resonances.size() == 0) return nullptr;
 
@@ -315,7 +321,7 @@ protected:
             W_daughter = first_resonance;
         }
         else
-            throw exception("both resonances are not in relationship");
+            throw exception("two resonances are not in relationship");
 
         analysis::GenParticlePtrVector resonanceDecayProducts;
         if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
