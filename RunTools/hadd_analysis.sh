@@ -24,36 +24,37 @@
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
 if [ $# -ne 2 ] ; then
-    echo "Usage: analysis_path output_dir"
+    echo "Usage: analysis_path output_path"
     exit
 fi
 
 ANALYSIS_PATH=$1
+
+OUTPUT_PATH=$2
+if [ -d "$OUTPUT_PATH" ] ; then
+    echo "ERROR: output path '$OUTPUT_PATH' already exists."
+    exit
+fi
+mkdir -p $OUTPUT_PATH
+OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
+
 cd $ANALYSIS_PATH
 
-FOLDER_PATH="anaMuTau anaETau anaTauTau"
-OUTPUT_DIR=$2
+ANA_FOLDERS=$( find . -maxdepth 1 -type d -printf "%f\n" )
 
-if [ -d "$OUTPUT_DIR" ] ; then
-	echo "ERROR: output dir '$OUTPUT_DIR' already exists."
-	exit
-fi
-
-mkdir -p $OUTPUT_DIR
-
-for FOLDER in $FOLDER_PATH ; do
+for FOLDER in $ANA_FOLDERS ; do
     SUB_FOLDERS=$( find $FOLDER -maxdepth 1 -type d -printf "%f\n" )
     for SUB_FOLDER in $SUB_FOLDERS ; do
 		if [ $SUB_FOLDER = $FOLDER ] ; then
 			continue
 		fi
-        mkdir -p $OUTPUT_DIR/$FOLDER
+        mkdir -p $OUTPUT_PATH/$FOLDER
         if [ $SUB_FOLDER = "Radion" ] ; then
-            cp $FOLDER/$SUB_FOLDER/*.root $OUTPUT_DIR/$FOLDER/
+            cp $FOLDER/$SUB_FOLDER/*.root $OUTPUT_PATH/$FOLDER/
         else
-            hadd $OUTPUT_DIR/$FOLDER/${SUB_FOLDER}.root $FOLDER/$SUB_FOLDER/*.root
+            hadd $OUTPUT_PATH/$FOLDER/${SUB_FOLDER}.root $FOLDER/$SUB_FOLDER/*.root
         fi
 	done
 done
 
-tar cjvf ${OUTPUT_DIR}.tar.bz2 $OUTPUT_DIR
+tar cjvf ${OUTPUT_PATH}.tar.bz2 $OUTPUT_PATH
