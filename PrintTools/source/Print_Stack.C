@@ -46,6 +46,7 @@ struct HistogramDescriptor {
     std::string Yaxis_title;
     root_ext::Range xRange;
     unsigned rebinFactor;
+    unsigned nBins;
     bool useLogY;
 };
 
@@ -82,6 +83,27 @@ std::istream&operator>>(std::istream& s, EColor& color){
 class Print_Stack {
 public:
     typedef root_ext::PdfPrinter Printer;
+
+    static TH1D* Convert(const std::string& sourceName, TFile* file, const std::string& treeName,
+                         const std::string& branchName, unsigned nBins, double xMin, double xMax,
+                         const std::string& weightBranchName = "")
+    {
+        TTree* tree = static_cast<TTree*>(file->Get(treeName.c_str()));;
+        if(!tree)
+            throw std::runtime_error("tree not found.");
+        std::ostringstream name;
+        name << sourceName << "_" << branchName << "_hist";
+        std::ostringstream command;
+        command << "(" << branchName;
+        if(weightBranchName.size())
+            command << "*" << weightBranchName;
+        command << ")>>+" << name.str();
+
+        TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), nBins, xMin, xMax);
+        tree->Draw(command.str().c_str(), "");
+        return histogram;
+    }
+
 
     Print_Stack(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                 const std::string& outputFileName)
@@ -120,7 +142,7 @@ public:
             TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
             leg->SetFillColor(0);
             leg->SetTextSize(0.125);
-            TString lumist="0.88 fb^{-1}";
+            TString lumist="19.7 fb^{-1}";
             TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
             ll->SetTextSize(0.03);
             ll->SetTextFont(42);
@@ -138,7 +160,8 @@ public:
             TH1D* data_histogram = nullptr;
             for (unsigned n = 0; n<sources.size(); ++n){
                 const DataSource& source = sources.at(n);
-                TH1D* histogram = static_cast<TH1D*>(source.file->Get(hist.name.c_str()));
+                TH1D* histogram = Convert(source.name, source.file, "syncTree", hist.name, hist.nBins,
+                                          hist.xRange.min, hist.xRange.max, "");
                 if (!histogram){
                     std::ostringstream ss;
                     ss << "histogram '" << hist.name << "' not found in " << source.file_name;
@@ -198,6 +221,7 @@ private:
             ss >> hist.xRange.min;
             ss >> hist.xRange.max;
             ss >> hist.rebinFactor;
+            ss >> hist.nBins;
             ss >> hist.useLogY;
             histograms.push_back(hist);
           }
