@@ -1,0 +1,14 @@
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_74_1_nnH.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_108_1_HTy.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_124_1_5Ea.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_75_1_Ssg.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_113_1_7HW.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_79_1_45P.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_177_1_kiq.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_89_1_F2v.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_137_1_zXS.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_78_1_zxZ.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_109_1_0bK.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_134_1_R2N.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_280_1_vS7.root
+/store/user/kandroso/Tau_Run2012A_22Jan2013_v1/TREE/Tree_92_1_CPM.root

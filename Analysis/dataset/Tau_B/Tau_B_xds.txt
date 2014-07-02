@@ -1,0 +1,16 @@
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_168_1_qSp.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1211_1_LdD.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1554_1_s3B.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1225_1_RoH.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_710_1_Tqa.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1002_1_Xxj.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1523_1_FLX.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1173_1_ybX.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1401_1_EUG.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1592_1_1AL.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1_2_zaF.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1379_1_uq7.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_876_1_jE7.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1194_1_L3t.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1646_1_hWy.root
+/store/user/kandroso/TauParked_Run2012B_22Jan2013_v1/TREE/Tree_1525_1_0r2.root
