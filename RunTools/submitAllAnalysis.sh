@@ -29,17 +29,20 @@ if [ $# -ne 7 ] ; then
 fi
 
 ANA_CFG_FILE=$1
-CFG_FILE=$2
+if [ ! -f "$ANA_CFG_FILE" ] ; then
+    echo "ERROR: config file '$ANA_CFG_FILE' with analyzer list does not exists."
+    exit
+fi
 
+CFG_FILE=$2
 if [ ! -f "$CFG_FILE" ] ; then
-    echo "ERROR: config file '$CFG_FILE' does not exist."
+    echo "ERROR: config file '$CFG_FILE' with dataset list does not exists."
     exit
 fi
 
 OUTPUT_PATH=$3
-
 if [ -d "$OUTPUT_PATH" ] ; then
-    echo "ERROR: working path '$OUTPUT_PATH' already exists."
+    echo "ERROR: output path '$OUTPUT_PATH' already exists."
     exit
 fi
 mkdir -p $OUTPUT_PATH
@@ -64,10 +67,17 @@ ANALYZER_PATH=( $( cat $ANA_CFG_FILE ) )
 
 if [ $USE_MULTI_ANA = "yes" ] ; then
     MULTI_ANA_NAME="H_BaselineSync"
-
-    $MAKE_PATH $OUTPUT_PATH $MULTI_ANA_NAME $MULTI_ANA_NAME
     EXE_NAME=$OUTPUT_PATH/$MULTI_ANA_NAME
+
+    echo "Compiling executable file $EXE_NAME..."
+    $MAKE_PATH $OUTPUT_PATH $MULTI_ANA_NAME $MULTI_ANA_NAME
+    RESULT=$?
+    if [ $RESULT -ne 0 ] ; then
+        echo "Compilation of $EXE_NAME failed with an error code $RESULT. No jobs will be submited."
+        exit
+    fi
     echo "Executable file $EXE_NAME is compiled."
+
 
     for (( i=0; i<$N_DATASET; i++ )) ; do
         INPUT_PATH=$REFERENCE_INPUT_PATH/${DATASET_ARRAY[i]}
@@ -88,16 +98,22 @@ if [ $USE_MULTI_ANA = "yes" ] ; then
 
         yes | ./RunTools/submitMultiAnalysis_Batch.sh $QUEUE $STORAGE $MAX_N_PARALLEL_JOBS $INPUT_PATH \
             $OUTPUT_PATH $ANA_OUTPUT_PATH_1 $ANA_OUTPUT_PATH_2 $ANA_OUTPUT_PATH_3 \
-            $ANA_FOLDER $REFERENCE_CFG_PATH/${CFG_ARRAY[i]} $EXE_NAME
+            $REFERENCE_CFG_PATH/${CFG_ARRAY[i]} $EXE_NAME
     done
 
 else
 
     for ANA_FOLDER in $ANALYZER_PATH ; do
         mkdir -p $OUTPUT_PATH/$ANA_FOLDER
-
-        $MAKE_PATH $OUTPUT_PATH/$ANA_FOLDER $ANA_FOLDER $ANA_FOLDER
         EXE_NAME=$OUTPUT_PATH/$ANA_FOLDER/$ANA_FOLDER
+
+        echo "Compiling executable file $EXE_NAME..."
+        $MAKE_PATH $OUTPUT_PATH/$ANA_FOLDER $ANA_FOLDER $ANA_FOLDER
+        RESULT=$?
+        if [ $RESULT -ne 0 ] ; then
+            echo "Compilation of $EXE_NAME failed with an error code $RESULT. No jobs will be submited."
+            exit
+        fi
         echo "Executable file $EXE_NAME is compiled."
 
         for (( i=0; i<$N_DATASET; i++ )) ; do
