@@ -97,7 +97,7 @@ if [ "$REPLAY" != "y" -a "$REPLAY" != "yes" -a "$REPLAY" != "Y" ] ; then
     exit
 fi
 
-if [ $EXE_NAME = "" ] ; then
+if [ "x$EXE_NAME" = "x" ] ; then
     $MAKE_PATH $OUTPUT_PATH $ANALYZER_NAME $ANALYZER_NAME
     EXE_NAME=$OUTPUT_PATH/$ANALYZER_NAME
     echo "Executable file is compiled."

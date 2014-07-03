@@ -40,10 +40,10 @@ OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
 
 cd $ANALYSIS_PATH
 
-ANA_FOLDERS=$( find . -maxdepth 1 -type d -printf "%f\n" )
+ANA_FOLDERS=$( find . -maxdepth 1 ! -path . -type d -printf "%f\n" )
 
 for FOLDER in $ANA_FOLDERS ; do
-    SUB_FOLDERS=$( find $FOLDER -maxdepth 1 -type d -printf "%f\n" )
+    SUB_FOLDERS=$( find $FOLDER -maxdepth 1 ! -path $FOLDER -type d -printf "%f\n" )
     for SUB_FOLDER in $SUB_FOLDERS ; do
 		if [ $SUB_FOLDER = $FOLDER ] ; then
 			continue
@@ -57,4 +57,5 @@ for FOLDER in $ANA_FOLDERS ; do
 	done
 done
 
-tar cjvf ${OUTPUT_PATH}.tar.bz2 $OUTPUT_PATH
+cd $OUTPUT_PATH
+tar cjvf ${OUTPUT_PATH}.tar.bz2 .
