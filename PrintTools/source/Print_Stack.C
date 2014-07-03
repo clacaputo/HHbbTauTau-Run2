@@ -31,11 +31,10 @@
 
 #include "../include/RootPrintToPdf.h"
 
+
 struct DataSource {
-    std::string name;
     std::string file_name;
     double scale_factor;
-    EColor color;
     TFile* file;
 };
 
@@ -50,25 +49,25 @@ struct HistogramDescriptor {
     bool useLogY;
 };
 
+typedef std::vector<DataSource> DataSourceVector;
 
-std::ostream& operator<<(std::ostream& s, const DataSource& source){
-    s << "Name: " << source.name << ", File: " << source.file_name << ", SC: " << source.scale_factor <<
-         ", color: " << source.color ;
-    return s;
-}
+struct DataCategory {
+    std::string name;
+    std::string title;
+    EColor color;
 
-std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
-    s << "Name: " << hist.name << ", Title: " << hist.title << ", xmin: " << hist.xRange.min << ", xmax: " <<
-         hist.xRange.max << ", rebinFactor: " << hist.rebinFactor << ", useLog: " << hist.useLogY  ;
-    return s;
-}
+    DataSourceVector sources;
+};
 
-std::istream&operator>>(std::istream& s, EColor& color){
-    const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
-                                                       {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
-                                                       {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
-                                                       {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
-                                                       {"azure",kAzure}, {"violet",kViolet},{"pink",kPink}};
+typedef std::vector<DataCategory> DataCategoryCollection;
+
+static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
+                                                           {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
+                                                           {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
+                                                           {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
+                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink}};
+
+std::istream& operator>>(std::istream& s, EColor& color){
     std::string name;
     s >> name ;
     if (!colorMapName.count(name)){
@@ -80,34 +79,76 @@ std::istream&operator>>(std::istream& s, EColor& color){
     return s;
 }
 
+std::ostream& operator<<(std::ostream& s, const EColor& color){
+    for(const auto& entry : colorMapName) {
+        if(entry.second == color) {
+            s << entry.first;
+            return s;
+        }
+    }
+    s << "Unknown color " << color;
+    return s;
+}
+
+
+std::ostream& operator<<(std::ostream& s, const DataSource& source){
+    s << "File: " << source.file_name << ", SF: " << source.scale_factor;
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const DataCategory& category){
+    s << "Name: " << category.name << ", Title: '" << category.title << "', Color: " << category.color << std::endl;
+    for(const DataSource& source : category.sources)
+        s << source << std::endl;
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
+    s << "Name: " << hist.name << ", Title: " << hist.title << ", xmin: " << hist.xRange.min << ", xmax: " <<
+         hist.xRange.max << ", rebinFactor: " << hist.rebinFactor << ", useLog: " << hist.useLogY  ;
+    return s;
+}
+
 class Print_Stack {
 public:
     typedef root_ext::PdfPrinter Printer;
 
-    static TH1D* Convert(const std::string& sourceName, TFile* file, const std::string& treeName,
-                         const std::string& branchName, unsigned nBins, double xMin, double xMax,
+    static TH1D* CreateHistogram(const DataCategory& category, const HistogramDescriptor& hist)
+    {
+        std::ostringstream name;
+        name << category.name << "_" << hist.name << "_hist";
+        TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), hist.nBins, hist.xRange.min, hist.xRange.max);
+
+        for(const DataSource& source : category.sources) {
+            TH1D* source_histogram = Convert(source, hist, "syncTree");
+            histogram->Add(source_histogram, source.scale_factor);
+        }
+        return histogram;
+    }
+
+    static TH1D* Convert(const DataSource& source, const HistogramDescriptor& hist, const std::string& treeName,
                          const std::string& weightBranchName = "")
     {
-        TTree* tree = static_cast<TTree*>(file->Get(treeName.c_str()));;
+        TTree* tree = static_cast<TTree*>(source.file->Get(treeName.c_str()));;
         if(!tree)
             throw std::runtime_error("tree not found.");
         std::ostringstream name;
-        name << sourceName << "_" << branchName << "_hist";
+        name << source.file_name << "_" << hist.name << "_hist";
         std::ostringstream command;
-        command << "(" << branchName;
+        command << "(" << hist.name;
         if(weightBranchName.size())
             command << "*" << weightBranchName;
         command << ")>>+" << name.str();
 
-        TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), nBins, xMin, xMax);
+        TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), hist.nBins, hist.xRange.min, hist.xRange.max);
         tree->Draw(command.str().c_str(), "");
         return histogram;
     }
 
 
     Print_Stack(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                const std::string& outputFileName)
-        : inputPath(_inputPath), printer(outputFileName)
+                const std::string& outputFileName, const std::string& _signalName, const std::string& _dataName)
+        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -116,14 +157,16 @@ public:
     void Run()
     {
         std::cout << "Opening Sources... " << std::endl;
-        for (DataSource& source : sources){
-            //std::cout << source << std::endl;
-            const std::string fullFileName = inputPath + "/" + source.file_name;
-            source.file = new TFile(fullFileName.c_str(), "READ");
-            if(source.file->IsZombie()) {
-                std::ostringstream ss;
-                ss << "Input file '" << source.file_name << "' not found.";
-                throw std::runtime_error(ss.str());
+        for(DataCategory& category : categories) {
+            std::cout << category << std::endl;
+            for (DataSource& source : category.sources){
+                const std::string fullFileName = inputPath + "/" + source.file_name;
+                source.file = new TFile(fullFileName.c_str(), "READ");
+                if(source.file->IsZombie()) {
+                    std::ostringstream ss;
+                    ss << "Input file '" << source.file_name << "' not found.";
+                    throw std::runtime_error(ss.str());
+                }
             }
         }
 
@@ -141,7 +184,7 @@ public:
 
             TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
             leg->SetFillColor(0);
-            leg->SetTextSize(0.125);
+            leg->SetTextSize(0.1);
             TString lumist="19.7 fb^{-1}";
             TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
             ll->SetTextSize(0.03);
@@ -158,28 +201,19 @@ public:
 
             //for (const DataSource& source : sources){
             TH1D* data_histogram = nullptr;
-            for (unsigned n = 0; n<sources.size(); ++n){
-                const DataSource& source = sources.at(n);
-                TH1D* histogram = Convert(source.name, source.file, "syncTree", hist.name, hist.nBins,
-                                          hist.xRange.min, hist.xRange.max, "");
-                if (!histogram){
-                    std::ostringstream ss;
-                    ss << "histogram '" << hist.name << "' not found in " << source.file_name;
-                    throw std::runtime_error(ss.str());
-                }
-                histogram->Rebin(hist.rebinFactor);
-                histogram->Scale(source.scale_factor);
-                histogram->SetLineColor(source.color);
+            for(const DataCategory& category : categories) {
+                TH1D* histogram = CreateHistogram(category, hist);
+                histogram->SetLineColor(category.color);
                 std::string legend_option = "f";
-                if (n < sources.size() - 1){
-                    histogram->SetFillColor(source.color);
+                if (category.name.find("DATA") == std::string::npos){
+                    histogram->SetFillColor(category.color);
                     stack->Add(histogram);
                 }
                 else {
                     legend_option = "p";
                     data_histogram = histogram;
                 }
-                leg->AddEntry(histogram,source.name.c_str(),legend_option.c_str());
+                leg->AddEntry(histogram, category.title.c_str(), legend_option.c_str());
             }
             printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
         }
@@ -189,20 +223,52 @@ private:
     void ReadSourceCfg(const std::string& cfg_name)
     {
         std::ifstream cfg(cfg_name);
+        std::shared_ptr<DataCategory> currentCategory;
         while (cfg.good()) {
             std::string cfgLine;
             std::getline(cfg,cfgLine);
             if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
-            std::istringstream ss(cfgLine);
-            DataSource source;
-            ss >> source.name;
-            ss >> source.file_name;
-            ss >> source.scale_factor;
-            ss >> source.color;
-            sources.push_back(source);
+            if (cfgLine.at(0) == '[') {
+                if(currentCategory)
+                    categories.push_back(*currentCategory);
+                currentCategory = std::shared_ptr<DataCategory>(new DataCategory());
+                const size_t pos = cfgLine.find(']');
+                currentCategory->name = cfgLine.substr(1, pos - 1);
+                std::getline(cfg, currentCategory->title);
+                std::string colorLine;
+                std::getline(cfg,colorLine);
+                std::istringstream ss(colorLine);
+                ss >> currentCategory->color;
+            }
+            else if (currentCategory) {
+                std::istringstream ss(cfgLine);
+                DataSource source;
+                ss >> source.file_name;
+                ss >> source.scale_factor;
+                currentCategory->sources.push_back(source);
+            }
+            else
+                throw std::runtime_error("bad source file format");
           }
-        if (sources.size() < 2)
-            throw std::runtime_error("not enough sources");
+        if(currentCategory)
+            categories.push_back(*currentCategory);
+        DataCategoryCollection filteredCategories;
+        for(const DataCategory& category : categories) {
+            if(category.name.find("SIGNAL") != std::string::npos) {
+                const size_t sub_name_pos = category.name.find(' ');
+                const std::string sub_name = category.name.substr(sub_name_pos + 1);
+                if(sub_name != signalName)
+                    continue;
+            }
+            if(category.name.find("DATA") != std::string::npos) {
+                const size_t sub_name_pos = category.name.find(' ');
+                const std::string sub_name = category.name.substr(sub_name_pos + 1);
+                if(sub_name != dataName)
+                    continue;
+            }
+            filteredCategories.push_back(category);
+        }
+        categories = filteredCategories;
     }
 
     void ReadHistCfg(const std::string& cfg_name)
@@ -229,7 +295,8 @@ private:
 
 private:
     std::string inputPath;
-    std::vector<DataSource> sources;
+    std::string signalName, dataName;
+    DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
     Printer printer;
     root_ext::SingleSidedPage page;

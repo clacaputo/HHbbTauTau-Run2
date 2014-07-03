@@ -50,8 +50,7 @@ PatProduction/crab/multicrab_VV.cfg
 PatProduction/python/patOptions.py
 PatProduction/python/patTuple.py
 PrintTools/config/hist.txt
-PrintTools/config/sources_Tau.txt
-PrintTools/config/sources_TauPlusX.txt
+PrintTools/config/sources.txt
 PrintTools/include/RootPrintSource.h
 PrintTools/include/RootPrintToPdf.h
 PrintTools/include/RootPrintTools.h
