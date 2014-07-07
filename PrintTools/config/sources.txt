@@ -39,11 +39,11 @@ tt_semi.root 0.0862
 T_tW.root 0.4394
 Tbar_tW.root 0.4431
 
-[WJets]
-Wjets
-azure
-WJets_v2.root 12.3768
-WJets_v1.root 38.8332
+#[WJets]
+#Wjets
+#azure
+#WJets_v2.root 12.3768
+#WJets_v1.root 38.8332
 #W1Jets.root 3.5716
 #W2Jets.root 1.1232
 #W3Jets.root 0.6708
@@ -52,21 +52,21 @@ WJets_v1.root 38.8332
 [DYJets]
 DYJets
 orange
-DYJets.root 2.2662
+DYJetsToLL.root 2.2662
 #DY1Jets.root 0.4596
 #DY2Jets.root 0.1632
 #DY3Jets.root 0.0914
 #DY4Jets.root 0.0708
 
-[DiBoson]
-DiBoson
-green
-ZZJetsTo4L.root 0.0007
-ZZJetsTo2L2Nu.root 0.0148
-ZZJetsTo2L2Q.root 0.0254
-WWJets.root 0.0593
-WZJetsTo2L2Q.root 0.0135
-WZJetsTo3LNu.root 0.0103
+#[DiBoson]
+#DiBoson
+#green
+#ZZJetsTo4L.root 0.0007
+#ZZJetsTo2L2Nu.root 0.0148
+#ZZJetsTo2L2Q.root 0.0254
+#WWJets.root 0.0593
+#WZJetsTo2L2Q.root 0.0135
+#WZJetsTo3LNu.root 0.0103
 
 [DATA TauPlusX]
 Observed
