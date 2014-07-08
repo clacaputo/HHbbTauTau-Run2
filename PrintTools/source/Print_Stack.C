@@ -120,7 +120,7 @@ public:
         TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), hist.nBins, hist.xRange.min, hist.xRange.max);
 
         for(const DataSource& source : category.sources) {
-            TH1D* source_histogram = Convert(source, hist, "syncTree");
+            TH1D* source_histogram = Convert(source, hist, "syncTree","puweight");
             histogram->Add(source_histogram, source.scale_factor);
         }
         return histogram;
@@ -141,7 +141,7 @@ public:
         command << ")>>+" << name.str();
 
         TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), hist.nBins, hist.xRange.min, hist.xRange.max);
-        tree->Draw(command.str().c_str(), "");
+        tree->Draw(command.str().c_str(), " (nbtag >=2 && bcsv_1 > 0.679 && bcsv_2 > 0.679) && mt_1 < 30 && (q_1*q_2==-1)");
         return histogram;
     }
 
