@@ -256,7 +256,7 @@ protected:
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
 //        std::cout << "pfRelIso = " << object.pfRelIso << std::endl;
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
-        const size_t eta_index = eta <= barrel_eta_high ? barrel_index : endcap_index;
+        const size_t eta_index = std::abs(object.eta) <= barrel_eta_high ? barrel_index : endcap_index;
 //        std::cout << "sigmaIEtaIEta = " << object.sigmaIEtaIEta << std::endl;
         cut(X(sigmaIEtaIEta) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
 //        std::cout << "deltaEtaTrkSC = " << object.deltaEtaTrkSC << std::endl;
