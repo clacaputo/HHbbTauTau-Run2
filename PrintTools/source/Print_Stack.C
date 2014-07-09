@@ -113,14 +113,14 @@ class Print_Stack {
 public:
     typedef root_ext::PdfPrinter Printer;
 
-    static TH1D* CreateHistogram(const DataCategory& category, const HistogramDescriptor& hist)
+    static TH1D* CreateHistogram(const DataCategory& category, const HistogramDescriptor& hist, bool isData)
     {
         std::ostringstream name;
         name << category.name << "_" << hist.name << "_hist";
         TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), hist.nBins, hist.xRange.min, hist.xRange.max);
 
         for(const DataSource& source : category.sources) {
-            TH1D* source_histogram = Convert(source, hist, "syncTree","puweight");
+            TH1D* source_histogram = Convert(source, hist, "syncTree", isData ? "" : "");
             histogram->Add(source_histogram, source.scale_factor);
         }
         return histogram;
@@ -141,7 +141,7 @@ public:
         command << ")>>+" << name.str();
 
         TH1D* histogram = new TH1D(name.str().c_str(), name.str().c_str(), hist.nBins, hist.xRange.min, hist.xRange.max);
-        tree->Draw(command.str().c_str(), " (nbtag >=2 && bcsv_1 > 0.679 && bcsv_2 > 0.679) && mt_1 < 30 && (q_1*q_2==-1)");
+        tree->Draw(command.str().c_str(), " njetspt20>=2 && (nbtag >=2 && bcsv_1 > 0.679 && bcsv_2 > 0.679) && (q_1*q_2==-1)");
         return histogram;
     }
 
@@ -202,10 +202,11 @@ public:
             //for (const DataSource& source : sources){
             TH1D* data_histogram = nullptr;
             for(const DataCategory& category : categories) {
-                TH1D* histogram = CreateHistogram(category, hist);
+                const bool isData = category.name.find("DATA") != std::string::npos;
+                TH1D* histogram = CreateHistogram(category, hist,isData);
                 histogram->SetLineColor(category.color);
                 std::string legend_option = "f";
-                if (category.name.find("DATA") == std::string::npos){
+                if (!isData){
                     histogram->SetFillColor(category.color);
                     stack->Add(histogram);
                 }

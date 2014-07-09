@@ -151,8 +151,8 @@ public:
 //        drawHistos("signalWeight", 30, 0, 2.0);
 
         //SV Fit variables
-        drawHistos("mvis", 50, 0, 200);
-        drawHistos("m_sv", 60, 0, 300);
+        drawHistos("mvis", 20, 0, 200);
+        drawHistos("m_sv", 30, 0, 300);
 //        drawHistos("pt_sv", 100, 0, 100);
 //        drawHistos("eta_sv", 60, -3, 3);
 //        drawHistos("phi_sv", 30, -3.5, 3.5);
@@ -160,7 +160,7 @@ public:
 //        drawHistos("m_sv_Down", 60, 0, 300);
 
         //  First lepton :  muon for mu Tau, electron for e Tau, electron for e mu, Leading (in pT) Tau for Tau Tau
-        drawHistos("pt_1", 100, 0, 150);
+        drawHistos("pt_1", 15, 0, 150);
         drawHistos("eta_1", 60, -3, 3);
         drawHistos("phi_1", 30, -3.5, 3.5);
         if (channel == "etau" || channel == "mutau")
@@ -184,7 +184,7 @@ public:
         drawHistos("againstMuonTight2_1", 2, -0.5, 1.5);
 
         //Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau
-        drawHistos("pt_2", 100, 0, 150);
+        drawHistos("pt_2", 15, 0, 150);
         drawHistos("eta_2", 60, -3, 3);
         drawHistos("phi_2", 30, -3.5, 3.5);
         drawHistos("iso_2", 40, 0.6, 1.1);
@@ -208,14 +208,14 @@ public:
 
         //Met related variables
 
-        drawHistos("met", 50, 0, 200);
+        drawHistos("met", 20, 0, 200);
         drawHistos("metphi", 30, -3.5, 3.5);
         drawHistos("metcov00", 40, 0, 1000);
         drawHistos("metcov01", 40, 0, 1000);
         drawHistos("metcov10", 40, 0, 1000);
         drawHistos("metcov11", 40, 0, 1000);
 
-        drawHistos("mvamet", 50, 0, 200);
+        drawHistos("mvamet", 20, 0, 200);
         drawHistos("mvametphi", 30, -3.5, 3.5);
         drawHistos("mvacov00", 40, 0, 1000);
         drawHistos("mvacov01", 40, 0, 1000);
@@ -303,19 +303,21 @@ public:
 
 
             //Candidate B Jets : leading jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
-        drawHistos("bpt_1", 50, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+        drawHistos("bpt_1", 20, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
         drawHistos("beta_1", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
         drawHistos("bphi_1", 30, -3.5, 3.5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
         drawHistos("bcsv_1", 50, 0.5, 1.1, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
 
             //Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
-        drawHistos("bpt_2", 50, 0, 200, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("bpt_2", 20, 0, 200, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
         drawHistos("beta_2", 50, -5, 5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
         drawHistos("bphi_2", 30, -3.5, 3.5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
         drawHistos("bcsv_2", 50, 0.5, 1.1, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("m_bb", 30, 0, 300, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("m_ttbb", 100, 0, 1000, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
 
             //Candidate B Jets : third jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
-        drawHistos("bpt_3", 50, 0, 200, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
+        drawHistos("bpt_3", 20, 0, 200, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
         drawHistos("beta_3", 50, -5, 5, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
         drawHistos("bphi_3", 30, -3.5, 3.5, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
         drawHistos("bcsv_3", 50, 0.5, 1.1, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
