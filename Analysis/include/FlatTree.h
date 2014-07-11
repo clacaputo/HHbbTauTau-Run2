@@ -105,6 +105,15 @@
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pT of 2 legs with MVAMET*/ \
     SIMPLE_VAR(Float_t, m_sv_Up) /* High Energy scale shape */ \
     SIMPLE_VAR(Float_t, m_sv_Down) /* Low Energy Scale Shape */ \
+    SIMPLE_VAR(Float_t, Htautau_pt) /*pt Htautau*/ \
+    SIMPLE_VAR(Float_t, Htautau_eta) /*eta Htautau*/ \
+    SIMPLE_VAR(Float_t, Htautau_phi) /*phi Htautau*/ \
+    SIMPLE_VAR(Float_t, Htautau_energy) /*energy Htautau*/ \
+    /* H_bb variables */ \
+    SIMPLE_VAR(Float_t, Hbb_pt) /*pt Hbb*/ \
+    SIMPLE_VAR(Float_t, Hbb_eta) /*eta Hbb*/ \
+    SIMPLE_VAR(Float_t, Hbb_phi) /*phi Hbb*/ \
+    SIMPLE_VAR(Float_t, Hbb_energy) /*energy Hbb*/ \
     /* Met related variables */ \
     SIMPLE_VAR(Float_t, met) /* pfmet */ \
     SIMPLE_VAR(Float_t, metphi) /* pfmet Phi */ \
