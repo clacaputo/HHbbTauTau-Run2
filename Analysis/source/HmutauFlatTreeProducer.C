@@ -79,21 +79,14 @@ public:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.front();
 
-        const auto z_muons = CollectZmuons();
-        const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);
-        cut(!z_muon_candidates.size(), "z_mumu_veto");
-
         const auto electrons_bkg = CollectBackgroundElectrons();
-        cut(!electrons_bkg.size(), "no_electron");
 
         const auto muons = CollectMuons();
         cut(muons.size(), "muon_cand");
-        cut(muons.size() == 1, "one_muon_cand");
 
         const auto muons_bkg = CollectBackgroundMuons();
-        const bool have_bkg_muon = muons_bkg.size() > 1 ||
-                ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
-        cut(!have_bkg_muon, "no_bkg_muon");
+//        const bool have_bkg_muon = muons_bkg.size() > 1 ||
+//                ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
 
         if (config.ApplyTauESCorrection())
             ApplyTauCorrections(muTau.hadronic_taus,false);
@@ -104,7 +97,7 @@ public:
         cut(taus.size(), "tau_cand");
 
         const auto higgses = FindCompatibleObjects(muons, taus, DeltaR_betweenSignalObjects,
-                                                   Candidate::Higgs, "H_mu_tau", 0);
+                                                   Candidate::Higgs, "H_mu_tau");
         cut(higgses.size(), "mu_tau");
 
 
@@ -178,7 +171,6 @@ protected:
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
         const double dB_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
         cut(std::abs( Y(dB_PV) ) < dB, "dB");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
 
         return muon;
     }
@@ -196,9 +188,9 @@ protected:
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
+        cut(X(againstMuonLoose) > cuts::skim::MuTau::tauID::againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < cuts::skim::MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
 
@@ -208,19 +200,11 @@ protected:
         return tau;
     }
 
-    analysis::CandidateVector CollectZmuons()
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                                     root_ext::AnalyzerData& _anaData,
+                                                     const std::string& selection_label) override
     {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectZmuon(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event->muons().size());
-    }
-
-    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                            root_ext::AnalyzerData& _anaData,
-                                            const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
+        using namespace cuts::Htautau_Summer13::muonVeto;
         cuts::Cutter cut(objectSelector);
         const ntuple::Muon& object = event->muons().at(id);
         const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
@@ -233,12 +217,42 @@ protected:
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
         const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
-        cut(X(isTrackerMuon) == isTrackerMuon, "trackerMuon");
-        cut(X(isPFMuon) == isPFMuon, "PFMuon");
-        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
 
         return muon;
     }
+
+    virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
+                                                         root_ext::AnalyzerData& _anaData,
+                                                         const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::electronVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Electron& object = event->electrons().at(id);
+        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
+
+        cut(true, ">0 ele cand");
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
+        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
+
+        return electron;
+    }
+
 
 
     bool FindAnalysisFinalState(analysis::finalState::MuTaujet& final_state)

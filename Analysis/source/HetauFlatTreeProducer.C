@@ -71,22 +71,14 @@ public:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.front();
 
-        const auto z_electrons = CollectZelectrons();
-//        cut(analysis::AllCandidatesHaveSameCharge(z_electrons), "no_electron_OSpair");
-        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,Candidate::Z, "Z_e_e", 0);
-        cut(!z_electron_candidates.size(), "z_ee_veto");
-
         const auto muons_bkg = CollectBackgroundMuons();
-        cut(!muons_bkg.size(), "no_muon");
 
         const auto electrons = CollectElectrons();
         cut(electrons.size(), "electron_cand");
-        cut(electrons.size() == 1, "one_electron_cand");
 
         const auto electrons_bkg = CollectBackgroundElectrons();
-        const bool have_bkg_electron = electrons_bkg.size() > 1 ||
-                ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
-        cut(!have_bkg_electron, "no_bkg_electron");
+//        const bool have_bkg_electron = electrons_bkg.size() > 1 ||
+//                ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
 
         if (config.ApplyTauESCorrection())
             ApplyTauCorrections(eTau.hadronic_taus,false);
@@ -97,29 +89,15 @@ public:
         cut(taus.size(), "tau_cand");
 
         const auto higgses = FindCompatibleObjects(electrons, taus, DeltaR_betweenSignalObjects,
-                                                   Candidate::Higgs, "H_e_tau", 0);
+                                                   Candidate::Higgs, "H_e_tau");
         cut(higgses.size(), "e_tau");
 
         const auto higgsTriggered = ApplyTriggerMatch(higgses, trigger::hltPaths,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
-//        const auto higgsZveto = ApplyZVeto(higgsTriggered, z_electrons);
-//        cut(higgsZveto.size(), "Z veto with dR");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
-//        if(!analysis::AllCandidatesHaveSameCharge(z_electrons)) {
-//            const Candidate electron = higgs.GetDaughter(Candidate::Electron);
-//            const Candidate tau = higgs.GetDaughter(Candidate::Tau);
-//            double maxDeltaR = 0;
-//            for(const Candidate& z_electron : z_electrons) {
-//                if(electron.charge != z_electron.charge && tau.charge == z_electron.charge){
-//                    const double DeltaR = tau.momentum.DeltaR(z_electron.momentum);
-//                    anaData.Tau_Zele_deltaR().Fill(DeltaR);
-//                    maxDeltaR = std::max(maxDeltaR,DeltaR);
-//                }
-//            }
-//            cut(maxDeltaR < 0.03, "DR_eleTau");
-//        }
+
 
         const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
                                                                         event->jets(),primaryVertex,
@@ -175,7 +153,6 @@ protected:
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
         const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
-        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
 
@@ -200,19 +177,68 @@ protected:
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
         const bool againstElectron =  againstElectronMediumMVA3_Custom(object);
         cut(Y(againstElectron), "vs_e_mediumMVA");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) <
+            cuts::skim::ETau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
-//        const TVector3 tau_vertex(object.vx, object.vy, object.vz);
-//        const double dB_PV = (tau_vertex - primaryVertex.position).Perp();
-//        cut(std::abs( Y(dB_PV) ) < dB, "dB");
-
-
-//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
+
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                                     root_ext::AnalyzerData& _anaData,
+                                                     const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::muonVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Muon& object = event->muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+
+        cut(true, ">0 mu cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+
+        return muon;
+    }
+
+    virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
+                                                         root_ext::AnalyzerData& _anaData,
+                                                         const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::electronVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Electron& object = event->electrons().at(id);
+        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
+
+        cut(true, ">0 ele cand");
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
+        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
+
+        return electron;
+    }
+
+
 
     bool againstElectronMediumMVA3_Custom(const ntuple::Tau& tau)
     {
@@ -224,51 +250,6 @@ protected:
         return tau.againstElectronMVA3raw > againstElectronMediumMVA3_customValues.at(ucut);
     }
 
-    analysis::CandidateVector CollectZelectrons()
-    {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectZelectron(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("z_electrons", base_selector, event->electrons().size());
-    }
-
-    virtual analysis::Candidate SelectZelectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                                root_ext::AnalyzerData& _anaData,
-                                                const std::string& selection_label)
-    {
-        using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event->electrons().at(id);
-        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
-
-        cut(true, ">0 mu cand");
-//        std::cout << "Z ee" <<  std::endl;
-//        std::cout << "q = " << object.charge << std::endl;
-//        std::cout << "pt = " << object.pt << std::endl;
-        cut(X(pt) > pt, "pt");
-//        std::cout << "eta = " << object.eta  << ", phi="<< object.phi << std::endl;
-        cut(std::abs( X(eta) ) < eta, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-//        std::cout << "dz = " << DeltaZ << std::endl;
-        cut(Y(DeltaZ)  < dz, "dz");
-        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
-//        std::cout << "d0 = " << d0_PV << std::endl;
-        cut(std::abs( Y(d0_PV) ) < d0, "d0");
-//        std::cout << "pfRelIso = " << object.pfRelIso << std::endl;
-        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
-        const size_t eta_index = std::abs(object.eta) <= barrel_eta_high ? barrel_index : endcap_index;
-//        std::cout << "sigmaIEtaIEta = " << object.sigmaIEtaIEta << std::endl;
-        cut(X(sigmaIEtaIEta) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
-//        std::cout << "deltaEtaTrkSC = " << object.deltaEtaTrkSC << std::endl;
-        cut(X(deltaEtaTrkSC) < delta_eta[eta_index], "deltaEtaSC");
-//        std::cout << "deltaPhiTrkSC = " << object.deltaPhiTrkSC << std::endl;
-        cut(X(deltaPhiTrkSC) < delta_phi[eta_index], "deltaPhiSC");
-//        std::cout << "eSuperClusterOverP = " << object.eSuperClusterOverP << std::endl;
-        cut(X(eSuperClusterOverP) < HoverE[eta_index], "HoverE");
-
-        return electron;
-    }
 
     bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
     {

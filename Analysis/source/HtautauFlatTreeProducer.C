@@ -71,10 +71,8 @@ public:
         primaryVertex = vertices.front();
 
         const auto electrons_bkg = CollectBackgroundElectrons();
-        cut(!electrons_bkg.size(), "no_electron");
 
         const auto muons_bkg = CollectBackgroundMuons();
-        cut(!muons_bkg.size(), "no_muon");
 
         if (config.ApplyTauESCorrection())
             ApplyTauCorrections(tauTau.hadronic_taus,false);
@@ -90,15 +88,11 @@ public:
 
         cut(higgses.size(), "DeltaR taus");
 
-        const auto higgses_tautau = ApplyTauFullSelection(higgses);
-
-        cut(higgses_tautau.size(), "tau_tau selection");
-
         const auto looseJets = CollectLooseJets();
         const auto jets = CollectJets(looseJets);
 
-        const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses_tautau,jets);
-        const Higgs_JetsMap higgs_looseJetsMap = MatchedHiggsAndJets(higgses_tautau, looseJets);
+        const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses,jets);
+        const Higgs_JetsMap higgs_looseJetsMap = MatchedHiggsAndJets(higgses, looseJets);
 
         const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
@@ -138,18 +132,75 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::TauTau;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
+
         cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
 
         cut(true, ">0 tau cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
-        cut(X(byMediumCombinedIsolationDeltaBetaCorr3Hits) > byMediumCombinedIsolationDeltaBetaCorr3Hits, "mediumIso3Hits");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) <
+            cuts::skim::TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
 
         return analysis::Candidate(analysis::Candidate::Tau, id, object);
+    }
+
+    virtual analysis::Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
+                                                         root_ext::AnalyzerData& _anaData,
+                                                         const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::electronVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Electron& object = event->electrons().at(id);
+        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
+
+        cut(true, ">0 ele cand");
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
+        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
+
+        return electron;
+    }
+
+    virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                                     root_ext::AnalyzerData& _anaData,
+                                                     const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::muonVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Muon& object = event->muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+
+        cut(true, ">0 mu cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+
+        return muon;
     }
 
     analysis::CandidateVector ApplyTauFullSelection(const analysis::CandidateVector& higgses)

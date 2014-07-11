@@ -210,6 +210,7 @@ namespace TauTau {
     namespace tauID {
         const double pt = 45; // > AN-2013/189 H->tautau full hadronic
         const double eta = 2.1; // < AN-2013/189 H->tautau full hadronic
+        const double dz = 0.2; // < AN-2013/189 H->tautau full hadronic
         const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
         const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation

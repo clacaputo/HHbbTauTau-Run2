@@ -29,6 +29,30 @@
 namespace cuts {
     const double minDeltaR_betweenHiggses = 1; // >
 
+    namespace skim {
+        namespace TauTau {
+
+            namespace tauID {
+                const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
+            }
+        }
+
+        namespace ETau {
+
+            namespace tauID {
+                const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
+            }
+        }
+
+        namespace MuTau {
+
+            namespace tauID {
+                const double againstMuonLoose = 0.5; // >
+                const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
+            }
+        }
+    }
+
     namespace btag {
         const double CSVL = 0.244; // loose twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
         const double CSVM = 0.679; //medium twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
