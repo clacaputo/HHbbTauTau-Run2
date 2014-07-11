@@ -314,7 +314,7 @@ public:
         drawHistos("bphi_2", 30, -3.5, 3.5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
         drawHistos("bcsv_2", 50, 0.5, 1.1, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
         drawHistos("m_bb", 30, 0, 300, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
-        drawHistos("m_ttbb", 100, 0, 1000, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+        drawHistos("m_ttbb", 50, 0, 500, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
 
             //Candidate B Jets : third jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
         drawHistos("bpt_3", 20, 0, 200, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
