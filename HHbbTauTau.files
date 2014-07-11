@@ -227,3 +227,8 @@ Analysis/config/analyzers.cfg
 Analysis/source/H_BaselineSync.C
 RunTools/batch.sh
 RunTools/submitMultiAnalysis_Batch.sh
+Analysis/include/FlatTree.h
+Analysis/source/HtautauFlatTreeProducer.C
+Analysis/source/HmutauFlatTreeProducer.C
+Analysis/source/HetauFlatTreeProducer.C
+Analysis/source/H_FlatTreeProducer.C
