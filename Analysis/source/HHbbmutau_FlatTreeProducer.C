@@ -24,50 +24,30 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/H_BaseAnalyzer.h"
-#include "../include/FlatTree.h"
+#include "../include/BaseFlatTreeProducer.h"
 
-class AnalyzerDataMuTau : public analysis::BaseAnalyzerData {
+class HHbbmutau_FlatTreeProducer : public analysis::BaseFlatTreeProducer {
 public:
-    AnalyzerDataMuTau(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
-
-
-    TH2D_ENTRY(PFmet_comparison, 300, 0.0, 300.0, 100, -1, 1)
-    TH2D_ENTRY(PFmetType1_comparison, 300, 0.0, 300.0, 100, -1, 1)
-    TH1D_ENTRY(DeltaPhi_PFmet, 100, -4.0, 4.0)
-    TH1D_ENTRY(DeltaPhi_PFmetType1, 100, -4.0, 4.0)
-
-};
-
-class HmutauFlatTreeProducer : public analysis::H_BaseAnalyzer {
-public:
-    HmutauFlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
-                        const std::string& configFileName, const std::string& _prefix = "none",
-                        size_t _maxNumberOfEvents = 0)
-        : H_BaseAnalyzer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents),
+    HHbbmutau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
+                               const std::string& configFileName, const std::string& _prefix = "none",
+                               size_t _maxNumberOfEvents = 0,
+                               std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
+        : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           anaData(*outputFile)
     {
         anaData.getOutputFile().cd();
-    }
-
-    virtual ~HmutauFlatTreeProducer() override
-    {
-        anaData.getOutputFile().cd();
-        syncTree.Write();
     }
 
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
-
-        H_BaseAnalyzer::ProcessEvent(_event);
+        BaseFlatTreeProducer::ProcessEvent(_event);
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
 
-        //std::cout << event->eventId().eventId << std::endl;
         if (!FindAnalysisFinalState(muTau) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
@@ -88,10 +68,7 @@ public:
 //        const bool have_bkg_muon = muons_bkg.size() > 1 ||
 //                ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
 
-        if (config.ApplyTauESCorrection())
-            ApplyTauCorrections(muTau.hadronic_taus,false);
-        else
-            correctedTaus = event->taus();
+        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau.hadronic_taus,false) : event->taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -110,10 +87,7 @@ public:
                                                                 event->jets(),primaryVertex,
                                                                 vertices,event->taus());
 
-        if (config.ApplyTauESCorrection())
-            ApplyTauCorrectionsToMVAMET(mvaMet);
-        else
-            correctedMET = mvaMet;
+        correctedMET = config.ApplyTauESCorrection() ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
 
         const auto looseJets = CollectLooseJets();
 
@@ -126,23 +100,15 @@ public:
         const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC());
 
 
-        ApplyRecoilCorrections(higgs, muTau.resonance, jets.size());
+        postRecoilMET = ApplyRecoilCorrections(higgs, muTau.resonance, jets.size(), correctedMET);
 
         const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
 
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
-        if(config.isMC()) {
-            anaData.PFmet_comparison().Fill(event->metPF().pt, std::abs(pfMET.pt - event->metPF().pt)/event->metPF().pt);
-            anaData.PFmetType1_comparison().Fill(event->met().pt, std::abs(pfMET.pt - event->met().pt)/event->met().pt);
-            const double DeltaPhi_PFmet = TVector2::Phi_mpi_pi(event->metPF().phi - pfMET.phi);
-            const double DeltaPhi_PFmetType1 = TVector2::Phi_mpi_pi(event->met().phi - pfMET.phi);
-            anaData.DeltaPhi_PFmet().Fill(std::abs(DeltaPhi_PFmet));
-            anaData.DeltaPhi_PFmetType1().Fill(std::abs(DeltaPhi_PFmetType1));
-        }
 
-        FillSyncTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
+        FillFlatTree(higgs, m_sv, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
 
 protected:
@@ -253,11 +219,9 @@ protected:
         return electron;
     }
 
-
-
     bool FindAnalysisFinalState(analysis::finalState::MuTaujet& final_state)
     {
-        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state);
+        const bool base_result = BaseFlatTreeProducer::FindAnalysisFinalState(final_state);
         if(!base_result)
             return base_result;
 
@@ -342,7 +306,7 @@ protected:
         DMweights.push_back(weight);
     }
 
-    void FillSyncTree(const analysis::Candidate& higgs, double m_sv,
+    void FillFlatTree(const analysis::Candidate& higgs, double m_sv,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
@@ -351,18 +315,19 @@ protected:
         const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, muon, tau, pfMET);
+        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, muon, tau, pfMET);
 
-        syncTree.iso_1() = ntuple_muon.pfRelIso;
-        syncTree.mva_1() = 0;
-        //syncTree.passid_2();
-        //syncTree.passiso_2();
-        //syncTree.mva_2() = ntuple_tau.againstElectronLoose;
-        syncTree.Fill();
+        flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);
+        flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
+        flatTree->mva_1() = 0;
+        //flatTree->passid_2();
+        //flatTree->passiso_2();
+        //flatTree->mva_2() = ntuple_tau.againstElectronLoose;
+        flatTree->Fill();
     }
 
 private:
-    AnalyzerDataMuTau anaData;
+    analysis::BaseAnalyzerData anaData;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

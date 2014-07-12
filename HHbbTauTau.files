@@ -228,7 +228,8 @@ Analysis/source/H_BaselineSync.C
 RunTools/batch.sh
 RunTools/submitMultiAnalysis_Batch.sh
 Analysis/include/FlatTree.h
-Analysis/source/HtautauFlatTreeProducer.C
-Analysis/source/HmutauFlatTreeProducer.C
-Analysis/source/HetauFlatTreeProducer.C
+Analysis/source/HHbbtautau_FlatTreeProducer.C
+Analysis/source/HHbbmutau_FlatTreeProducer.C
+Analysis/source/HHbbetau_FlatTreeProducer.C
 Analysis/source/H_FlatTreeProducer.C
+Analysis/include/BaseFlatTreeProducer.h

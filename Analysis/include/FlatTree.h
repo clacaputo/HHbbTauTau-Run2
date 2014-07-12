@@ -32,88 +32,93 @@
     /* Event Variables */ \
     SIMPLE_VAR(Int_t, run) /* Run */ \
     SIMPLE_VAR(Int_t, lumi) /* Lumi */ \
-    SIMPLE_VAR(Int_t, evt) /* Evt */ \
-    /* First signal lepton :  muon for mu Tau, electron for e Tau, Leading (in pT) Tau for Tau Tau */ \
-    SIMPLE_VAR(Int_t, type_1) /* pT */ \
+    SIMPLE_VAR(Int_t, evt) /* Event */ \
+    SIMPLE_VAR(Int_t, channel) /* Analysis channel as defined in ntuple::Channel */ \
+    \
+    \
+    /* First signal lepton :  muon for MuTau, electron for ETau, leading (in pT) tau for TauTau */ \
     SIMPLE_VAR(Float_t, pt_1) /* pT */ \
     SIMPLE_VAR(Float_t, phi_1) /* Phi */ \
     SIMPLE_VAR(Float_t, eta_1) /* Eta */ \
     SIMPLE_VAR(Float_t, m_1) /* Mass */ \
-    SIMPLE_VAR(Float_t, energy_1) /* Mass */ \
+    SIMPLE_VAR(Float_t, energy_1) /* Energy */ \
     SIMPLE_VAR(Int_t, q_1) /* Charge */ \
     SIMPLE_VAR(Float_t, mt_1) /* mT of  first lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, d0_1) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_1) /* dZ with respect to primary vertex */ \
-    SIMPLE_VAR(Bool_t, hasMatchedGenparticle_1) /* is matched with Gen Particle */ \
     /* Gen particle quantities of First signal lepton matched with the truth */ \
-    SIMPLE_VAR(Int_t, pdgId_1_matched) /* pT */ \
-    SIMPLE_VAR(Float_t, pt_1_matched) /* pT */ \
-    SIMPLE_VAR(Float_t, phi_1_matched) /* Phi */ \
-    SIMPLE_VAR(Float_t, eta_1_matched) /* Eta */ \
-    SIMPLE_VAR(Float_t, energy_1_matched) /* Energy */ \
-    /* First lepton discriminators */ \
-    SIMPLE_VAR(Int_t, decayMode_1) /* decayMode - tau tau channel*/ \
-    SIMPLE_VAR(Float_t, iso_1) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    SIMPLE_VAR(Float_t, mva_1) /* MVA id (when using electron) 0 otherwise */ \
-    SIMPLE_VAR(Bool_t, passid_1) /* Whether it passes id  (not necessarily iso) */ \
+    SIMPLE_VAR(Int_t, pdgId_1_MC) /* PDG ID or particles::NONEXISTENT, if there is no matched genParticle. */ \
+    SIMPLE_VAR(Float_t, pt_1_MC) /* pT */ \
+    SIMPLE_VAR(Float_t, phi_1_MC) /* Phi */ \
+    SIMPLE_VAR(Float_t, eta_1_MC) /* Eta */ \
+    SIMPLE_VAR(Float_t, m_1_MC) /* Mass */ \
+    /* First lepton - electron & muon specific */ \
+    SIMPLE_VAR(Float_t, pfRelIso_1) /* Delta Beta for muon and electron */ \
+    SIMPLE_VAR(Float_t, mva_1) /* MVA id when using electron, 0 otherwise */ \
+    SIMPLE_VAR(Bool_t, passid_1) /* Whether it passes id (not necessarily iso) */ \
     SIMPLE_VAR(Bool_t, passiso_1) /* Whether it passes iso (not necessarily id) */ \
-    SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_1) /*  */ \
-    SIMPLE_VAR(Float_t, againstElectronMVA_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronLoose_1) /*  */ \
-    SIMPLE_VAR(Float_t, againstElectronMedium_1) /*  */ \
-    SIMPLE_VAR(Float_t, againstElectronTight_1) /*  */ \
-    SIMPLE_VAR(Float_t, againstMuonLoose_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstMuonMedium_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstMuonTight_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    /* Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau */ \
-    SIMPLE_VAR(Int_t, type_2) /* pT */ \
+    /* First lepton - hadronic tau specific */ \
+    SIMPLE_VAR(Int_t, decayMode_1) /* tau decay mode as defined in ntuple::tau_id::hadronicDecayMode */ \
+    SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_1) /* tau raw isolation value */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_1) /* Whether tau passes loose MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_1) /* Whether tau passes medium MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_1) /* Whether tau passes tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLoose_1) /* Whether tau passes loose against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMedium_1) /* Whether tau passes medium against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTight_1) /* Whether tau passes tight against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstMuonLoose_1) /* Whether tau passes loose against muon discriminator */ \
+    SIMPLE_VAR(Bool_t, againstMuonMedium_1) /* Whether tau passes medium against muon discriminator */ \
+    SIMPLE_VAR(Bool_t, againstMuonTight_1) /* Whether tau passes tight against muon discriminator */ \
+    \
+    \
+    /* Second lepton : hadronic tau for MuTau & ETau, trailing (in pT) tau for TauTau */ \
     SIMPLE_VAR(Float_t, pt_2) /* pT */ \
     SIMPLE_VAR(Float_t, phi_2) /* Phi */ \
     SIMPLE_VAR(Float_t, eta_2) /* Eta */ \
     SIMPLE_VAR(Float_t, m_2) /* Mass */ \
-    SIMPLE_VAR(Float_t, energy_2) /* Mass */ \
+    SIMPLE_VAR(Float_t, energy_2) /* Energy */ \
     SIMPLE_VAR(Int_t, q_2) /* Charge */ \
-    SIMPLE_VAR(Float_t, mt_2) /* mT of  first lepton wrt to MVA met */ \
+    SIMPLE_VAR(Float_t, mt_2) /* mT of second lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, d0_2) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_2) /* dZ with respect to primary vertex */ \
-    SIMPLE_VAR(Bool_t, hasMatchedGenparticle_2) /* is matched with Gen Particle */ \
     /* Gen particle quantities of second signal lepton matched with the truth */ \
-    SIMPLE_VAR(Int_t, pdgId_2_matched) /* pT */ \
-    SIMPLE_VAR(Float_t, pt_2_matched) /* pT */ \
-    SIMPLE_VAR(Float_t, phi_2_matched) /* Phi */ \
-    SIMPLE_VAR(Float_t, eta_2_matched) /* Eta */ \
-    SIMPLE_VAR(Float_t, energy_2_matched) /* Energy */ \
-    /* Second lepton discriminators */ \
-    SIMPLE_VAR(Int_t, decayMode_2) /* decayMode - tau tau channel*/ \
-    SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
-    SIMPLE_VAR(Float_t, mva_2) /* MVA id (when using electron) 0 otherwise */ \
-    SIMPLE_VAR(Bool_t, passid_2) /* Whether it passes id  (not necessarily iso) */ \
-    SIMPLE_VAR(Bool_t, passiso_2) /* Whether it passes iso (not necessarily id) */ \
-    SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_2) /*  */ \
-    SIMPLE_VAR(Float_t, againstElectronMVA_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronLoose_2) /*  */ \
-    SIMPLE_VAR(Float_t, againstElectronMedium_2) /*  */ \
-    SIMPLE_VAR(Float_t, againstElectronTight_2) /*  */ \
-    SIMPLE_VAR(Float_t, againstMuonLoose_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstMuonMedium_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstMuonTight_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Int_t, pdgId_2_MC) /* PDG ID or particles::NONEXISTENT, if there is no matched genParticle. */ \
+    SIMPLE_VAR(Float_t, pt_2_MC) /* pT */ \
+    SIMPLE_VAR(Float_t, phi_2_MC) /* Phi */ \
+    SIMPLE_VAR(Float_t, eta_2_MC) /* Eta */ \
+    SIMPLE_VAR(Float_t, m_2_MC) /* Mass */ \
+    /* Second lepton - hadronic tau specific */ \
+    SIMPLE_VAR(Int_t, decayMode_2) /* tau decay mode as defined in ntuple::tau_id::hadronicDecayMode */ \
+    SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_2) /* tau raw isolation value */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_2) /* Whether tau passes loose MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_2) /* Whether tau passes medium MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLoose_2) /* Whether tau passes loose against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMedium_2) /* Whether tau passes medium against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTight_2) /* Whether tau passes tight against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstMuonLoose_2) /* Whether tau passes loose against muon discriminator */ \
+    SIMPLE_VAR(Bool_t, againstMuonMedium_2) /* Whether tau passes medium against muon discriminator */ \
+    SIMPLE_VAR(Bool_t, againstMuonTight_2) /* Whether tau passes tight against muon discriminator */ \
+    \
+    \
     /* H_tautau variables */ \
-    SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between 2 legs of Higgs candidate */ \
-    SIMPLE_VAR(Float_t, mvis) /* SV Fit using integration method */ \
-    SIMPLE_VAR(Float_t, m_sv) /* SV Fit using integration method */ \
-    SIMPLE_VAR(Float_t, pt_tt) /* pT of 2 legs w/o MVAMET*/ \
-    SIMPLE_VAR(Float_t, pt_tt_MET) /* pT of 2 legs with MVAMET*/ \
-    SIMPLE_VAR(Float_t, m_sv_Up) /* High Energy scale shape */ \
-    SIMPLE_VAR(Float_t, m_sv_Down) /* Low Energy Scale Shape */ \
-    SIMPLE_VAR(Float_t, Htautau_pt) /*pt Htautau*/ \
-    SIMPLE_VAR(Float_t, Htautau_eta) /*eta Htautau*/ \
-    SIMPLE_VAR(Float_t, Htautau_phi) /*phi Htautau*/ \
-    SIMPLE_VAR(Float_t, Htautau_energy) /*energy Htautau*/ \
+    SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of Higgs candidate */ \
+    SIMPLE_VAR(Float_t, mvis) /* Visible mass of H_tautau */ \
+    SIMPLE_VAR(Float_t, m_sv) /* Mass of H_tautau corrected by svFit using integration method */ \
+    SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
+    SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
+    SIMPLE_VAR(Float_t, Htautau_pt) /* pt H_tautau */ \
+    SIMPLE_VAR(Float_t, Htautau_eta) /* eta H_tautau */ \
+    SIMPLE_VAR(Float_t, Htautau_phi) /* phi H_tautau */ \
+    SIMPLE_VAR(Float_t, Htautau_energy) /* energy H_tautau */ \
     /* H_bb variables */ \
-    SIMPLE_VAR(Float_t, Hbb_pt) /*pt Hbb*/ \
-    SIMPLE_VAR(Float_t, Hbb_eta) /*eta Hbb*/ \
-    SIMPLE_VAR(Float_t, Hbb_phi) /*phi Hbb*/ \
-    SIMPLE_VAR(Float_t, Hbb_energy) /*energy Hbb*/ \
+    SIMPLE_VAR(Float_t, Hbb_pt) /* pt H_bb */ \
+    SIMPLE_VAR(Float_t, Hbb_eta) /* eta H_bb */ \
+    SIMPLE_VAR(Float_t, Hbb_phi) /* phi H_bb */ \
+    SIMPLE_VAR(Float_t, Hbb_m) /* mass H_bb */ \
+    SIMPLE_VAR(Float_t, Hbb_energy) /* energy H_bb */ \
+    \
+    \
     /* Met related variables */ \
     SIMPLE_VAR(Float_t, met) /* pfmet */ \
     SIMPLE_VAR(Float_t, metphi) /* pfmet Phi */ \
@@ -129,72 +134,94 @@
     SIMPLE_VAR(Float_t, mvacov01) /* mva met covariance matrix 01 */ \
     SIMPLE_VAR(Float_t, mvacov10) /* mva met covariance matrix 10 */ \
     SIMPLE_VAR(Float_t, mvacov11) /* mva met covariance matrix 11 */ \
+    \
+    \
     /* Extra Leptons*/ \
-    /* first 4 Muons sorted by pt*/ \
-    VECTOR_VAR(Float_t, pt_muons) /* pt of first 4 muons */ \
-    VECTOR_VAR(Float_t, eta_muons) /* eta of first 4 muons */ \
-    VECTOR_VAR(Float_t, phi_muons) /* phi of first 4 muons */ \
-    VECTOR_VAR(Float_t, mass_muons) /* mass of first 4 muons */ \
-    VECTOR_VAR(Float_t, iso_muons) /* iso of first 4 muons */ \
-    VECTOR_VAR(Int_t, charge_muons) /* q of first 4 muons */ \
-    VECTOR_VAR(Bool_t, passId_muons) /* passId of first 4 muons */ \
-    /* first 4 Electrons sorted by pt*/ \
-    VECTOR_VAR(Float_t, pt_electrons) /* pt of first 4 electrons */ \
-    VECTOR_VAR(Float_t, eta_electrons) /* eta of first 4 electrons */ \
-    VECTOR_VAR(Float_t, phi_electrons) /* phi of first 4 electrons */ \
-    VECTOR_VAR(Float_t, mass_electrons) /* mass of first 4 electrons */ \
-    VECTOR_VAR(Float_t, iso_electrons) /* iso of first 4 electrons */ \
-    VECTOR_VAR(Int_t, charge_electrons) /* q of first 4 electrons */ \
-    VECTOR_VAR(Bool_t, passId_electrons) /* passId of first 4 electrons */ \
-    /*useful info at gen level*/ \
-    SIMPLE_VAR(Float_t, pt_resonance) /* pt resonance */ \
-    SIMPLE_VAR(Float_t, eta_resonance) /* eta resonance */ \
-    SIMPLE_VAR(Float_t, phi_resonance) /* phi resonance */ \
-    SIMPLE_VAR(Float_t, mass_resonance) /* mass resonance */ \
-    SIMPLE_VAR(Float_t, pt_Htt) /* pt Htt */ \
-    SIMPLE_VAR(Float_t, eta_Htt) /* eta Htt */ \
-    SIMPLE_VAR(Float_t, phi_Htt) /* phi Htt */ \
-    SIMPLE_VAR(Float_t, mass_Htt) /* mass Htt */ \
-    SIMPLE_VAR(Float_t, pt_Hbb) /* pt Hbb */ \
-    SIMPLE_VAR(Float_t, eta_Hbb) /* eta Hbb */ \
-    SIMPLE_VAR(Float_t, phi_Hbb) /* phi Hbb */ \
-    SIMPLE_VAR(Float_t, mass_Hbb) /* mass Hbb */ \
-    SIMPLE_VAR(Int_t, n_extraJets) /* number extra jets*/ \
-    /* jets passing jet id ( pt > 20 ) sorted by pt*/ \
-    SIMPLE_VAR(Int_t, njets) /*  */ \
-    VECTOR_VAR(Float_t, pt_jets) /* pt of first 4 jets */ \
-    VECTOR_VAR(Float_t, eta_jets) /* eta of first 4 jets */ \
-    VECTOR_VAR(Float_t, phi_jets) /* phi of first 4 jets */ \
-    VECTOR_VAR(Float_t, mass_jets) /* mass of first 4 jets */ \
-    VECTOR_VAR(Float_t, csv_jets) /* csv of first 4 jets */ \
-    VECTOR_VAR(Bool_t, isBjet) /* is a bjet */ \
-    VECTOR_VAR(Bool_t, isB_leptonicDecay) /* is a b with leptonic decay */ \
-    /* bjets passing jet id ( pt > 20 ) sorted by csv*/ \
-    SIMPLE_VAR(Int_t, nBjets) /*  */ \
-    VECTOR_VAR(Float_t, pt_Bjets) /* pt of first 4 Bjets */ \
-    VECTOR_VAR(Float_t, eta_Bjets) /* eta of first 4 Bjets */ \
-    VECTOR_VAR(Float_t, phi_Bjets) /* phi of first 4 Bjets */ \
-    VECTOR_VAR(Float_t, mass_Bjets) /* mass of first 4 Bjets */ \
-    VECTOR_VAR(Float_t, csv_Bjets) /* csv of first 4 Bjets */ \
-    VECTOR_VAR(Bool_t, isBjet) /* is a bjet */ \
-    VECTOR_VAR(Bool_t, isB_leptonicDecay) /* is a b with leptonic decay */ \
-    /* vertices*/ \
+    /* first 4 extra muons sorted by pt*/ \
+    VECTOR_VAR(Float_t, pt_muons) /* pt of extra muons */ \
+    VECTOR_VAR(Float_t, eta_muons) /* eta of extra muons */ \
+    VECTOR_VAR(Float_t, phi_muons) /* phi of extra muons */ \
+    VECTOR_VAR(Float_t, mass_muons) /* mass of extra muons */ \
+    VECTOR_VAR(Float_t, energy_muons) /* mass of extra muons */ \
+    VECTOR_VAR(Float_t, pfRelIso_muons) /* isolation of extra muons */ \
+    VECTOR_VAR(Int_t, charge_muons) /* charge of extra muons */ \
+    VECTOR_VAR(Bool_t, passId_muons) /* Whether extra muon passes id (not necessarily iso) */ \
+    VECTOR_VAR(Bool_t, passIso_muons) /* Whether extra muon passes iso (not necessarily id) */ \
+    /* first 4 extra electrons sorted by pt*/ \
+    VECTOR_VAR(Float_t, pt_electrons) /* pt of extra electrons */ \
+    VECTOR_VAR(Float_t, eta_electrons) /* eta of extra electrons */ \
+    VECTOR_VAR(Float_t, phi_electrons) /* phi of extra electrons */ \
+    VECTOR_VAR(Float_t, mass_electrons) /* mass of extra electrons */ \
+    VECTOR_VAR(Float_t, energy_electrons) /* mass of extra electrons */ \
+    VECTOR_VAR(Float_t, pfRelIso_electrons) /* isolation of extra electrons */ \
+    VECTOR_VAR(Int_t, charge_electrons) /* charge of extra electrons */ \
+    VECTOR_VAR(Bool_t, passId_electrons) /* Whether extra electron passes id (not necessarily iso) */ \
+    VECTOR_VAR(Bool_t, passIso_electrons) /* Whether extra electron passes iso (not necessarily id) */ \
+    VECTOR_VAR(Float_t, mva_electrons) /* MVA id of extra electrons */ \
+    \
+    \
+    /* Useful info at gen level */ \
+    SIMPLE_VAR(Int_t, pdgId_resonance_MC) /* PDG ID of X/MSSM_H or particles::NONEXISTENT, if it not present */ \
+    SIMPLE_VAR(Float_t, pt_resonance_MC) /* pt of X/MSSM_H */ \
+    SIMPLE_VAR(Float_t, eta_resonance_MC) /* eta of X/MSSM_H */ \
+    SIMPLE_VAR(Float_t, phi_resonance_MC) /* phi of X/MSSM_H */ \
+    SIMPLE_VAR(Float_t, mass_resonance_MC) /* mass of X/MSSM_H */ \
+    SIMPLE_VAR(Int_t, pdgId_Htt_MC) /* PDG ID of H_tt or particles::NONEXISTENT, if it not present */ \
+    SIMPLE_VAR(Float_t, pt_Htt_MC) /* pt of Htt */ \
+    SIMPLE_VAR(Float_t, eta_Htt_MC) /* eta of Htt */ \
+    SIMPLE_VAR(Float_t, phi_Htt_MC) /* phi of Htt */ \
+    SIMPLE_VAR(Float_t, mass_Htt_MC) /* mass of Htt */ \
+    SIMPLE_VAR(Int_t, pdgId_Hbb_MC) /* PDG ID of H_bb or particles::NONEXISTENT, if it not present */ \
+    SIMPLE_VAR(Float_t, pt_Hbb_MC) /* pt of Hbb */ \
+    SIMPLE_VAR(Float_t, eta_Hbb_MC) /* eta of Hbb */ \
+    SIMPLE_VAR(Float_t, phi_Hbb_MC) /* phi of Hbb */ \
+    SIMPLE_VAR(Float_t, mass_Hbb_MC) /* mass of Hbb */ \
+    SIMPLE_VAR(Int_t, n_extraJets_MC) /* number extra jets */ \
+    \
+    \
+    /* Jets info */ \
+    SIMPLE_VAR(Int_t, njets) /* number of jets passing jet id ( pt > 30 ) */ \
+    SIMPLE_VAR(Int_t, njetspt20) /* number of jets passing jet id ( pt > 20 ) */ \
+    /* First 4 jets passing jet id ( pt > 20 ) sorted by pt*/ \
+    VECTOR_VAR(Float_t, pt_jets) /* pt of jets */ \
+    VECTOR_VAR(Float_t, eta_jets) /* eta of jets */ \
+    VECTOR_VAR(Float_t, phi_jets) /* phi of jets */ \
+    VECTOR_VAR(Float_t, mass_jets) /* mass of jets */ \
+    VECTOR_VAR(Float_t, energy_jets) /* energy of jets */ \
+    VECTOR_VAR(Float_t, csv_jets) /* csv of jets */ \
+    VECTOR_VAR(Bool_t, isJet_MC_Bjet) /* Whether jet matches MC b-jet */ \
+    VECTOR_VAR(Bool_t, isJet_MC_Bjet_withLeptonicDecay) /* Whether jet matches MC b-jet that decayed leptonically */ \
+    /* b-jets info */ \
+    SIMPLE_VAR(Int_t, nBjets) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
+    /* First 4 b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
+    VECTOR_VAR(Float_t, pt_Bjets) /* pt of b-jets */ \
+    VECTOR_VAR(Float_t, eta_Bjets) /* eta of b-jets */ \
+    VECTOR_VAR(Float_t, phi_Bjets) /* phi of b-jets */ \
+    VECTOR_VAR(Float_t, mass_Bjets) /* mass of b-jets */ \
+    VECTOR_VAR(Float_t, energy_Bjets) /* energy of b-jets */ \
+    VECTOR_VAR(Float_t, csv_Bjets) /* csv of b-jets */ \
+    VECTOR_VAR(Bool_t, isBjet_MC_Bjet) /* Whether b-jet matches MC b-jet */ \
+    VECTOR_VAR(Bool_t, isBjet_MC_Bjet_withLeptonicDecay) /* Whether b-jet matches MC b-jet that decayed leptonically */ \
+    \
+    \
+    /* vertices */ \
     SIMPLE_VAR(Float_t, x_PV) /* x of PV*/ \
     SIMPLE_VAR(Float_t, y_PV) /* y of PV*/ \
     SIMPLE_VAR(Float_t, z_PV) /* z of PV*/ \
     SIMPLE_VAR(Int_t, npv) /* NPV */ \
+    SIMPLE_VAR(Int_t, npu) /* NPU */ \
     /* Event Weights */ \
-    SIMPLE_VAR(Float_t, puweight) /* Pielup Weight */ \
-    SIMPLE_VAR(Float_t, trigweight_1) /* Effieiency Scale factor (all components multiplied in) */ \
-    SIMPLE_VAR(Float_t, trigweight_2) /* Effieiency Scale factor (all components multiplied in) */ \
-    SIMPLE_VAR(Float_t, idweight_1) /* Effieiency Scale factor (all components multiplied in) */ \
-    SIMPLE_VAR(Float_t, idweight_2) /* Effieiency Scale factor (all components multiplied in) */ \
-    SIMPLE_VAR(Float_t, isoweight_1) /* Effieiency Scale factor (all components multiplied in) */ \
-    SIMPLE_VAR(Float_t, isoweight_2) /* Effieiency Scale factor (all components multiplied in) */ \
-    SIMPLE_VAR(Float_t, decayModeWeight) /* decay Mode Weight */ \
-    SIMPLE_VAR(Float_t, embeddedWeight) /*  */ \
-    SIMPLE_VAR(Float_t, mcweight) /* MC Weight (xs/nevents * additional wieght (ie pt weight for gghiggs)) */ \
-    SIMPLE_VAR(Float_t, weight) /* mcweight*puweight*effweight */ \
+    SIMPLE_VAR(Float_t, puweight) /* Pielup weight */ \
+    SIMPLE_VAR(Float_t, trigweight_1) /* Trigger weight for the first leg */ \
+    SIMPLE_VAR(Float_t, trigweight_2) /* Trigger weight for the second leg */ \
+    SIMPLE_VAR(Float_t, idweight_1) /* ID weight for the first leg */ \
+    SIMPLE_VAR(Float_t, idweight_2) /* ID weight for the second leg */ \
+    SIMPLE_VAR(Float_t, isoweight_1) /* Isolation weight for the first leg */ \
+    SIMPLE_VAR(Float_t, isoweight_2) /* Isolation weight for the second leg */ \
+    SIMPLE_VAR(Float_t, decayModeWeight_1) /* decay mode weight for the first leg */ \
+    SIMPLE_VAR(Float_t, decayModeWeight_2) /* decay mode weight for the second leg */ \
+    SIMPLE_VAR(Float_t, embeddedWeight) /* Weight for embedded events */ \
+    SIMPLE_VAR(Float_t, weight) /* Product of all weights defined above */ \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)
@@ -217,5 +244,7 @@ TREE_CLASS_INITIALIZE(ntuple, FlatTree, FLAT_DATA)
 #undef FLAT_DATA
 
 namespace ntuple {
-inline double DefaultFillValueForFlatTree() { return -10000; }
+inline float DefaultFloatFillValueForFlatTree() { return std::numeric_limits<float>::lowest(); }
+inline int DefaultIntegerFillValueForFlatTree() { return std::numeric_limits<int>::lowest(); }
+enum class Channel { ETau = 0, MuTau = 1, TauTau = 2 };
 }

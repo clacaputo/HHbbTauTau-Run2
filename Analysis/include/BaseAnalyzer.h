@@ -376,6 +376,152 @@ protected:
         return result;
     }
 
+    ntuple::TauVector ApplyTauCorrections(const GenParticlePtrVector& hadronic_taus, bool useLegacyCorrections)
+    {
+        using namespace cuts::Htautau_Summer13::tauCorrections;
+
+        ntuple::TauVector correctedTaus;
+
+        for(const ntuple::Tau& tau : event->taus()) {
+            TLorentzVector momentum;
+            momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
+
+            const bool hasMCmatch = FindMatchedParticles(momentum, hadronic_taus, deltaR).size() != 0;
+            const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
+                                   ntuple::tau_id::ConvertToHadronicDecayMode(tau.decayMode), useLegacyCorrections);
+            const TLorentzVector correctedMomentum = momentum * scaleFactor;
+            ntuple::Tau correctedTau(tau);
+            correctedTau.pt = correctedMomentum.Pt();
+            correctedTau.eta = correctedMomentum.Eta();
+            correctedTau.phi = correctedMomentum.Phi();
+            correctedTau.mass = correctedMomentum.M();
+            correctedTaus.push_back(correctedTau);
+        }
+        return correctedTaus;
+    }
+
+    ntuple::MET ApplyTauCorrectionsToMVAMET(const ntuple::MET& metMVA, const ntuple::TauVector& correctedTaus)
+    {
+        TLorentzVector sumCorrectedTaus, sumTaus;
+        for(const ntuple::Tau& tau : event->taus()) {
+            TLorentzVector momentum;
+            momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
+            sumTaus += momentum;
+        }
+
+        for (const ntuple::Tau& correctedTau : correctedTaus) {
+            TLorentzVector correctedMomentum;
+            correctedMomentum.SetPtEtaPhiM(correctedTau.pt, correctedTau.eta, correctedTau.phi,correctedTau.mass);
+            sumCorrectedTaus += correctedMomentum;
+        }
+
+        TLorentzVector met, metCorrected;
+        met.SetPtEtaPhiM(metMVA.pt, 0, metMVA.phi, 0.);
+        metCorrected = met + sumTaus - sumCorrectedTaus;
+        ntuple::MET correctedMET = metMVA;
+        correctedMET.pt = metCorrected.Pt();
+        correctedMET.phi = metCorrected.Phi();
+        return correctedMET;
+    }
+
+    analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
+                                                        const std::vector<std::string>& hltPaths,
+                                                        bool useStandardTriggerMatch)
+    {
+        analysis::CandidateVector triggeredHiggses;
+        for (const auto& higgs : higgses){
+            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs))
+                triggeredHiggses.push_back(higgs);
+            if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event,hltPaths,higgs))
+                triggeredHiggses.push_back(higgs);
+        }
+        return triggeredHiggses;
+    }
+
+    ntuple::MET ApplyRecoilCorrections(const Candidate& higgs, const GenParticle* resonance,
+                                       const size_t njets, const ntuple::MET& correctedMET)
+    {
+        if (config.ApplyRecoilCorrection()){
+            if(!resonance)
+                resonance = FindWboson();
+            if(resonance)
+                return recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+        }
+        return correctedMET;
+    }
+
+    const GenParticle* FindWboson()
+    {
+        static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
+        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
+
+//        genEvent.Print();
+        const analysis::GenParticleSet all_resonances = genEvent.GetParticles(resonanceCodes);
+
+        analysis::GenParticleSet resonances;
+        for(const GenParticle* w : all_resonances) {
+            if(w->mothers.size() == 1 && w->mothers.at(0)->pdg.Code != particles::tau)
+                resonances.insert(w);
+        }
+
+        if (resonances.size() == 0) return nullptr;
+
+        if (resonances.size() > 2)
+            throw exception("more than 2 W in the event");
+
+        if (resonances.size() == 1){
+            const GenParticle* Wboson = *resonances.begin();
+
+            analysis::GenParticlePtrVector resonanceDecayProducts;
+            if(analysis::FindDecayProducts(*Wboson, resonanceDecay,resonanceDecayProducts)){
+                return Wboson;
+            }
+            return nullptr;
+        }
+
+
+        const GenParticle* first_resonance = *resonances.begin();
+        const GenParticle* second_resonance = *std::next(resonances.begin());
+        const GenParticle* W_mother;
+        const GenParticle* W_daughter;
+
+
+        if (first_resonance->daughters.size() == 1 && first_resonance->daughters.at(0) == second_resonance){
+            W_mother = first_resonance;
+            W_daughter = second_resonance;
+        }
+        else if (second_resonance->daughters.size() == 1 && second_resonance->daughters.at(0) == first_resonance){
+            W_mother = second_resonance;
+            W_daughter = first_resonance;
+        }
+        else
+            throw exception("two resonances are not in relationship");
+
+        analysis::GenParticlePtrVector resonanceDecayProducts;
+        if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
+            return W_daughter;
+        }
+
+        return nullptr;
+    }
+
+    const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
+    {
+        if(!higgses.size())
+            throw std::runtime_error("no available higgs candidate to select");
+        const auto higgsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
+        {
+            const double first_Pt1 = first.daughters.at(0).momentum.Pt();
+            const double first_Pt2 = first.daughters.at(1).momentum.Pt();
+            const double first_sumPt = first_Pt1 + first_Pt2;
+            const double second_Pt1 = second.daughters.at(0).momentum.Pt();
+            const double second_Pt2 = second.daughters.at(1).momentum.Pt();
+            const double second_sumPt = second_Pt1 + second_Pt2;
+
+            return first_sumPt < second_sumPt;
+        };
+        return *std::max_element(higgses.begin(), higgses.end(), higgsSelector);
+    }
 
 protected:
     Config config;
