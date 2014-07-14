@@ -309,7 +309,7 @@ protected:
         // need to clean the muons from the signal muon!
         const auto muons_bkg = CollectBackgroundMuons() ;
         CandidateVector filtered_muons_bkg ;
-        for (unsigned int imuon = 0 ; imuon <= muons_bkg.size() ; ++imuon) {
+        for (unsigned int imuon = 0 ; imuon < muons_bkg.size() ; ++imuon) {
           // for all analyses, leg1 is always the lepton
           if ( leg1.momentum.DeltaR(muons_bkg.at(imuon).momentum) < 0.01 ) continue ;
           filtered_muons_bkg.push_back(muons_bkg.at(imuon)) ;
@@ -317,7 +317,7 @@ protected:
         // sort the muons by pt
         std::sort( filtered_muons_bkg.begin(), filtered_muons_bkg.end(), []( analysis::Candidate a, analysis::Candidate b ){ return a.momentum.Pt() > b.momentum.Pt(); } ) ;
 
-       // fill the extra muons collection
+        // fill the extra muons collection
         for (unsigned int imuon = 0 ; imuon <= 3 ; ++imuon) {
           flatTree->pt_muons()      .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.Pt()  : default_value) );
           flatTree->eta_muons()     .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.Eta() : default_value) );
@@ -329,7 +329,6 @@ protected:
           // flatTree->passId_muons()  .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).passID()       : default_value) ); // FIXME
           // flatTree->passIso_muons() .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).passIso()      : default_value) ); // FIXME
         }
-
     }
 
 protected:
