@@ -193,7 +193,7 @@ protected:
 
     void FillFlatTree(const Candidate& higgs      , double m_sv,
                       const CandidateVector& jets , const CandidateVector& jetsPt20,
-                      const CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
+                      const CandidateVector& bjets, const CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
                       const ntuple::MET& pfMET)
     {
@@ -212,15 +212,15 @@ protected:
         //flatTree->rho();
 
         //flatTree->mcweight();
-        flatTree->puweight() = PUweight;
-        flatTree->trigweight_1() = triggerWeights.at(0);
-        flatTree->trigweight_2() = triggerWeights.at(1);
-        flatTree->idweight_1() = IDweights.at(0);
-        flatTree->idweight_2() = IDweights.at(1);
-        flatTree->isoweight_1() = IsoWeights.at(0);
-        flatTree->isoweight_2() = IsoWeights.at(1);
+        flatTree->puweight()        = PUweight;
+        flatTree->trigweight_1()    = triggerWeights.at(0);
+        flatTree->trigweight_2()    = triggerWeights.at(1);
+        flatTree->idweight_1()      = IDweights.at(0);
+        flatTree->idweight_2()      = IDweights.at(1);
+        flatTree->isoweight_1()     = IsoWeights.at(0);
+        flatTree->isoweight_2()     = IsoWeights.at(1);
         //flatTree->effweight();
-        flatTree->weight() = eventWeight;
+        flatTree->weight()          = eventWeight;
         //flatTree->embeddedWeight();
         //flatTree->signalWeight();
 
@@ -238,20 +238,20 @@ protected:
         flatTree->dZ_1()     = leg1.vertexPosition.Z() - primaryVertex.position.Z();
 
         // leg1 lepton specific variable should be filled outside. Here all them set to the default value.
-        flatTree->pfRelIso_1()                                 = default_value;
-        flatTree->decayMode_1()                                = default_value;
-        flatTree->againstElectronLooseMVA_1()                  = default_value;
-        flatTree->againstElectronMediumMVA_1()                 = default_value;
-        flatTree->againstElectronTightMVA_1()                  = default_value;
-        flatTree->againstElectronLoose_1()                     = default_value;
-        flatTree->againstElectronMedium_1()                    = default_value;
-        flatTree->againstElectronTight_1()                     = default_value;
-        flatTree->againstMuonLoose_1()                         = default_value;
-        flatTree->againstMuonMedium_1()                        = default_value;
-        flatTree->againstMuonTight_1()                         = default_value;
-        flatTree->passid_1()                                   = default_value;
-        flatTree->passiso_1()                                  = default_value;
-        flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
+//         flatTree->pfRelIso_1()                                 = default_value;
+//         flatTree->decayMode_1()                                = default_value;
+//         flatTree->againstElectronLooseMVA_1()                  = default_value;
+//         flatTree->againstElectronMediumMVA_1()                 = default_value;
+//         flatTree->againstElectronTightMVA_1()                  = default_value;
+//         flatTree->againstElectronLoose_1()                     = default_value;
+//         flatTree->againstElectronMedium_1()                    = default_value;
+//         flatTree->againstElectronTight_1()                     = default_value;
+//         flatTree->againstMuonLoose_1()                         = default_value;
+//         flatTree->againstMuonMedium_1()                        = default_value;
+//         flatTree->againstMuonTight_1()                         = default_value;
+//         flatTree->passid_1()                                   = default_value;
+//         flatTree->passiso_1()                                  = default_value;
+//         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
 
         flatTree->pt_2()     = leg2.momentum.Pt();
         flatTree->phi_2()    = leg2.momentum.Phi();
@@ -301,9 +301,40 @@ protected:
         flatTree->mvacov10() = metMVAcov[1][0];
         flatTree->mvacov11() = metMVAcov[1][1];
 
-        flatTree->njets() = jets.size();
-
         flatTree->nBjets() = retagged_bjets.size();
+
+        /*
+        // RM: SAVE THE FIRST 4 JETS SORTED BY CSV
+        // need to clean the muons from the signal muon!
+        CandidateVector nonconst_bjetsPt20 ;
+        for (unsigned int ibjet = 0 ; ibjet < bjets.size() ; ++ibjet) {
+          nonconst_bjetsPt20.push_back(bjets.at(ibjet)) ;
+        }
+        // sort the bjets by cvs
+        std::sort( nonconst_bjetsPt20.begin(), nonconst_bjetsPt20.end(), []( analysis::Candidate a, analysis::Candidate b ){ return a.momentum.Pt() > b.momentum.Pt(); } ) ;
+        //combinedSecondaryVertexBJetTags
+
+        flatTree->njets()     = jets    .size();
+        flatTree->njetspt20() = jetsPt20.size();
+        */
+
+        // RM: SAVE THE FIRST 4 JETS WITH PT > 20
+        // need to unconst each element, otherwise we cannot sort by pt. Is this really mandatory? CHECK
+        CandidateVector nonconst_jetsPt20 ;
+        for (unsigned int ijet = 0 ; ijet < jetsPt20.size() ; ++ijet) {
+          nonconst_jetsPt20.push_back(jetsPt20.at(ijet)) ;
+        }
+        // sort the jets by pt
+        std::sort( nonconst_jetsPt20.begin(), nonconst_jetsPt20.end(), []( analysis::Candidate a, analysis::Candidate b ){ return a.momentum.Pt() > b.momentum.Pt(); } ) ;
+
+        for (unsigned int ijet = 0 ; ijet <= 10 ; ++ijet) {
+          flatTree->pt_jets()      .push_back( (ijet < nonconst_jetsPt20.size() ? nonconst_jetsPt20.at(ijet).momentum.Pt()  : default_value) );
+          flatTree->eta_jets()     .push_back( (ijet < nonconst_jetsPt20.size() ? nonconst_jetsPt20.at(ijet).momentum.Eta() : default_value) );
+          flatTree->phi_jets()     .push_back( (ijet < nonconst_jetsPt20.size() ? nonconst_jetsPt20.at(ijet).momentum.Phi() : default_value) );
+          flatTree->mass_jets()    .push_back( (ijet < nonconst_jetsPt20.size() ? nonconst_jetsPt20.at(ijet).momentum.M()   : default_value) );
+          flatTree->energy_jets()  .push_back( (ijet < nonconst_jetsPt20.size() ? nonconst_jetsPt20.at(ijet).momentum.E()   : default_value) );
+          flatTree->csv_jets()     .push_back( (ijet < nonconst_jetsPt20.size() ? nonconst_jetsPt20.at(ijet).csv_jets       : default_value) );
+        }
 
         // RM: EXTRA MUONS
         // need to clean the muons from the signal muon!
@@ -329,6 +360,33 @@ protected:
           // flatTree->passId_muons()  .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).passID()       : default_value) ); // FIXME
           // flatTree->passIso_muons() .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).passIso()      : default_value) ); // FIXME
         }
+
+        // RM: EXTRA ELECTRONS
+        // need to clean the electrons from the signal electron!
+        const auto electrons_bkg = CollectBackgroundElectrons() ;
+        CandidateVector filtered_electrons_bkg ;
+        for (unsigned int ielectron = 0 ; ielectron < electrons_bkg.size() ; ++ielectron) {
+          // for all analyses, leg1 is always the lepton
+          if ( leg1.momentum.DeltaR(electrons_bkg.at(ielectron).momentum) < 0.01 ) continue ;
+          filtered_electrons_bkg.push_back(electrons_bkg.at(ielectron)) ;
+        }
+        // sort the electrons by pt
+        std::sort( filtered_electrons_bkg.begin(), filtered_electrons_bkg.end(), []( analysis::Candidate a, analysis::Candidate b ){ return a.momentum.Pt() > b.momentum.Pt(); } ) ;
+
+        // fill the extra electrons collection
+        for (unsigned int ielectron = 0 ; ielectron <= 3 ; ++ielectron) {
+          flatTree->pt_electrons()      .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).momentum.Pt()  : default_value) );
+          flatTree->eta_electrons()     .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).momentum.Eta() : default_value) );
+          flatTree->phi_electrons()     .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).momentum.Phi() : default_value) );
+          flatTree->mass_electrons()    .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).momentum.M()   : default_value) );
+          flatTree->energy_electrons()  .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).momentum.E()   : default_value) );
+          flatTree->charge_electrons()  .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).charge         : default_value) );
+          // flatTree->pfRelIso_electrons().push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).pfRelIso()     : default_value) ); // FIXME
+          // flatTree->passId_electrons()  .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).passID()       : default_value) ); // FIXME
+          // flatTree->passIso_electrons() .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).passIso()      : default_value) ); // FIXME
+          // flatTree->mva_electrons()     .push_back( (ielectron < filtered_electrons_bkg.size() ? filtered_electrons_bkg.at(ielectron).idMVA()        : default_value) ); // FIXME
+        }
+
     }
 
 protected:
