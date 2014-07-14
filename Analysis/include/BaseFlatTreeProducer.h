@@ -191,8 +191,8 @@ protected:
         return true;
     }
 
-    void FillFlatTree(const Candidate& higgs, double m_sv,
-                      const CandidateVector& jets, const CandidateVector& jetsPt20,
+    void FillFlatTree(const Candidate& higgs      , double m_sv,
+                      const CandidateVector& jets , const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
                       const ntuple::MET& pfMET)
@@ -227,35 +227,55 @@ protected:
         flatTree->mvis() = higgs.momentum.M();
         flatTree->m_sv() = m_sv;
 
-        flatTree->pt_1() = leg1.momentum.Pt();
-        flatTree->phi_1() = leg1.momentum.Phi();
-        flatTree->eta_1() = leg1.momentum.Eta();
-        flatTree->m_1() = leg1.momentum.M();
-        flatTree->q_1() = leg1.charge;
-        flatTree->mt_1() = analysis::Calculate_MT(leg1.momentum, postRecoilMET.pt, postRecoilMET.phi);
-        flatTree->d0_1() = analysis::Calculate_dxy(leg1.vertexPosition, primaryVertex.position,leg1.momentum);
-        flatTree->dZ_1() = leg1.vertexPosition.Z() - primaryVertex.position.Z();
+        flatTree->pt_1()     = leg1.momentum.Pt();
+        flatTree->phi_1()    = leg1.momentum.Phi();
+        flatTree->eta_1()    = leg1.momentum.Eta();
+        flatTree->m_1()      = leg1.momentum.M();
+        flatTree->energy_1() = leg1.momentum.E();
+        flatTree->q_1()      = leg1.charge;
+        flatTree->mt_1()     = analysis::Calculate_MT(leg1.momentum, postRecoilMET.pt, postRecoilMET.phi);
+        flatTree->d0_1()     = analysis::Calculate_dxy(leg1.vertexPosition, primaryVertex.position,leg1.momentum);
+        flatTree->dZ_1()     = leg1.vertexPosition.Z() - primaryVertex.position.Z();
 
         // leg1 lepton specific variable should be filled outside. Here all them set to the default value.
-        flatTree->pfRelIso_1() = default_value;
-        flatTree->mva_1() = default_value;
-        //flatTree->passid_1() = default_value;
-        //flatTree->passiso_1() = default_value;
+        flatTree->pfRelIso_1()                                 = default_value;
+        flatTree->decayMode_1()                                = default_value;
+        flatTree->againstElectronLooseMVA_1()                  = default_value;
+        flatTree->againstElectronMediumMVA_1()                 = default_value;
+        flatTree->againstElectronTightMVA_1()                  = default_value;
+        flatTree->againstElectronLoose_1()                     = default_value;
+        flatTree->againstElectronMedium_1()                    = default_value;
+        flatTree->againstElectronTight_1()                     = default_value;
+        flatTree->againstMuonLoose_1()                         = default_value;
+        flatTree->againstMuonMedium_1()                        = default_value;
+        flatTree->againstMuonTight_1()                         = default_value;
+        flatTree->passid_1()                                   = default_value;
+        flatTree->passiso_1()                                  = default_value;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
 
-        flatTree->pt_2() = leg2.momentum.Pt();
-        flatTree->phi_2() = leg2.momentum.Phi();
-        flatTree->eta_2() = leg2.momentum.Eta();
-        flatTree->m_2() = leg2.momentum.M();
-        flatTree->q_2() = leg2.charge;
-        flatTree->mt_2() = analysis::Calculate_MT(leg2.momentum, postRecoilMET.pt, postRecoilMET.phi);
-        flatTree->d0_2() = analysis::Calculate_dxy(leg2.vertexPosition, primaryVertex.position,leg2.momentum);
-        flatTree->dZ_2() = leg2.vertexPosition.Z() - primaryVertex.position.Z();
+        flatTree->pt_2()     = leg2.momentum.Pt();
+        flatTree->phi_2()    = leg2.momentum.Phi();
+        flatTree->eta_2()    = leg2.momentum.Eta();
+        flatTree->m_2()      = leg2.momentum.M();
+        flatTree->energy_2() = leg2.momentum.E();
+        flatTree->q_2()      = leg2.charge;
+        flatTree->mt_2()     = analysis::Calculate_MT(leg2.momentum, postRecoilMET.pt, postRecoilMET.phi);
+        flatTree->d0_2()     = analysis::Calculate_dxy(leg2.vertexPosition, primaryVertex.position,leg2.momentum);
+        flatTree->dZ_2()     = leg2.vertexPosition.Z() - primaryVertex.position.Z();
 
+        // RM: for the three channels, mt, et, tt this leg is always a tau
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
-//        flatTree->iso_2() = ntuple_tau_leg2.byIsolationMVAraw;
-        //flatTree->passid_2();
-        //flatTree->passiso_2();
+        flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode                               ;
+//  needs custom definition
+//         flatTree->againstElectronLooseMVA_2()                  = ntuple_tau_leg2.default_value;
+//         flatTree->againstElectronMediumMVA_2()                 = ntuple_tau_leg2.default_value;
+//         flatTree->againstElectronTightMVA_2()                  = ntuple_tau_leg2.default_value;
+        flatTree->againstElectronLoose_2()                     = ntuple_tau_leg2.againstElectronLoose                    ;
+        flatTree->againstElectronMedium_2()                    = ntuple_tau_leg2.againstElectronMedium                   ;
+        flatTree->againstElectronTight_2()                     = ntuple_tau_leg2.againstElectronTight                    ;
+        flatTree->againstMuonLoose_2()                         = ntuple_tau_leg2.againstMuonLoose                        ;
+        flatTree->againstMuonMedium_2()                        = ntuple_tau_leg2.againstMuonMedium                       ;
+        flatTree->againstMuonTight_2()                         = ntuple_tau_leg2.againstMuonTight                        ;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits;
 
         TLorentzVector postRecoilMetMomentum;
@@ -284,6 +304,32 @@ protected:
         flatTree->njets() = jets.size();
 
         flatTree->nBjets() = retagged_bjets.size();
+
+        // RM: EXTRA MUONS
+        // need to clean the muons from the signal muon!
+        const auto muons_bkg = CollectBackgroundMuons() ;
+        CandidateVector filtered_muons_bkg ;
+        for (unsigned int imuon = 0 ; imuon <= muons_bkg.size() ; ++imuon) {
+          // for all analyses, leg1 is always the lepton
+          if ( leg1.momentum.DeltaR(muons_bkg.at(imuon).momentum) < 0.01 ) continue ;
+          filtered_muons_bkg.push_back(muons_bkg.at(imuon)) ;
+        }
+        // sort the muons by pt
+        std::sort( filtered_muons_bkg.begin(), filtered_muons_bkg.end(), []( analysis::Candidate a, analysis::Candidate b ){ return a.momentum.Pt() > b.momentum.Pt(); } ) ;
+
+       // fill the extra muons collection
+        for (unsigned int imuon = 0 ; imuon <= 3 ; ++imuon) {
+          flatTree->pt_muons()      .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.Pt()  : default_value) );
+          flatTree->eta_muons()     .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.Eta() : default_value) );
+          flatTree->phi_muons()     .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.Phi() : default_value) );
+          flatTree->mass_muons()    .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.M()   : default_value) );
+          flatTree->energy_muons()  .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).momentum.E()   : default_value) );
+          flatTree->charge_muons()  .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).charge         : default_value) );
+          // flatTree->pfRelIso_muons().push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).pfRelIso()     : default_value) ); // FIXME
+          // flatTree->passId_muons()  .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).passID()       : default_value) ); // FIXME
+          // flatTree->passIso_muons() .push_back( (imuon < filtered_muons_bkg.size() ? filtered_muons_bkg.at(imuon).passIso()      : default_value) ); // FIXME
+        }
+
     }
 
 protected:
