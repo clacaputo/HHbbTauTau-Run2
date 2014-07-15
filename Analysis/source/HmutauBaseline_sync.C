@@ -122,19 +122,17 @@ public:
             correctedMET = mvaMet;
 
         const auto looseJets = CollectLooseJets();
-
         const auto filteredLooseJets = FilterCompatibleObjects(looseJets, higgs,
                                                                cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
-
-
         const auto jets = CollectJets(filteredLooseJets);
         const auto bjets = CollectBJets(filteredLooseJets, false);
         const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC());
 
-
         ApplyRecoilCorrections(higgs, muTau.resonance, jets.size());
 
-        const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
+        const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1);
+        const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1);
+        const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,1);
 
         CalculateFullEventWeight(higgs);
 

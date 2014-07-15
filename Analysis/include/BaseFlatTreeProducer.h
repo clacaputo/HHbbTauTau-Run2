@@ -220,6 +220,8 @@ protected:
                       const ntuple::MET& pfMET)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+
+        // Event
         flatTree->run() = event->eventInfo().run;
         flatTree->lumi() = event->eventInfo().lumis;
         flatTree->evt() = event->eventInfo().EventId;
@@ -232,6 +234,7 @@ protected:
             flatTree->npu() = event->eventInfo().trueNInt.at(bxIndex);
         }
 
+        // Weights
         flatTree->puweight()        = PUweight;
         flatTree->trigweight_1()    = triggerWeights.at(0);
         flatTree->trigweight_2()    = triggerWeights.at(1);
@@ -242,6 +245,7 @@ protected:
         flatTree->weight()          = eventWeight;
         flatTree->embeddedWeight()  = 1.; // FIXME once we have the embedded samples
 
+        // HTT candidate
         flatTree->mvis()      = higgs.momentum.M();
         flatTree->m_sv()      = m_sv;
         flatTree->m_sv_Up()   = default_value;
@@ -299,6 +303,7 @@ protected:
         flatTree->againstMuonTight_2()                         = ntuple_tau_leg2.againstMuonTight      ;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits ;
 
+        // MET
         TLorentzVector postRecoilMetMomentum;
         postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, 0, postRecoilMET.phi, 0.);
         flatTree->pt_tt() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
@@ -322,31 +327,28 @@ protected:
         flatTree->mvacov10() = metMVAcov[1][0];
         flatTree->mvacov11() = metMVAcov[1][1];
 
+        // Jets
         flatTree->njets()     = jets.size()           ;
         flatTree->njetspt20() = jetsPt20.size()       ;
         flatTree->nBjets()    = retagged_bjets.size() ;
 
         // RM: SAVE ALL THE JETS WITH PT > 20 (AND SAVE THE CSV DISCRIMINATOR)
-        // need to unconst each element, otherwise we cannot sort the collection. Is this really mandatory? CHECK
-        CandidateVector nonconst_jetsPt20 ;
+        std::vector<ntuple::Jet> csv_sorted_jetsPt20 ;
         for (unsigned int ijet = 0 ; ijet < jetsPt20.size() ; ++ijet) {
-          nonconst_jetsPt20.push_back(jetsPt20.at(ijet)) ;
-          //std::cout << "CSV original  " << jetsPt20.at(ijet).combinedSecondaryVertexBJetTags        << std::endl ;
-          //std::cout << "CSV mine      " << nonconst_jetsPt20.back().combinedSecondaryVertexBJetTags << std::endl ;
+          ntuple::Jet myJet = event->jets().at(jetsPt20.at(ijet).index) ;
+          csv_sorted_jetsPt20.push_back(myJet) ;
         }
 
-        // sort the jets by pt
-        std::sort( nonconst_jetsPt20.begin(), nonconst_jetsPt20.end(), []( analysis::Candidate a, analysis::Candidate b ){ return a.momentum.Pt() > b.momentum.Pt(); } ) ;
-        // std::sort( nonconst_jetsPt20.begin(), nonconst_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.combinedSecondaryVertexBJetTags > b.combinedSecondaryVertexBJetTags; } ) ;
+        // sort the jets by csv discriminator
+        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.combinedSecondaryVertexBJetTags > b.combinedSecondaryVertexBJetTags; } ) ;
 
-        for (unsigned int ijet = 0 ; ijet < nonconst_jetsPt20.size() ; ++ijet) {
-          flatTree->pt_jets()      .push_back( nonconst_jetsPt20.at(ijet).momentum.Pt()  );
-          flatTree->eta_jets()     .push_back( nonconst_jetsPt20.at(ijet).momentum.Eta() );
-          flatTree->phi_jets()     .push_back( nonconst_jetsPt20.at(ijet).momentum.Phi() );
-          flatTree->mass_jets()    .push_back( nonconst_jetsPt20.at(ijet).momentum.M()   );
-          flatTree->energy_jets()  .push_back( nonconst_jetsPt20.at(ijet).momentum.E()   );
-          // flatTree->csv_jets()     .push_back( (fabs(nonconst_jetsPt20.at(ijet).momentum.Eta())<2.4 ? \
-                                               nonconst_jetsPt20.at(ijet).combinedSecondaryVertexBJetTags : default_value ); // FIXME
+        for (unsigned int ijet = 0 ; ijet < csv_sorted_jetsPt20.size() ; ++ijet) {
+          flatTree->pt_jets()      .push_back( csv_sorted_jetsPt20.at(ijet).pt  );
+          flatTree->eta_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).eta );
+          flatTree->phi_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).phi );
+          flatTree->mass_jets()    .push_back( csv_sorted_jetsPt20.at(ijet).mass);
+          // flatTree->energy_jets()  .push_back( csv_sorted_jetsPt20.at(ijet).E()); // not in ntuple::Jet
+          flatTree->csv_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).combinedSecondaryVertexBJetTags );
         }
 
         // RM: EXTRA Muons
