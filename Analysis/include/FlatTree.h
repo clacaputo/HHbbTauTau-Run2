@@ -93,6 +93,7 @@
     SIMPLE_VAR(Bool_t, againstElectronLooseMVA_2) /* Whether tau passes loose MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_2) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_2) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_2) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_2) /* Whether tau passes tight against electron discriminator */ \
@@ -105,6 +106,11 @@
     SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of Higgs candidate */ \
     SIMPLE_VAR(Float_t, mvis) /* Visible mass of H_tautau */ \
     SIMPLE_VAR(Float_t, m_sv) /* Mass of H_tautau corrected by svFit using integration method */ \
+    SIMPLE_VAR(Float_t, m_sv_Up) /* Mass of H_tautau corrected by svFit using integration method when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_Down) /* Mass of H_tautau corrected by svFit using integration method when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, pt_sv) /* Pt of H_tautau corrected by svFit using integration method */ \
+    SIMPLE_VAR(Float_t, eta_sv) /* Et of H_tautau corrected by svFit using integration method */ \
+    SIMPLE_VAR(Float_t, phi_sv) /* Phi of H_tautau corrected by svFit using integration method */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
     SIMPLE_VAR(Float_t, Htautau_pt) /* pt H_tautau */ \
