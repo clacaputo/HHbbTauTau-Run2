@@ -28,6 +28,7 @@
 
 #include "BaseAnalyzer.h"
 #include "FlatTree.h"
+#include "GenMatch.h" // is it needed?
 
 namespace analysis {
 
@@ -211,9 +212,11 @@ protected:
         case 3 : return (raw > cutsVeryTight[category]) ;
       }
 
+      return false ; // to avoid warnings, smarter solutions exist
     }
 
     void FillFlatTree(const Candidate& higgs      , double m_sv,
+                      double m_sv_Up, double m_sv_Down,
                       const CandidateVector& jets , const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
@@ -234,6 +237,7 @@ protected:
             flatTree->npu() = event->eventInfo().trueNInt.at(bxIndex);
         }
 
+
         // Weights
         flatTree->puweight()        = PUweight;
         flatTree->trigweight_1()    = triggerWeights.at(0);
@@ -243,16 +247,37 @@ protected:
         flatTree->isoweight_1()     = IsoWeights.at(0);
         flatTree->isoweight_2()     = IsoWeights.at(1);
         flatTree->weight()          = eventWeight;
-        flatTree->embeddedWeight()  = 1.; // FIXME once we have the embedded samples
+        flatTree->embeddedWeight()  = 1.; // FIXME! once we have the embedded samples
 
         // HTT candidate
-        flatTree->mvis()      = higgs.momentum.M();
-        flatTree->m_sv()      = m_sv;
-        flatTree->m_sv_Up()   = default_value;
-        flatTree->m_sv_Down() = default_value;
-        flatTree->pt_sv()     = default_value;
-        flatTree->eta_sv()    = default_value;
-        flatTree->phi_sv()    = default_value;
+        flatTree->mvis()           = higgs.momentum.M();
+        flatTree->m_sv()           = m_sv;
+        flatTree->m_sv_Up()        = m_sv_Up;
+        flatTree->m_sv_Down()      = m_sv_Down;
+        flatTree->pt_sv()          = default_value; // SVfit not ready yet
+        flatTree->eta_sv()         = default_value; // SVfit not ready yet
+        flatTree->phi_sv()         = default_value; // SVfit not ready yet
+        flatTree->DeltaR_leptons() = leg1.momentum.DeltaR(leg2.momentum) ;
+        flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
+
+        // Hhh generator infocandidate
+        mcmatching::MChiggses mch = mcmatching::GetMChiggses(event->genParticles()) ;
+        //flatTree->pdgId_resonance_MC() = mch.heavyH.M() ;
+        flatTree->pt_resonance_MC()    = mch.heavyH.Pt()  ;
+        flatTree->eta_resonance_MC()   = mch.heavyH.Eta() ;
+        flatTree->phi_resonance_MC()   = mch.heavyH.Phi() ;
+        flatTree->mass_resonance_MC()  = mch.heavyH.M()   ;
+        //flatTree->pdgId_Htt_MC()       = mch.heavyH.M() ;
+        flatTree->pt_Htt_MC()          = mch.lightH1.Pt()  ;
+        flatTree->eta_Htt_MC()         = mch.lightH1.Eta() ;
+        flatTree->phi_Htt_MC()         = mch.lightH1.Phi() ;
+        flatTree->mass_Htt_MC()        = mch.lightH1.M()   ;
+        //flatTree->pdgId_Hbb_MC()       = mch.heavyH.M() ;
+        flatTree->pt_Hbb_MC()          = mch.lightH2.Pt()  ;
+        flatTree->eta_Hbb_MC()         = mch.lightH2.Eta() ;
+        flatTree->phi_Hbb_MC()         = mch.lightH2.Phi() ;
+        flatTree->mass_Hbb_MC()        = mch.lightH2.M()   ;
+        flatTree->n_extraJets_MC()     = default_value ;
 
         // Leg 1, lepton
         flatTree->pt_1()     = leg1.momentum.Pt()  ;
@@ -265,6 +290,14 @@ protected:
         flatTree->d0_1()     = analysis::Calculate_dxy(leg1.vertexPosition, primaryVertex.position,leg1.momentum);
         flatTree->dZ_1()     = leg1.vertexPosition.Z() - primaryVertex.position.Z();
 
+        // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATMCMatchingExercise
+        mcmatching::matchedGenParticle genp1 = mcmatching::MatchToGen(leg1,event->genParticles(),1) ; // stable muons
+        flatTree->pdgId_1_MC() = genp1.pdgId    ;
+        flatTree->pt_1_MC   () = genp1.matched ? genp1.p4.Pt()  : default_value ;
+        flatTree->phi_1_MC  () = genp1.matched ? genp1.p4.Phi() : default_value ;
+        flatTree->eta_1_MC  () = genp1.matched ? genp1.p4.Eta() : default_value ;
+        flatTree->m_1_MC    () = genp1.matched ? genp1.p4.M()   : default_value ;
+
         // Leg 2, tau
         flatTree->pt_2()     = leg2.momentum.Pt();
         flatTree->phi_2()    = leg2.momentum.Phi();
@@ -276,21 +309,29 @@ protected:
         flatTree->d0_2()     = analysis::Calculate_dxy(leg2.vertexPosition, primaryVertex.position,leg2.momentum);
         flatTree->dZ_2()     = leg2.vertexPosition.Z() - primaryVertex.position.Z();
 
+        // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATMCMatchingExercise
+        mcmatching::matchedGenParticle genp2 = mcmatching::MatchToGen(leg2,event->genParticles(),3) ; // taus before fragmentation (not perfect, but acceptable)
+        flatTree->pdgId_2_MC() = genp2.pdgId    ;
+        flatTree->pt_2_MC   () = genp2.matched ? genp2.p4.Pt()  : default_value ;
+        flatTree->phi_2_MC  () = genp2.matched ? genp2.p4.Phi() : default_value ;
+        flatTree->eta_2_MC  () = genp2.matched ? genp2.p4.Eta() : default_value ;
+        flatTree->m_2_MC    () = genp2.matched ? genp2.p4.M()   : default_value ;
+
         // RM: for the three channels, mt, et, tt this leg is always a tau
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
         bool antiEloose  = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                0) ;
+                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
+                                                                                      0) ;
         bool antiEMedium = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                1) ;
+                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
+                                                                                      1) ;
         bool antiETight  = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                2) ;
+                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
+                                                                                      2) ;
         bool antiEVTight = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                3) ;
+                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
+                                                                                      3) ;
         flatTree->againstElectronLooseMVA_2()                  = antiEloose  ;
         flatTree->againstElectronMediumMVA_2()                 = antiEMedium ;
         flatTree->againstElectronTightMVA_2()                  = antiETight  ;
@@ -306,7 +347,7 @@ protected:
         // MET
         TLorentzVector postRecoilMetMomentum;
         postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, 0, postRecoilMET.phi, 0.);
-        flatTree->pt_tt() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
+        flatTree->pt_tt_MET() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
 
         flatTree->met()       = pfMET.pt          ;
         flatTree->metphi()    = pfMET.phi         ;
@@ -339,9 +380,10 @@ protected:
           csv_sorted_jetsPt20.push_back(myJet) ;
         }
 
-        // sort the jets by csv discriminator
-        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.combinedSecondaryVertexBJetTags > b.combinedSecondaryVertexBJetTags; } ) ;
+        // sort the jets by pt
+        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.pt > b.pt; } ) ;
 
+        // fill the jet collections
         for (unsigned int ijet = 0 ; ijet < csv_sorted_jetsPt20.size() ; ++ijet) {
           flatTree->pt_jets()      .push_back( csv_sorted_jetsPt20.at(ijet).pt  );
           flatTree->eta_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).eta );
@@ -349,6 +391,27 @@ protected:
           flatTree->mass_jets()    .push_back( csv_sorted_jetsPt20.at(ijet).mass);
           // flatTree->energy_jets()  .push_back( csv_sorted_jetsPt20.at(ijet).E()); // not in ntuple::Jet
           flatTree->csv_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).combinedSecondaryVertexBJetTags );
+          // inspect the flavour of the gen jet
+          mcmatching::genjetflavour genjetinfo = mcmatching::IsGenBJet(csv_sorted_jetsPt20.at(ijet),event->genParticles()) ;
+          flatTree->isJet_MC_Bjet()                  .push_back( genjetinfo.isBjet                                 );
+          flatTree->isJet_MC_Bjet_withLeptonicDecay().push_back( genjetinfo.leptonsInJet.size() > 0 ? true : false );
+        }
+
+        // sort the jets by csv discriminator
+        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.combinedSecondaryVertexBJetTags > b.combinedSecondaryVertexBJetTags; } ) ;
+
+        // fill the bjet collections
+        for (unsigned int ibjet = 0 ; ibjet < csv_sorted_jetsPt20.size() ; ++ibjet) {
+          flatTree->pt_Bjets()      .push_back( csv_sorted_jetsPt20.at(ibjet).pt  );
+          flatTree->eta_Bjets()     .push_back( csv_sorted_jetsPt20.at(ibjet).eta );
+          flatTree->phi_Bjets()     .push_back( csv_sorted_jetsPt20.at(ibjet).phi );
+          flatTree->mass_Bjets()    .push_back( csv_sorted_jetsPt20.at(ibjet).mass);
+          // flatTree->energy_Bjets()  .push_back( csv_sorted_jetsPt20.at(ibjet).E()); // not in ntuple::Jet
+          flatTree->csv_Bjets()     .push_back( csv_sorted_jetsPt20.at(ibjet).combinedSecondaryVertexBJetTags );
+          // inspect the flavour of the gen jet
+          mcmatching::genjetflavour genjetinfo = mcmatching::IsGenBJet(csv_sorted_jetsPt20.at(ibjet),event->genParticles()) ;
+          flatTree->isBjet_MC_Bjet()                  .push_back( genjetinfo.isBjet                                 );
+          flatTree->isBjet_MC_Bjet_withLeptonicDecay().push_back( genjetinfo.leptonsInJet.size() > 0 ? true : false );
         }
 
         // RM: EXTRA Muons
@@ -412,6 +475,12 @@ protected:
           flatTree->mva_electrons()     .push_back( filtered_electrons_bkg.at(ielectron).mvaPOGNonTrig );
           // flatTree->passIso_electrons() .push_back( filtered_electrons_bkg.at(ielectron).passIso       ); // FIXME
         }
+
+        // PV
+        ntuple::Vertex PV = event->vertices().front() ;
+        flatTree->x_PV() = PV.x ;
+        flatTree->y_PV() = PV.y ;
+        flatTree->z_PV() = PV.z ;
 
     }
 

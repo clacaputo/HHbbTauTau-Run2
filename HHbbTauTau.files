@@ -6,6 +6,7 @@ Analysis/include/DebugTools.h
 Analysis/include/EventDescriptor.h
 Analysis/include/EventId.h
 Analysis/include/GenParticle.h
+Analysis/include/GenMatch.h
 Analysis/include/Htautau_Summer13.h
 Analysis/include/MCfinalState.h
 Analysis/include/Particles.h

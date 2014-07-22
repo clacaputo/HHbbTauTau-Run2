@@ -113,16 +113,6 @@
     SIMPLE_VAR(Float_t, phi_sv) /* Phi of H_tautau corrected by svFit using integration method */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
-    SIMPLE_VAR(Float_t, Htautau_pt) /* pt H_tautau */ \
-    SIMPLE_VAR(Float_t, Htautau_eta) /* eta H_tautau */ \
-    SIMPLE_VAR(Float_t, Htautau_phi) /* phi H_tautau */ \
-    SIMPLE_VAR(Float_t, Htautau_energy) /* energy H_tautau */ \
-    /* H_bb variables */ \
-    SIMPLE_VAR(Float_t, Hbb_pt) /* pt H_bb */ \
-    SIMPLE_VAR(Float_t, Hbb_eta) /* eta H_bb */ \
-    SIMPLE_VAR(Float_t, Hbb_phi) /* phi H_bb */ \
-    SIMPLE_VAR(Float_t, Hbb_m) /* mass H_bb */ \
-    SIMPLE_VAR(Float_t, Hbb_energy) /* energy H_bb */ \
     \
     \
     /* Met related variables */ \
