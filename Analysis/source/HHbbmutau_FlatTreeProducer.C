@@ -322,7 +322,7 @@ protected:
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
-        flatTree->mva_1() = 0;
+        //flatTree->mva_1() = 0;
         //flatTree->passid_2();
         //flatTree->passiso_2();
         //flatTree->mva_2() = ntuple_tau.againstElectronLoose;

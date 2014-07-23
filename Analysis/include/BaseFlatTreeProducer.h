@@ -246,6 +246,7 @@ protected:
         flatTree->idweight_2()      = IDweights.at(1);
         flatTree->isoweight_1()     = IsoWeights.at(0);
         flatTree->isoweight_2()     = IsoWeights.at(1);
+        // flatTree->fakeweight()      = fakeWeights.at(1); // what's this?
         flatTree->weight()          = eventWeight;
         flatTree->embeddedWeight()  = 1.; // FIXME! once we have the embedded samples
 
@@ -260,7 +261,7 @@ protected:
         flatTree->DeltaR_leptons() = leg1.momentum.DeltaR(leg2.momentum) ;
         flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
 
-        // Hhh generator infocandidate
+        // Hhh generator info candidate
         mcmatching::MChiggses mch = mcmatching::GetMChiggses(event->genParticles()) ;
         //flatTree->pdgId_resonance_MC() = mch.heavyH.M() ;
         flatTree->pt_resonance_MC()    = mch.heavyH.Pt()  ;
@@ -277,7 +278,7 @@ protected:
         flatTree->eta_Hbb_MC()         = mch.lightH2.Eta() ;
         flatTree->phi_Hbb_MC()         = mch.lightH2.Phi() ;
         flatTree->mass_Hbb_MC()        = mch.lightH2.M()   ;
-        flatTree->n_extraJets_MC()     = default_value ;
+        flatTree->n_extraJets_MC()     = default_value ; // needs to be filles with NUP! https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
 
         // Leg 1, lepton
         flatTree->pt_1()     = leg1.momentum.Pt()  ;
@@ -466,7 +467,6 @@ protected:
                                                    < cuts::Htautau_Summer13::muonVeto::d0
                                                  );
         }
-
 
         // RM: EXTRA Electrons
         std::vector<ntuple::Electron> filtered_electrons_bkg ;
