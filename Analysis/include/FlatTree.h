@@ -143,6 +143,8 @@
     VECTOR_VAR(Int_t, charge_muons) /* charge of extra muons */ \
     VECTOR_VAR(Bool_t, passId_muons) /* Whether extra muon passes id (not necessarily iso) */ \
     VECTOR_VAR(Bool_t, passIso_muons) /* Whether extra muon passes iso (not necessarily id) */ \
+    VECTOR_VAR(Bool_t, isZmm_muon_muons) /* Whether it fires the Zmm Veto as defined in the TWiki FIXME! PUT THE LINK HERE */ \
+    VECTOR_VAR(Bool_t, isVeto_muon_muons) /* Whether it fires the Veto as defined in the TWiki FIXME! PUT THE LINK HERE */ \
     /* first 4 extra electrons sorted by pt*/ \
     VECTOR_VAR(Float_t, pt_electrons) /* pt of extra electrons */ \
     VECTOR_VAR(Float_t, eta_electrons) /* eta of extra electrons */ \
@@ -154,6 +156,8 @@
     VECTOR_VAR(Bool_t, passId_electrons) /* Whether extra electron passes id (not necessarily iso) */ \
     VECTOR_VAR(Bool_t, passIso_electrons) /* Whether extra electron passes iso (not necessarily id) */ \
     VECTOR_VAR(Float_t, mva_electrons) /* MVA id of extra electrons */ \
+    VECTOR_VAR(Bool_t, isZee_electron_electrons) /* Whether it fires the Zee Veto as defined in the TWiki FIXME! PUT THE LINK HERE */ \
+    VECTOR_VAR(Bool_t, isVeto_electron_electrons) /* Whether it fires the Veto as defined in the TWiki FIXME! PUT THE LINK HERE */ \
     \
     \
     /* Useful info at gen level */ \
