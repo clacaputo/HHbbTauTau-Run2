@@ -415,122 +415,124 @@ protected:
           flatTree->isBjet_MC_Bjet_withLeptonicDecay().push_back( genjetinfo.leptonsInJet.size() > 0 ? true : false );
         }
 
-        // RM: EXTRA Muons
-        std::vector<ntuple::Muon> filtered_muons_bkg ;
+// RM not needed at the moment, fiddling with the veto destroys sync at the event level and maximum improvement is less than 4%
 
-        // clean the extra muons against the signal particles (by dR, is this nasty? do we have the unique index?)
-        for (unsigned int imuon = 0 ; imuon < event->muons().size() ; ++imuon) {
-          TLorentzVector muonP4 ;
-          muonP4.SetPtEtaPhiM(event->muons().at(imuon).pt ,
-                              event->muons().at(imuon).eta,
-                              event->muons().at(imuon).phi,
-                              event->muons().at(imuon).mass) ;
-          if ( leg1.momentum.DeltaR(muonP4) < 0.01 ) continue ;
-          filtered_muons_bkg.push_back(event->muons().at(imuon)) ;
-        }
-
-        // sort the muons by pt
-        std::sort( filtered_muons_bkg.begin(), filtered_muons_bkg.end(), []( ntuple::Muon a, ntuple::Muon b ){ return a.pt > b.pt; } ) ;
-
-        // fill the extra muons collection
-        for (unsigned int imuon = 0 ; imuon < filtered_muons_bkg.size() ; ++imuon) {
-          ntuple::Muon mymuon = filtered_muons_bkg.at(imuon) ;
-          flatTree->pt_muons()         .push_back( mymuon.pt       );
-          flatTree->eta_muons()        .push_back( mymuon.eta      );
-          flatTree->phi_muons()        .push_back( mymuon.phi      );
-          flatTree->mass_muons()       .push_back( mymuon.mass     );
-          // flatTree->energy_muons()     .push_back( mymuon.energy   ); // ntuple::Electron doesn't have energy method!
-          flatTree->charge_muons()     .push_back( mymuon.charge   );
-          flatTree->pfRelIso_muons()   .push_back( mymuon.pfRelIso );
-          flatTree->passId_muons()     .push_back( mymuon.passID   );
-          // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-          flatTree->isZmm_muon_muons() .push_back( mymuon.pt                                        > cuts::Htautau_Summer13::MuTau::ZmumuVeto::pt       && \
-                                                   fabs(mymuon.eta)                                 < cuts::Htautau_Summer13::MuTau::ZmumuVeto::eta      && \
-                                                   mymuon.pfRelIso                                  < cuts::Htautau_Summer13::MuTau::ZmumuVeto::pfRelIso && \
-                                                   mymuon.isPFMuon                                                                                       && \
-                                                   mymuon.isTrackerMuon                                                                                  && \
-                                                   // mymuon.isGlobalMuon                                                                                   && \  not in ntuple::Muon, but shuodl be applied by default
-                                                   // mymuon.isGlobalMuonPromptTight                                                                        && \ what's this?
-                                                   fabs(vertices.front().position.z() - mymuon.vz ) < cuts::Htautau_Summer13::MuTau::ZmumuVeto::dz       && \
-                                                   sqrt( (vertices.front().position.x() - mymuon.vx) * (vertices.front().position.x() - mymuon.vx) +        \
-                                                         (vertices.front().position.y() - mymuon.vy) * (vertices.front().position.y() - mymuon.vy) )        \
-                                                   < cuts::Htautau_Summer13::MuTau::ZmumuVeto::d0
-                                                  );
-          // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
-          flatTree->isVeto_muon_muons().push_back( mymuon.pt                                       > cuts::Htautau_Summer13::muonVeto::pt         && \
-                                                   fabs(mymuon.eta)                                < cuts::Htautau_Summer13::muonVeto::eta        && \
-                                                   mymuon.pfRelIso                                 < cuts::Htautau_Summer13::muonVeto::pfRelIso   && \
-                                                   mymuon.isTightMuon                                                                             && \
-                                                   fabs(vertices.front().position.z() - mymuon.vz) < cuts::Htautau_Summer13::muonVeto::dz         && \
-                                                   sqrt( (vertices.front().position.x() - mymuon.vx) * (vertices.front().position.x() - mymuon.vx) + \
-                                                         (vertices.front().position.y() - mymuon.vy) * (vertices.front().position.y() - mymuon.vy) ) \
-                                                   < cuts::Htautau_Summer13::muonVeto::d0
-                                                 );
-        }
-
-        // RM: EXTRA Electrons
-        std::vector<ntuple::Electron> filtered_electrons_bkg ;
-
-        // clean the extra electrons against the signal particles (by dR, is this nasty? do we have the unique index?)
-        for (unsigned int ielectron = 0 ; ielectron < event->electrons().size() ; ++ielectron) {
-          TLorentzVector electronP4 ;
-          electronP4.SetPtEtaPhiM(event->electrons().at(ielectron).pt ,
-                                  event->electrons().at(ielectron).eta,
-                                  event->electrons().at(ielectron).phi,
-                                  event->electrons().at(ielectron).mass) ;
-          if ( leg1.momentum.DeltaR(electronP4) < 0.01 ) continue ;
-          filtered_electrons_bkg.push_back(event->electrons().at(ielectron)) ;
-        }
-
-        // sort the electrons by pt
-        std::sort( filtered_electrons_bkg.begin(), filtered_electrons_bkg.end(), []( ntuple::Electron a, ntuple::Electron b ){ return a.pt > b.pt; } ) ;
-
-        // fill the extra electrons collection
-        // FIXME! check what id and isolation variable we actually need
-        size_t pt_index   = 0 ;
-        size_t eta_index  = 0 ;
-        size_t ieta_index = 0 ;
-        for (unsigned int ielectron = 0 ; ielectron < filtered_electrons_bkg.size() ; ++ielectron) {
-          ntuple::Electron myelectron = filtered_electrons_bkg.at(ielectron) ;
-
-          pt_index   = myelectron.pt        <  cuts::Htautau_Summer13::electronVeto::ref_pt           ? 0 : 1 ;
-          eta_index  = myelectron.eta       <  cuts::Htautau_Summer13::electronVeto::scEta_min[0]     ? 0 : (myelectron.eta < cuts::Htautau_Summer13::electronVeto::scEta_min[1] ? 1 : 2) ;
-          ieta_index = fabs(myelectron.eta) <= cuts::Htautau_Summer13::ETau::ZeeVeto::barrel_eta_high ? cuts::Htautau_Summer13::ETau::ZeeVeto::barrel_index : cuts::Htautau_Summer13::ETau::ZeeVeto::endcap_index ;
-
-          flatTree->pt_electrons()      .push_back( myelectron.pt            );
-          flatTree->eta_electrons()     .push_back( myelectron.eta           );
-          flatTree->phi_electrons()     .push_back( myelectron.phi           );
-          flatTree->mass_electrons()    .push_back( myelectron.mass          );
-          // flatTree->energy_electrons()  .push_back( myelectron.energy        ); // ntuple::Electron doesn't have energy method!
-          flatTree->charge_electrons()  .push_back( myelectron.charge        );
-          flatTree->pfRelIso_electrons().push_back( myelectron.pfRelIso      );
-          // flatTree->passId_electrons()  .push_back( myelectron.passID        );
-          flatTree->mva_electrons()     .push_back( myelectron.mvaPOGNonTrig );
-          // flatTree->passIso_electrons() .push_back( myelectron.passIso       ); // FIXME
-          flatTree->isZee_electron_electrons() .push_back( myelectron.pt                                        > cuts::Htautau_Summer13::ETau::ZeeVeto::pt                          && \
-                                                           fabs(myelectron.eta)                                 < cuts::Htautau_Summer13::ETau::ZeeVeto::eta                         && \
-                                                           myelectron.pfRelIso                                  < cuts::Htautau_Summer13::ETau::ZeeVeto::pfRelIso                    && \
-                                                           myelectron.sigmaIEtaIEta                             < cuts::Htautau_Summer13::ETau::ZeeVeto::sigma_ieta_ieta[ieta_index] && \
-                                                           myelectron.deltaEtaTrkSC                             < cuts::Htautau_Summer13::ETau::ZeeVeto::delta_eta      [ieta_index] && \
-                                                           myelectron.deltaPhiTrkSC                             < cuts::Htautau_Summer13::ETau::ZeeVeto::delta_phi      [ieta_index] && \
-                                                           myelectron.eSuperClusterOverP                        < cuts::Htautau_Summer13::ETau::ZeeVeto:: HoverE        [ieta_index] && \
-                                                           fabs(vertices.front().position.z() - myelectron.vz ) < cuts::Htautau_Summer13::ETau::ZeeVeto::dz                          && \
-                                                           sqrt( (vertices.front().position.x() - myelectron.vx) * (vertices.front().position.x() - myelectron.vx) + \
-                                                                 (vertices.front().position.y() - myelectron.vy) * (vertices.front().position.y() - myelectron.vy) ) \
-                                                           < cuts::Htautau_Summer13::ETau::ZeeVeto::d0
-                                                         );
-          flatTree->isVeto_electron_electrons().push_back( myelectron.pt                    > cuts::Htautau_Summer13::electronVeto::pt                                 && \
-                                                           fabs(myelectron.eta)             < cuts::Htautau_Summer13::electronVeto::eta_high                           && \
-                                                           myelectron.pfRelIso              < cuts::Htautau_Summer13::electronVeto::pFRelIso                           && \
-                                                           myelectron.mvaPOGNonTrig         > cuts::Htautau_Summer13::electronVeto::MVApogNonTrig[pt_index][eta_index] && \
-                                                           myelectron.missingHits           < cuts::Htautau_Summer13::electronVeto::missingHits                        && \
-                                                           myelectron.hasMatchedConversion == cuts::Htautau_Summer13::electronVeto::hasMatchedConversion               && \
-                                                           fabs(vertices.front().position.z() - myelectron.vz) < cuts::Htautau_Summer13::electronVeto::dz &&              \
-                                                           sqrt( (vertices.front().position.x() - myelectron.vx) * (vertices.front().position.x() - myelectron.vx) +      \
-                                                                 (vertices.front().position.y() - myelectron.vy) * (vertices.front().position.y() - myelectron.vy) )      \
-                                                           < cuts::Htautau_Summer13::electronVeto::d0
-                                                         );
-        }
+//         // RM: EXTRA Muons
+//         std::vector<ntuple::Muon> filtered_muons_bkg ;
+//
+//         // clean the extra muons against the signal particles (by dR, is this nasty? do we have the unique index?)
+//         for (unsigned int imuon = 0 ; imuon < event->muons().size() ; ++imuon) {
+//           TLorentzVector muonP4 ;
+//           muonP4.SetPtEtaPhiM(event->muons().at(imuon).pt ,
+//                               event->muons().at(imuon).eta,
+//                               event->muons().at(imuon).phi,
+//                               event->muons().at(imuon).mass) ;
+//           if ( leg1.momentum.DeltaR(muonP4) < 0.01 ) continue ;
+//           filtered_muons_bkg.push_back(event->muons().at(imuon)) ;
+//         }
+//
+//         // sort the muons by pt
+//         std::sort( filtered_muons_bkg.begin(), filtered_muons_bkg.end(), []( ntuple::Muon a, ntuple::Muon b ){ return a.pt > b.pt; } ) ;
+//
+//         // fill the extra muons collection
+//         for (unsigned int imuon = 0 ; imuon < filtered_muons_bkg.size() ; ++imuon) {
+//           ntuple::Muon mymuon = filtered_muons_bkg.at(imuon) ;
+//           flatTree->pt_muons()         .push_back( mymuon.pt       );
+//           flatTree->eta_muons()        .push_back( mymuon.eta      );
+//           flatTree->phi_muons()        .push_back( mymuon.phi      );
+//           flatTree->mass_muons()       .push_back( mymuon.mass     );
+//           // flatTree->energy_muons()     .push_back( mymuon.energy   ); // ntuple::Electron doesn't have energy method!
+//           flatTree->charge_muons()     .push_back( mymuon.charge   );
+//           flatTree->pfRelIso_muons()   .push_back( mymuon.pfRelIso );
+//           flatTree->passId_muons()     .push_back( mymuon.passID   );
+//           // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+//           flatTree->isZmm_muon_muons() .push_back( mymuon.pt                                        > cuts::Htautau_Summer13::MuTau::ZmumuVeto::pt       && \
+//                                                    fabs(mymuon.eta)                                 < cuts::Htautau_Summer13::MuTau::ZmumuVeto::eta      && \
+//                                                    mymuon.pfRelIso                                  < cuts::Htautau_Summer13::MuTau::ZmumuVeto::pfRelIso && \
+//                                                    mymuon.isPFMuon                                                                                       && \
+//                                                    mymuon.isTrackerMuon                                                                                  && \
+//                                                    // mymuon.isGlobalMuon                                                                                   && \  not in ntuple::Muon, but shuodl be applied by default
+//                                                    // mymuon.isGlobalMuonPromptTight                                                                        && \ what's this?
+//                                                    fabs(vertices.front().position.z() - mymuon.vz ) < cuts::Htautau_Summer13::MuTau::ZmumuVeto::dz       && \
+//                                                    sqrt( (vertices.front().position.x() - mymuon.vx) * (vertices.front().position.x() - mymuon.vx) +        \
+//                                                          (vertices.front().position.y() - mymuon.vy) * (vertices.front().position.y() - mymuon.vy) )        \
+//                                                    < cuts::Htautau_Summer13::MuTau::ZmumuVeto::d0
+//                                                   );
+//           // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
+//           flatTree->isVeto_muon_muons().push_back( mymuon.pt                                       > cuts::Htautau_Summer13::muonVeto::pt         && \
+//                                                    fabs(mymuon.eta)                                < cuts::Htautau_Summer13::muonVeto::eta        && \
+//                                                    mymuon.pfRelIso                                 < cuts::Htautau_Summer13::muonVeto::pfRelIso   && \
+//                                                    mymuon.isTightMuon                                                                             && \
+//                                                    fabs(vertices.front().position.z() - mymuon.vz) < cuts::Htautau_Summer13::muonVeto::dz         && \
+//                                                    sqrt( (vertices.front().position.x() - mymuon.vx) * (vertices.front().position.x() - mymuon.vx) + \
+//                                                          (vertices.front().position.y() - mymuon.vy) * (vertices.front().position.y() - mymuon.vy) ) \
+//                                                    < cuts::Htautau_Summer13::muonVeto::d0
+//                                                  );
+//         }
+//
+//         // RM: EXTRA Electrons
+//         std::vector<ntuple::Electron> filtered_electrons_bkg ;
+//
+//         // clean the extra electrons against the signal particles (by dR, is this nasty? do we have the unique index?)
+//         for (unsigned int ielectron = 0 ; ielectron < event->electrons().size() ; ++ielectron) {
+//           TLorentzVector electronP4 ;
+//           electronP4.SetPtEtaPhiM(event->electrons().at(ielectron).pt ,
+//                                   event->electrons().at(ielectron).eta,
+//                                   event->electrons().at(ielectron).phi,
+//                                   event->electrons().at(ielectron).mass) ;
+//           if ( leg1.momentum.DeltaR(electronP4) < 0.01 ) continue ;
+//           filtered_electrons_bkg.push_back(event->electrons().at(ielectron)) ;
+//         }
+//
+//         // sort the electrons by pt
+//         std::sort( filtered_electrons_bkg.begin(), filtered_electrons_bkg.end(), []( ntuple::Electron a, ntuple::Electron b ){ return a.pt > b.pt; } ) ;
+//
+//         // fill the extra electrons collection
+//         // FIXME! check what id and isolation variable we actually need
+//         size_t pt_index   = 0 ;
+//         size_t eta_index  = 0 ;
+//         size_t ieta_index = 0 ;
+//         for (unsigned int ielectron = 0 ; ielectron < filtered_electrons_bkg.size() ; ++ielectron) {
+//           ntuple::Electron myelectron = filtered_electrons_bkg.at(ielectron) ;
+//
+//           pt_index   = myelectron.pt        <  cuts::Htautau_Summer13::electronVeto::ref_pt           ? 0 : 1 ;
+//           eta_index  = myelectron.eta       <  cuts::Htautau_Summer13::electronVeto::scEta_min[0]     ? 0 : (myelectron.eta < cuts::Htautau_Summer13::electronVeto::scEta_min[1] ? 1 : 2) ;
+//           ieta_index = fabs(myelectron.eta) <= cuts::Htautau_Summer13::ETau::ZeeVeto::barrel_eta_high ? cuts::Htautau_Summer13::ETau::ZeeVeto::barrel_index : cuts::Htautau_Summer13::ETau::ZeeVeto::endcap_index ;
+//
+//           flatTree->pt_electrons()      .push_back( myelectron.pt            );
+//           flatTree->eta_electrons()     .push_back( myelectron.eta           );
+//           flatTree->phi_electrons()     .push_back( myelectron.phi           );
+//           flatTree->mass_electrons()    .push_back( myelectron.mass          );
+//           // flatTree->energy_electrons()  .push_back( myelectron.energy        ); // ntuple::Electron doesn't have energy method!
+//           flatTree->charge_electrons()  .push_back( myelectron.charge        );
+//           flatTree->pfRelIso_electrons().push_back( myelectron.pfRelIso      );
+//           // flatTree->passId_electrons()  .push_back( myelectron.passID        );
+//           flatTree->mva_electrons()     .push_back( myelectron.mvaPOGNonTrig );
+//           // flatTree->passIso_electrons() .push_back( myelectron.passIso       ); // FIXME
+//           flatTree->isZee_electron_electrons() .push_back( myelectron.pt                                        > cuts::Htautau_Summer13::ETau::ZeeVeto::pt                          && \
+//                                                            fabs(myelectron.eta)                                 < cuts::Htautau_Summer13::ETau::ZeeVeto::eta                         && \
+//                                                            myelectron.pfRelIso                                  < cuts::Htautau_Summer13::ETau::ZeeVeto::pfRelIso                    && \
+//                                                            myelectron.sigmaIEtaIEta                             < cuts::Htautau_Summer13::ETau::ZeeVeto::sigma_ieta_ieta[ieta_index] && \
+//                                                            myelectron.deltaEtaTrkSC                             < cuts::Htautau_Summer13::ETau::ZeeVeto::delta_eta      [ieta_index] && \
+//                                                            myelectron.deltaPhiTrkSC                             < cuts::Htautau_Summer13::ETau::ZeeVeto::delta_phi      [ieta_index] && \
+//                                                            myelectron.eSuperClusterOverP                        < cuts::Htautau_Summer13::ETau::ZeeVeto:: HoverE        [ieta_index] && \
+//                                                            fabs(vertices.front().position.z() - myelectron.vz ) < cuts::Htautau_Summer13::ETau::ZeeVeto::dz                          && \
+//                                                            sqrt( (vertices.front().position.x() - myelectron.vx) * (vertices.front().position.x() - myelectron.vx) + \
+//                                                                  (vertices.front().position.y() - myelectron.vy) * (vertices.front().position.y() - myelectron.vy) ) \
+//                                                            < cuts::Htautau_Summer13::ETau::ZeeVeto::d0
+//                                                          );
+//           flatTree->isVeto_electron_electrons().push_back( myelectron.pt                    > cuts::Htautau_Summer13::electronVeto::pt                                 && \
+//                                                            fabs(myelectron.eta)             < cuts::Htautau_Summer13::electronVeto::eta_high                           && \
+//                                                            myelectron.pfRelIso              < cuts::Htautau_Summer13::electronVeto::pFRelIso                           && \
+//                                                            myelectron.mvaPOGNonTrig         > cuts::Htautau_Summer13::electronVeto::MVApogNonTrig[pt_index][eta_index] && \
+//                                                            myelectron.missingHits           < cuts::Htautau_Summer13::electronVeto::missingHits                        && \
+//                                                            myelectron.hasMatchedConversion == cuts::Htautau_Summer13::electronVeto::hasMatchedConversion               && \
+//                                                            fabs(vertices.front().position.z() - myelectron.vz) < cuts::Htautau_Summer13::electronVeto::dz &&              \
+//                                                            sqrt( (vertices.front().position.x() - myelectron.vx) * (vertices.front().position.x() - myelectron.vx) +      \
+//                                                                  (vertices.front().position.y() - myelectron.vy) * (vertices.front().position.y() - myelectron.vy) )      \
+//                                                            < cuts::Htautau_Summer13::electronVeto::d0
+//                                                          );
+//         }
 
         // PV
         ntuple::Vertex PV = event->vertices().front() ;

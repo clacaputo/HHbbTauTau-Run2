@@ -59,14 +59,21 @@ public:
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.front();
 
+        const auto z_muons = CollectZmuons();
+        const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);
+        cut(!z_muon_candidates.size(), "z_mumu_veto");
+
         const auto electrons_bkg = CollectBackgroundElectrons();
+        cut(!electrons_bkg.size(), "no_electron");
 
         const auto muons = CollectMuons();
         cut(muons.size(), "muon_cand");
+        cut(muons.size() == 1, "one_muon_cand");
 
         const auto muons_bkg = CollectBackgroundMuons();
-//        const bool have_bkg_muon = muons_bkg.size() > 1 ||
-//                ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
+        const bool have_bkg_muon = muons_bkg.size() > 1 ||
+                ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
+        cut(!have_bkg_muon, "no_bkg_muon");
 
         correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau.hadronic_taus,false) : event->taus();
 
@@ -166,6 +173,38 @@ protected:
         const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
 
         return tau;
+    }
+
+    analysis::CandidateVector CollectZmuons()
+    {
+        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
+                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
+            { return SelectZmuon(id, _objectSelector, _anaData, _selection_label); };
+        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event->muons().size());
+    }
+
+    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                            root_ext::AnalyzerData& _anaData,
+                                            const std::string& selection_label)
+    {
+        using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Muon& object = event->muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+
+        cut(true, ">0 mu cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(isTrackerMuon) == isTrackerMuon, "trackerMuon");
+        cut(X(isPFMuon) == isPFMuon, "PFMuon");
+        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
+
+        return muon;
     }
 
     virtual analysis::Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
