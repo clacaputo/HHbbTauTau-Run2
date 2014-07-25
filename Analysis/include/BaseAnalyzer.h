@@ -261,12 +261,22 @@ protected:
         return CollectCandidateObjects("taus", &BaseAnalyzer::SelectTau, event->taus().size());
     }
 
+    CandidateVector CollectSignalTaus()
+    {
+        return CollectCandidateObjects("taus", &BaseAnalyzer::SelectSignalTau, event->taus().size());
+    }
+
     virtual Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
                                 const std::string& selection_label)
     {
         throw std::runtime_error("Tau selection for signal not implemented");
     }
 
+    virtual Candidate SelectSignalTau(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
+                                const std::string& selection_label)
+    {
+        throw std::runtime_error("Signal tau selection for signal not implemented");
+    }
 
     CandidateVector CollectElectrons()
     {
@@ -521,38 +531,6 @@ protected:
             return first_sumPt < second_sumPt;
         };
         return *std::max_element(higgses.begin(), higgses.end(), higgsSelector) ;
-
-//         CandidateVector higgses_os;
-//         CandidateVector higgses_ss;
-//         std::vector<analysis::Candidate *> higgses_os;
-//         std::vector<analysis::Candidate *> higgses_ss;
-//         CandidateVector myhiggses = * higgs
-
-//         std::cout << higgses << std::endl ;
-//         std::cout << &higgses << std::endl ;
-//         std::cout << *higgses << std::endl ;
-
-//         for (auto higgs : higgses)
-//         for (CandidateVector::const_iterator higgs = higgses.begin() ; higgs != higgses.end() ; ++higgs)
-//         {
-//           std::cout << "\n\n******************" << std::endl ;
-//           std::cout << higgs.type << "\t" << higgs.daughters.at(0).type << "\t" << higgs.daughters.at(1).type << std::endl ;
-//           if (higgs.daughters.at(0).charge * higgs.daughters.at(1).charge < 0) higgses_os.push_back(higgs) ;
-//           if (higgs.daughters.at(0).charge * higgs.daughters.at(1).charge > 0) higgses_ss.push_back(higgs) ;
-//         }
-//
-//         std::cout << "higgs size    " <<  higgses   .size() << std::endl ;
-//         std::cout << "OS higgs size " <<  higgses_os.size() << std::endl ;
-//         std::cout << "SS higgs size " <<  higgses_ss.size() << std::endl ;
-//
-//         std::cout << __LINE__ << "\t" << higgses_os.front().type << "\t" << higgses_os.front().daughters.at(0).type << "\t" << higgses_os.front().daughters.at(1).type << std::endl ;
-//         std::cout << __LINE__ << "\t" << &higgses_os.front() << std::endl ;
-//
-//         if(higgses_os.size()) return higgses_os.front() ;
-//         else                  return higgses_ss.front() ;
-
-//         if(higgses_os.size()) return *std::max_element(higgses_os.begin(), higgses_os.end(), higgsSelector);
-//         else                  return *std::max_element(higgses_ss.begin(), higgses_ss.end(), higgsSelector);
     }
 
 

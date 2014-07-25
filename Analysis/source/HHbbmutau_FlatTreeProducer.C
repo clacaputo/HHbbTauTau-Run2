@@ -48,62 +48,51 @@ public:
         using namespace cuts::Htautau_Summer13::MuTau;
         finalState::MuTaujet muTau;
 
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
         if (!FindAnalysisFinalState(muTau) && config.RequireSpecificFinalState()) return;
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         cuts::Cutter cut(&anaData.Selection("event"));
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
         cut(true, "total");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         cut(HaveTriggerFired(trigger::hltPaths), "trigger");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
         primaryVertex = vertices.front();
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         const auto z_muons = CollectZmuons();
         const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);
         cut(!z_muon_candidates.size(), "z_mumu_veto");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         const auto electrons_bkg = CollectBackgroundElectrons();
         cut(!electrons_bkg.size(), "no_electron");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         const auto muons = CollectMuons();
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
         cut(muons.size(), "muon_cand");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
         cut(muons.size() == 1, "one_muon_cand");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         const auto muons_bkg = CollectBackgroundMuons();
         const bool have_bkg_muon = muons_bkg.size() > 1 ||
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau.hadronic_taus,false) : event->taus();
 
-        const auto taus = CollectTaus();
-        cut(taus.size(), "tau_cand");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
+        const auto alltaus = CollectTaus();
+        cut(alltaus.size(), "tau_cand");
+
+        const auto signaltaus = CollectSignalTaus() ;
+
 
         analysis::CandidateVector higgses ;
 
-        // First check OS higgs candidates
-        const auto higgses_sig = FindCompatibleObjects(muons, taus, DeltaR_betweenSignalObjects,
+        // First check OS, isolated higgs candidates
+        const auto higgses_sig = FindCompatibleObjects(muons, signaltaus, DeltaR_betweenSignalObjects,
                                                    Candidate::Higgs, "H_mu_tau",0);
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
-        // If no OS candidate, keep SS candidates for bkg estimation
+        // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
         if (!higgses_sig.size())
         {
-          const auto higgses_bkg = FindCompatibleObjects(muons, taus, DeltaR_betweenSignalObjects,
+          const auto higgses_bkg = FindCompatibleObjects(muons, alltaus, DeltaR_betweenSignalObjects,
                                                      Candidate::Higgs, "H_mu_tau");
           higgses = higgses_bkg ;
         }
@@ -114,29 +103,10 @@ public:
 
         cut(higgses.size(), "mu_tau");
 
-        //if (higgses.size()>1){
-//         std::cout << "higgses size " << higgses.size() << std::endl ;
-//         for (auto higgs : higgses)
-//         {
-//           std::cout << "______________________" << std::endl ;
-//           std::cout << higgs.daughters.at(0).momentum.Pt() * higgs.daughters.at(1).momentum.Pt() << std::endl ;
-//           std::cout << higgs.daughters.at(0).charge * higgs.daughters.at(1).charge << std::endl ;
-//         }
-        //}
-
         const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,false);
         cut(higgsTriggered.size(), "trigger obj match");
-        std::cout << __LINE__ << "\t] fin qui" << std::endl ;
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
-
-//         std::cout << __LINE__ << "______________________" << std::endl ;
-//         std::cout << event->eventInfo().EventId << std::endl ;
-//         std::cout << &higgs << std::endl ;
-//         std::cout << higgs.daughters.at(0).momentum.Pt() + higgs.daughters.at(1).momentum.Pt() << std::endl ;
-//         std::cout << higgs.daughters.at(0).charge * higgs.daughters.at(1).charge << std::endl ;
-//         std::cout << higgs.type << "\t" << higgs.daughters.at(0).type << "\t" << higgs.daughters.at(1).type << std::endl ;
-
 
         const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
                                                                 event->jets(),primaryVertex,
@@ -157,9 +127,9 @@ public:
 
         postRecoilMET = ApplyRecoilCorrections(higgs, muTau.resonance, jets.size(), correctedMET);
 
-        const double m_sv      = 1;//CorrectMassBySVfit(higgs, postRecoilMET,1   );
-        const double m_sv_Up   = 1;//CorrectMassBySVfit(higgs, postRecoilMET,1.03);
-        const double m_sv_Down = 1;//CorrectMassBySVfit(higgs, postRecoilMET,0.97);
+        const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1   );
+        const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
+        const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
         CalculateFullEventWeight(higgs);
 
@@ -215,6 +185,31 @@ protected:
         cut(X(againstMuonLoose) > cuts::skim::MuTau::tauID::againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < cuts::skim::MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+
+
+        const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
+
+        return tau;
+    }
+
+    virtual analysis::Candidate SelectSignalTau(size_t id, cuts::ObjectSelector* objectSelector,
+                                                root_ext::AnalyzerData& _anaData,
+                                                const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau;
+        using namespace cuts::Htautau_Summer13::MuTau::tauID;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Tau& object = correctedTaus.at(id);
+
+        cut(true, ">0 tau cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
+        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
 
@@ -369,3 +364,4 @@ private:
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"
+
