@@ -25,8 +25,8 @@
  */
 
 #pragma once
-#include "GenParticle.h"
 
+#include "GenParticle.h"
 
 namespace analysis {
 
@@ -37,8 +37,8 @@ struct bbTauTau{
     const GenParticle* resonance;
     const GenParticle* Higgs_TauTau;
     const GenParticle* Higgs_BB;
-    GenParticlePtrVector b_jets;
-    GenParticlePtrVector taus;
+    VisibleGenObjectVector b_jets;
+    VisibleGenObjectVector taus;
 
     bbTauTau() : resonance(nullptr), Higgs_TauTau(nullptr), Higgs_BB(nullptr){}
 
@@ -47,21 +47,21 @@ struct bbTauTau{
 
 struct bbETaujet : public bbTauTau {
     const GenParticle* electron;
-    const GenParticle* tau_jet;
+    const VisibleGenObject* tau_jet;
 
     bbETaujet() : electron(nullptr), tau_jet(nullptr) {}
 };
 
 struct bbMuTaujet : public bbTauTau{
     const GenParticle* muon;
-    const GenParticle* tau_jet;
+    const VisibleGenObject* tau_jet;
 
     bbMuTaujet() : muon(nullptr), tau_jet(nullptr) {}
 };
 
 struct bbTaujetTaujet : public bbTauTau {
-    const GenParticle* leading_tau_jet;
-    const GenParticle* subleading_tau_jet;
+    const VisibleGenObject* leading_tau_jet;
+    const VisibleGenObject* subleading_tau_jet;
 
     bbTaujetTaujet() : leading_tau_jet(nullptr), subleading_tau_jet(nullptr) {}
 };
