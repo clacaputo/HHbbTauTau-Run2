@@ -206,6 +206,70 @@ protected:
         return jets;
     }
 
+    //from HH_BaseAnalyzer Master branch
+    void FindAnalysisBBTauTauFinalState(finalState::bbTauTau& final_state)
+    {
+        static const particles::ParticleCodes resonanceCodes = { particles::Radion};
+        static const particles::ParticleCodes resonanceDecay = { particles::Higgs, particles::Higgs };
+        static const particles::ParticleCodes2D HiggsDecays = { { particles::b, particles::b },
+                                                                { particles::tau, particles::tau } };
+        static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z };
+        static const particles::ParticleCodes SM_ResonanceDecay_1 = { particles::tau, particles::tau };
+        static const particles::ParticleCodes SM_ResonanceDecay_2 = { particles::b, particles::b };
+
+
+        genEvent.Initialize(event.genParticles());
+
+        const GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+
+        if (resonances.size() > 1)
+            throw std::runtime_error("more than 1 resonance per event");
+
+        if (resonances.size() == 1){
+            final_state.resonance = *resonances.begin();
+
+            GenParticlePtrVector HiggsBosons;
+            if(!FindDecayProducts(*final_state.resonance, resonanceDecay,HiggsBosons))
+                throw std::runtime_error("Resonance does not decay into 2 Higgs");
+
+            GenParticleVector2D HiggsDecayProducts;
+            GenParticleIndexVector HiggsIndexes;
+            if(!FindDecayProducts2D(HiggsBosons,HiggsDecays,HiggsDecayProducts,HiggsIndexes))
+                throw std::runtime_error("NOT HH -> bb tautau");
+
+            final_state.b_jets = HiggsDecayProducts.at(0);
+            final_state.taus = HiggsDecayProducts.at(1);
+
+            final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(1));
+            final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(0));
+
+        }
+
+        if (resonances.size() == 0){
+            //search H->bb H->tautau
+            const analysis::GenParticleSet SM_particles = genEvent.GetParticles(SM_ResonanceCodes);
+
+            analysis::GenParticlePtrVector SM_ResonanceToTauTau;
+            analysis::GenParticlePtrVector SM_ResonanceToBB;
+
+            for (const GenParticle* SM_particle : SM_particles){
+                analysis::GenParticlePtrVector resonanceDecayProducts;
+                if(analysis::FindDecayProducts(*SM_particle, SM_ResonanceDecay_1,resonanceDecayProducts)){
+                    final_state.taus = resonanceDecayProducts;
+                    final_state.resonance = SM_particle;
+                    SM_ResonanceToTauTau.push_back(SM_particle);
+                }
+                else if (analysis::FindDecayProducts(*SM_particle, SM_ResonanceDecay_2,resonanceDecayProducts)){
+                    final_state.b_jets = resonanceDecayProducts;
+                    final_state.resonance = SM_particle;
+                    SM_ResonanceToBB.push_back(SM_particle);
+                }
+            }
+        }
+
+
+    }
+
     bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
     {
         static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
