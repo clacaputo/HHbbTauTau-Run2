@@ -39,6 +39,7 @@ namespace cuts {
 
         namespace ETau {
 
+            const double pFRelIso = 0.5; // <
             namespace tauID {
                 const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
             }
@@ -46,6 +47,7 @@ namespace cuts {
 
         namespace MuTau {
 
+            const double pFRelIso = 0.5; // <
             namespace tauID {
                 const double againstMuonLoose = 0.5; // >
                 const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
