@@ -204,8 +204,6 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     if (genParticle.status != particles::Decayed_or_fragmented){
         throw std::runtime_error("particle type not supported");
     }
-//    std::cout << "I'm in FindDecayProducts" << std::endl;
-//    std::cout << "gen particle index = " << genParticle.pdg << ", index = " << genParticle.index << std::endl;
 
     decayProducts.clear();
     const GenParticlePtrVector* daughters = &genParticle.daughters;
@@ -255,8 +253,9 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     return true;
 }
 
-inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const particles::ParticleCodes2D& particleCodes2D,
-                                GenParticleVector2D& decayProducts2D, GenParticleIndexVector& indexes)
+inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles,
+                                const particles::ParticleCodes2D& particleCodes2D, GenParticleVector2D& decayProducts2D,
+                                GenParticleIndexVector& indexes)
 {
     std::set<size_t> taken_genParticles;
     if (genParticles.size() != particleCodes2D.size())
@@ -289,6 +288,18 @@ inline GenParticleSet FindMatchedParticles(const TLorentzVector& candidateMoment
             matchedGenParticles.insert(genParticle);
     }
     return matchedGenParticles;
+}
+
+template<typename Container>
+inline VisibleGenObjectVector FindMatchedObjects(const TLorentzVector& candidateMomentum,
+                                                 const Container& genObjects, double deltaR)
+{
+    VisibleGenObjectVector matchedGenObjects;
+    for (const VisibleGenObject& genObject : genObjects){
+        if (candidateMomentum.DeltaR(genObject.visibleMomentum) < deltaR)
+            matchedGenObjects.push_back(genObject);
+    }
+    return matchedGenObjects;
 }
 
 } // analysis
