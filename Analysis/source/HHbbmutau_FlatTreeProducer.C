@@ -66,14 +66,16 @@ public:
         const auto electrons_bkg = CollectBackgroundElectrons();
         cut(!electrons_bkg.size(), "no_electron");
 
-        const auto muons = CollectMuons();
+        const auto muons = CollectSignalMuons();
         cut(muons.size(), "muon_cand");
         cut(muons.size() == 1, "one_muon_cand");
 
-        const auto muons_bkg = CollectBackgroundMuons();
-        const bool have_bkg_muon = muons_bkg.size() > 1 ||
-                ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
+        const auto muons_extra = CollectBackgroundMuons();
+        const bool have_bkg_muon = muons_extra.size() > 1 ||
+                ( muons_extra.size() == 1 && muons_extra.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
+
+        const auto allmuons = CollectMuons();
 
         correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau_MC.hadronic_taus,false) : event->taus();
 
@@ -81,7 +83,6 @@ public:
         cut(alltaus.size(), "tau_cand");
 
         const auto signaltaus = CollectSignalTaus() ;
-
 
         analysis::CandidateVector higgses ;
 
@@ -92,7 +93,7 @@ public:
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
         if (!higgses_sig.size())
         {
-          const auto higgses_bkg = FindCompatibleObjects(muons, alltaus, DeltaR_betweenSignalObjects,
+          const auto higgses_bkg = FindCompatibleObjects(allmuons, alltaus, DeltaR_betweenSignalObjects,
                                                      Candidate::Higgs, "H_mu_tau");
           higgses = higgses_bkg ;
         }
@@ -131,6 +132,10 @@ public:
         const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
         const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
+//         const double m_sv      = 1.;
+//         const double m_sv_Up   = 1.;
+//         const double m_sv_Down = 1.;
+
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
@@ -144,6 +149,34 @@ protected:
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                            root_ext::AnalyzerData& _anaData,
                                            const std::string& selection_label) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau;
+        using namespace cuts::Htautau_Summer13::MuTau::muonID;
+        cuts::Cutter cut(objectSelector);
+        const ntuple::Muon& object = event->muons().at(id);
+        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+
+        cut(true, ">0 mu cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double dB_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
+        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+        //cut(X(pfRelIso) < cuts::skim::MuTau::pFRelIso, "pFRelIso");
+
+        return muon;
+    }
+
+    virtual analysis::Candidate SelectSignalMuon(size_t id, cuts::ObjectSelector* objectSelector,
+                                                 root_ext::AnalyzerData& _anaData,
+                                                 const std::string& selection_label) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::muonID;

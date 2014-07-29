@@ -239,10 +239,21 @@ protected:
         return CollectCandidateObjects("muons", &BaseAnalyzer::SelectMuon, event->muons().size());
     }
 
+    CandidateVector CollectSignalMuons()
+    {
+        return CollectCandidateObjects("muons", &BaseAnalyzer::SelectSignalMuon, event->muons().size());
+    }
+
     virtual Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
                                  const std::string& selection_label)
     {
         throw std::runtime_error("Muon selection for signal not implemented");
+    }
+
+    virtual Candidate SelectSignalMuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
+                                 const std::string& selection_label)
+    {
+        throw std::runtime_error("Signal muon selection for signal not implemented");
     }
 
     CandidateVector CollectBackgroundMuons()
@@ -283,8 +294,19 @@ protected:
         return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectElectron, event->electrons().size());
     }
 
+    CandidateVector CollectSignalElectrons()
+    {
+        return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectSignalElectron, event->electrons().size());
+    }
+
     virtual Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
                                      const std::string& selection_label)
+    {
+        throw std::runtime_error("Electron selection for signal not implemented");
+    }
+
+    virtual Candidate SelectSignalElectron(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
+                                           const std::string& selection_label)
     {
         throw std::runtime_error("Electron selection for signal not implemented");
     }
