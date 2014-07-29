@@ -32,6 +32,7 @@
 #include "../include/Particles.h"
 #include "../include/iostream_operators.h"
 #include "TreeProduction/interface/GenParticle.h"
+#include "exception.h"
 
 namespace analysis {
 
@@ -50,9 +51,10 @@ public:
     particles::PdgParticle pdg;
     particles::Status status;
     TLorentzVector momentum;
+    TVector3 vertex;
+    int charge;
     GenParticlePtrVector mothers;
     GenParticlePtrVector daughters;
-    TVector3 vertex;
 
 public:
     GenParticle() {}
@@ -68,6 +70,7 @@ public:
         status = particles::NameProvider<particles::Status>::Convert(ntupleGenParticle.Status);
         momentum.SetPtEtaPhiM(ntupleGenParticle.pt, ntupleGenParticle.eta, ntupleGenParticle.phi, ntupleGenParticle.mass);
         vertex = TVector3(ntupleGenParticle.X, ntupleGenParticle.Y, ntupleGenParticle.Z);
+        charge = ntupleGenParticle.Charge;
     }
 
     void Initialize(const ntuple::GenParticleVector& ntupleGenParticles, GenParticleVector& particles)
@@ -82,6 +85,53 @@ public:
         }
     }
 };
+
+class VisibleGenObject {
+public:
+    const GenParticle* origin;
+
+    GenParticlePtrVector finalStateChargedLeptons;
+    GenParticlePtrVector finalStateChargedHadrons;
+    GenParticlePtrVector finalStateNeutralHadrons;
+
+    TLorentzVector chargedLeptonsMomentum;
+    TLorentzVector chargedHadronsMomentum;
+    TLorentzVector neutralHadronsMomentum;
+    TLorentzVector visibleMomentum;
+
+public:
+    VisibleGenObject(const GenParticle *_origin) : origin(_origin)
+    {
+        CollectInfo(origin);
+    }
+
+private:
+    void CollectInfo(const GenParticle* particle)
+    {
+        if(particle->status == particles::Status::FinalStateParticle && particle->daughters.size() != 0)
+            throw exception("Invalid gen particle");
+
+        if(particle->status == particles::Status::FinalStateParticle && particle->pdg.Code != particles::nu_e
+                && particle->pdg.Code != particles::nu_mu && particle->pdg.Code != particles::nu_tau) {
+            visibleMomentum += particle->momentum;
+            if(particle->pdg.Code == particles::e || particle->pdg.Code == particles::mu) {
+                finalStateChargedLeptons.push_back(particle);
+                chargedLeptonsMomentum += particle->momentum;
+            } else if(particle->charge) {
+                finalStateChargedHadrons.push_back(particle);
+                chargedHadronsMomentum += particle->momentum;
+            } else {
+                finalStateNeutralHadrons.push_back(particle);
+                neutralHadronsMomentum += particle->momentum;
+            }
+        }
+
+        for(const GenParticle* daughter : particle->daughters)
+            CollectInfo(daughter);
+    }
+};
+
+typedef std::vector<VisibleGenObject> VisibleGenObjectVector;
 
 class GenEvent {
 public:
@@ -154,8 +204,6 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     if (genParticle.status != particles::Decayed_or_fragmented){
         throw std::runtime_error("particle type not supported");
     }
-//    std::cout << "I'm in FindDecayProducts" << std::endl;
-//    std::cout << "gen particle index = " << genParticle.pdg << ", index = " << genParticle.index << std::endl;
 
     decayProducts.clear();
     const GenParticlePtrVector* daughters = &genParticle.daughters;
@@ -205,8 +253,9 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     return true;
 }
 
-inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles, const particles::ParticleCodes2D& particleCodes2D,
-                                GenParticleVector2D& decayProducts2D, GenParticleIndexVector& indexes)
+inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles,
+                                const particles::ParticleCodes2D& particleCodes2D, GenParticleVector2D& decayProducts2D,
+                                GenParticleIndexVector& indexes)
 {
     std::set<size_t> taken_genParticles;
     if (genParticles.size() != particleCodes2D.size())
@@ -239,6 +288,18 @@ inline GenParticleSet FindMatchedParticles(const TLorentzVector& candidateMoment
             matchedGenParticles.insert(genParticle);
     }
     return matchedGenParticles;
+}
+
+template<typename Container>
+inline VisibleGenObjectVector FindMatchedObjects(const TLorentzVector& candidateMomentum,
+                                                 const Container& genObjects, double deltaR)
+{
+    VisibleGenObjectVector matchedGenObjects;
+    for (const VisibleGenObject& genObject : genObjects){
+        if (candidateMomentum.DeltaR(genObject.visibleMomentum) < deltaR)
+            matchedGenObjects.push_back(genObject);
+    }
+    return matchedGenObjects;
 }
 
 } // analysis
