@@ -24,37 +24,25 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/H_BaseAnalyzer.h"
-#include "../include/FlatTree.h"
+#include "../include/BaseFlatTreeProducer.h"
 
-class AnalyzerDataTauTau : public analysis::BaseAnalyzerData {
+class HHbbtautau_FlatTreeProducer : public analysis::BaseFlatTreeProducer {
 public:
-    AnalyzerDataTauTau(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
-};
-
-class HtautauFlatTreeProducer : public analysis::H_BaseAnalyzer {
-public:
-    HtautauFlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
-                         const std::string& configFileName, const std::string& _prefix = "none",
-                         size_t _maxNumberOfEvents = 0)
-        : H_BaseAnalyzer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents),
+    HHbbtautau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
+                                const std::string& configFileName, const std::string& _prefix = "none",
+                                size_t _maxNumberOfEvents = 0,
+                                std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
+        : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           anaData(*outputFile)
     {
         anaData.getOutputFile().cd();
     }
 
-    virtual ~HtautauFlatTreeProducer() override
-    {
-        anaData.getOutputFile().cd();
-        syncTree.Write();
-    }
-
-    typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
     {
-        H_BaseAnalyzer::ProcessEvent(_event);
+        BaseFlatTreeProducer::ProcessEvent(_event);
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
@@ -71,13 +59,12 @@ public:
         primaryVertex = vertices.front();
 
         const auto electrons_bkg = CollectBackgroundElectrons();
+        cut(!electrons_bkg.size(), "no_electron");
 
         const auto muons_bkg = CollectBackgroundMuons();
+        cut(!muons_bkg.size(), "no_muon");
 
-        if (config.ApplyTauESCorrection())
-            ApplyTauCorrections(tauTau.hadronic_taus,false);
-        else
-            correctedTaus = event->taus();
+        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(Tau.hadronic_taus,false) : event->taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -99,29 +86,32 @@ public:
 
         const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),event->jets(),primaryVertex,
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
+                                                                event->jets(),primaryVertex,
                                                                 vertices,event->taus());
 
-        if (config.ApplyTauESCorrection())
-            ApplyTauCorrectionsToMVAMET(mvaMet);
-        else
-            correctedMET = mvaMet;
-
+        correctedMET = config.ApplyTauESCorrection() ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
 
         const auto bjets = CollectBJets(higgs_looseJetsMap.at(higgs), false);
         const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.isMC());
 
 
-        ApplyRecoilCorrections(higgs, tauTau.resonance, higgs_JetsMap.at(higgs).size());
+        postRecoilMET = ApplyRecoilCorrections(higgs, Tau.resonance, jets.size(), correctedMET);
 
 
-        const double m_sv = CorrectMassBySVfit(higgs, postRecoilMET,1);
+        const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1   );
+        const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
+        const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
+
+//         const double m_sv      = 1.;
+//         const double m_sv_Up   = 1.;
+//         const double m_sv_Down = 1.;
 
         CalculateFullEventWeight(higgs);
 
-
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
-        FillSyncTree(higgs, m_sv, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs), bjets, retagged_bjets, vertices,pfMET);
+
+        FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
 
 protected:
@@ -358,18 +348,14 @@ protected:
 
         H_BaseAnalyzer::FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, leadTau, subLeadTau,pfMET);
 
-        syncTree.iso_1() = ntuple_tau_leg1.byIsolationMVAraw;
-        syncTree.mva_1() = 0;
-        //syncTree.passid_1();
-        //syncTree.passiso_1();
-        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
-        syncTree.againstElectronMVA3raw_1() = ntuple_tau_leg1.againstElectronMVA3raw;
-        syncTree.byIsolationMVA2raw_1() = ntuple_tau_leg1.byIsolationMVA2raw;
-        syncTree.againstMuonLoose2_1() = ntuple_tau_leg1.againstMuonLoose2;
-        syncTree.againstMuonMedium2_1() = ntuple_tau_leg1.againstMuonMedium2;
-        syncTree.againstMuonTight2_1() = ntuple_tau_leg1.againstMuonTight2;
-        //syncTree.mva_2();
-        syncTree.Fill();
+        flatTree->channel()                                    = static_cast<int>(ntuple::Channel::TauTau)                ;
+        flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits ;
+        flatTree->againstElectronMVA3raw_1()                   = ntuple_tau_leg1.againstElectronMVA3raw                   ;
+        flatTree->byIsolationMVA2raw_1()                       = ntuple_tau_leg1.byIsolationMVA2raw                       ;
+        flatTree->againstMuonLoose2_1()                        = ntuple_tau_leg1.againstMuonLoose2                        ;
+        flatTree->againstMuonMedium2_1()                       = ntuple_tau_leg1.againstMuonMedium2                       ;
+        flatTree->againstMuonTight2_1()                        = ntuple_tau_leg1.againstMuonTight2                        ;
+        flatTree->Fill();
     }
 
 private:
