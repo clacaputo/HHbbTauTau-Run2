@@ -278,13 +278,23 @@ inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles,
     return true;
 }
 
+inline bool HasMatchWithMCParticle(const TLorentzVector& candidateMomentum, const GenParticle* genParticle, double deltaR)
+{
+    return genParticle && candidateMomentum.DeltaR(genParticle->momentum) < deltaR;
+}
+
+inline bool HasMatchWithMCObject(const TLorentzVector& candidateMomentum, const VisibleGenObject* genObject, double deltaR)
+{
+    return genObject && candidateMomentum.DeltaR(genObject->visibleMomentum) < deltaR;
+}
+
 template<typename Container>
 inline GenParticleSet FindMatchedParticles(const TLorentzVector& candidateMomentum,
                                            const Container& genParticles, double deltaR)
 {
     GenParticleSet matchedGenParticles;
     for (const GenParticle* genParticle : genParticles){
-        if (candidateMomentum.DeltaR(genParticle->momentum) < deltaR)
+        if (HasMatchWithMCParticle(candidateMomentum, genParticle, deltaR))
             matchedGenParticles.insert(genParticle);
     }
     return matchedGenParticles;
@@ -296,7 +306,7 @@ inline VisibleGenObjectVector FindMatchedObjects(const TLorentzVector& candidate
 {
     VisibleGenObjectVector matchedGenObjects;
     for (const VisibleGenObject& genObject : genObjects){
-        if (candidateMomentum.DeltaR(genObject.visibleMomentum) < deltaR)
+        if (HasMatchWithMCObject(candidateMomentum, &genObject, deltaR))
             matchedGenObjects.push_back(genObject);
     }
     return matchedGenObjects;

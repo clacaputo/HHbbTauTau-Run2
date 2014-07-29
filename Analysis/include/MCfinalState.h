@@ -39,10 +39,18 @@ struct bbTauTau{
     const GenParticle* Higgs_BB;
     VisibleGenObjectVector b_jets;
     VisibleGenObjectVector taus;
+    VisibleGenObjectVector hadronic_taus;
 
     bbTauTau() : resonance(nullptr), Higgs_TauTau(nullptr), Higgs_BB(nullptr){}
 
     virtual ~bbTauTau() {}
+    virtual void Reset()
+    {
+        resonance = Higgs_TauTau = Higgs_BB = nullptr;
+        b_jets.clear();
+        taus.clear();
+        hadronic_taus.clear();
+    }
 };
 
 struct bbETaujet : public bbTauTau {
@@ -50,6 +58,12 @@ struct bbETaujet : public bbTauTau {
     const VisibleGenObject* tau_jet;
 
     bbETaujet() : electron(nullptr), tau_jet(nullptr) {}
+    virtual void Reset() override
+    {
+        bbTauTau::Reset();
+        electron = nullptr;
+        tau_jet = nullptr;
+    }
 };
 
 struct bbMuTaujet : public bbTauTau{
@@ -57,6 +71,12 @@ struct bbMuTaujet : public bbTauTau{
     const VisibleGenObject* tau_jet;
 
     bbMuTaujet() : muon(nullptr), tau_jet(nullptr) {}
+    virtual void Reset() override
+    {
+        bbTauTau::Reset();
+        muon = nullptr;
+        tau_jet = nullptr;
+    }
 };
 
 struct bbTaujetTaujet : public bbTauTau {
@@ -64,6 +84,11 @@ struct bbTaujetTaujet : public bbTauTau {
     const VisibleGenObject* subleading_tau_jet;
 
     bbTaujetTaujet() : leading_tau_jet(nullptr), subleading_tau_jet(nullptr) {}
+    virtual void Reset() override
+    {
+        bbTauTau::Reset();
+        leading_tau_jet = subleading_tau_jet = nullptr;
+    }
 };
 
 struct TauTau {

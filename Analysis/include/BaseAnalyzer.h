@@ -386,7 +386,7 @@ protected:
         return result;
     }
 
-    ntuple::TauVector ApplyTauCorrections(const GenParticlePtrVector& hadronic_taus, bool useLegacyCorrections)
+    ntuple::TauVector ApplyTauCorrections(const VisibleGenObjectVector& hadronic_taus, bool useLegacyCorrections)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
@@ -396,7 +396,7 @@ protected:
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
 
-            const bool hasMCmatch = FindMatchedParticles(momentum, hadronic_taus, deltaR).size() != 0;
+            const bool hasMCmatch = FindMatchedObjects(momentum, hadronic_taus, deltaR).size() != 0;
             const double scaleFactor = MomentumScaleFactor(hasMCmatch, momentum.Pt(),
                                    ntuple::tau_id::ConvertToHadronicDecayMode(tau.decayMode), useLegacyCorrections);
             const TLorentzVector correctedMomentum = momentum * scaleFactor;

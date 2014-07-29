@@ -40,7 +40,8 @@ public:
     ANA_CONFIG_PARAMETER(bool, isMC, false)
     ANA_CONFIG_PARAMETER(bool, ApplyTauESCorrection, false)
     ANA_CONFIG_PARAMETER(bool, ApplyRecoilCorrection, false)
-    ANA_CONFIG_PARAMETER(bool, ExpectedOneResonanceToTauTau, false)
+    ANA_CONFIG_PARAMETER(bool, ExpectedOneNonSMResonance, false)
+    ANA_CONFIG_PARAMETER(bool, ExpectedAtLeastOneSMResonanceToTauTauOrToBB, false)
     ANA_CONFIG_PARAMETER(bool, RequireSpecificFinalState, false)
 
     ANA_CONFIG_PARAMETER(bool, ApplyPUreweight, false)
@@ -60,8 +61,8 @@ public:
 
     bool extractMCtruth()
     {
-        return ApplyTauESCorrection() || ApplyRecoilCorrection() ||
-                RequireSpecificFinalState() || ExpectedOneResonanceToTauTau();
+        return ApplyTauESCorrection() || ApplyRecoilCorrection() || RequireSpecificFinalState()
+                || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB();
     }
 
 };

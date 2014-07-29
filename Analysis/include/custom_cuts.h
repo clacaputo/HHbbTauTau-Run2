@@ -29,6 +29,8 @@
 namespace cuts {
     const double minDeltaR_betweenHiggses = 1; // >
 
+    const double DeltaR_MC_Match = 0.3; // <
+
     namespace skim {
         namespace TauTau {
 

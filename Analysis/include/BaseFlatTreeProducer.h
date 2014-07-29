@@ -28,7 +28,6 @@
 
 #include "BaseAnalyzer.h"
 #include "FlatTree.h"
-#include "GenMatch.h" // is it needed?
 
 namespace analysis {
 
@@ -206,107 +205,89 @@ protected:
         return jets;
     }
 
-    //from HH_BaseAnalyzer Master branch
-    void FindAnalysisBBTauTauFinalState(finalState::bbTauTau& final_state)
+    bool FindAnalysisFinalState(finalState::bbTauTau& final_state)
     {
-        static const particles::ParticleCodes resonanceCodes = { particles::Radion};
+        static const particles::ParticleCodes resonanceCodes = { particles::Radion };
         static const particles::ParticleCodes resonanceDecay = { particles::Higgs, particles::Higgs };
-        static const particles::ParticleCodes2D HiggsDecays = { { particles::b, particles::b },
-                                                                { particles::tau, particles::tau } };
         static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z };
         static const particles::ParticleCodes SM_ResonanceDecay_1 = { particles::tau, particles::tau };
         static const particles::ParticleCodes SM_ResonanceDecay_2 = { particles::b, particles::b };
+        static const particles::ParticleCodes2D HiggsDecays = { SM_ResonanceDecay_1, SM_ResonanceDecay_2 };
 
-
-        genEvent.Initialize(event.genParticles());
+        genEvent.Initialize(event->genParticles());
+        final_state.Reset();
 
         const GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
 
         if (resonances.size() > 1)
-            throw std::runtime_error("more than 1 resonance per event");
+            throw exception("more than 1 resonance per event");
 
-        if (resonances.size() == 1){
+        if (resonances.size() == 1) {
             final_state.resonance = *resonances.begin();
 
             GenParticlePtrVector HiggsBosons;
-            if(!FindDecayProducts(*final_state.resonance, resonanceDecay,HiggsBosons))
-                throw std::runtime_error("Resonance does not decay into 2 Higgs");
+            if(!FindDecayProducts(*final_state.resonance, resonanceDecay, HiggsBosons))
+                throw exception("Resonance does not decay into 2 Higgs");
 
             GenParticleVector2D HiggsDecayProducts;
             GenParticleIndexVector HiggsIndexes;
-            if(!FindDecayProducts2D(HiggsBosons,HiggsDecays,HiggsDecayProducts,HiggsIndexes))
-                throw std::runtime_error("NOT HH -> bb tautau");
+            if(!FindDecayProducts2D(HiggsBosons, HiggsDecays, HiggsDecayProducts, HiggsIndexes))
+                throw exception("NOT HH -> bb tautau");
 
-            final_state.b_jets = HiggsDecayProducts.at(0);
-            final_state.taus = HiggsDecayProducts.at(1);
+            for(const GenParticle* tau : HiggsDecayProducts.at(0)) {
+                const VisibleGenObject tau_products(tau);
+                final_state.taus.push_back(tau_products);
+                if(tau_products.finalStateChargedHadrons.size() != 0)
+                    final_state.hadronic_taus.push_back(tau_products);
+            }
+            for(const GenParticle* b : HiggsDecayProducts.at(1))
+                final_state.b_jets.push_back(VisibleGenObject(b));
 
-            final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(1));
-            final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(0));
-
+            final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
+            final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
+            return true;
         }
 
-        if (resonances.size() == 0){
-            //search H->bb H->tautau
-            const analysis::GenParticleSet SM_particles = genEvent.GetParticles(SM_ResonanceCodes);
+        if(config.ExpectedOneNonSMResonance())
+            throw exception("Non-SM resonance not found.");
 
-            analysis::GenParticlePtrVector SM_ResonanceToTauTau;
-            analysis::GenParticlePtrVector SM_ResonanceToBB;
+        //search H->bb, H->tautau
+        const GenParticleSet SM_particles = genEvent.GetParticles(SM_ResonanceCodes);
 
-            for (const GenParticle* SM_particle : SM_particles){
-                analysis::GenParticlePtrVector resonanceDecayProducts;
-                if(analysis::FindDecayProducts(*SM_particle, SM_ResonanceDecay_1,resonanceDecayProducts)){
-                    final_state.taus = resonanceDecayProducts;
-                    final_state.resonance = SM_particle;
-                    SM_ResonanceToTauTau.push_back(SM_particle);
+        GenParticlePtrVector SM_ResonanceToTauTau;
+        GenParticlePtrVector SM_ResonanceToBB;
+
+        for (const GenParticle* SM_particle : SM_particles){
+            GenParticlePtrVector resonanceDecayProducts;
+            if(FindDecayProducts(*SM_particle, SM_ResonanceDecay_1,resonanceDecayProducts)){
+                for(const GenParticle* tau : resonanceDecayProducts) {
+                    const VisibleGenObject tau_products(tau);
+                    final_state.taus.push_back(tau_products);
+                    if(tau_products.finalStateChargedHadrons.size() != 0)
+                        final_state.hadronic_taus.push_back(tau_products);
                 }
-                else if (analysis::FindDecayProducts(*SM_particle, SM_ResonanceDecay_2,resonanceDecayProducts)){
-                    final_state.b_jets = resonanceDecayProducts;
-                    final_state.resonance = SM_particle;
-                    SM_ResonanceToBB.push_back(SM_particle);
-                }
+                final_state.Higgs_TauTau = SM_particle;
+                SM_ResonanceToTauTau.push_back(SM_particle);
+            }
+            else if (FindDecayProducts(*SM_particle, SM_ResonanceDecay_2,resonanceDecayProducts)){
+                for(const GenParticle* b : resonanceDecayProducts)
+                    final_state.b_jets.push_back(VisibleGenObject(b));
+                final_state.Higgs_BB = SM_particle;
+                SM_ResonanceToBB.push_back(SM_particle);
             }
         }
 
+        if (SM_ResonanceToTauTau.size() > 1)
+            throw exception("more than one SM resonance to tautau per event");
+        if (SM_ResonanceToBB.size() > 1)
+            throw exception("more than one SM resonance to bb per event");
 
-    }
-
-    bool FindAnalysisFinalState(analysis::finalState::TauTau& final_state)
-    {
-        static const particles::ParticleCodes resonanceCodes = { particles::Higgs, particles::Z };
-        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::tau };
-
-        genEvent.Initialize(event->genParticles());
-//        genEvent.Print();
-
-        const analysis::GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
-
-        analysis::GenParticlePtrVector resonancesToTauTau;
-
-        for (const GenParticle* resonance : resonances){
-            analysis::GenParticlePtrVector resonanceDecayProducts;
-            if(analysis::FindDecayProducts(*resonance, resonanceDecay,resonanceDecayProducts)){
-                final_state.taus = resonanceDecayProducts;
-                final_state.resonance = resonance;
-                resonancesToTauTau.push_back(resonance);
-            }
+        if (SM_ResonanceToTauTau.size() + SM_ResonanceToBB.size() == 0) {
+            if(config.ExpectedAtLeastOneSMResonanceToTauTauOrToBB())
+                throw exception("SM resonance to tautau or to bb not found.");
+            return false;
         }
 
-        if (resonancesToTauTau.size() > 1)
-            throw exception("more than one resonance to tautau per event");
-
-        if(resonancesToTauTau.size() == 0){
-            if(config.ExpectedOneResonanceToTauTau())
-                throw exception("resonance to tautau not found");
-            else
-                return false;
-        }
-
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector TauProducts;
-            if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
-                    && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
-                final_state.hadronic_taus.push_back(tau_MC);
-        }
         return true;
     }
 
@@ -337,9 +318,10 @@ protected:
                       const CandidateVector& jets , const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
-                      const ntuple::MET& pfMET)
+                      const ntuple::MET& pfMET, const finalState::bbTauTau& final_state_MC)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+        static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
 
         // Event
         flatTree->run() = event->eventInfo().run;
@@ -379,22 +361,51 @@ protected:
         flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
 
         // Hhh generator info candidate
-        mcmatching::MChiggses mch = mcmatching::GetMChiggses(event->genParticles()) ;
-        //flatTree->pdgId_resonance_MC() = mch.heavyH.M() ;
-        flatTree->pt_resonance_MC()    = mch.heavyH.Pt()  ;
-        flatTree->eta_resonance_MC()   = mch.heavyH.Eta() ;
-        flatTree->phi_resonance_MC()   = mch.heavyH.Phi() ;
-        flatTree->mass_resonance_MC()  = mch.heavyH.M()   ;
-        //flatTree->pdgId_Htt_MC()       = mch.heavyH.M() ;
-        flatTree->pt_Htt_MC()          = mch.lightH1.Pt()  ;
-        flatTree->eta_Htt_MC()         = mch.lightH1.Eta() ;
-        flatTree->phi_Htt_MC()         = mch.lightH1.Phi() ;
-        flatTree->mass_Htt_MC()        = mch.lightH1.M()   ;
-        //flatTree->pdgId_Hbb_MC()       = mch.heavyH.M() ;
-        flatTree->pt_Hbb_MC()          = mch.lightH2.Pt()  ;
-        flatTree->eta_Hbb_MC()         = mch.lightH2.Eta() ;
-        flatTree->phi_Hbb_MC()         = mch.lightH2.Phi() ;
-        flatTree->mass_Hbb_MC()        = mch.lightH2.M()   ;
+        if(final_state_MC.resonance) {
+            const TLorentzVector& momentum = final_state_MC.resonance->momentum;
+            flatTree->pt_resonance_MC()    = momentum.Pt()  ;
+            flatTree->eta_resonance_MC()   = momentum.Eta() ;
+            flatTree->phi_resonance_MC()   = momentum.Phi() ;
+            flatTree->mass_resonance_MC()  = momentum.M()   ;
+            flatTree->pdgId_resonance_MC() = final_state_MC.resonance->pdg.ToInteger();
+        } else {
+            flatTree->pt_resonance_MC()    = default_value  ;
+            flatTree->eta_resonance_MC()   = default_value  ;
+            flatTree->phi_resonance_MC()   = default_value  ;
+            flatTree->mass_resonance_MC()  = default_value  ;
+            flatTree->pdgId_resonance_MC() = default_int_value  ;
+        }
+
+        if(final_state_MC.Higgs_TauTau) {
+            const TLorentzVector& momentum = final_state_MC.Higgs_TauTau->momentum;
+            flatTree->pt_Htt_MC()    = momentum.Pt()  ;
+            flatTree->eta_Htt_MC()   = momentum.Eta() ;
+            flatTree->phi_Htt_MC()   = momentum.Phi() ;
+            flatTree->mass_Htt_MC()  = momentum.M()   ;
+            flatTree->pdgId_Htt_MC() = final_state_MC.Higgs_TauTau->pdg.ToInteger();
+        } else {
+            flatTree->pt_Htt_MC()    = default_value  ;
+            flatTree->eta_Htt_MC()   = default_value  ;
+            flatTree->phi_Htt_MC()   = default_value  ;
+            flatTree->mass_Htt_MC()  = default_value  ;
+            flatTree->pdgId_Htt_MC() = default_int_value  ;
+        }
+
+        if(final_state_MC.Higgs_BB) {
+            const TLorentzVector& momentum = final_state_MC.Higgs_BB->momentum;
+            flatTree->pt_Hbb_MC()    = momentum.Pt()  ;
+            flatTree->eta_Hbb_MC()   = momentum.Eta() ;
+            flatTree->phi_Hbb_MC()   = momentum.Phi() ;
+            flatTree->mass_Hbb_MC()  = momentum.M()   ;
+            flatTree->pdgId_Hbb_MC() = final_state_MC.Higgs_BB->pdg.ToInteger();
+        } else {
+            flatTree->pt_Hbb_MC()    = default_value  ;
+            flatTree->eta_Hbb_MC()   = default_value  ;
+            flatTree->phi_Hbb_MC()   = default_value  ;
+            flatTree->mass_Hbb_MC()  = default_value  ;
+            flatTree->pdgId_Hbb_MC() = default_int_value  ;
+        }
+
         flatTree->n_extraJets_MC()     = default_value ; // needs to be filles with NUP! https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
 
         // Leg 1, lepton
@@ -408,14 +419,6 @@ protected:
         flatTree->d0_1()     = analysis::Calculate_dxy(leg1.vertexPosition, primaryVertex.position,leg1.momentum);
         flatTree->dZ_1()     = leg1.vertexPosition.Z() - primaryVertex.position.Z();
 
-        // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATMCMatchingExercise
-        mcmatching::matchedGenParticle genp1 = mcmatching::MatchToGen(leg1,event->genParticles(),1) ; // stable muons
-        flatTree->pdgId_1_MC() = genp1.pdgId    ;
-        flatTree->pt_1_MC   () = genp1.matched ? genp1.p4.Pt()  : default_value ;
-        flatTree->phi_1_MC  () = genp1.matched ? genp1.p4.Phi() : default_value ;
-        flatTree->eta_1_MC  () = genp1.matched ? genp1.p4.Eta() : default_value ;
-        flatTree->m_1_MC    () = genp1.matched ? genp1.p4.M()   : default_value ;
-
         // Leg 2, tau
         flatTree->pt_2()     = leg2.momentum.Pt();
         flatTree->phi_2()    = leg2.momentum.Phi();
@@ -426,14 +429,6 @@ protected:
         flatTree->mt_2()     = analysis::Calculate_MT(leg2.momentum, postRecoilMET.pt, postRecoilMET.phi);
         flatTree->d0_2()     = analysis::Calculate_dxy(leg2.vertexPosition, primaryVertex.position,leg2.momentum);
         flatTree->dZ_2()     = leg2.vertexPosition.Z() - primaryVertex.position.Z();
-
-        // https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATMCMatchingExercise
-        mcmatching::matchedGenParticle genp2 = mcmatching::MatchToGen(leg2,event->genParticles(),3) ; // taus before fragmentation (not perfect, but acceptable)
-        flatTree->pdgId_2_MC() = genp2.pdgId    ;
-        flatTree->pt_2_MC   () = genp2.matched ? genp2.p4.Pt()  : default_value ;
-        flatTree->phi_2_MC  () = genp2.matched ? genp2.p4.Phi() : default_value ;
-        flatTree->eta_2_MC  () = genp2.matched ? genp2.p4.Eta() : default_value ;
-        flatTree->m_2_MC    () = genp2.matched ? genp2.p4.M()   : default_value ;
 
         // RM: for the three channels, mt, et, tt this leg is always a tau
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
@@ -492,44 +487,51 @@ protected:
         flatTree->nBjets()    = retagged_bjets.size() ;
 
         // RM: SAVE ALL THE JETS WITH PT > 20 (AND SAVE THE CSV DISCRIMINATOR)
-        std::vector<ntuple::Jet> csv_sorted_jetsPt20 ;
-        for (unsigned int ijet = 0 ; ijet < jetsPt20.size() ; ++ijet) {
-          ntuple::Jet myJet = event->jets().at(jetsPt20.at(ijet).index) ;
-          csv_sorted_jetsPt20.push_back(myJet) ;
-        }
-
-        // sort the jets by pt
-        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.pt > b.pt; } ) ;
+        CandidateVector pt_sorted_jetsPt20 = jetsPt20;
+        std::sort( pt_sorted_jetsPt20.begin(), pt_sorted_jetsPt20.end(),
+                   []( const Candidate& a, const Candidate& b ) { return a.momentum.Pt() > b.momentum.Pt(); } ) ;
 
         // fill the jet collections
-        for (unsigned int ijet = 0 ; ijet < csv_sorted_jetsPt20.size() ; ++ijet) {
-          flatTree->pt_jets()      .push_back( csv_sorted_jetsPt20.at(ijet).pt  );
-          flatTree->eta_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).eta );
-          flatTree->phi_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).phi );
-          flatTree->mass_jets()    .push_back( csv_sorted_jetsPt20.at(ijet).mass);
-          // flatTree->energy_jets()  .push_back( csv_sorted_jetsPt20.at(ijet).E()); // not in ntuple::Jet
-          flatTree->csv_jets()     .push_back( csv_sorted_jetsPt20.at(ijet).combinedSecondaryVertexBJetTags );
-          // inspect the flavour of the gen jet
-          mcmatching::genjetflavour genjetinfo = mcmatching::IsGenBJet(csv_sorted_jetsPt20.at(ijet),event->genParticles()) ;
-          flatTree->isJet_MC_Bjet()                  .push_back( genjetinfo.isBjet                                 );
-          flatTree->isJet_MC_Bjet_withLeptonicDecay().push_back( genjetinfo.leptonsInJet.size() > 0 ? true : false );
+        for (const Candidate& jet : pt_sorted_jetsPt20) {
+            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
+            flatTree->pt_jets()      .push_back( jet.momentum.Pt() );
+            flatTree->eta_jets()     .push_back( jet.momentum.Eta() );
+            flatTree->phi_jets()     .push_back( jet.momentum.Phi() );
+            flatTree->mass_jets()    .push_back( jet.momentum.M() );
+            flatTree->energy_jets()  .push_back( jet.momentum.E() );
+            flatTree->csv_jets()     .push_back( ntuple_jet.combinedSecondaryVertexBJetTags );
+            // inspect the flavour of the gen jet
+            const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet.momentum, final_state_MC.b_jets,
+                                                                               cuts::DeltaR_MC_Match);
+            const bool isJet_MC_Bjet = matched_bjets_MC.size() != 0;
+            const bool isJet_MC_Bjet_withLeptonicDecay = isJet_MC_Bjet
+                    && matched_bjets_MC.at(0).finalStateChargedLeptons.size() != 0;
+            flatTree->isJet_MC_Bjet()                  .push_back( isJet_MC_Bjet );
+            flatTree->isJet_MC_Bjet_withLeptonicDecay().push_back( isJet_MC_Bjet_withLeptonicDecay );
         }
 
-        // sort the jets by csv discriminator
-        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(), []( ntuple::Jet a, ntuple::Jet b ){ return a.combinedSecondaryVertexBJetTags > b.combinedSecondaryVertexBJetTags; } ) ;
+        CandidateVector csv_sorted_jetsPt20 = jetsPt20;
+        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(),
+                   [&]( const Candidate& a, const Candidate& b )
+            { return event->jets().at(a.index).combinedSecondaryVertexBJetTags >
+                     event->jets().at(b.index).combinedSecondaryVertexBJetTags; } ) ;
 
-        // fill the bjet collections
-        for (unsigned int ibjet = 0 ; ibjet < csv_sorted_jetsPt20.size() ; ++ibjet) {
-          flatTree->pt_Bjets()      .push_back( csv_sorted_jetsPt20.at(ibjet).pt  );
-          flatTree->eta_Bjets()     .push_back( csv_sorted_jetsPt20.at(ibjet).eta );
-          flatTree->phi_Bjets()     .push_back( csv_sorted_jetsPt20.at(ibjet).phi );
-          flatTree->mass_Bjets()    .push_back( csv_sorted_jetsPt20.at(ibjet).mass);
-          // flatTree->energy_Bjets()  .push_back( csv_sorted_jetsPt20.at(ibjet).E()); // not in ntuple::Jet
-          flatTree->csv_Bjets()     .push_back( csv_sorted_jetsPt20.at(ibjet).combinedSecondaryVertexBJetTags );
-          // inspect the flavour of the gen jet
-          mcmatching::genjetflavour genjetinfo = mcmatching::IsGenBJet(csv_sorted_jetsPt20.at(ibjet),event->genParticles()) ;
-          flatTree->isBjet_MC_Bjet()                  .push_back( genjetinfo.isBjet                                 );
-          flatTree->isBjet_MC_Bjet_withLeptonicDecay().push_back( genjetinfo.leptonsInJet.size() > 0 ? true : false );
+        for (const Candidate& jet : csv_sorted_jetsPt20) {
+            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
+            flatTree->pt_Bjets()      .push_back( jet.momentum.Pt() );
+            flatTree->eta_Bjets()     .push_back( jet.momentum.Eta() );
+            flatTree->phi_Bjets()     .push_back( jet.momentum.Phi() );
+            flatTree->mass_Bjets()    .push_back( jet.momentum.M() );
+            flatTree->energy_Bjets()  .push_back( jet.momentum.E() );
+            flatTree->csv_Bjets()     .push_back( ntuple_jet.combinedSecondaryVertexBJetTags );
+            // inspect the flavour of the gen jet
+            const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet.momentum, final_state_MC.b_jets,
+                                                                               cuts::DeltaR_MC_Match);
+            const bool isJet_MC_Bjet = matched_bjets_MC.size() != 0;
+            const bool isJet_MC_Bjet_withLeptonicDecay = isJet_MC_Bjet
+                    && matched_bjets_MC.at(0).finalStateChargedLeptons.size() != 0;
+            flatTree->isBjet_MC_Bjet()                  .push_back( isJet_MC_Bjet );
+            flatTree->isBjet_MC_Bjet_withLeptonicDecay().push_back( isJet_MC_Bjet_withLeptonicDecay );
         }
 
         // PV
@@ -537,7 +539,6 @@ protected:
         flatTree->x_PV() = PV.x ;
         flatTree->y_PV() = PV.y ;
         flatTree->z_PV() = PV.z ;
-
     }
 
 protected:

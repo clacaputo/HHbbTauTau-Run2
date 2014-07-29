@@ -365,6 +365,11 @@ struct PdgParticle {
     {
         return Code == other.Code && Type == other.Type;
     }
+
+    int ToInteger() const
+    {
+        return Type == Particle ? Code.RawCode() : - Code.RawCode();
+    }
 };
 
 typedef std::vector<particles::ParticleCode> ParticleCodes;

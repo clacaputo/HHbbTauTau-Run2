@@ -46,9 +46,9 @@ public:
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
-        finalState::MuTaujet muTau;
 
-        if (!FindAnalysisFinalState(muTau) && config.RequireSpecificFinalState()) return;
+
+        if (!FindAnalysisFinalState(muTau_MC) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -75,7 +75,7 @@ public:
                 ( muons_bkg.size() == 1 && muons_bkg.front() != muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
-        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau.hadronic_taus,false) : event->taus();
+        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau_MC.hadronic_taus,false) : event->taus();
 
         const auto alltaus = CollectTaus();
         cut(alltaus.size(), "tau_cand");
@@ -125,7 +125,7 @@ public:
         const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC());
 
 
-        postRecoilMET = ApplyRecoilCorrections(higgs, muTau.resonance, jets.size(), correctedMET);
+        postRecoilMET = ApplyRecoilCorrections(higgs, muTau_MC.resonance, jets.size(), correctedMET);
 
         const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1   );
         const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
@@ -251,19 +251,19 @@ protected:
         return muon;
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::MuTaujet& final_state)
+    bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& final_state)
     {
         const bool base_result = BaseFlatTreeProducer::FindAnalysisFinalState(final_state);
         if(!base_result)
             return base_result;
 
-        final_state.muon = final_state.tau_jet = nullptr;
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
-                final_state.muon = tauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
-                final_state.tau_jet = tau_MC;
+        if(!final_state.Higgs_TauTau) return false;
+        for(const analysis::VisibleGenObject& tau_MC : final_state.taus) {
+            if(tau_MC.finalStateChargedLeptons.size() == 1
+                    && tau_MC.finalStateChargedLeptons.at(0)->pdg.Code == particles::mu)
+                final_state.muon = tau_MC.finalStateChargedLeptons.at(0);
+            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
+                final_state.tau_jet = &tau_MC;
         }
 
         if (!final_state.muon || !final_state.tau_jet) return false;
@@ -344,11 +344,15 @@ protected:
                       const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
+        static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+        static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
+
         const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
         const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, jetsPt20, bjets, retagged_bjets, vertices, muon, tau, pfMET);
+        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, jetsPt20, bjets, retagged_bjets,
+                                           vertices, muon, tau, pfMET, muTau_MC);
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
@@ -356,12 +360,45 @@ protected:
         //flatTree->passid_2();
         //flatTree->passiso_2();
         //flatTree->mva_2() = ntuple_tau.againstElectronLoose;
+
+        const bool muon_matched = analysis::HasMatchWithMCParticle(muon.momentum, muTau_MC.muon, cuts::DeltaR_MC_Match);
+        if(muon_matched) {
+            const TLorentzVector& momentum = muTau_MC.muon->momentum;
+            flatTree->pt_1_MC   () = momentum.Pt()  ;
+            flatTree->phi_1_MC  () = momentum.Phi() ;
+            flatTree->eta_1_MC  () = momentum.Eta() ;
+            flatTree->m_1_MC    () = momentum.M()   ;
+            flatTree->pdgId_1_MC() = muTau_MC.muon->pdg.ToInteger();
+        } else {
+            flatTree->pt_1_MC   () = default_value ;
+            flatTree->phi_1_MC  () = default_value ;
+            flatTree->eta_1_MC  () = default_value ;
+            flatTree->m_1_MC    () = default_value ;
+            flatTree->pdgId_1_MC() = default_int_value;
+        }
+
+        const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, muTau_MC.tau_jet, cuts::DeltaR_MC_Match);
+        if(tau_matched) {
+            const TLorentzVector& momentum = muTau_MC.tau_jet->origin->momentum;
+            flatTree->pt_2_MC   () = momentum.Pt()  ;
+            flatTree->phi_2_MC  () = momentum.Phi() ;
+            flatTree->eta_2_MC  () = momentum.Eta() ;
+            flatTree->m_2_MC    () = momentum.M()   ;
+            flatTree->pdgId_2_MC() = muTau_MC.tau_jet->origin->pdg.ToInteger();
+        } else {
+            flatTree->pt_2_MC   () = default_value ;
+            flatTree->phi_2_MC  () = default_value ;
+            flatTree->eta_2_MC  () = default_value ;
+            flatTree->m_2_MC    () = default_value ;
+            flatTree->pdgId_2_MC() = default_int_value;
+        }
+
         flatTree->Fill();
     }
 
 private:
     analysis::BaseAnalyzerData anaData;
+    analysis::finalState::bbMuTaujet muTau_MC;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"
-
