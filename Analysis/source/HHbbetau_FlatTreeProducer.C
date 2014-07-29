@@ -46,9 +46,8 @@ public:
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::ETau;
-        finalState::ETaujet eTau;
 
-        if (!FindAnalysisFinalState(eTau) && config.RequireSpecificFinalState()) return;
+        if (!FindAnalysisFinalState(eTau_MC) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -76,9 +75,9 @@ public:
                 ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
-        const auto allelectrons = CollectMuons();
+        const auto allelectrons = CollectElectrons();
 
-        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(eTau.hadronic_taus,false) : event->taus();
+        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(eTau_MC.hadronic_taus,false) : event->taus();
 
         const auto alltaus = CollectTaus();
         cut(alltaus.size(), "tau_cand");
@@ -130,18 +129,15 @@ public:
         const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC());
 
 
-        postRecoilMET = ApplyRecoilCorrections(higgs, eTau.resonance, jets.size(), correctedMET);
+        postRecoilMET = ApplyRecoilCorrections(higgs, eTau_MC.resonance, jets.size(), correctedMET);
 
         const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1   );
         const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
         const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
-//         const double m_sv      = 1.;
-//         const double m_sv_Up   = 1.;
-//         const double m_sv_Down = 1.;
+        CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
-
 
         FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
@@ -354,19 +350,18 @@ protected:
         return tau.againstElectronMVA3raw > againstElectronMediumMVA3_customValues.at(ucut);
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::ETaujet& final_state)
+    bool FindAnalysisFinalState(analysis::finalState::bbETaujet& final_state)
     {
         const bool base_result = BaseFlatTreeProducer::FindAnalysisFinalState(final_state);
         if(!base_result)
             return base_result;
 
-        final_state.electron = final_state.tau_jet = nullptr;
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, tauProducts))
-                final_state.electron = tauProducts.at(0);
-            else if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, tauProducts))
-                final_state.tau_jet = tau_MC;
+        for (const analysis::VisibleGenObject& tau_MC : final_state.taus) {
+            if(tau_MC.finalStateChargedLeptons.size() == 1
+                    && tau_MC.finalStateChargedLeptons.at(0)->pdg.Code == particles::e)
+                final_state.electron = tau_MC.finalStateChargedLeptons.at(0);
+            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
+                final_state.tau_jet = &tau_MC;
         }
 
         if (!final_state.electron || !final_state.tau_jet) return false;
@@ -435,23 +430,90 @@ protected:
                       const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
+        static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+        static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
+
         const analysis::Candidate& electron = higgs.GetDaughter(analysis::Candidate::Electron);
         const ntuple::Electron& ntuple_electron = event->electrons().at(electron.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, jetsPt20, bjets, retagged_bjets, vertices, electron, tau, pfMET);
+        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, jetsPt20, bjets, retagged_bjets,
+                                           vertices, electron, tau, pfMET, eTau_MC);
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::ETau);
         flatTree->pfRelIso_1() = ntuple_electron.pfRelIso;
-        //flatTree->mva_1() = 0;
-        //flatTree->passid_2();
-        //flatTree->passiso_2();
-        //flatTree->mva_2() = ntuple_tau.againstElectronLoose;
+        flatTree->mva_1() = ntuple_electron.mvaPOGNonTrig;
+        flatTree->passid_1() = true;
+        flatTree->passiso_1() = ntuple_electron.pfRelIso < cuts::Htautau_Summer13::ETau::electronID::pFRelIso;
+        flatTree->decayMode_1() = default_int_value;
+        flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
+        flatTree->againstElectronLooseMVA_1() = false;
+        flatTree->againstElectronMediumMVA_1() = false;
+        flatTree->againstElectronTightMVA_1() = false;
+        flatTree->againstElectronVTightMVA_1() = false;
+        flatTree->againstElectronLoose_1() = false;
+        flatTree->againstElectronMedium_1() = false;
+        flatTree->againstElectronTight_1() = false;
+        flatTree->againstMuonLoose_1() = false;
+        flatTree->againstMuonMedium_1() = false;
+        flatTree->againstMuonTight_1() = false;
+
+        const bool electron_matched = analysis::HasMatchWithMCParticle(electron.momentum, eTau_MC.electron,
+                                                                       cuts::DeltaR_MC_Match);
+        if(electron_matched) {
+            const TLorentzVector& momentum = eTau_MC.electron->momentum;
+            flatTree->pt_1_MC   () = momentum.Pt()  ;
+            flatTree->phi_1_MC  () = momentum.Phi() ;
+            flatTree->eta_1_MC  () = momentum.Eta() ;
+            flatTree->m_1_MC    () = momentum.M()   ;
+            flatTree->pt_1_visible_MC   () = momentum.Pt()  ;
+            flatTree->phi_1_visible_MC  () = momentum.Phi() ;
+            flatTree->eta_1_visible_MC  () = momentum.Eta() ;
+            flatTree->m_1_visible_MC    () = momentum.M()   ;
+            flatTree->pdgId_1_MC() = eTau_MC.electron->pdg.ToInteger();
+        } else {
+            flatTree->pt_1_MC   () = default_value ;
+            flatTree->phi_1_MC  () = default_value ;
+            flatTree->eta_1_MC  () = default_value ;
+            flatTree->m_1_MC    () = default_value ;
+            flatTree->pt_1_visible_MC   () = default_value ;
+            flatTree->phi_1_visible_MC  () = default_value ;
+            flatTree->eta_1_visible_MC  () = default_value ;
+            flatTree->m_1_visible_MC    () = default_value ;
+            flatTree->pdgId_1_MC() = default_int_value;
+        }
+
+        const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, eTau_MC.tau_jet, cuts::DeltaR_MC_Match);
+        if(tau_matched) {
+            const TLorentzVector& momentum = eTau_MC.tau_jet->origin->momentum;
+            flatTree->pt_2_MC   () = momentum.Pt()  ;
+            flatTree->phi_2_MC  () = momentum.Phi() ;
+            flatTree->eta_2_MC  () = momentum.Eta() ;
+            flatTree->m_2_MC    () = momentum.M()   ;
+            const TLorentzVector& visible_momentum = eTau_MC.tau_jet->visibleMomentum;
+            flatTree->pt_2_visible_MC   () = visible_momentum.Pt()  ;
+            flatTree->phi_2_visible_MC  () = visible_momentum.Phi() ;
+            flatTree->eta_2_visible_MC  () = visible_momentum.Eta() ;
+            flatTree->m_2_visible_MC    () = visible_momentum.M()   ;
+            flatTree->pdgId_2_MC() = eTau_MC.tau_jet->origin->pdg.ToInteger();
+        } else {
+            flatTree->pt_2_MC   () = default_value ;
+            flatTree->phi_2_MC  () = default_value ;
+            flatTree->eta_2_MC  () = default_value ;
+            flatTree->m_2_MC    () = default_value ;
+            flatTree->pt_2_visible_MC   () = default_value ;
+            flatTree->phi_2_visible_MC  () = default_value ;
+            flatTree->eta_2_visible_MC  () = default_value ;
+            flatTree->m_2_visible_MC    () = default_value ;
+            flatTree->pdgId_2_MC() = default_int_value;
+        }
+
         flatTree->Fill();
     }
 
 private:
     analysis::BaseAnalyzerData anaData;
+    analysis::finalState::bbETaujet eTau_MC;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

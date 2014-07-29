@@ -132,10 +132,6 @@ public:
         const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
         const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
-//         const double m_sv      = 1.;
-//         const double m_sv_Up   = 1.;
-//         const double m_sv_Down = 1.;
-
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
@@ -290,7 +286,6 @@ protected:
         if(!base_result)
             return base_result;
 
-        if(!final_state.Higgs_TauTau) return false;
         for(const analysis::VisibleGenObject& tau_MC : final_state.taus) {
             if(tau_MC.finalStateChargedLeptons.size() == 1
                     && tau_MC.finalStateChargedLeptons.at(0)->pdg.Code == particles::mu)
@@ -389,10 +384,21 @@ protected:
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
-        //flatTree->mva_1() = 0;
-        //flatTree->passid_2();
-        //flatTree->passiso_2();
-        //flatTree->mva_2() = ntuple_tau.againstElectronLoose;
+        flatTree->mva_1() = 0;
+        flatTree->passid_1() = true;
+        flatTree->passiso_1() = ntuple_muon.pfRelIso < cuts::Htautau_Summer13::MuTau::muonID::pFRelIso;
+        flatTree->decayMode_1() = default_int_value;
+        flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
+        flatTree->againstElectronLooseMVA_1() = false;
+        flatTree->againstElectronMediumMVA_1() = false;
+        flatTree->againstElectronTightMVA_1() = false;
+        flatTree->againstElectronVTightMVA_1() = false;
+        flatTree->againstElectronLoose_1() = false;
+        flatTree->againstElectronMedium_1() = false;
+        flatTree->againstElectronTight_1() = false;
+        flatTree->againstMuonLoose_1() = false;
+        flatTree->againstMuonMedium_1() = false;
+        flatTree->againstMuonTight_1() = false;
 
         const bool muon_matched = analysis::HasMatchWithMCParticle(muon.momentum, muTau_MC.muon, cuts::DeltaR_MC_Match);
         if(muon_matched) {
@@ -401,13 +407,21 @@ protected:
             flatTree->phi_1_MC  () = momentum.Phi() ;
             flatTree->eta_1_MC  () = momentum.Eta() ;
             flatTree->m_1_MC    () = momentum.M()   ;
+            flatTree->pt_1_visible_MC   () = momentum.Pt()  ;
+            flatTree->phi_1_visible_MC  () = momentum.Phi() ;
+            flatTree->eta_1_visible_MC  () = momentum.Eta() ;
+            flatTree->m_1_visible_MC    () = momentum.M()   ;
             flatTree->pdgId_1_MC() = muTau_MC.muon->pdg.ToInteger();
         } else {
             flatTree->pt_1_MC   () = default_value ;
             flatTree->phi_1_MC  () = default_value ;
             flatTree->eta_1_MC  () = default_value ;
             flatTree->m_1_MC    () = default_value ;
-            flatTree->pdgId_1_MC() = default_int_value;
+            flatTree->pt_1_visible_MC   () = default_value ;
+            flatTree->phi_1_visible_MC  () = default_value ;
+            flatTree->eta_1_visible_MC  () = default_value ;
+            flatTree->m_1_visible_MC    () = default_value ;
+            flatTree->pdgId_1_MC() = particles::NONEXISTENT.RawCode();
         }
 
         const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, muTau_MC.tau_jet, cuts::DeltaR_MC_Match);
@@ -417,13 +431,22 @@ protected:
             flatTree->phi_2_MC  () = momentum.Phi() ;
             flatTree->eta_2_MC  () = momentum.Eta() ;
             flatTree->m_2_MC    () = momentum.M()   ;
+            const TLorentzVector& visible_momentum = muTau_MC.tau_jet->visibleMomentum;
+            flatTree->pt_2_visible_MC   () = visible_momentum.Pt()  ;
+            flatTree->phi_2_visible_MC  () = visible_momentum.Phi() ;
+            flatTree->eta_2_visible_MC  () = visible_momentum.Eta() ;
+            flatTree->m_2_visible_MC    () = visible_momentum.M()   ;
             flatTree->pdgId_2_MC() = muTau_MC.tau_jet->origin->pdg.ToInteger();
         } else {
             flatTree->pt_2_MC   () = default_value ;
             flatTree->phi_2_MC  () = default_value ;
             flatTree->eta_2_MC  () = default_value ;
             flatTree->m_2_MC    () = default_value ;
-            flatTree->pdgId_2_MC() = default_int_value;
+            flatTree->pt_2_visible_MC   () = default_value ;
+            flatTree->phi_2_visible_MC  () = default_value ;
+            flatTree->eta_2_visible_MC  () = default_value ;
+            flatTree->m_2_visible_MC    () = default_value ;
+            flatTree->pdgId_2_MC() = particles::NONEXISTENT.RawCode();
         }
 
         flatTree->Fill();

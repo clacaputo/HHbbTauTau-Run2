@@ -28,6 +28,8 @@
 
 class HHbbtautau_FlatTreeProducer : public analysis::BaseFlatTreeProducer {
 public:
+    typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
+
     HHbbtautau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
                                 const std::string& configFileName, const std::string& _prefix = "none",
                                 size_t _maxNumberOfEvents = 0,
@@ -46,8 +48,8 @@ public:
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::TauTau;
-        finalState::TaujetTaujet tauTau;
-        if (!FindAnalysisFinalState(tauTau) && config.RequireSpecificFinalState()) return;
+
+        if (!FindAnalysisFinalState(tauTau_MC) && config.RequireSpecificFinalState()) return;
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
@@ -64,7 +66,7 @@ public:
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
 
-        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(Tau.hadronic_taus,false) : event->taus();
+        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(tauTau_MC.hadronic_taus,false) : event->taus();
 
         const auto taus = CollectTaus();
         cut(taus.size(), "tau_cand");
@@ -96,22 +98,18 @@ public:
         const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.isMC());
 
 
-        postRecoilMET = ApplyRecoilCorrections(higgs, Tau.resonance, jets.size(), correctedMET);
-
+        postRecoilMET = ApplyRecoilCorrections(higgs, tauTau_MC.resonance, jets.size(), correctedMET);
 
         const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1   );
         const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
         const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
 
-//         const double m_sv      = 1.;
-//         const double m_sv_Up   = 1.;
-//         const double m_sv_Down = 1.;
-
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
 
-        FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
+        FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs),
+                     bjets, retagged_bjets, vertices, pfMET);
     }
 
 protected:
@@ -284,31 +282,20 @@ protected:
         return *std::min_element(higgses.begin(), higgses.end(), higgsSelector);
     }
 
-    bool FindAnalysisFinalState(analysis::finalState::TaujetTaujet& final_state)
+    bool FindAnalysisFinalState(analysis::finalState::bbTaujetTaujet& final_state)
     {
-        const bool base_result = H_BaseAnalyzer::FindAnalysisFinalState(final_state);
+        const bool base_result = BaseFlatTreeProducer::FindAnalysisFinalState(final_state);
         if(!base_result)
             return base_result;
 
-        unsigned n_hadronic_taus = 0;
+        if(final_state.hadronic_taus.size() != 2) return false;
 
-        if(final_state.taus.size() != 2)
-            throw std::runtime_error("bad tautau MC final state");
-
-        for (const analysis::GenParticle* tau_MC : final_state.taus) {
-            analysis::GenParticlePtrVector TauProducts;
-            if (!analysis::FindDecayProducts(*tau_MC, analysis::TauMuonicDecay, TauProducts)
-                    && !analysis::FindDecayProducts(*tau_MC, analysis::TauElectronDecay, TauProducts))
-                ++n_hadronic_taus;
-        }
-
-        if (n_hadronic_taus != 2) return false;
-        if(final_state.taus.at(0)->momentum.Pt() > final_state.taus.at(1)->momentum.Pt()) {
-            final_state.leading_tau_jet = final_state.taus.at(0);
-            final_state.subleading_tau_jet = final_state.taus.at(1);
+        if(final_state.hadronic_taus.at(0).visibleMomentum.Pt() > final_state.hadronic_taus.at(1).visibleMomentum.Pt()) {
+            final_state.leading_tau_jet = &final_state.hadronic_taus.at(0);
+            final_state.subleading_tau_jet = &final_state.hadronic_taus.at(1);
         } else {
-            final_state.leading_tau_jet = final_state.taus.at(1);
-            final_state.subleading_tau_jet = final_state.taus.at(0);
+            final_state.leading_tau_jet = &final_state.hadronic_taus.at(1);
+            final_state.subleading_tau_jet = &final_state.hadronic_taus.at(0);
         }
         return true;
     }
@@ -337,29 +324,104 @@ protected:
         DMweights.push_back(subLeadWeight);
     }
 
-    void FillSyncTree(const analysis::Candidate& higgs, double m_sv,
+    void FillFlatTree(const analysis::Candidate& higgs, double m_sv,
+                      double m_sv_Up, double m_sv_Down,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets,  const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
+        static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+        static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
+
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
 
-        H_BaseAnalyzer::FillSyncTree(higgs, m_sv, jets, jetsPt20, bjets, retagged_bjets, vertices, leadTau, subLeadTau,pfMET);
+        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, jetsPt20,
+                                           bjets, retagged_bjets, vertices, leadTau, subLeadTau,pfMET, tauTau_MC);
 
-        flatTree->channel()                                    = static_cast<int>(ntuple::Channel::TauTau)                ;
-        flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits ;
-        flatTree->againstElectronMVA3raw_1()                   = ntuple_tau_leg1.againstElectronMVA3raw                   ;
-        flatTree->byIsolationMVA2raw_1()                       = ntuple_tau_leg1.byIsolationMVA2raw                       ;
-        flatTree->againstMuonLoose2_1()                        = ntuple_tau_leg1.againstMuonLoose2                        ;
-        flatTree->againstMuonMedium2_1()                       = ntuple_tau_leg1.againstMuonMedium2                       ;
-        flatTree->againstMuonTight2_1()                        = ntuple_tau_leg1.againstMuonTight2                        ;
+        flatTree->channel() = static_cast<int>(ntuple::Channel::TauTau);
+        flatTree->pfRelIso_1() = default_value;
+        flatTree->mva_1() = default_int_value;
+        flatTree->passid_1() = false;
+        flatTree->passiso_1() = false;
+        flatTree->decayMode_1() = ntuple_tau_leg1.decayMode;
+        flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
+        flatTree->againstElectronLooseMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
+                                                                           ntuple_tau_leg1.againstElectronMVA3raw, 0);
+        flatTree->againstElectronMediumMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
+                                                                            ntuple_tau_leg1.againstElectronMVA3raw, 1);
+        flatTree->againstElectronTightMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
+                                                                           ntuple_tau_leg1.againstElectronMVA3raw, 2);
+        flatTree->againstElectronVTightMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
+                                                                            ntuple_tau_leg1.againstElectronMVA3raw, 3);
+        flatTree->againstElectronLoose_1() = ntuple_tau_leg1.againstElectronLoose;
+        flatTree->againstElectronMedium_1() = ntuple_tau_leg1.againstElectronMedium;
+        flatTree->againstElectronTight_1() = ntuple_tau_leg1.againstElectronTight;
+        flatTree->againstMuonLoose_1() = ntuple_tau_leg1.againstMuonLoose;
+        flatTree->againstMuonMedium_1() = ntuple_tau_leg1.againstMuonMedium;
+        flatTree->againstMuonTight_1() = ntuple_tau_leg1.againstMuonTight;
+
+        const analysis::VisibleGenObjectVector leadTau_matches =
+                analysis::FindMatchedObjects(leadTau.momentum, tauTau_MC.hadronic_taus, cuts::DeltaR_MC_Match);
+        if(leadTau_matches.size() != 0) {
+            const TLorentzVector& momentum = leadTau_matches.at(0).origin->momentum;
+            flatTree->pt_1_MC   () = momentum.Pt()  ;
+            flatTree->phi_1_MC  () = momentum.Phi() ;
+            flatTree->eta_1_MC  () = momentum.Eta() ;
+            flatTree->m_1_MC    () = momentum.M()   ;
+            const TLorentzVector& visible_momentum = leadTau_matches.at(0).visibleMomentum;
+            flatTree->pt_1_visible_MC   () = visible_momentum.Pt()  ;
+            flatTree->phi_1_visible_MC  () = visible_momentum.Phi() ;
+            flatTree->eta_1_visible_MC  () = visible_momentum.Eta() ;
+            flatTree->m_1_visible_MC    () = visible_momentum.M()   ;
+            flatTree->pdgId_1_MC() = leadTau_matches.at(0).origin->pdg.ToInteger();
+        } else {
+            flatTree->pt_1_MC   () = default_value ;
+            flatTree->phi_1_MC  () = default_value ;
+            flatTree->eta_1_MC  () = default_value ;
+            flatTree->m_1_MC    () = default_value ;
+            flatTree->pt_1_visible_MC   () = default_value ;
+            flatTree->phi_1_visible_MC  () = default_value ;
+            flatTree->eta_1_visible_MC  () = default_value ;
+            flatTree->m_1_visible_MC    () = default_value ;
+            flatTree->pdgId_1_MC() = particles::NONEXISTENT.RawCode();
+        }
+
+        const analysis::VisibleGenObjectVector subLeadTau_matches =
+                analysis::FindMatchedObjects(subLeadTau.momentum, tauTau_MC.hadronic_taus, cuts::DeltaR_MC_Match);
+
+        if(subLeadTau_matches.size() != 0) {
+            const TLorentzVector& momentum = subLeadTau_matches.at(0).origin->momentum;
+            flatTree->pt_2_MC   () = momentum.Pt()  ;
+            flatTree->phi_2_MC  () = momentum.Phi() ;
+            flatTree->eta_2_MC  () = momentum.Eta() ;
+            flatTree->m_2_MC    () = momentum.M()   ;
+            const TLorentzVector& visible_momentum = subLeadTau_matches.at(0).visibleMomentum;
+            flatTree->pt_2_visible_MC   () = visible_momentum.Pt()  ;
+            flatTree->phi_2_visible_MC  () = visible_momentum.Phi() ;
+            flatTree->eta_2_visible_MC  () = visible_momentum.Eta() ;
+            flatTree->m_2_visible_MC    () = visible_momentum.M()   ;
+            flatTree->pdgId_2_MC() = subLeadTau_matches.at(0).origin->pdg.ToInteger();
+        } else {
+            flatTree->pt_2_MC   () = default_value ;
+            flatTree->phi_2_MC  () = default_value ;
+            flatTree->eta_2_MC  () = default_value ;
+            flatTree->m_2_MC    () = default_value ;
+            flatTree->pt_2_visible_MC   () = default_value ;
+            flatTree->phi_2_visible_MC  () = default_value ;
+            flatTree->eta_2_visible_MC  () = default_value ;
+            flatTree->m_2_visible_MC    () = default_value ;
+            flatTree->pdgId_2_MC() = particles::NONEXISTENT.RawCode();
+        }
+
         flatTree->Fill();
     }
 
 private:
-    AnalyzerDataTauTau anaData;
+    analysis::BaseAnalyzerData anaData;
+    analysis::finalState::bbTaujetTaujet tauTau_MC;
+
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

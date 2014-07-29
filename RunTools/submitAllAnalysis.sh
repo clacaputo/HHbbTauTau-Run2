@@ -23,8 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-if [ $# -ne 7 ] ; then
-    echo "Usage: analyzer_cfg dataset_cfg output_path queue storage n_parallel_jobs use_multi_ana"
+if [ $# -ne 8 ] ; then
+    echo "Usage: analyzer_cfg dataset_cfg output_path queue storage n_parallel_jobs use_multi_ana multi_ana_name"
     exit
 fi
 
@@ -52,6 +52,8 @@ QUEUE=$4
 STORAGE=$5
 MAX_N_PARALLEL_JOBS=$6
 USE_MULTI_ANA=$7
+MULTI_ANA_NAME=$8
+#MULTI_ANA_NAME="H_BaselineSync"
 
 WORKING_PATH=$CMSSW_BASE/src/HHbbTauTau
 MAKE_PATH=$WORKING_PATH/RunTools/make_withFactory.sh
@@ -66,7 +68,6 @@ N_DATASET=${#DATASET_ARRAY[@]}
 ANALYZER_PATH=( $( cat $ANA_CFG_FILE ) )
 
 if [ $USE_MULTI_ANA = "yes" ] ; then
-    MULTI_ANA_NAME="H_BaselineSync"
     EXE_NAME=$OUTPUT_PATH/$MULTI_ANA_NAME
 
     echo "Compiling executable file $EXE_NAME..."

@@ -321,7 +321,6 @@ protected:
                       const ntuple::MET& pfMET, const finalState::bbTauTau& final_state_MC)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
-        static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
 
         // Event
         flatTree->run() = event->eventInfo().run;
@@ -335,7 +334,6 @@ protected:
                 throw std::runtime_error("in-time BX not found");
             flatTree->npu() = event->eventInfo().trueNInt.at(bxIndex);
         }
-
 
         // Weights
         flatTree->puweight()        = PUweight;
@@ -373,7 +371,7 @@ protected:
             flatTree->eta_resonance_MC()   = default_value  ;
             flatTree->phi_resonance_MC()   = default_value  ;
             flatTree->mass_resonance_MC()  = default_value  ;
-            flatTree->pdgId_resonance_MC() = default_int_value  ;
+            flatTree->pdgId_resonance_MC() = particles::NONEXISTENT.RawCode() ;
         }
 
         if(final_state_MC.Higgs_TauTau) {
@@ -388,7 +386,7 @@ protected:
             flatTree->eta_Htt_MC()   = default_value  ;
             flatTree->phi_Htt_MC()   = default_value  ;
             flatTree->mass_Htt_MC()  = default_value  ;
-            flatTree->pdgId_Htt_MC() = default_int_value  ;
+            flatTree->pdgId_Htt_MC() = particles::NONEXISTENT.RawCode() ;
         }
 
         if(final_state_MC.Higgs_BB) {
@@ -403,7 +401,7 @@ protected:
             flatTree->eta_Hbb_MC()   = default_value  ;
             flatTree->phi_Hbb_MC()   = default_value  ;
             flatTree->mass_Hbb_MC()  = default_value  ;
-            flatTree->pdgId_Hbb_MC() = default_int_value  ;
+            flatTree->pdgId_Hbb_MC() = particles::NONEXISTENT.RawCode()  ;
         }
 
         flatTree->n_extraJets_MC()     = default_value ; // needs to be filles with NUP! https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
@@ -433,22 +431,14 @@ protected:
         // RM: for the three channels, mt, et, tt this leg is always a tau
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
-        bool antiEloose  = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                                      0) ;
-        bool antiEMedium = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                                      1) ;
-        bool antiETight  = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                                      2) ;
-        bool antiEVTight = analysis::BaseFlatTreeProducer::ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
-                                                                                      ntuple_tau_leg2.againstElectronMVA3raw,
-                                                                                      3) ;
-        flatTree->againstElectronLooseMVA_2()                  = antiEloose  ;
-        flatTree->againstElectronMediumMVA_2()                 = antiEMedium ;
-        flatTree->againstElectronTightMVA_2()                  = antiETight  ;
-        flatTree->againstElectronVTightMVA_2()                 = antiEVTight ;
+        flatTree->againstElectronLooseMVA_2() = ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
+                                                                           ntuple_tau_leg2.againstElectronMVA3raw, 0);
+        flatTree->againstElectronMediumMVA_2() = ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
+                                                                            ntuple_tau_leg2.againstElectronMVA3raw, 1);
+        flatTree->againstElectronTightMVA_2() = ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
+                                                                           ntuple_tau_leg2.againstElectronMVA3raw, 2);
+        flatTree->againstElectronVTightMVA_2() = ComputeAntiElectronMVA3New(ntuple_tau_leg2.againstElectronMVA3category,
+                                                                            ntuple_tau_leg2.againstElectronMVA3raw, 3);
         flatTree->againstElectronLoose_2()                     = ntuple_tau_leg2.againstElectronLoose  ;
         flatTree->againstElectronMedium_2()                    = ntuple_tau_leg2.againstElectronMedium ;
         flatTree->againstElectronTight_2()                     = ntuple_tau_leg2.againstElectronTight  ;
@@ -534,11 +524,9 @@ protected:
             flatTree->isBjet_MC_Bjet_withLeptonicDecay().push_back( isJet_MC_Bjet_withLeptonicDecay );
         }
 
-        // PV
-        ntuple::Vertex PV = event->vertices().front() ;
-        flatTree->x_PV() = PV.x ;
-        flatTree->y_PV() = PV.y ;
-        flatTree->z_PV() = PV.z ;
+        flatTree->x_PV() = primaryVertex.position.x();
+        flatTree->y_PV() = primaryVertex.position.y();
+        flatTree->z_PV() = primaryVertex.position.z();
     }
 
 protected:

@@ -26,11 +26,9 @@
 
 #include "../HHbbTauTau/Analysis/include/TreeExtractor.h"
 #include "../HHbbTauTau/Analysis/include/Config.h"
-#include "../HHbbTauTau/Analysis/source/HmutauFlatTreeProducer.C"
-#include "../HHbbTauTau/Analysis/source/HetauFlatTreeProducer.C"
-#include "../HHbbTauTau/Analysis/source/HtautauFlatTreeProducer.C"
-
-
+#include "../HHbbTauTau/Analysis/source/HHbbmutau_FlatTreeProducer.C"
+#include "../HHbbTauTau/Analysis/source/HHbbetau_FlatTreeProducer.C"
+#include "../HHbbTauTau/Analysis/source/HHbbtautau_FlatTreeProducer.C"
 
 class H_FlatTreeProducer {
 public:
@@ -76,9 +74,9 @@ private:
     size_t maxNumberOfEvents;
     std::shared_ptr<const analysis::EventDescriptor> event;
     analysis::TreeExtractor treeExtractor;
-    HmutauFlatTreeProducer HmutauAnalyzer;
-    HetauFlatTreeProducer HetauAnalyzer;
-    HtautauFlatTreeProducer HtautauAnalyzer;
+    HHbbmutau_FlatTreeProducer HmutauAnalyzer;
+    HHbbetau_FlatTreeProducer HetauAnalyzer;
+    HHbbtautau_FlatTreeProducer HtautauAnalyzer;
     double eventWeight;
 };
 

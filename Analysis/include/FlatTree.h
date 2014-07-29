@@ -43,15 +43,19 @@
     SIMPLE_VAR(Float_t, m_1) /* Mass */ \
     SIMPLE_VAR(Float_t, energy_1) /* Energy */ \
     SIMPLE_VAR(Int_t, q_1) /* Charge */ \
-    SIMPLE_VAR(Float_t, mt_1) /* mT of  first lepton wrt to MVA met */ \
-    SIMPLE_VAR(Float_t, d0_1) /* d0 with respect to primary vertex */ \
-    SIMPLE_VAR(Float_t, dZ_1) /* dZ with respect to primary vertex */ \
-    /* Gen particle quantities of First signal lepton matched with the truth */ \
+    SIMPLE_VAR(Float_t, mt_1) /* mT of the first lepton wrt to MVA met */ \
+    SIMPLE_VAR(Float_t, d0_1) /* d0 with respect to the primary vertex */ \
+    SIMPLE_VAR(Float_t, dZ_1) /* dZ with respect to the primary vertex */ \
+    /* Gen particle quantities of the first signal lepton matched with the truth */ \
     SIMPLE_VAR(Int_t, pdgId_1_MC) /* PDG ID or particles::NONEXISTENT, if there is no matched genParticle. */ \
     SIMPLE_VAR(Float_t, pt_1_MC) /* pT */ \
     SIMPLE_VAR(Float_t, phi_1_MC) /* Phi */ \
     SIMPLE_VAR(Float_t, eta_1_MC) /* Eta */ \
     SIMPLE_VAR(Float_t, m_1_MC) /* Mass */ \
+    SIMPLE_VAR(Float_t, pt_1_visible_MC) /* Visible pT */ \
+    SIMPLE_VAR(Float_t, phi_1_visible_MC) /* Visible phi */ \
+    SIMPLE_VAR(Float_t, eta_1_visible_MC) /* Visible eta */ \
+    SIMPLE_VAR(Float_t, m_1_visible_MC) /* Visible mass */ \
     /* First lepton - electron & muon specific */ \
     SIMPLE_VAR(Float_t, pfRelIso_1) /* Delta Beta for muon and electron */ \
     SIMPLE_VAR(Float_t, mva_1) /* MVA id when using electron, 0 otherwise */ \
@@ -63,6 +67,7 @@
     SIMPLE_VAR(Bool_t, againstElectronLooseMVA_1) /* Whether tau passes loose MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_1) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_1) /* Whether tau passes tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_1) /* Whether tau passes very tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_1) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_1) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_1) /* Whether tau passes tight against electron discriminator */ \
@@ -87,13 +92,17 @@
     SIMPLE_VAR(Float_t, phi_2_MC) /* Phi */ \
     SIMPLE_VAR(Float_t, eta_2_MC) /* Eta */ \
     SIMPLE_VAR(Float_t, m_2_MC) /* Mass */ \
+    SIMPLE_VAR(Float_t, pt_2_visible_MC) /* Visible pT */ \
+    SIMPLE_VAR(Float_t, phi_2_visible_MC) /* Visible phi */ \
+    SIMPLE_VAR(Float_t, eta_2_visible_MC) /* Visible eta */ \
+    SIMPLE_VAR(Float_t, m_2_visible_MC) /* Visible mass */ \
     /* Second lepton - hadronic tau specific */ \
     SIMPLE_VAR(Int_t, decayMode_2) /* tau decay mode as defined in ntuple::tau_id::hadronicDecayMode */ \
     SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_2) /* tau raw isolation value */ \
     SIMPLE_VAR(Bool_t, againstElectronLooseMVA_2) /* Whether tau passes loose MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_2) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
-    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_2) /* Whether tau passes very tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_2) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_2) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_2) /* Whether tau passes tight against electron discriminator */ \
@@ -103,13 +112,13 @@
     \
     \
     /* H_tautau variables */ \
-    SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of Higgs candidate */ \
+    SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of H_tautau candidate */ \
     SIMPLE_VAR(Float_t, mvis) /* Visible mass of H_tautau */ \
     SIMPLE_VAR(Float_t, m_sv) /* Mass of H_tautau corrected by svFit using integration method */ \
     SIMPLE_VAR(Float_t, m_sv_Up) /* Mass of H_tautau corrected by svFit using integration method when TauES is scaled up by 3% */ \
     SIMPLE_VAR(Float_t, m_sv_Down) /* Mass of H_tautau corrected by svFit using integration method when TauES is scaled down by 3% */ \
     SIMPLE_VAR(Float_t, pt_sv) /* Pt of H_tautau corrected by svFit using integration method */ \
-    SIMPLE_VAR(Float_t, eta_sv) /* Et of H_tautau corrected by svFit using integration method */ \
+    SIMPLE_VAR(Float_t, eta_sv) /* Eta of H_tautau corrected by svFit using integration method */ \
     SIMPLE_VAR(Float_t, phi_sv) /* Phi of H_tautau corrected by svFit using integration method */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
@@ -154,7 +163,7 @@
     /* Jets info */ \
     SIMPLE_VAR(Int_t, njets) /* number of jets passing jet id ( pt > 30 ) */ \
     SIMPLE_VAR(Int_t, njetspt20) /* number of jets passing jet id ( pt > 20 ) */ \
-    /* First 4 jets passing jet id ( pt > 20 ) sorted by pt*/ \
+    /* All jets passing jet id ( pt > 20 ) sorted by pt*/ \
     VECTOR_VAR(Float_t, pt_jets) /* pt of jets */ \
     VECTOR_VAR(Float_t, eta_jets) /* eta of jets */ \
     VECTOR_VAR(Float_t, phi_jets) /* phi of jets */ \
@@ -165,7 +174,7 @@
     VECTOR_VAR(Bool_t, isJet_MC_Bjet_withLeptonicDecay) /* Whether jet matches MC b-jet that decayed leptonically */ \
     /* b-jets info */ \
     SIMPLE_VAR(Int_t, nBjets) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
-    /* First 4 b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
+    /* All b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
     VECTOR_VAR(Float_t, pt_Bjets) /* pt of b-jets */ \
     VECTOR_VAR(Float_t, eta_Bjets) /* eta of b-jets */ \
     VECTOR_VAR(Float_t, phi_Bjets) /* phi of b-jets */ \
