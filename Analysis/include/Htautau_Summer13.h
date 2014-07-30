@@ -324,5 +324,29 @@ namespace tauCorrections {
     }
 }
 
+namespace customTauMVA {
+    bool ComputeAntiElectronMVA3New(int category, float raw, int WP)
+    {
+      if (category < 0 ) return false ;
+      if (category > 15) return true  ;
+
+      float cutsLoose    [16] = {0.835,0.831,0.849,0.859,0.873,0.823,0.85 ,0.855,0.816,0.861,0.862,0.847,0.893,0.82 ,0.845,0.851} ;
+      float cutsMedium   [16] = {0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95 ,0.897,0.958,0.955,0.942} ;
+      float cutsTight    [16] = { 0.96,0.968,0.971,0.972,0.969,0.959,0.981,0.965,0.975,0.972,0.974,0.971,0.897,0.971,0.961,0.97 } ;
+      float cutsVeryTight[16] = {0.978,0.98 ,0.982,0.985,0.977,0.974,0.989,0.977,0.986,0.983,0.984,0.983,0.971,0.987,0.977,0.981} ;
+
+      switch (WP)
+      {
+        case 0 : return (raw > cutsLoose    [category]) ;
+        case 1 : return (raw > cutsMedium   [category]) ;
+        case 2 : return (raw > cutsTight    [category]) ;
+        case 3 : return (raw > cutsVeryTight[category]) ;
+      }
+
+      return false ; // to avoid warnings, smarter solutions exist
+    }
+
+}
+
 } // Htautau_Summer13
 } // cuts
