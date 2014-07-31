@@ -23,8 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-if [ $# -ne 6 ] ; then
-    echo "Usage: analyzer_cfg dataset_cfg output_path queue storage n_parallel_jobs"
+if [ $# -ne 7 ] ; then
+    echo "Usage: analyzer_cfg dataset_cfg output_path queue storage n_parallel_jobs multi_ana_name"
     exit
 fi
 
@@ -50,7 +50,8 @@ OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
 QUEUE=$4
 STORAGE=$5
 MAX_N_PARALLEL_JOBS=$6
-
+#MULTI_ANA_NAME="H_BaselineSync"
+MULTI_ANA_NAME=$7
 
 REFERENCE_INPUT_PATH="Analysis/dataset"
 REFERENCE_CFG_PATH="Analysis/config"
@@ -60,7 +61,7 @@ N_DATASET=${#DATASET_ARRAY[@]}
 
 
 ANALYZER_PATH=( $( cat $ANA_CFG_FILE ) )
-MULTI_ANA_NAME="H_BaselineSync"
+
 EXE_NAME=$OUTPUT_PATH/$MULTI_ANA_NAME
 if [ ! -f $EXE_NAME ] ; then
     echo "Compiling executable file $EXE_NAME..."
