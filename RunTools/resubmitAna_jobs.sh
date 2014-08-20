@@ -95,7 +95,7 @@ for (( i=0; i<$N_DATASET; i++ )) ; do
     SUCCESSFULL_JOBS=""
     N_SUCCESSFULL_JOBS=0
     if [ -f $FILE_JOB_RESULT ] ; then
-        SUCCESSFULL_JOBS=$( cat $FILE_JOB_RESULT | sed -n "s/\(^0 $DATASET\)\([^ ]*\)\(.*\)/\2/p" | sort )
+        SUCCESSFULL_JOBS=$( cat $FILE_JOB_RESULT | sed -n "s/\(^0 \)\($DATASET[^ ]*\)\(.*\)/\2/p" | sort )
         N_SUCCESSFULL_JOBS=$( echo "$SUCCESSFULL_JOBS" | sed '/^\s*$/d' | wc -l )
         echo "Number of successfull jobs: $N_SUCCESSFULL_JOBS"
     else
