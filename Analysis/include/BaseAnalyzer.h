@@ -492,9 +492,13 @@ protected:
 
         analysis::GenParticleSet resonances;
         for(const GenParticle* w : all_resonances) {
-            if(w->mothers.size() == 1 && w->mothers.at(0)->pdg.Code != particles::tau)
-                resonances.insert(w);
-        }
+            if(w->mothers.size() == 1) {
+                const GenParticle* mother = w->mothers.at(0);
+                if(mother->pdg.Code != particles::tau &&
+                        !(mother->pdg.Code == particles::W_plus && mother->status == particles::Decayed_or_fragmented))
+                    resonances.insert(w);
+            }
+         }
 
         if (resonances.size() == 0) return nullptr;
 

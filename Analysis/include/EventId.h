@@ -70,6 +70,6 @@ struct EventId{
 
 inline std::ostream& operator <<(std::ostream& s, const analysis::EventId& event)
 {
-    s << "run = " << event.runId << ", lumi =" << event.lumiBlock << ", evt = " << event.eventId;
+    s << "run = " << event.runId << ", lumi = " << event.lumiBlock << ", evt = " << event.eventId;
     return s;
 }

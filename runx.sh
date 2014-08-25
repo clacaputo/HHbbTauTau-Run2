@@ -35,7 +35,7 @@ SCRIPT_RUN_PATH="$SCRIPT_PATH/run"
 mkdir -p $SCRIPT_RUN_PATH
 
 
-SUFFIX=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+LC_CTYPE=C SUFFIX=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 JOB_NAME=${NAME}_${SUFFIX}
 EXE_NAME="$SCRIPT_RUN_PATH/$JOB_NAME"
 
