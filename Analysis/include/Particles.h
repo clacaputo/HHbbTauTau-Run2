@@ -252,7 +252,8 @@ PARTICLE(NONEXISTENT, std::numeric_limits<int>::max());
 #undef PARTICLE
 
 enum Status {
-    FinalStateParticle = 1, Decayed_or_fragmented = 2, HardInteractionProduct = 3, Generator_dependet_51 = 51
+    FinalStateParticle = 1, Decayed_or_fragmented = 2, HardInteractionProduct = 3,
+    Generator_dependet_41 = 41, Generator_dependet_51 = 51
 };
 
 enum ParticleType {
