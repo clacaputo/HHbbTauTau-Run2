@@ -322,6 +322,7 @@ struct NameCollection<Status> {
             names[FinalStateParticle] = "FinalStateParticle";
             names[Decayed_or_fragmented] = "Decayed_or_fragmented";
             names[HardInteractionProduct] = "HardInteractionProduct";
+            names[Generator_dependet_41] = "Generator_dependet_41";
             names[Generator_dependet_51] = "Generator_dependet_51";
         }
         return names;
