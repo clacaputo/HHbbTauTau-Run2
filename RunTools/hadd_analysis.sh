@@ -23,8 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-if [ $# -ne 2 ] ; then
-    echo "Usage: analysis_path output_path"
+if [ $# -lt 2 -o $# -gt 3 ] ; then
+    echo "Usage: analysis_path output_path [create_archive]"
     exit
 fi
 
@@ -37,6 +37,8 @@ if [ -d "$OUTPUT_PATH" ] ; then
 fi
 mkdir -p $OUTPUT_PATH
 OUTPUT_PATH=$( cd "$OUTPUT_PATH" ; pwd )
+
+CREATE_ARCHIVE=$3
 
 cd $ANALYSIS_PATH
 
@@ -57,5 +59,7 @@ for FOLDER in $ANA_FOLDERS ; do
 	done
 done
 
-cd $OUTPUT_PATH
-tar cjvf ${OUTPUT_PATH}.tar.bz2 .
+if [ "$CREATE_ARCHIVE" = "archive" -o "$CREATE_ARCHIVE" = "create" -o "$CREATE_ARCHIVE" = "yes" ] ; then
+    cd $OUTPUT_PATH
+    tar cjvf ${OUTPUT_PATH}.tar.bz2 .
+fi
