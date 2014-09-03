@@ -234,3 +234,5 @@ Analysis/source/HHbbetau_FlatTreeProducer.C
 Analysis/source/H_FlatTreeProducer.C
 Analysis/include/BaseFlatTreeProducer.h
 Analysis/config/signal_VBF.cfg
+Analysis/include/BaseFlatTreeAnalyzer.h
+Analysis/source/FlatTreeAnalyzer_tautau.C
