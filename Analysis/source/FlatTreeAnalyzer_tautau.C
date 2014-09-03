@@ -26,7 +26,6 @@
 
 #include "../include/BaseFlatTreeAnalyzer.h"
 #include "../include/Htautau_Summer13.h"
-#include "../include/exception.h"
 
 class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
@@ -91,45 +90,6 @@ protected:
             return EventCategory::TwoJets_OneBtag;
         else
             return EventCategory::TwoJets_TwoBtag;
-    }
-
-    virtual void EstimateQCD() override
-    {
-        analysis::DataCategory qcd;
-        qcd.name = "QCD";
-        qcd.title = "QCD";
-        qcd.color = kPink;
-        for (auto& fullAnaDataEntry : fullAnaData){
-            const EventCategory eventCategory = fullAnaDataEntry.first;
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const analysis::HistogramDescriptor& hist : histograms){
-                const analysis::DataCategory& data = FindCategory("DATA");
-                if(!anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
-                anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name) =
-                        anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].Get<TH1D>(hist.name);
-                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
-                for (const analysis::DataCategory& category : categories){
-                    const bool isData = category.name.find("DATA") != std::string::npos;
-                    const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
-                    if (isData || isSignal) continue;
-                    if(!anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
-                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Get<TH1D>(hist.name);
-                    histogram.Add(&nonQCD_hist,-1);
-                }
-                histogram.Scale(1.06);
-            }
-        }
-        categories.push_back(qcd);
-    }
-
-    const analysis::DataCategory& FindCategory(const std::string& prefix) const
-    {
-        for (const analysis::DataCategory& category : categories){
-            const bool foundPrefix = category.name.find(prefix) != std::string::npos;
-            if (foundPrefix)
-                return category;
-        }
-        throw analysis::exception("category not found : ") << prefix ;
     }
 
     virtual void EstimateWjets() override

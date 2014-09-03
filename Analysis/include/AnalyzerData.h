@@ -155,6 +155,19 @@ public:
         return Get((ValueType*)nullptr, name, "");
     }
 
+    template<typename ValueType>
+    SmartHistogram<ValueType>& Clone(const SmartHistogram<ValueType>& original)
+    {
+        if(data.count(original.Name()))
+            throw std::runtime_error("histogram already exists");
+        cd();
+        AbstractHistogram* h = new SmartHistogram<ValueType>(original);
+        data[h->Name()] = h;
+        if(!outputFile)
+            h->DetachFromFile();
+        return *static_cast< SmartHistogram<ValueType>* >(h);
+    }
+
 private:
     typedef std::map< std::string, AbstractHistogram* > DataMap;
     DataMap data;

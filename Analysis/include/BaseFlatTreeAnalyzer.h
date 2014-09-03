@@ -31,6 +31,7 @@
 #include "AnalyzerData.h"
 #include "FlatTree.h"
 #include "PrintTools/include/RootPrintToPdf.h"
+#include "../include/exception.h"
 
 namespace analysis {
 
@@ -127,7 +128,7 @@ std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
-    TH1D_ENTRY(m_sv, 3000, 0.0, 3000.0)
+    TH1D_ENTRY(m_sv, 30, 0.0, 300.0)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -201,7 +202,36 @@ protected:
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
     virtual EventCategory DetermineEventCategory(const ntuple::Flat& event) = 0;
 
-    virtual void EstimateQCD() = 0;
+    virtual void EstimateQCD()
+    {
+        using analysis::EventType_QCD;
+        using analysis::EventCategory;
+
+        analysis::DataCategory qcd;
+        qcd.name = "QCD";
+        qcd.title = "QCD";
+        qcd.color = kPink;
+        for (auto& fullAnaDataEntry : fullAnaData){
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const analysis::HistogramDescriptor& hist : histograms){
+                const analysis::DataCategory& data = FindCategory("DATA");
+                if(!anaData[data.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
+                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
+                            anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name));
+                for (const analysis::DataCategory& category : categories){
+                    const bool isData = category.name.find("DATA") != std::string::npos;
+                    const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
+                    if (isData || isSignal) continue;
+                    if(!anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
+                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
+                    histogram.Add(&nonQCD_hist,-1);
+                }
+                histogram.Scale(1.06);
+            }
+        }
+        categories.push_back(qcd);
+    }
+
     virtual void EstimateWjets() = 0;
 
     void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
@@ -267,6 +297,16 @@ protected:
                 printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
             }
         }
+    }
+
+    const analysis::DataCategory& FindCategory(const std::string& prefix) const
+    {
+        for (const analysis::DataCategory& category : categories){
+            const bool foundPrefix = category.name.find(prefix) != std::string::npos;
+            if (foundPrefix)
+                return category;
+        }
+        throw analysis::exception("category not found : ") << prefix ;
     }
 
 private:
