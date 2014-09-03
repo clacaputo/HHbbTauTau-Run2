@@ -1,6 +1,6 @@
 /*!
  * \file FlatTreeAnalyzer_tautau.C
- * \brief Analyze flat-tree for Htautau analysis.
+ * \brief Analyze flat-tree for tau-tau channel for HHbbtautau analysis.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \date 2014-09-03 created
@@ -25,13 +25,12 @@
  */
 
 #include "../include/BaseFlatTreeAnalyzer.h"
-#include "../include/Htautau_Summer13.h"
 
 class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_tautau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                         const std::string& outputFileName, const std::string& _signalName,
-                         const std::string& _dataName)
+                            const std::string& outputFileName, const std::string& _signalName,
+                            const std::string& _dataName)
         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName)
     {
     }
@@ -70,26 +69,6 @@ protected:
     {
         using analysis::EventType_Wjets;
         return EventType_Wjets::Unknown;
-    }
-
-    virtual analysis::EventCategory DetermineEventCategory(const ntuple::Flat& event) override
-    {
-        using analysis::EventCategory;
-
-        std::vector<Float_t> goodCVSvalues;
-        for (unsigned i = 0; i < event.eta_Bjets.size(); ++i){
-            if ( std::abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
-            goodCVSvalues.push_back(event.csv_Bjets.at(i));
-        }
-
-        if (goodCVSvalues.size() < 2) return EventCategory::Unknown;
-
-        if (goodCVSvalues.at(0) <= cuts::Htautau_Summer13::btag::CSVM )
-            return EventCategory::TwoJets_ZeroBtag;
-        else if ( goodCVSvalues.at(1) <= cuts::Htautau_Summer13::btag::CSVM )
-            return EventCategory::TwoJets_OneBtag;
-        else
-            return EventCategory::TwoJets_TwoBtag;
     }
 
     virtual void EstimateWjets() override

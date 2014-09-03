@@ -27,10 +27,12 @@
 #pragma once
 
 #include <iostream>
+#include <cmath>
 
 #include "AnalyzerData.h"
 #include "FlatTree.h"
 #include "PrintTools/include/RootPrintToPdf.h"
+#include "../include/Htautau_Summer13.h"
 #include "../include/exception.h"
 
 namespace analysis {
@@ -200,13 +202,28 @@ protected:
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
-    virtual EventCategory DetermineEventCategory(const ntuple::Flat& event) = 0;
+
+    virtual analysis::EventCategory DetermineEventCategory(const ntuple::Flat& event)
+    {
+        std::vector<Float_t> goodCVSvalues;
+        for (unsigned i = 0; i < event.eta_Bjets.size(); ++i){
+            if ( std::abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
+            goodCVSvalues.push_back(event.csv_Bjets.at(i));
+        }
+
+        if (goodCVSvalues.size() < 2) return EventCategory::Unknown;
+
+        if (goodCVSvalues.at(0) <= cuts::Htautau_Summer13::btag::CSVM )
+            return EventCategory::TwoJets_ZeroBtag;
+        else if ( goodCVSvalues.at(1) <= cuts::Htautau_Summer13::btag::CSVM )
+            return EventCategory::TwoJets_OneBtag;
+        else
+            return EventCategory::TwoJets_TwoBtag;
+    }
+
 
     virtual void EstimateQCD()
     {
-        using analysis::EventType_QCD;
-        using analysis::EventCategory;
-
         analysis::DataCategory qcd;
         qcd.name = "QCD";
         qcd.title = "QCD";
