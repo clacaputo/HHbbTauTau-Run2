@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "AnalyzerData.h"
 #include "FlatTree.h"
 #include "PrintTools/include/RootPrintToPdf.h"
@@ -112,7 +114,7 @@ std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
-    TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
+    TH1D_ENTRY(m_sv, 3000, 0.0, 3000.0)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -123,8 +125,8 @@ public:
     enum class EventType_Wjets { Unknown, Signal, HighMissingEt };
     enum class EventCategory { Unknown, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
-    typedef std::map<EventType_QCD, BaseAnalyzerData> AnaDataQCD;
-    typedef std::map<EventType_Wjets, BaseAnalyzerData> AnaDataWjets;
+    typedef std::map<EventType_QCD, FlatAnalyzerData> AnaDataQCD;
+    typedef std::map<EventType_Wjets, FlatAnalyzerData> AnaDataWjets;
 
     struct AnaDataEventTypes {
         AnaDataQCD QCD;
@@ -156,14 +158,14 @@ public:
                     ss << "Input file '" << source.file_name << "' not found.";
                     throw std::runtime_error(ss.str());
                 }
-                source.tree = std::shared_ptr<ntuple::FlatTree>(new ntuple::FlatTree(*source.file));
+                source.tree = std::shared_ptr<ntuple::FlatTree>(new ntuple::FlatTree(*source.file, "flatTree"));
                 ProcessDataSource(category.name, source);
             }
-
-            EstimateQCD();
-            EstimateWjets();
-            PrintStackedPlots();
         }
+
+        EstimateQCD();
+        EstimateWjets();
+//            PrintStackedPlots();
     }
 
 protected:
@@ -175,7 +177,9 @@ protected:
             const EventType_QCD eventTypeQCD = DetermineEventTypeForQCD(event);
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategory eventCategory = DetermineEventCategory(event);
-            FillHistograms(dataCategoryName, event, eventTypeQCD, eventTypeWjets, eventCategory, event.weight);
+            const bool isData = dataCategoryName.find("DATA") != std::string::npos;
+            const double weight = isData ? 1 : event.weight * dataSource.scale_factor;
+            FillHistograms(dataCategoryName, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
         }
     }
 
@@ -189,16 +193,24 @@ protected:
     void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
                         EventType_Wjets eventTypeWjets, EventCategory eventCategory, double weight)
     {
-        fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].Mass().Fill(event.m_sv, weight);
-        fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].Mass().Fill(event.m_sv, weight);
+        fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
+        fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
     }
 
     void PrintStackedPlots()
     {
-        for(const auto& fullAnaDataEntry : fullAnaData) {
+        for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
-            const AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const HistogramDescriptor& hist : histograms){
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const HistogramDescriptor& hist : histograms) {
+                page.side.use_log_scaleY = hist.useLogY;
+                page.side.xRange = hist.xRange;
+                page.side.fit_range_x = false;
+                page.title = hist.title;
+                page.side.axis_titleX = hist.Xaxis_title;
+                page.side.axis_titleY = hist.Yaxis_title;
+                page.side.layout.has_stat_pad = true;
+
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
                 TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
@@ -218,26 +230,23 @@ protected:
                 text = text + lumist;
                 ll->AddText(0.65, 0.6, text);
 
-                //for (const DataSource& source : sources){
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     const bool isData = category.name.find("DATA") != std::string::npos;
-                    TH1D* histogram = CreateHistogram(category, hist,isData);
-                    histogram->SetLineColor(category.color);
+                    TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
+                    histogram.SetLineColor(category.color);
                     std::string legend_option = "f";
                     if (!isData){
-                        histogram->SetFillColor(category.color);
-                        stack->Add(histogram);
+                        histogram.SetFillColor(category.color);
+                        stack->Add(&histogram);
                     }
                     else {
                         legend_option = "p";
-                        data_histogram = histogram;
+                        data_histogram = &histogram;
                     }
-                    leg->AddEntry(histogram, category.title.c_str(), legend_option.c_str());
+                    leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
                 }
-                stack->Draw();
-                data_histogram->Draw("SAME");
-                // printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
+                printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
             }
         }
     }

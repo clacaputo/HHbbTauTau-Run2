@@ -82,13 +82,15 @@ public:
 
     virtual ~AnalyzerData()
     {
-        cd();
-        for(const auto& iter : data) {
-            iter.second->WriteRootObject();
-            delete iter.second;
+        if(outputFile) {
+            cd();
+            for(const auto& iter : data) {
+                iter.second->WriteRootObject();
+                delete iter.second;
+            }
+            if(ownOutputFile)
+                delete outputFile;
         }
-        if(ownOutputFile)
-            delete outputFile;
     }
 
     TFile& getOutputFile(){return *outputFile;}
@@ -114,6 +116,14 @@ public:
         }
     }
 
+    std::vector<std::string> KeysCollection() const
+    {
+        std::vector<std::string> keys;
+        for(const auto& iter : data)
+            keys.push_back(iter.first);
+        return keys;
+    }
+
     template<typename ValueType, typename KeySuffix, typename ...Args>
     SmartHistogram<ValueType>& Get(const ValueType*, const std::string& name, const KeySuffix& suffix, Args... args)
     {
@@ -126,6 +136,8 @@ public:
             cd();
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
+            if(!outputFile)
+                h->DetachFromFile();
         }
         return *static_cast< SmartHistogram<ValueType>* >(data[full_name]);
     }

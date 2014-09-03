@@ -31,6 +31,7 @@
 #include <limits>
 #include <stdexcept>
 #include <memory>
+#include <fstream>
 
 #include <TObject.h>
 #include <TH1.h>
@@ -47,6 +48,7 @@ public:
     virtual ~AbstractHistogram() {}
 
     virtual void WriteRootObject() = 0;
+    virtual void DetachFromFile() {}
 
     const std::string& Name() const { return name; }
 
@@ -199,6 +201,11 @@ public:
     {
         this->Write();
     }
+
+    virtual void DetachFromFile()
+    {
+        this->SetDirectory(nullptr);
+    }
 };
 
 template<>
@@ -212,6 +219,11 @@ public:
     virtual void WriteRootObject()
     {
         this->Write();
+    }
+
+    virtual void DetachFromFile()
+    {
+        this->SetDirectory(nullptr);
     }
 };
 
