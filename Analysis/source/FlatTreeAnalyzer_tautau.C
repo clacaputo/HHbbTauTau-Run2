@@ -25,6 +25,7 @@
  */
 
 #include "../include/BaseFlatTreeAnalyzer.h"
+#include "../include/Htautau_Summer13.h"
 
 class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
@@ -38,7 +39,29 @@ public:
 protected:
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
     {
-        return EventType_QCD::Unknown;
+        if (event.againstElectronLooseMVA_2 > 0.5){
+            // OS - isolated
+            if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < 1.5 &&
+                    event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < 1.5 &&
+                    (event.q_1 * event.q_2 == -1))
+                return EventType_QCD::OS_Isolated;
+            else if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < 1.5 &&
+                    event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < 1.5 &&
+                    (event.q_1 * event.q_2 == +1)) // SS - isolated
+                return EventType_QCD::SS_Isolated;
+            else if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= 1.5 ||
+                     event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= 1.5) &&
+                     (event.q_1 * event.q_2 == -1)) // OS - not isolated
+                return EventType_QCD::OS_NotIsolated;
+            else if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= 1.5 ||
+                     event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= 1.5) &&
+                     (event.q_1 * event.q_2 == +1)) // SS - not isolated
+                return EventType_QCD::SS_NotIsolated;
+            else
+                return EventType_QCD::Unknown;
+        }
+        else
+            return EventType_QCD::Unknown;
     }
 
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
@@ -48,7 +71,21 @@ protected:
 
     virtual EventCategory DetermineEventCategory(const ntuple::Flat& event) override
     {
-        return EventCategory::TwoJets_OneBtag;
+        std::vector<Float_t> goodCVSvalues;
+        for (unsigned i = 0; i < event.eta_Bjets.size(); ++i){
+            if ( std::Abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
+            goodCVSvalues.push_back(event.csv_Bjets);
+        }
+
+        if (goodCVSvalues.size() < 2) return EventCategory::Unknown;
+
+        if (goodCVSvalues.at(0) <= cuts::Htautau_Summer13::btag::CSVM )
+            return EventCategory::TwoJets_ZeroBtag;
+        else if ( goodCVSvalues.at(1) <= cuts::Htautau_Summer13::btag::CSVM )
+            return EventCategory::TwoJets_OneBtag;
+        else
+            return EventCategory::TwoJets_TwoBtag;
+
     }
 
     virtual void EstimateQCD() override
