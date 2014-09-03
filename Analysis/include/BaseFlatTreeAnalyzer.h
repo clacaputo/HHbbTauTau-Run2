@@ -147,7 +147,7 @@ public:
 
     void Run()
     {
-        std::cout << "Opening Sources... " << std::endl;
+        std::cout << "Processing sources... " << std::endl;
         for(DataCategory& category : categories) {
             std::cout << category << std::endl;
             for (DataSource& source : category.sources){
@@ -163,9 +163,12 @@ public:
             }
         }
 
+        std::cout << "Estimating QCD... " << std::endl;
         EstimateQCD();
+        std::cout << "Estimating Wjets... " << std::endl;
         EstimateWjets();
-//            PrintStackedPlots();
+        std::cout << "Printing stacked plots... " << std::endl;
+        PrintStackedPlots();
     }
 
 protected:

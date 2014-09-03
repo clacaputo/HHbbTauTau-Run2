@@ -73,8 +73,8 @@ protected:
     {
         std::vector<Float_t> goodCVSvalues;
         for (unsigned i = 0; i < event.eta_Bjets.size(); ++i){
-            if ( std::Abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
-            goodCVSvalues.push_back(event.csv_Bjets);
+            if ( std::abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
+            goodCVSvalues.push_back(event.csv_Bjets.at(i));
         }
 
         if (goodCVSvalues.size() < 2) return EventCategory::Unknown;
@@ -85,7 +85,6 @@ protected:
             return EventCategory::TwoJets_OneBtag;
         else
             return EventCategory::TwoJets_TwoBtag;
-
     }
 
     virtual void EstimateQCD() override
