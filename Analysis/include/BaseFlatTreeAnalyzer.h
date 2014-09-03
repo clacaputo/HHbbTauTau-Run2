@@ -210,7 +210,7 @@ protected:
         analysis::DataCategory qcd;
         qcd.name = "QCD";
         qcd.title = "QCD";
-        qcd.color = kPink;
+        qcd.color = kGray;
         for (auto& fullAnaDataEntry : fullAnaData){
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const analysis::HistogramDescriptor& hist : histograms){
@@ -222,8 +222,8 @@ protected:
                     const bool isData = category.name.find("DATA") != std::string::npos;
                     const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
                     if (isData || isSignal) continue;
-                    if(!anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
-                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
+                    if(!anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
+                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
                     histogram.Add(&nonQCD_hist,-1);
                 }
                 histogram.Scale(1.06);
