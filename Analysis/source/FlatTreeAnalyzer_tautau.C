@@ -37,8 +37,10 @@ public:
     }
 
 protected:
-    virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
+    virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
     {
+        using analysis::EventType_QCD;
+
         if (event.againstElectronLooseMVA_2 > 0.5){
             // OS - isolated
             if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < 1.5 &&
@@ -64,13 +66,16 @@ protected:
             return EventType_QCD::Unknown;
     }
 
-    virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
+    virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
     {
+        using analysis::EventType_Wjets;
         return EventType_Wjets::Unknown;
     }
 
-    virtual EventCategory DetermineEventCategory(const ntuple::Flat& event) override
+    virtual analysis::EventCategory DetermineEventCategory(const ntuple::Flat& event) override
     {
+        using analysis::EventCategory;
+
         std::vector<Float_t> goodCVSvalues;
         for (unsigned i = 0; i < event.eta_Bjets.size(); ++i){
             if ( std::abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
