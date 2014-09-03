@@ -111,6 +111,19 @@ std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
     return s;
 }
 
+enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
+enum class EventType_Wjets { Unknown, Signal, HighMissingEt };
+enum class EventCategory { Unknown, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
+
+static const std::map<EventCategory, std::string> eventCategoryMapName =
+          { { EventCategory::Unknown, "Unknown" }, { EventCategory::TwoJets_ZeroBtag, "TwoJets_ZeroBtag" },
+          { EventCategory::TwoJets_OneBtag, "TwoJets_OneBtag"}, { EventCategory::TwoJets_TwoBtag, "TwoJets_TwoBtag" } };
+
+std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
+    s << eventCategoryMapName.at(eventCategory);
+    return s;
+}
+
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
@@ -121,9 +134,6 @@ class BaseFlatTreeAnalyzer {
 public:
     typedef root_ext::PdfPrinter Printer;
 
-    enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
-    enum class EventType_Wjets { Unknown, Signal, HighMissingEt };
-    enum class EventCategory { Unknown, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
     typedef std::map<EventType_QCD, FlatAnalyzerData> AnaDataQCD;
     typedef std::map<EventType_Wjets, FlatAnalyzerData> AnaDataWjets;
@@ -180,6 +190,7 @@ protected:
             const EventType_QCD eventTypeQCD = DetermineEventTypeForQCD(event);
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategory eventCategory = DetermineEventCategory(event);
+            if(eventCategory == EventCategory::Unknown) continue;
             const bool isData = dataCategoryName.find("DATA") != std::string::npos;
             const double weight = isData ? 1 : event.weight * dataSource.scale_factor;
             FillHistograms(dataCategoryName, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
@@ -206,10 +217,13 @@ protected:
             const EventCategory eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const HistogramDescriptor& hist : histograms) {
+                std::ostringstream ss_title;
+                ss_title << eventCategory << ": " << hist.title;
+
                 page.side.use_log_scaleY = hist.useLogY;
                 page.side.xRange = hist.xRange;
                 page.side.fit_range_x = false;
-                page.title = hist.title;
+                page.title = ss_title.str();
                 page.side.axis_titleX = hist.Xaxis_title;
                 page.side.axis_titleY = hist.Yaxis_title;
                 page.side.layout.has_stat_pad = true;
@@ -235,6 +249,7 @@ protected:
 
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
+                    if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
                     const bool isData = category.name.find("DATA") != std::string::npos;
                     TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     histogram.SetLineColor(category.color);
