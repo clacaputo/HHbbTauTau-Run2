@@ -79,7 +79,7 @@ protected:
         if(event.mt_1 < muonID::mt)
             return EventType_Wjets::Signal;
         if(event.mt_1 > BackgroundEstimation::HighMtRegion)
-            return EventType_Wjets::HighMissingEt;
+            return EventType_Wjets::HighMt;
         return EventType_Wjets::Unknown;
     }
 
@@ -95,14 +95,14 @@ protected:
                 TH1D& histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
                 //MC wjets
                 const analysis::DataCategory& wjets = FindCategory("REFERENCE");
-                TH1D& histWjetsHighMt;
-                TH1D& histWjetsSignal;
-                if(!anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Contains<TH1D>(hist.name)){
-                    histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
-                }
-                if(!anaData[wjets.name].Wjets[EventType_Wjets::Signal].Contains<TH1D>(hist.name)){
-                    histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].Get<TH1D>(hist.name);
-                }
+                if(!anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Contains(hist.name))
+                    throw analysis::exception("histogram for Wjets High Mt category doesn't exist");
+                TH1D& histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
+
+                if(!anaData[wjets.name].Wjets[EventType_Wjets::Signal].Contains(hist.name))
+                    throw analysis::exception("histogram for Wjets Signal category doesn't exist");
+                TH1D& histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].Get<TH1D>(hist.name);
+
 
                 for (const analysis::DataCategory& category : categories){
                     const bool isData = category.name.find("DATA") != std::string::npos;
