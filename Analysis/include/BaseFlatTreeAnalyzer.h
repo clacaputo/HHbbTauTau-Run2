@@ -65,6 +65,13 @@ struct DataCategory {
     EColor color;
 
     DataSourceVector sources;
+
+public:
+    bool IsData() const { return NameContains("DATA"); }
+    bool IsSignal() const { return NameContains("SIGNAL"); }
+    bool IsReference() const { return NameContains("REFERENCE"); }
+
+    bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
 };
 
 typedef std::list<DataCategory> DataCategoryCollection;
@@ -178,7 +185,7 @@ public:
                     throw std::runtime_error(ss.str());
                 }
                 source.tree = std::shared_ptr<ntuple::FlatTree>(new ntuple::FlatTree(*source.file, "flatTree"));
-                ProcessDataSource(category.name, source);
+                ProcessDataSource(category, source);
             }
         }
 
@@ -191,7 +198,7 @@ public:
     }
 
 protected:
-    void ProcessDataSource(const std::string& dataCategoryName, const DataSource& dataSource)
+    void ProcessDataSource(const DataCategory& dataCategory, const DataSource& dataSource)
     {
         for(size_t current_entry = 0; current_entry < dataSource.tree->GetEntries(); ++current_entry) {
             dataSource.tree->GetEntry(current_entry);
@@ -200,9 +207,8 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategory eventCategory = DetermineEventCategory(event);
             if(eventCategory == EventCategory::Unknown) continue;
-            const bool isData = dataCategoryName.find("DATA") != std::string::npos;
-            const double weight = isData ? 1 : event.weight * dataSource.scale_factor;
-            FillHistograms(dataCategoryName, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
+            const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
+            FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
         }
     }
 
@@ -242,9 +248,7 @@ protected:
                 TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
                             anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name));
                 for (const analysis::DataCategory& category : categories){
-                    const bool isData = category.name.find("DATA") != std::string::npos;
-                    const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
-                    if (isData || isSignal) continue;
+                    if (category.IsData() || category.IsSignal()) continue;
                     if(!anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
                     TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
                     histogram.Add(&nonQCD_hist,-1);
@@ -303,11 +307,12 @@ protected:
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    const bool isData = category.name.find("DATA") != std::string::npos;
+                    if(category.IsReference()) continue;
                     TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     histogram.SetLineColor(category.color);
+                    ReweightWithBinWidth(histogram);
                     std::string legend_option = "f";
-                    if (!isData){
+                    if (!category.IsData()){
                         histogram.SetFillColor(category.color);
                         stack->Add(&histogram);
                     }
@@ -325,8 +330,7 @@ protected:
     const analysis::DataCategory& FindCategory(const std::string& prefix) const
     {
         for (const analysis::DataCategory& category : categories){
-            const bool foundPrefix = category.name.find(prefix) != std::string::npos;
-            if (foundPrefix)
+            if (category.NameContains(prefix))
                 return category;
         }
         throw analysis::exception("category not found : ") << prefix ;
@@ -367,13 +371,13 @@ private:
             categories.push_back(*currentCategory);
         DataCategoryCollection filteredCategories;
         for(const DataCategory& category : categories) {
-            if(category.name.find("SIGNAL") != std::string::npos) {
+            if(category.IsSignal()) {
                 const size_t sub_name_pos = category.name.find(' ');
                 const std::string sub_name = category.name.substr(sub_name_pos + 1);
                 if(sub_name != signalName)
                     continue;
             }
-            if(category.name.find("DATA") != std::string::npos) {
+            if(category.IsData()) {
                 const size_t sub_name_pos = category.name.find(' ');
                 const std::string sub_name = category.name.substr(sub_name_pos + 1);
                 if(sub_name != dataName)
@@ -404,6 +408,14 @@ private:
             ss >> hist.useLogY;
             histograms.push_back(hist);
           }
+    }
+
+    static void ReweightWithBinWidth(TH1D& histogram)
+    {
+        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
+            const double new_value = histogram.GetBinContent(n) / histogram.GetBinWidth(n);
+            histogram.SetBinContent(n, new_value);
+        }
     }
 
 protected:
