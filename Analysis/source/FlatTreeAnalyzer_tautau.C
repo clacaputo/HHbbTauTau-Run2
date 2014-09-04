@@ -68,6 +68,47 @@ protected:
         return EventType_QCD::Unknown;
     }
 
+    virtual void EstimateQCD() override
+    {
+        using analysis::EventType_QCD;
+        analysis::DataCategory qcd;
+        qcd.name = "QCD";
+        qcd.title = "QCD";
+        qcd.color = kGray;
+        for (auto& fullAnaDataEntry : fullAnaData){
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const analysis::HistogramDescriptor& hist : histograms){
+                const analysis::DataCategory& data = FindCategory("DATA");
+                if(!anaData[data.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
+                if(!anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].Contains(hist.name)) continue;
+                if(!anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
+                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
+                            anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].Get<TH1D>(hist.name));
+                TH1D& hist_SSIso = anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
+                TH1D& hist_SSnotIso = anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].Get<TH1D>(hist.name);
+                for (const analysis::DataCategory& category : categories){
+                    const bool isData = category.name.find("DATA") != std::string::npos;
+                    const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
+                    if (isData || isSignal) continue;
+                    if(!anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
+                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Get<TH1D>(hist.name);
+                    histogram.Add(&nonQCD_hist,-1);
+                    if(!anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
+                    TH1D& nonQCD_histIso = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
+                    hist_SSIso.Add(&nonQCD_histIso,-1);
+                    if(!anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].Contains(hist.name)) continue;
+                    TH1D& nonQCD_histNotIso =
+                            anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].Get<TH1D>(hist.name);
+                    hist_SSnotIso.Add(&nonQCD_histNotIso,-1);
+                }
+                const double ratio = hist_SSIso.Integral()/hist_SSnotIso.Integral();
+                std::cout << fullAnaDataEntry.first << " SS_Iso/SS_NotIso = " << ratio << std::endl;
+                histogram.Scale(ratio);
+            }
+        }
+        categories.push_back(qcd);
+    }
+
     virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
     {
         using analysis::EventType_Wjets;
