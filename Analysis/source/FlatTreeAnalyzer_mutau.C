@@ -73,7 +73,7 @@ protected:
 
         if(!event.againstMuonTight_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || event.pfRelIso_1 < muonID::pFRelIso)
+                || event.pfRelIso_1 >= muonID::pFRelIso)
             return EventType_Wjets::Unknown;
 
         if(event.mt_1 < muonID::mt)
@@ -94,7 +94,7 @@ protected:
                 if(!anaData[data.name].Wjets[EventType_Wjets::HighMt].Contains(hist.name)) continue;
                 TH1D& histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
                 //MC wjets
-                const analysis::DataCategory& wjets = FindCategory("REFERENCE");
+                const analysis::DataCategory& wjets = FindCategory("REFERENCE Wjets");
                 if(!anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Contains(hist.name))
                     throw analysis::exception("histogram for Wjets High Mt category doesn't exist");
                 TH1D& histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
