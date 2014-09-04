@@ -44,30 +44,29 @@ protected:
     virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
     {
         using analysis::EventType_QCD;
+        using namespace cuts::Htautau_Summer13::MuTau;
 
-        if (event.againstElectronLooseMVA_2 > 0.5){
-            // OS - isolated
-            if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < 1.5 &&
-                    event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < 1.5 &&
-                    (event.q_1 * event.q_2 == -1))
-                return EventType_QCD::OS_Isolated;
-            else if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < 1.5 &&
-                    event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < 1.5 &&
-                    (event.q_1 * event.q_2 == +1)) // SS - isolated
-                return EventType_QCD::SS_Isolated;
-            else if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= 1.5 ||
-                     event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= 1.5) &&
-                     (event.q_1 * event.q_2 == -1)) // OS - not isolated
-                return EventType_QCD::OS_NotIsolated;
-            else if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= 1.5 ||
-                     event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= 1.5) &&
-                     (event.q_1 * event.q_2 == +1)) // SS - not isolated
-                return EventType_QCD::SS_NotIsolated;
-            else
-                return EventType_QCD::Unknown;
-        }
-        else
+        if(event.againstMuonTight_2 < tauID::againstMuonTight
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits)
             return EventType_QCD::Unknown;
+
+        if(event.pfRelIso_1 < muonID::pFRelIso
+                && (event.q_1 * event.q_2 == -1) )
+            return EventType_QCD::OS_Isolated;
+
+        if(event.pfRelIso_1 < muonID::pFRelIso
+                && (event.q_1 * event.q_2 == +1) )
+            return EventType_QCD::SS_Isolated;
+
+        if(event.pfRelIso_1 >= muonID::pFRelIso
+                && (event.q_1 * event.q_2 == -1) )
+            return EventType_QCD::OS_NotIsolated;
+
+        if(event.pfRelIso_1 >= muonID::pFRelIso
+                && (event.q_1 * event.q_2 == +1) )
+            return EventType_QCD::SS_NotIsolated;
+
+        return EventType_QCD::Unknown;
     }
 
     virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override

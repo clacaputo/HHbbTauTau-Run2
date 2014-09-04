@@ -220,6 +220,9 @@ namespace TauTau {
                                                      // MVA3 is recommended, but it does not exists any more for new tauID
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5; // equivalent to the medium working point
+                                                     // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+
     }
 }
 

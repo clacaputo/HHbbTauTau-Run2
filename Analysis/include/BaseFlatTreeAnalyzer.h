@@ -28,6 +28,8 @@
 
 #include <iostream>
 #include <cmath>
+#include <list>
+#include <TColor.h>
 
 #include "AnalyzerData.h"
 #include "FlatTree.h"
@@ -65,13 +67,17 @@ struct DataCategory {
     DataSourceVector sources;
 };
 
-typedef std::vector<DataCategory> DataCategoryCollection;
+typedef std::list<DataCategory> DataCategoryCollection;
 
 static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
                                                            {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
                                                            {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
                                                            {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
-                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink}};
+                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink},
+                                                           {"pink_custom", (EColor) TColor::GetColor(250,202,255)},
+                                                           {"red_custom", (EColor) TColor::GetColor(222,90,106)},
+                                                           {"violet_custom", (EColor) TColor::GetColor(155,152,204)},
+                                                           {"yellow_custom", (EColor) TColor::GetColor(248,206,104)}};
 
 std::istream& operator>>(std::istream& s, EColor& color){
     std::string name;
@@ -227,7 +233,7 @@ protected:
         analysis::DataCategory qcd;
         qcd.name = "QCD";
         qcd.title = "QCD";
-        qcd.color = kGray;
+        qcd.color = colorMapName.at("pink_custom");
         for (auto& fullAnaDataEntry : fullAnaData){
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const analysis::HistogramDescriptor& hist : histograms){
@@ -246,7 +252,7 @@ protected:
                 histogram.Scale(1.06);
             }
         }
-        categories.push_back(qcd);
+        categories.push_front(qcd);
     }
 
     virtual void EstimateWjets() = 0;
