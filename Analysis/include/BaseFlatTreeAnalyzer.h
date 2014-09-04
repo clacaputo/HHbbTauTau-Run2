@@ -121,7 +121,7 @@ std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
 }
 
 enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
-enum class EventType_Wjets { Unknown, Signal, HighMissingEt };
+enum class EventType_Wjets { Unknown, Signal, HighMt };
 enum class EventCategory { Unknown, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
 static const std::map<EventCategory, std::string> eventCategoryMapName =

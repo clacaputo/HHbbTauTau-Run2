@@ -33,7 +33,6 @@ ggH.root 0.0037
 [EWK]
 EWK
 red_custom
-WJetsToLNu_v2.root 12.3768
 ZZJetsTo4L.root 0.0007
 ZZJetsTo2L2Nu.root 0.0148
 ZZJetsTo2L2Q.root 0.0254
@@ -41,6 +40,10 @@ WWJetsTo2L2Nu.root 0.0593
 WZJetsTo2L2Q.root 0.0135
 WZJetsTo3LNu.root 0.0103
 
+[REFERENCE Wjets]
+Wjets
+black
+WJetsToLNu_v2.root 12.3768
 
 [TTbar]
 t#bar{t}

@@ -174,7 +174,7 @@ private:
         stack.GetYaxis()->SetTitle(page_side.axis_titleY.c_str());
 
         data_hist.SetMarkerStyle(7);
-        data_hist.Draw("same P");
+        data_hist.Draw("samepP0E");
         pave_text.Draw("same");
         if(stat_pad)
             stat_pad->cd();
