@@ -114,6 +114,10 @@ namespace MuTau {
         const double deltaR = 0.15; // >
         const bool haveOppositeCharge = true; // =
     }
+
+    namespace BackgroundEstimation {
+        const double HighMtRegion = 70; // > For W-jets data driven estimation
+    }
 }
 
 namespace ETau {

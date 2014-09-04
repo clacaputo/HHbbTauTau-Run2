@@ -69,6 +69,17 @@ protected:
     virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
     {
         using analysis::EventType_Wjets;
+        using namespace cuts::Htautau_Summer13::MuTau;
+
+        if(!event.againstMuonTight_2
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                || event.pfRelIso_1 < muonID::pFRelIso)
+            return EventType_Wjets::Unknown;
+
+        if(event.mt_1 < muonID::mt)
+            return EventType_Wjets::Signal;
+        if(event.mt_1 > BackgroundEstimation::HighMtRegion)
+            return EventType_Wjets::HighMissingEt;
         return EventType_Wjets::Unknown;
     }
 
