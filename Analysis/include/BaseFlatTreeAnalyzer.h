@@ -27,10 +27,15 @@
 #pragma once
 
 #include <iostream>
+#include <cmath>
+#include <list>
+#include <TColor.h>
 
 #include "AnalyzerData.h"
 #include "FlatTree.h"
 #include "PrintTools/include/RootPrintToPdf.h"
+#include "../include/Htautau_Summer13.h"
+#include "../include/exception.h"
 
 namespace analysis {
 
@@ -60,15 +65,26 @@ struct DataCategory {
     EColor color;
 
     DataSourceVector sources;
+
+public:
+    bool IsData() const { return NameContains("DATA"); }
+    bool IsSignal() const { return NameContains("SIGNAL"); }
+    bool IsReference() const { return NameContains("REFERENCE"); }
+
+    bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
 };
 
-typedef std::vector<DataCategory> DataCategoryCollection;
+typedef std::list<DataCategory> DataCategoryCollection;
 
 static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
                                                            {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
                                                            {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
                                                            {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
-                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink}};
+                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink},
+                                                           {"pink_custom", (EColor) TColor::GetColor(250,202,255)},
+                                                           {"red_custom", (EColor) TColor::GetColor(222,90,106)},
+                                                           {"violet_custom", (EColor) TColor::GetColor(155,152,204)},
+                                                           {"yellow_custom", (EColor) TColor::GetColor(248,206,104)}};
 
 std::istream& operator>>(std::istream& s, EColor& color){
     std::string name;
@@ -112,12 +128,13 @@ std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
 }
 
 enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
-enum class EventType_Wjets { Unknown, Signal, HighMissingEt };
-enum class EventCategory { Unknown, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
+enum class EventType_Wjets { Unknown, Signal, HighMt };
+enum class EventCategory { Inclusive, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
 static const std::map<EventCategory, std::string> eventCategoryMapName =
-          { { EventCategory::Unknown, "Unknown" }, { EventCategory::TwoJets_ZeroBtag, "TwoJets_ZeroBtag" },
+          { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::TwoJets_ZeroBtag, "TwoJets_ZeroBtag" },
           { EventCategory::TwoJets_OneBtag, "TwoJets_OneBtag"}, { EventCategory::TwoJets_TwoBtag, "TwoJets_TwoBtag" } };
+typedef std::vector<EventCategory> EventCategoryVector;
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     s << eventCategoryMapName.at(eventCategory);
@@ -127,7 +144,7 @@ std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
-    TH1D_ENTRY(m_sv, 3000, 0.0, 3000.0)
+    TH1D_ENTRY(m_sv, 30, 0.0, 300.0)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -169,7 +186,7 @@ public:
                     throw std::runtime_error(ss.str());
                 }
                 source.tree = std::shared_ptr<ntuple::FlatTree>(new ntuple::FlatTree(*source.file, "flatTree"));
-                ProcessDataSource(category.name, source);
+                ProcessDataSource(category, source);
             }
         }
 
@@ -182,33 +199,79 @@ public:
     }
 
 protected:
-    void ProcessDataSource(const std::string& dataCategoryName, const DataSource& dataSource)
+    void ProcessDataSource(const DataCategory& dataCategory, const DataSource& dataSource)
     {
         for(size_t current_entry = 0; current_entry < dataSource.tree->GetEntries(); ++current_entry) {
             dataSource.tree->GetEntry(current_entry);
             const ntuple::Flat& event = dataSource.tree->data;
             const EventType_QCD eventTypeQCD = DetermineEventTypeForQCD(event);
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
-            const EventCategory eventCategory = DetermineEventCategory(event);
-            if(eventCategory == EventCategory::Unknown) continue;
-            const bool isData = dataCategoryName.find("DATA") != std::string::npos;
-            const double weight = isData ? 1 : event.weight * dataSource.scale_factor;
-            FillHistograms(dataCategoryName, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
+            const EventCategoryVector eventCategories = DetermineEventCategories(event);
+            const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
+            FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategories, weight);
         }
     }
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
-    virtual EventCategory DetermineEventCategory(const ntuple::Flat& event) = 0;
 
-    virtual void EstimateQCD() = 0;
+    virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
+    {
+        EventCategoryVector categories;
+        categories.push_back(EventCategory::Inclusive);
+
+        std::vector<Float_t> goodCVSvalues;
+        for (unsigned i = 0; i < event.eta_Bjets.size(); ++i){
+            if ( std::abs(event.eta_Bjets.at(i)) >= cuts::Htautau_Summer13::btag::eta) continue;
+            goodCVSvalues.push_back(event.csv_Bjets.at(i));
+        }
+
+        if (goodCVSvalues.size() >= 2) {
+
+            if (goodCVSvalues.at(0) <= cuts::Htautau_Summer13::btag::CSVM )
+                categories.push_back(EventCategory::TwoJets_ZeroBtag);
+            else if ( goodCVSvalues.at(1) <= cuts::Htautau_Summer13::btag::CSVM )
+                categories.push_back(EventCategory::TwoJets_OneBtag);
+            else
+                categories.push_back(EventCategory::TwoJets_TwoBtag);
+        }
+        return categories;
+    }
+
+    virtual void EstimateQCD()
+    {
+        analysis::DataCategory qcd;
+        qcd.name = "QCD";
+        qcd.title = "QCD";
+        qcd.color = colorMapName.at("pink_custom");
+        for (auto& fullAnaDataEntry : fullAnaData){
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const analysis::HistogramDescriptor& hist : histograms){
+                const analysis::DataCategory& data = FindCategory("DATA");
+                if(!anaData[data.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
+                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
+                            anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name));
+                for (const analysis::DataCategory& category : categories){
+                    if (category.IsData() || category.IsSignal()) continue;
+                    if(!anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
+                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
+                    histogram.Add(&nonQCD_hist,-1);
+                }
+                histogram.Scale(1.06);
+            }
+        }
+        categories.push_front(qcd);
+    }
+
     virtual void EstimateWjets() = 0;
 
     void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
-                        EventType_Wjets eventTypeWjets, EventCategory eventCategory, double weight)
+                        EventType_Wjets eventTypeWjets, const EventCategoryVector& eventCategories, double weight)
     {
-        fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
-        fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
+        for(auto eventCategory : eventCategories) {
+            fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
+            fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
+        }
     }
 
     void PrintStackedPlots()
@@ -250,11 +313,12 @@ protected:
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    const bool isData = category.name.find("DATA") != std::string::npos;
+                    if(category.IsReference()) continue;
                     TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     histogram.SetLineColor(category.color);
+                    ReweightWithBinWidth(histogram);
                     std::string legend_option = "f";
-                    if (!isData){
+                    if (!category.IsData()){
                         histogram.SetFillColor(category.color);
                         stack->Add(&histogram);
                     }
@@ -267,6 +331,15 @@ protected:
                 printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
             }
         }
+    }
+
+    const analysis::DataCategory& FindCategory(const std::string& prefix) const
+    {
+        for (const analysis::DataCategory& category : categories){
+            if (category.NameContains(prefix))
+                return category;
+        }
+        throw analysis::exception("category not found : ") << prefix ;
     }
 
 private:
@@ -304,13 +377,13 @@ private:
             categories.push_back(*currentCategory);
         DataCategoryCollection filteredCategories;
         for(const DataCategory& category : categories) {
-            if(category.name.find("SIGNAL") != std::string::npos) {
+            if(category.IsSignal()) {
                 const size_t sub_name_pos = category.name.find(' ');
                 const std::string sub_name = category.name.substr(sub_name_pos + 1);
                 if(sub_name != signalName)
                     continue;
             }
-            if(category.name.find("DATA") != std::string::npos) {
+            if(category.IsData()) {
                 const size_t sub_name_pos = category.name.find(' ');
                 const std::string sub_name = category.name.substr(sub_name_pos + 1);
                 if(sub_name != dataName)
@@ -341,6 +414,14 @@ private:
             ss >> hist.useLogY;
             histograms.push_back(hist);
           }
+    }
+
+    static void ReweightWithBinWidth(TH1D& histogram)
+    {
+        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
+            const double new_value = histogram.GetBinContent(n) / histogram.GetBinWidth(n);
+            histogram.SetBinContent(n, new_value);
+        }
     }
 
 protected:

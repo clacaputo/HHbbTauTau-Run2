@@ -30,19 +30,34 @@ gg->H->hh
 violet
 ggH.root 0.0037
 
+[EWK]
+EWK
+red_custom
+ZZJetsTo4L.root 0.0007
+ZZJetsTo2L2Nu.root 0.0148
+ZZJetsTo2L2Q.root 0.0254
+WWJetsTo2L2Nu.root 0.0593
+WZJetsTo2L2Q.root 0.0135
+WZJetsTo3LNu.root 0.0103
+
+[REFERENCE Wjets]
+Wjets
+black
+WJetsToLNu_v2.root 12.3768
+
 [TTbar]
 t#bar{t}
-red
+violet_custom
 tt_hadr.root 0.0719
 tt_lept.root 0.0430
 tt_semi.root 0.0862
 T_tW.root 0.4394
 Tbar_tW.root 0.4431
 
-[WJets]
-Wjets
-azure
-WJetsToLNu_v2.root 12.3768
+#[WJets]
+#Wjets
+#azure
+#WJetsToLNu_v2.root 12.3768
 #WJetsToLNu_v1.root 38.8332
 #W1Jets.root 3.5716
 #W2Jets.root 1.1232
@@ -50,23 +65,23 @@ WJetsToLNu_v2.root 12.3768
 #W4Jets.root 0.3150
 
 [DYJets]
-DYJets
-orange
+Z #rightarrow ll
+yellow_custom
 DYJetsToLL.root 2.2662
 #DY1Jets.root 0.4596
 #DY2Jets.root 0.1632
 #DY3Jets.root 0.0914
 #DY4Jets.root 0.0708
 
-[DiBoson]
-DiBoson
-green
-ZZJetsTo4L.root 0.0007
-ZZJetsTo2L2Nu.root 0.0148
-ZZJetsTo2L2Q.root 0.0254
-WWJetsTo2L2Nu.root 0.0593
-WZJetsTo2L2Q.root 0.0135
-WZJetsTo3LNu.root 0.0103
+#[DiBoson]
+#DiBoson
+#green
+#ZZJetsTo4L.root 0.0007
+#ZZJetsTo2L2Nu.root 0.0148
+#ZZJetsTo2L2Q.root 0.0254
+#WWJetsTo2L2Nu.root 0.0593
+#WZJetsTo2L2Q.root 0.0135
+#WZJetsTo3LNu.root 0.0103
 
 [DATA TauPlusX]
 Observed

@@ -84,6 +84,8 @@ namespace MuTau {
 
         const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
         const double pFRelIso = 0.1; // < twiki SWGuideMuonId#Muon_Isolation_AN1
+
+        const double mt = 30; // < not used for sync, only for the final selection.
     }
 
     namespace tauID {
@@ -111,6 +113,10 @@ namespace MuTau {
         const double pfRelIso = 0.3; // <
         const double deltaR = 0.15; // >
         const bool haveOppositeCharge = true; // =
+    }
+
+    namespace BackgroundEstimation {
+        const double HighMtRegion = 70; // > For W-jets data driven estimation
     }
 }
 
@@ -220,6 +226,9 @@ namespace TauTau {
                                                      // MVA3 is recommended, but it does not exists any more for new tauID
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5; // equivalent to the medium working point
+                                                     // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+
     }
 }
 
