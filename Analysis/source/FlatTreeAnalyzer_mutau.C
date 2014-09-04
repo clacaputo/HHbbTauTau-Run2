@@ -85,7 +85,46 @@ protected:
 
     virtual void EstimateWjets() override
     {
+        using analysis::EventType_Wjets;
+        for (auto& fullAnaDataEntry : fullAnaData){
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const analysis::HistogramDescriptor& hist : histograms){
+                //data
+                const analysis::DataCategory& data = FindCategory("DATA");
+                if(!anaData[data.name].Wjets[EventType_Wjets::HighMt].Contains(hist.name)) continue;
+                TH1D& histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
+                //MC wjets
+                const analysis::DataCategory& wjets = FindCategory("REFERENCE");
+                TH1D& histWjetsHighMt;
+                TH1D& histWjetsSignal;
+                if(!anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Contains<TH1D>(hist.name)){
+                    histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
+                }
+                if(!anaData[wjets.name].Wjets[EventType_Wjets::Signal].Contains<TH1D>(hist.name)){
+                    histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].Get<TH1D>(hist.name);
+                }
 
+                for (const analysis::DataCategory& category : categories){
+                    const bool isData = category.name.find("DATA") != std::string::npos;
+                    const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
+                    const bool isWjets = category.name.find("REFERENCE") != std::string::npos;
+                    if (isData || isSignal || isWjets) continue;
+                    if(!anaData[category.name].Wjets[EventType_Wjets::HighMt].Contains(hist.name)) continue;
+                    TH1D& nonWjets_hist = anaData[category.name].Wjets[EventType_Wjets::HighMt].Get<TH1D>(hist.name);
+                    histData_HighMt.Add(&nonWjets_hist,-1);
+                }
+                const double ratio = histWjetsSignal.Integral()/histWjetsHighMt.Integral();
+                std::cout << fullAnaDataEntry.first << " Wjets_signal/Wjets_HighMt = " << ratio << std::endl;
+                histData_HighMt.Scale(ratio);
+
+                for (const analysis::DataCategory& category : categories){
+                    const bool isEWK = category.name.find("EWK") != std::string::npos;
+                    if (!isEWK) continue;
+                    TH1D& histEWK = anaData[category.name].Wjets[EventType_Wjets::Signal].Get<TH1D>(hist.name);
+                    histEWK.Add(&histData_HighMt);
+                }
+            }
+        }
     }
 
 };
