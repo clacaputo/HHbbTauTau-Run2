@@ -46,24 +46,21 @@ protected:
         using analysis::EventType_QCD;
         using namespace cuts::Htautau_Summer13::MuTau;
 
-        if(event.againstMuonTight_2 < tauID::againstMuonTight
-                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits)
+        if(!event.againstMuonTight_2
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                || event.mt_1 < muonID::mt)
             return EventType_QCD::Unknown;
 
-        if(event.pfRelIso_1 < muonID::pFRelIso
-                && (event.q_1 * event.q_2 == -1) )
+        if(event.pfRelIso_1 < muonID::pFRelIso && (event.q_1 * event.q_2) == -1 )
             return EventType_QCD::OS_Isolated;
 
-        if(event.pfRelIso_1 < muonID::pFRelIso
-                && (event.q_1 * event.q_2 == +1) )
+        if(event.pfRelIso_1 < muonID::pFRelIso && (event.q_1 * event.q_2) == +1 )
             return EventType_QCD::SS_Isolated;
 
-        if(event.pfRelIso_1 >= muonID::pFRelIso
-                && (event.q_1 * event.q_2 == -1) )
+        if(event.pfRelIso_1 >= muonID::pFRelIso && (event.q_1 * event.q_2) == -1 )
             return EventType_QCD::OS_NotIsolated;
 
-        if(event.pfRelIso_1 >= muonID::pFRelIso
-                && (event.q_1 * event.q_2 == +1) )
+        if(event.pfRelIso_1 >= muonID::pFRelIso && (event.q_1 * event.q_2) == +1 )
             return EventType_QCD::SS_NotIsolated;
 
         return EventType_QCD::Unknown;

@@ -84,6 +84,8 @@ namespace MuTau {
 
         const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
         const double pFRelIso = 0.1; // < twiki SWGuideMuonId#Muon_Isolation_AN1
+
+        const double mt = 30; // < not used for sync, only for the final selection.
     }
 
     namespace tauID {
