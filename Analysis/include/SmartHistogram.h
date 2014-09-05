@@ -197,6 +197,10 @@ public:
     SmartHistogram(const std::string& name, size_t nbins, double low, double high)
         : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name) {}
 
+    SmartHistogram(const std::string& name, std::vector<double> bins)
+        : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name) {}
+
+
     virtual void WriteRootObject()
     {
         this->Write();

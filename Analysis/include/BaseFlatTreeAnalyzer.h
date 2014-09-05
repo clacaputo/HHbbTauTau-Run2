@@ -51,9 +51,6 @@ struct HistogramDescriptor {
     std::string title;
     std::string Xaxis_title;
     std::string Yaxis_title;
-    root_ext::Range xRange;
-    unsigned rebinFactor;
-    unsigned nBins;
     bool useLogY;
 };
 
@@ -122,8 +119,7 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
 }
 
 std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
-    s << "Name: " << hist.name << ", Title: " << hist.title << ", xmin: " << hist.xRange.min << ", xmax: " <<
-         hist.xRange.max << ", rebinFactor: " << hist.rebinFactor << ", useLog: " << hist.useLogY  ;
+    s << "Name: " << hist.name << ", Title: " << hist.title << ", useLog: " << hist.useLogY  ;
     return s;
 }
 
@@ -141,10 +137,13 @@ std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     return s;
 }
 
+static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
+                                               160, 170, 180, 190, 200, 225, 250, 275, 300 };
+
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
-    TH1D_ENTRY(m_sv, 30, 0.0, 300.0)
+    TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -284,7 +283,6 @@ protected:
                 ss_title << eventCategory << ": " << hist.title;
 
                 page.side.use_log_scaleY = hist.useLogY;
-                page.side.xRange = hist.xRange;
                 page.side.fit_range_x = false;
                 page.title = ss_title.str();
                 page.side.axis_titleX = hist.Xaxis_title;
@@ -414,11 +412,7 @@ private:
             ss >> hist.title;
             ss >> hist.Xaxis_title;
             ss >> hist.Yaxis_title;
-            ss >> hist.xRange.min;
-            ss >> hist.xRange.max;
-            ss >> hist.rebinFactor;
-            ss >> hist.nBins;
-            ss >> hist.useLogY;
+            ss >> std::boolalpha >> hist.useLogY;
             histograms.push_back(hist);
           }
     }

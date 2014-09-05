@@ -53,6 +53,7 @@
 
 #define TH1D_ENTRY(name, nbinsx, xlow, xup) ENTRY_1D(TH1D, name, nbinsx, xlow, xup)
 #define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
+#define TH1D_ENTRY_CUSTOM(name, bins) ENTRY_1D(TH1D, name, bins)
 
 #define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
     ENTRY_1D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
