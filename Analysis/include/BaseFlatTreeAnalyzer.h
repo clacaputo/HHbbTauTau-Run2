@@ -164,9 +164,10 @@ public:
     typedef std::map<EventCategory, AnaDataForDataCategory> FullAnaData;
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                         const std::string& outputFileName, const std::string& _signalName,
+                         const std::string& _outputFileName, const std::string& _signalName,
                          const std::string& _dataName, bool _isBlind=false)
-        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName), isBlind(_isBlind)
+        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
+          isBlind(_isBlind)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -199,7 +200,8 @@ public:
                 //EstimateWjets(eventCategory, anaData, hist);
             }
         }
-        std::cout << "Printing stacked plots... " << std::endl;
+        std::cout << "Saving tables and printing stacked plots... " << std::endl;
+        PrintTables();
         PrintStackedPlots();
     }
 
@@ -250,7 +252,7 @@ protected:
                                const HistogramDescriptor& hist) = 0;
 
     void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
-                        EventType_Wjets eventTypeWjets, const EventCategory& eventCategory, double weight)
+                        EventType_Wjets eventTypeWjets, EventCategory eventCategory, double weight)
     {
         fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
         fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
@@ -258,6 +260,7 @@ protected:
 
     void PrintStackedPlots()
     {
+        Printer printer(outputFileName + ".pdf");
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
@@ -422,16 +425,41 @@ private:
 
     }
 
+    void PrintTables()
+    {
+        static const std::string sep = ",";
 
+        std::ofstream of(outputFileName + ".csv");
+        of << std::setprecision(1) << std::fixed;
 
-
+        for(const auto& hist : histograms) {
+            of << hist.title << sep;
+            for (const auto& fullAnaDataEntry : fullAnaData) {
+                const EventCategory& eventCategory = fullAnaDataEntry.first;
+                of << eventCategory << sep;
+            }
+            of << std::endl;
+            for (auto& dataCategory : categories) {
+                of << dataCategory.title << sep;
+                for (auto& fullAnaDataEntry : fullAnaData) {
+                    AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+                    if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) )
+                        of << histogram->Integral() << sep;
+                    else
+                        of << "NaN" << sep;
+                }
+                of << std::endl;
+            }
+            of << std::endl << std::endl;
+        }
+    }
 
 protected:
     std::string inputPath;
     std::string signalName, dataName;
+    std::string outputFileName;
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
-    Printer printer;
     root_ext::SingleSidedPage page;
     FullAnaData fullAnaData;
     bool isBlind;
