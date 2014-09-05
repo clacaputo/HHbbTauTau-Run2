@@ -163,9 +163,9 @@ private:
 
         stack.Draw();
 
-        const Int_t firstBin = stack.GetXaxis()->FindBin(page_side.xRange.min);
-        const Int_t lastBin = stack.GetXaxis()->FindBin(page_side.xRange.max);
-        stack.GetXaxis()->SetRange(firstBin,lastBin);
+//        const Int_t firstBin = stack.GetXaxis()->FindBin(page_side.xRange.min);
+//        const Int_t lastBin = stack.GetXaxis()->FindBin(page_side.xRange.max);
+//        stack.GetXaxis()->SetRange(firstBin,lastBin);
         const Double_t maxY = std::max(stack.GetMaximum(),data_hist.GetMaximum());
         stack.SetMaximum(maxY*1.1);
         stack.SetMinimum(1);
