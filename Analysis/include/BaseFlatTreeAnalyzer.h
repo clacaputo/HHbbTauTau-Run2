@@ -165,7 +165,7 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, const bool _isBlind=false)
+                         const std::string& _dataName, bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName), isBlind(_isBlind)
     {
         ReadSourceCfg(source_cfg);
@@ -196,7 +196,7 @@ public:
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const auto& hist : histograms) {
                 EstimateQCD(eventCategory, anaData, hist);
-                EstimateWjets(eventCategory, anaData, hist);
+                //EstimateWjets(eventCategory, anaData, hist);
             }
         }
         std::cout << "Printing stacked plots... " << std::endl;
