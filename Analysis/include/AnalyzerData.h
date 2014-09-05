@@ -156,6 +156,13 @@ public:
     }
 
     template<typename ValueType>
+    SmartHistogram<ValueType>* GetPtr(const std::string& name)
+    {
+        if(!Contains(name)) return nullptr;
+        return &Get<ValueType>(name);
+    }
+
+    template<typename ValueType>
     SmartHistogram<ValueType>& Clone(const SmartHistogram<ValueType>& original)
     {
         if(data.count(original.Name()))
