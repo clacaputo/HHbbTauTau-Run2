@@ -165,8 +165,8 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& outputFileName, const std::string& _signalName,
-                         const std::string& _dataName)
-        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName)
+                         const std::string& _dataName, const bool _isBlind=false)
+        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName), isBlind(_isBlind)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -324,7 +324,14 @@ protected:
                     }
                     else {
                         legend_option = "p";
-                        data_histogram = &histogram;
+
+                        if (isBlind){
+                            TH1D* refilledData_histogram = refillData(&histogram);
+                            data_histogram = refilledData_histogram;
+                        }
+                        else
+                            data_histogram = &histogram;
+
                     }
                     leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
                 }
@@ -424,6 +431,24 @@ private:
         }
     }
 
+    float blinding_SM(float mass){ return (100<mass && mass<150); }
+
+    TH1D* refillData(TH1D* histogram)
+    {
+        TH1D* histData = (TH1D*)histogram->Clone();
+        histData->Clear();
+        for(int i=0; i<histData->GetNbinsX(); ++i){
+            histData->SetBinContent(i+1, blinding_SM (histData->GetBinCenter(i+1)) ? 0. : histData->GetBinContent(i+1));
+            histData->SetBinError (i+1,  blinding_SM (histData->GetBinCenter(i+1)) ? 0. : histData->GetBinError(i+1));
+        }
+        return histData;
+
+    }
+
+
+
+
+
 protected:
     std::string inputPath;
     std::string signalName, dataName;
@@ -432,6 +457,7 @@ protected:
     Printer printer;
     root_ext::SingleSidedPage page;
     FullAnaData fullAnaData;
+    bool isBlind;
 };
 
 } // namespace analysis
