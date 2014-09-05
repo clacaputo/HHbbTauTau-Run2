@@ -67,6 +67,7 @@ public:
     bool IsData() const { return NameContains("DATA"); }
     bool IsSignal() const { return NameContains("SIGNAL"); }
     bool IsReference() const { return NameContains("REFERENCE"); }
+    bool IsVirtual() const { return NameContains("VIRTUAL"); }
 
     bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
 };
@@ -189,10 +190,15 @@ public:
             }
         }
 
-        std::cout << "Estimating QCD... " << std::endl;
-        EstimateQCD();
-        std::cout << "Estimating Wjets... " << std::endl;
-        EstimateWjets();
+        std::cout << "Estimating QCD and Wjets... " << std::endl;
+        for (auto& fullAnaDataEntry : fullAnaData) {
+            const EventCategory& eventCategory = fullAnaDataEntry.first;
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const auto& hist : histograms) {
+                EstimateQCD(eventCategory, anaData, hist);
+                EstimateWjets(eventCategory, anaData, hist);
+            }
+        }
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots();
     }
@@ -207,7 +213,8 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
-            FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategories, weight);
+            for(auto eventCategory : eventCategories)
+                FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
         }
     }
 
@@ -237,40 +244,16 @@ protected:
         return categories;
     }
 
-    virtual void EstimateQCD()
-    {
-        analysis::DataCategory qcd;
-        qcd.name = "QCD";
-        qcd.title = "QCD";
-        qcd.color = colorMapName.at("pink_custom");
-        for (auto& fullAnaDataEntry : fullAnaData){
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const analysis::HistogramDescriptor& hist : histograms){
-                const analysis::DataCategory& data = FindCategory("DATA");
-                if(!anaData[data.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
-                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
-                            anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name));
-                for (const analysis::DataCategory& category : categories){
-                    if (category.IsData() || category.IsSignal()) continue;
-                    if(!anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
-                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
-                    histogram.Add(&nonQCD_hist,-1);
-                }
-                histogram.Scale(1.06);
-            }
-        }
-        categories.push_front(qcd);
-    }
-
-    virtual void EstimateWjets() = 0;
+    virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                             const HistogramDescriptor& hist) = 0;
+    virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                               const HistogramDescriptor& hist) = 0;
 
     void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
-                        EventType_Wjets eventTypeWjets, const EventCategoryVector& eventCategories, double weight)
+                        EventType_Wjets eventTypeWjets, const EventCategory& eventCategory, double weight)
     {
-        for(auto eventCategory : eventCategories) {
-            fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
-            fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
-        }
+        fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
+        fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
     }
 
     void PrintStackedPlots()

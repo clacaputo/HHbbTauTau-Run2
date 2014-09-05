@@ -30,6 +30,10 @@ gg->H->hh
 violet
 ggH.root 0.0037
 
+[VIRTUAL QCD]
+QCD
+pink_custom
+
 [EWK]
 EWK
 red_custom

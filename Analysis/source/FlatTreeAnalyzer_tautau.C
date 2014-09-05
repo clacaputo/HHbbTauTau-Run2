@@ -71,10 +71,7 @@ protected:
     virtual void EstimateQCD() override
     {
         using analysis::EventType_QCD;
-        analysis::DataCategory qcd;
-        qcd.name = "QCD";
-        qcd.title = "QCD";
-        qcd.color = analysis::colorMapName.at("pink_custom");
+        const analysis::DataCategory& qcd = FindCategory("QCD");
         for (auto& fullAnaDataEntry : fullAnaData){
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const analysis::HistogramDescriptor& hist : histograms){
@@ -111,7 +108,6 @@ protected:
                 histogram.Scale(ratio);
             }
         }
-        categories.push_front(qcd);
     }
 
     virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
