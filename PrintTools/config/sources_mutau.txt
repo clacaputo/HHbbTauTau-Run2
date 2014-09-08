@@ -39,10 +39,10 @@ Electroweak
 red_custom
 #WJetsToLNu_v1.root 9.3855
 #WJetsToLNu_v2.root 9.3855
-W1JetsToLNu_V19.root 3.5716
-W2JetsToLNu_V19.root 1.1232
-W3JetsToLNu_V19.root 0.6708
-W4Jets.root 0.3150
+#W1JetsToLNu_V19.root 3.5716
+#W2JetsToLNu_V19.root 1.1232
+#W3JetsToLNu_V19.root 0.6708
+#W4Jets.root 0.3150
 ZZJetsTo4L.root 0.0007
 ZZJetsTo2L2Nu.root 0.0148
 ZZJetsTo2L2Q.root 0.0254
@@ -53,8 +53,8 @@ WZJetsTo3LNu.root 0.0103
 [REFERENCE Wjets]
 Wjets
 black
-#WJetsToLNu_v1.root 9.3855
-#WJetsToLNu_v2.root 9.3855
+WJetsToLNu_v1.root 9.3855
+WJetsToLNu_v2.root 9.3855
 
 [TTbar]
 t#bar{t}
