@@ -172,6 +172,7 @@ public:
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
           isBlind(_isBlind)
     {
+        TH1::SetDefaultSumw2();
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
     }
@@ -266,7 +267,7 @@ protected:
                 b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
                                                event.mass_Bjets.at(n));
             const double mass_bb = (b_momentums.at(0) + b_momentums.at(1)).M();
-            anaData.m_bb().Fill(mass_bb);
+            anaData.m_bb().Fill(mass_bb, weight);
         }
     }
 
@@ -436,7 +437,9 @@ private:
     {
         for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
             const double new_value = histogram.GetBinContent(n) / histogram.GetBinWidth(n);
+            const double new_bin_error = histogram.GetBinError(n) / histogram.GetBinWidth(n);
             histogram.SetBinContent(n, new_value);
+            histogram.SetBinError(n, new_bin_error);
         }
     }
 
@@ -446,9 +449,8 @@ private:
     {
         TH1D* histData = (TH1D*)histogram->Clone();
         histData->Clear();
-        for(int i=0; i<histData->GetNbinsX(); ++i){
-            histData->SetBinContent(i+1, blinding_SM (histData->GetBinCenter(i+1)) ? 0. : histData->GetBinContent(i+1));
-            histData->SetBinError (i+1,  blinding_SM (histData->GetBinCenter(i+1)) ? 0. : histData->GetBinError(i+1));
+        for(int i=1; i<=histData->GetNbinsX(); ++i){
+            histData->SetBinContent(i, blinding_SM (histData->GetBinCenter(i)) ? 0. : histData->GetBinContent(i));
         }
         return histData;
 
