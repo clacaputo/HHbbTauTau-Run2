@@ -35,8 +35,8 @@ class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& _signalName,
-                           const std::string& _dataName)
-        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName)
+                           const std::string& _dataName, bool _isBlind=false)
+        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _isBlind)
     {
     }
 
@@ -66,6 +66,28 @@ protected:
         return EventType_QCD::Unknown;
     }
 
+    virtual void EstimateQCD(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+                             const analysis::HistogramDescriptor& hist) override
+    {
+        static const double scale_factor = 1.06;
+
+        using analysis::EventType_QCD;
+        const analysis::DataCategory& qcd = FindCategory("QCD");
+
+        const analysis::DataCategory& data = FindCategory("DATA");
+        root_ext::SmartHistogram<TH1D>* hist_data;
+        if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
+        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
+        for (const analysis::DataCategory& category : categories){
+            if (category.IsData() || category.IsSignal() || category.name == qcd.name) continue;
+            TH1D* nonQCD_hist;
+            if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
+            histogram.Add(nonQCD_hist, -1);
+        }
+        histogram.Scale(scale_factor);
+    }
+
+
     virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
     {
         using analysis::EventType_Wjets;
@@ -83,47 +105,42 @@ protected:
         return EventType_Wjets::Unknown;
     }
 
-    virtual void EstimateWjets() override
+    virtual void EstimateWjets(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                               const analysis::HistogramDescriptor& hist) override
     {
         using analysis::EventType_Wjets;
         using analysis::EventType_QCD;
 
-        for (auto& fullAnaDataEntry : fullAnaData){
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const analysis::HistogramDescriptor& hist : histograms) {
+        //data
+        const analysis::DataCategory& data = FindCategory("DATA");
+        TH1D* histData_HighMt;
+        if(!(histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) return;
 
-                //data
-                const analysis::DataCategory& data = FindCategory("DATA");
-                TH1D* histData_HighMt;
-                if(!(histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) continue;
+        //MC wjets
+        const analysis::DataCategory& wjets = FindCategory("REFERENCE Wjets");
+        TH1D* histWjetsHighMt;
+        if(!(histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name)))
+            throw analysis::exception("histogram for Wjets High Mt category doesn't exist");
 
-                //MC wjets
-                const analysis::DataCategory& wjets = FindCategory("REFERENCE Wjets");
-                TH1D* histWjetsHighMt;
-                if(!(histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name)))
-                    throw analysis::exception("histogram for Wjets High Mt category doesn't exist");
+        TH1D* histWjetsSignal;
+        if(!(histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name)))
+            throw analysis::exception("histogram for Wjets Signal category doesn't exist");
 
-                TH1D* histWjetsSignal;
-                if(!(histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name)))
-                    throw analysis::exception("histogram for Wjets Signal category doesn't exist");
-
-                for (const analysis::DataCategory& category : categories){
-                    if (category.IsData() || category.IsSignal() || category.IsReference()) continue;
-                    TH1D* nonWjets_hist;
-                    if(!(nonWjets_hist = anaData[category.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) continue;
-                    histData_HighMt->Add(nonWjets_hist,-1);
-                }
-
-                const double ratio = histWjetsSignal->Integral()/histWjetsHighMt->Integral();
-                std::cout << fullAnaDataEntry.first << " Wjets_signal/Wjets_HighMt = " << ratio << std::endl;
-                histData_HighMt->Scale(ratio);
-
-                const analysis::DataCategory& ewk = FindCategory("EWK");
-                TH1D* histEWK;
-                if(!(histEWK = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name)))
-                histEWK->Add(histData_HighMt);
-            }
+        for (const analysis::DataCategory& category : categories){
+            if (category.IsData() || category.IsSignal() || category.IsReference() || category.IsVirtual()) continue;
+            TH1D* nonWjets_hist;
+            if(!(nonWjets_hist = anaData[category.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) continue;
+            histData_HighMt->Add(nonWjets_hist,-1);
         }
+
+        const double ratio = histWjetsSignal->Integral()/histWjetsHighMt->Integral();
+        std::cout << eventCategory << " Wjets_signal/Wjets_HighMt = " << ratio << std::endl;
+        histData_HighMt->Scale(ratio);
+
+        const analysis::DataCategory& ewk = FindCategory("EWK");
+        TH1D* histEWK;
+        if(!(histEWK = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name)))
+        histEWK->Add(histData_HighMt);
     }
 
 };

@@ -30,12 +30,14 @@
 #include <cmath>
 #include <list>
 #include <TColor.h>
+#include <TLorentzVector.h>
 
 #include "AnalyzerData.h"
 #include "FlatTree.h"
+#include "AnalysisMath.h"
 #include "PrintTools/include/RootPrintToPdf.h"
-#include "../include/Htautau_Summer13.h"
-#include "../include/exception.h"
+#include "Htautau_Summer13.h"
+#include "exception.h"
 
 namespace analysis {
 
@@ -51,9 +53,6 @@ struct HistogramDescriptor {
     std::string title;
     std::string Xaxis_title;
     std::string Yaxis_title;
-    root_ext::Range xRange;
-    unsigned rebinFactor;
-    unsigned nBins;
     bool useLogY;
 };
 
@@ -70,6 +69,7 @@ public:
     bool IsData() const { return NameContains("DATA"); }
     bool IsSignal() const { return NameContains("SIGNAL"); }
     bool IsReference() const { return NameContains("REFERENCE"); }
+    bool IsVirtual() const { return NameContains("VIRTUAL"); }
 
     bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
 };
@@ -122,8 +122,7 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
 }
 
 std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
-    s << "Name: " << hist.name << ", Title: " << hist.title << ", xmin: " << hist.xRange.min << ", xmax: " <<
-         hist.xRange.max << ", rebinFactor: " << hist.rebinFactor << ", useLog: " << hist.useLogY  ;
+    s << "Name: " << hist.name << ", Title: " << hist.title << ", useLog: " << hist.useLogY  ;
     return s;
 }
 
@@ -141,10 +140,14 @@ std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     return s;
 }
 
+static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
+                                               160, 170, 180, 190, 200, 225, 250, 275, 300 };
+
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
-    TH1D_ENTRY(m_sv, 30, 0.0, 300.0)
+    TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
+    TH1D_ENTRY(m_bb, 15, 0, 600)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -164,9 +167,10 @@ public:
     typedef std::map<EventCategory, AnaDataForDataCategory> FullAnaData;
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                         const std::string& outputFileName, const std::string& _signalName,
-                         const std::string& _dataName)
-        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName)
+                         const std::string& _outputFileName, const std::string& _signalName,
+                         const std::string& _dataName, bool _isBlind=false)
+        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
+          isBlind(_isBlind)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -190,11 +194,18 @@ public:
             }
         }
 
-        std::cout << "Estimating QCD... " << std::endl;
-        EstimateQCD();
-        std::cout << "Estimating Wjets... " << std::endl;
-        EstimateWjets();
-        std::cout << "Printing stacked plots... " << std::endl;
+        std::cout << "Estimating QCD and Wjets... " << std::endl;
+        for (auto& fullAnaDataEntry : fullAnaData) {
+            const EventCategory& eventCategory = fullAnaDataEntry.first;
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const auto& hist : histograms) {
+                EstimateQCD(eventCategory, anaData, hist);
+                //EstimateWjets(eventCategory, anaData, hist);
+            }
+        }
+        std::cout << "Saving tables and printing stacked plots... " << std::endl;
+        PrintTables("comma", ",");
+        PrintTables("semicolon", ";");
         PrintStackedPlots();
     }
 
@@ -208,7 +219,10 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
-            FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategories, weight);
+            for(auto eventCategory : eventCategories) {
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight);
+            }
         }
     }
 
@@ -238,44 +252,27 @@ protected:
         return categories;
     }
 
-    virtual void EstimateQCD()
-    {
-        analysis::DataCategory qcd;
-        qcd.name = "QCD";
-        qcd.title = "QCD";
-        qcd.color = colorMapName.at("pink_custom");
-        for (auto& fullAnaDataEntry : fullAnaData){
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const analysis::HistogramDescriptor& hist : histograms){
-                const analysis::DataCategory& data = FindCategory("DATA");
-                if(!anaData[data.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
-                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
-                            anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name));
-                for (const analysis::DataCategory& category : categories){
-                    if (category.IsData() || category.IsSignal()) continue;
-                    if(!anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
-                    TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
-                    histogram.Add(&nonQCD_hist,-1);
-                }
-                histogram.Scale(1.06);
-            }
-        }
-        categories.push_front(qcd);
-    }
+    virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                             const HistogramDescriptor& hist) = 0;
+    virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                               const HistogramDescriptor& hist) = 0;
 
-    virtual void EstimateWjets() = 0;
-
-    void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
-                        EventType_Wjets eventTypeWjets, const EventCategoryVector& eventCategories, double weight)
+    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
     {
-        for(auto eventCategory : eventCategories) {
-            fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
-            fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
+        anaData.m_sv().Fill(event.m_sv, weight);
+        if(event.mass_Bjets.size() >= 2) {
+            std::vector<TLorentzVector> b_momentums(2);
+            for(size_t n = 0; n < b_momentums.size(); ++n)
+                b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
+                                               event.mass_Bjets.at(n));
+            const double mass_bb = (b_momentums.at(0) + b_momentums.at(1)).M();
+            anaData.m_bb().Fill(mass_bb);
         }
     }
 
     void PrintStackedPlots()
     {
+        Printer printer(outputFileName + ".pdf");
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
@@ -284,18 +281,21 @@ protected:
                 ss_title << eventCategory << ": " << hist.title;
 
                 page.side.use_log_scaleY = hist.useLogY;
-                page.side.xRange = hist.xRange;
                 page.side.fit_range_x = false;
                 page.title = ss_title.str();
                 page.side.axis_titleX = hist.Xaxis_title;
                 page.side.axis_titleY = hist.Yaxis_title;
                 page.side.layout.has_stat_pad = true;
+                page.side.layout.main_pad.right_top.x=0.75;
+                page.side.layout.main_pad.right_top.y=0.85;
+                page.side.layout.stat_pad.left_bottom.x=0.755;
+                page.side.layout.stat_pad.left_bottom.y=0.3;
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
                 TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
                 leg->SetFillColor(0);
-                leg->SetTextSize(0.1);
+                leg->SetTextSize(0.055);
                 TString lumist="19.7 fb^{-1}";
                 TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
                 ll->SetTextSize(0.03);
@@ -308,26 +308,48 @@ protected:
                 ll->AddText(0.01,0.5,text);
                 text = "#sqrt{s} = 8 TeV  L = ";
                 text = text + lumist;
-                ll->AddText(0.65, 0.6, text);
+                ll->AddText(0.25, 0.6, text);
 
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
                     if(category.IsReference()) continue;
                     TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
-                    histogram.SetLineColor(category.color);
+                    histogram.SetLineColor(colorMapName.at("black"));
+                    histogram.SetLineWidth(1.);
+                    //InitHist(&histogram,"","",category.color,1001);
                     ReweightWithBinWidth(histogram);
+                    SetErrorX(histogram);
                     std::string legend_option = "f";
                     if (!category.IsData()){
                         histogram.SetFillColor(category.color);
+                        //histogram.SetBinErrorOption(0);
+                        if(category.IsSignal()){
+//                            histogram.Scale(10);
+                        }
                         stack->Add(&histogram);
                     }
                     else {
-                        legend_option = "p";
-                        data_histogram = &histogram;
+                        legend_option = "LP";
+                        gStyle->SetErrorX(0.8);
+                        if (isBlind){
+                            TH1D* refilledData_histogram = refillData(&histogram);
+                            data_histogram = refilledData_histogram;
+                        }
+                        else
+                            data_histogram = &histogram;
+
                     }
-                    leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
+                    if (category.IsSignal()){
+                        //InitSignal(&histogram);
+                        leg->AddEntry(&histogram , "hh#rightarrow#tau#taubb(m_{H}=300,tan#beta=2.5))" , "F" );
+                        //leg->SetLineStyle(2);
+                        leg->SetLineColor(category.color);
+                    }
+                    else
+                        leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
                 }
+                //InitData(data_histogram);
                 printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
             }
         }
@@ -407,13 +429,17 @@ private:
             ss >> hist.title;
             ss >> hist.Xaxis_title;
             ss >> hist.Yaxis_title;
-            ss >> hist.xRange.min;
-            ss >> hist.xRange.max;
-            ss >> hist.rebinFactor;
-            ss >> hist.nBins;
-            ss >> hist.useLogY;
+            ss >> std::boolalpha >> hist.useLogY;
             histograms.push_back(hist);
           }
+    }
+
+    static void SetErrorX(TH1D& histogram)
+    {
+        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
+            const double binWidth = histogram.GetBinWidth(n);
+            histogram.SetBinError (n+1,binWidth);
+        }
     }
 
     static void ReweightWithBinWidth(TH1D& histogram)
@@ -424,14 +450,127 @@ private:
         }
     }
 
+    float blinding_SM(float mass){ return (100<mass && mass<150); }
+
+    TH1D* refillData(TH1D* histogram)
+    {
+        TH1D* histData = (TH1D*)histogram->Clone();
+        histData->Clear();
+        for(int i=0; i<histData->GetNbinsX(); ++i){
+            histData->SetBinContent(i+1, blinding_SM (histData->GetBinCenter(i+1)) ? 0. : histData->GetBinContent(i+1));
+            histData->SetBinError (i+1,  blinding_SM (histData->GetBinCenter(i+1)) ? 0. : histData->GetBinError(i+1));
+        }
+        return histData;
+
+    }
+
+    void PrintTables(const std::string& name_suffix, const std::string& sep)
+    {
+        std::ofstream of(outputFileName + "_" + name_suffix + ".csv");
+        of << std::setprecision(1) << std::fixed;
+
+        for(const auto& hist : histograms) {
+            of << hist.title << sep;
+            for (const auto& fullAnaDataEntry : fullAnaData) {
+                const EventCategory& eventCategory = fullAnaDataEntry.first;
+                of << eventCategory << sep;
+            }
+            of << std::endl;
+            for (auto& dataCategory : categories) {
+                of << dataCategory.title << sep;
+                for (auto& fullAnaDataEntry : fullAnaData) {
+                    AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+                    if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) )
+                        of << histogram->Integral() << sep;
+                    else
+                        of << "NaN" << sep;
+                }
+                of << std::endl;
+            }
+            of << std::endl << std::endl;
+        }
+    }
+
+    void SetLegendStyle(TLegend* leg)
+    {
+      leg->SetFillStyle (0);
+      leg->SetFillColor (0);
+      leg->SetBorderSize(0);
+    }
+
+    void InitData(TH1* hist)
+    {
+      hist->SetMarkerStyle(20.);
+      hist->SetMarkerSize (1.3);
+      hist->SetLineWidth  ( 1.);
+    }
+
+    void InitSignal(TH1 *hist)
+    {
+      hist->SetLineStyle(2);
+      hist->SetLineWidth(2.);
+      hist->SetLineColor(kBlue);
+    }
+
+    void CMSPrelim(const char* dataset, const char* channel, double lowX, double lowY)
+    {
+      TPaveText* lumi  = new TPaveText(lowX, lowY+0.06, lowX+0.30, lowY+0.16, "NDC");
+      lumi->SetBorderSize(   0 );
+      lumi->SetFillStyle(    0 );
+      lumi->SetTextAlign(   12 );
+      lumi->SetTextSize ( 0.035 );
+      lumi->SetTextColor(    1 );
+      lumi->SetTextFont (   62 );
+      lumi->AddText(dataset);
+      lumi->Draw();
+
+      TPaveText* chan     = new TPaveText(lowX+0.68, lowY+0.061, lowX+0.80, lowY+0.161, "NDC");
+      chan->SetBorderSize(   0 );
+      chan->SetFillStyle(    0 );
+      chan->SetTextAlign(   12 );
+      chan->SetTextSize ( 0.04 );
+      chan->SetTextColor(    1 );
+      chan->SetTextFont (   62 );
+      chan->AddText(channel);
+      chan->Draw();
+    }
+
+    void InitHist(TH1 *hist, const char *xtit, const char *ytit, int color, int style)
+    {
+      hist->SetXTitle(xtit);
+      hist->SetYTitle(ytit);
+      hist->SetLineColor(kBlack);
+      hist->SetLineWidth(    1.);
+      hist->SetFillColor(color );
+      hist->SetFillStyle(style );
+      hist->SetTitleSize  (0.055,"Y");
+      hist->SetTitleOffset(1.600,"Y");
+      hist->SetLabelOffset(0.014,"Y");
+      hist->SetLabelSize  (0.040,"Y");
+      hist->SetLabelFont  (42   ,"Y");
+      hist->SetTitleSize  (0.055,"X");
+      hist->SetTitleOffset(1.300,"X");
+      hist->SetLabelOffset(0.014,"X");
+      hist->SetLabelSize  (0.040,"X");
+      hist->SetLabelFont  (42   ,"X");
+      hist->SetMarkerStyle(20);
+      hist->SetMarkerColor(color);
+      hist->SetMarkerSize (0.6);
+      hist->GetYaxis()->SetTitleFont(42);
+      hist->GetXaxis()->SetTitleFont(42);
+      hist->SetTitle("");
+      return;
+    }
+
 protected:
     std::string inputPath;
     std::string signalName, dataName;
+    std::string outputFileName;
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
-    Printer printer;
     root_ext::SingleSidedPage page;
     FullAnaData fullAnaData;
+    bool isBlind;
 };
 
 } // namespace analysis

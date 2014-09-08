@@ -238,3 +238,4 @@ Analysis/include/BaseFlatTreeAnalyzer.h
 Analysis/source/FlatTreeAnalyzer_tautau.C
 Analysis/source/FlatTreeAnalyzer_etau.C
 Analysis/source/FlatTreeAnalyzer_mutau.C
+Analysis/include/AnalysisMath.h

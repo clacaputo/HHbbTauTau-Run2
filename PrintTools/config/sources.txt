@@ -7,31 +7,35 @@
 
 [SIGNAL Radion300]
 Radion 300 GeV
-violet
+blue
 Radion300.root 0.3704
 
 [SIGNAL Radion500]
 Radion 500 GeV
-violet
+blue
 Radion500.root 0.0680
 
 [SIGNAL Radion700]
 Radion 700 GeV
-violet
+blue
 Radion700.root 0.0256
 
 [SIGNAL Radion1000]
 Radion 1000 GeV
-violet
+blue
 Radion1000.root 0.0079
 
 [SIGNAL ggHhh300]
 gg->H->hh
-violet
+blue
 ggH.root 0.0037
 
+[VIRTUAL QCD]
+QCD
+pink_custom
+
 [EWK]
-EWK
+Electroweak
 red_custom
 #WJetsToLNu_v2.root 12.3768
 ZZJetsTo4L.root 0.0007

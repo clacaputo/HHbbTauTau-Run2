@@ -30,8 +30,8 @@ class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_tautau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                             const std::string& outputFileName, const std::string& _signalName,
-                            const std::string& _dataName)
-        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName)
+                            const std::string& _dataName, bool _isBlind=false)
+        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName,_isBlind)
     {
     }
 
@@ -44,7 +44,6 @@ protected:
         if (event.againstElectronLooseMVA_2 < againstElectronLooseMVA3)
             return EventType_QCD::Unknown;
 
-        // OS - isolated
         if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
                 event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
                 (event.q_1 * event.q_2 == -1))
@@ -52,66 +51,55 @@ protected:
 
         if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
                 event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                (event.q_1 * event.q_2 == +1)) // SS - isolated
+                (event.q_1 * event.q_2 == +1))
             return EventType_QCD::SS_Isolated;
 
         if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits ||
                  event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits) &&
-                 (event.q_1 * event.q_2 == -1)) // OS - not isolated
+                 (event.q_1 * event.q_2 == -1))
             return EventType_QCD::OS_NotIsolated;
 
         if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits ||
                  event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits) &&
-                 (event.q_1 * event.q_2 == +1)) // SS - not isolated
+                 (event.q_1 * event.q_2 == +1))
             return EventType_QCD::SS_NotIsolated;
 
         return EventType_QCD::Unknown;
     }
 
-    virtual void EstimateQCD() override
+    virtual void EstimateQCD(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                             const analysis::HistogramDescriptor& hist) override
     {
         using analysis::EventType_QCD;
-        analysis::DataCategory qcd;
-        qcd.name = "QCD";
-        qcd.title = "QCD";
-        qcd.color = analysis::colorMapName.at("pink_custom");
-        for (auto& fullAnaDataEntry : fullAnaData){
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const analysis::HistogramDescriptor& hist : histograms){
-                const analysis::DataCategory& data = FindCategory("DATA");
-                if(!anaData[data.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) continue;
-                if(!anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].Contains(hist.name)) continue;
-                if(!anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) continue;
-                TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(
-                            anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].Get<TH1D>(hist.name));
-                TH1D& hist_SSIso = anaData[qcd.name].QCD[EventType_QCD::SS_Isolated].Clone(
-                            anaData[data.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name));
-                TH1D& hist_SSnotIso = anaData[qcd.name].QCD[EventType_QCD::SS_NotIsolated].Clone(
-                            anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].Get<TH1D>(hist.name));
-                for (const analysis::DataCategory& category : categories){
-                    const bool isData = category.name.find("DATA") != std::string::npos;
-                    const bool isSignal = category.name.find("SIGNAL") != std::string::npos;
-                    if (isData || isSignal) continue;
-                    if(anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Contains(hist.name)) {
-                        TH1D& nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].Get<TH1D>(hist.name);
-                        histogram.Add(&nonQCD_hist,-1);
-                    }
-                    if(anaData[category.name].QCD[EventType_QCD::SS_Isolated].Contains(hist.name)) {
-                        TH1D& nonQCD_histIso = anaData[category.name].QCD[EventType_QCD::SS_Isolated].Get<TH1D>(hist.name);
-                        hist_SSIso.Add(&nonQCD_histIso,-1);
-                    }
-                    if(anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].Contains(hist.name)) {
-                        TH1D& nonQCD_histNotIso =
-                                anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].Get<TH1D>(hist.name);
-                        hist_SSnotIso.Add(&nonQCD_histNotIso,-1);
-                    }
-                }
-                const double ratio = hist_SSIso.Integral()/hist_SSnotIso.Integral();
-                std::cout << fullAnaDataEntry.first << " SS_Iso/SS_NotIso = " << ratio << std::endl;
-                histogram.Scale(ratio);
-            }
+
+        const analysis::DataCategory& qcd = FindCategory("QCD");
+        const analysis::DataCategory& data = FindCategory("DATA");
+
+        auto histogram_data = anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name);
+        auto hist_SSIso_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name);
+        auto hist_SSnotIso_data = anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name);
+        if(!histogram_data || !hist_SSIso_data || !hist_SSnotIso_data) return;
+
+        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*histogram_data);
+        TH1D& hist_SSIso = anaData[qcd.name].QCD[EventType_QCD::SS_Isolated].Clone(*hist_SSIso_data);
+        TH1D& hist_SSnotIso = anaData[qcd.name].QCD[EventType_QCD::SS_NotIsolated].Clone(*hist_SSnotIso_data);
+
+        for (const analysis::DataCategory& category : categories) {
+            if(category.IsData() || category.IsSignal() || category.name == qcd.name) continue;
+
+            if( TH1D* nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name) )
+                histogram.Add(nonQCD_hist, -1);
+
+            if( TH1D* nonQCD_histIso = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name) )
+                hist_SSIso.Add(nonQCD_histIso, -1);
+
+            if( TH1D* nonQCD_histNotIso = anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name) )
+                hist_SSnotIso.Add(nonQCD_histNotIso, -1);
         }
-        categories.push_front(qcd);
+
+        const double ratio = hist_SSIso.Integral()/hist_SSnotIso.Integral();
+        std::cout << eventCategory << " SS_Iso/SS_NotIso = " << ratio << std::endl;
+        histogram.Scale(ratio);
     }
 
     virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
@@ -120,7 +108,8 @@ protected:
         return EventType_Wjets::Unknown;
     }
 
-    virtual void EstimateWjets() override
+    virtual void EstimateWjets(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                               const analysis::HistogramDescriptor& hist) override
     {
 
     }
