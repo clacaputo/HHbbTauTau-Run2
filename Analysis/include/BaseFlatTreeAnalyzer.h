@@ -164,9 +164,9 @@ public:
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
-    TH1D_ENTRY(DeltaR_tt, 30, 0, 4)
-    TH1D_ENTRY(DeltaR_bb, 30, 0, 4)
-    TH1D_ENTRY(DeltaR_hh, 30, 0, 4)
+    TH1D_ENTRY(DeltaR_tt, 40, 0, 4)
+    TH1D_ENTRY(DeltaR_bb, 40, 0, 4)
+    TH1D_ENTRY(DeltaR_hh, 40, 0, 4)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -300,9 +300,9 @@ protected:
             for(size_t n = 0; n < b_momentums.size(); ++n)
                 b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
                                                event.mass_Bjets.at(n));
-            anaData.pt_b1.Fill(b_momentums.at(0).Pt(), weight);
+            anaData.pt_b1().Fill(b_momentums.at(0).Pt(), weight);
             anaData.eta_b1().Fill(b_momentums.at(0).Eta(), weight);
-            anaData.pt_b2.Fill(b_momentums.at(1).Pt(), weight);
+            anaData.pt_b2().Fill(b_momentums.at(1).Pt(), weight);
             anaData.eta_b2().Fill(b_momentums.at(1).Eta(), weight);
             anaData.DeltaPhi_bb().Fill(b_momentums.at(0).DeltaPhi(b_momentums.at(1)), weight);
             anaData.DeltaR_bb().Fill(b_momentums.at(0).DeltaR(b_momentums.at(1)), weight);
