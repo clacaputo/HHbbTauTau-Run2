@@ -173,9 +173,9 @@ public:
           WjetsData(_WjetsData), isBlind(_isBlind)
     {
         TH1::SetDefaultSumw2();
+
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
-        //TH1::SetDefaultSumw2();
     }
 
     void Run()
