@@ -30,12 +30,14 @@
 #include <cmath>
 #include <list>
 #include <TColor.h>
+#include <TLorentzVector.h>
 
 #include "AnalyzerData.h"
 #include "FlatTree.h"
+#include "AnalysisMath.h"
 #include "PrintTools/include/RootPrintToPdf.h"
-#include "../include/Htautau_Summer13.h"
-#include "../include/exception.h"
+#include "Htautau_Summer13.h"
+#include "exception.h"
 
 namespace analysis {
 
@@ -145,6 +147,7 @@ class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
+    TH1D_ENTRY(m_bb, 15, 0, 600)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -215,8 +218,10 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
-            for(auto eventCategory : eventCategories)
-                FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
+            for(auto eventCategory : eventCategories) {
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight);
+            }
         }
     }
 
@@ -251,11 +256,17 @@ protected:
     virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
                                const HistogramDescriptor& hist) = 0;
 
-    void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
-                        EventType_Wjets eventTypeWjets, EventCategory eventCategory, double weight)
+    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
     {
-        fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
-        fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
+        anaData.m_sv().Fill(event.m_sv, weight);
+        if(event.mass_Bjets.size() >= 2) {
+            std::vector<TLorentzVector> b_momentums(2);
+            for(size_t n = 0; n < b_momentums.size(); ++n)
+                b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
+                                               event.mass_Bjets.at(n));
+            const double mass_bb = (b_momentums.at(0) + b_momentums.at(1)).M();
+            anaData.m_bb().Fill(mass_bb);
+        }
     }
 
     void PrintStackedPlots()
