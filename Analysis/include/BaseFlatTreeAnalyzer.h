@@ -287,9 +287,9 @@ protected:
                 page.side.axis_titleX = hist.Xaxis_title;
                 page.side.axis_titleY = hist.Yaxis_title;
                 page.side.layout.has_stat_pad = true;
-                page.side.layout.main_pad.right_top.x=0.70;
-                page.side.layout.main_pad.right_top.y=0.80;
-                page.side.layout.stat_pad.left_bottom.x=0.705;
+                page.side.layout.main_pad.right_top.x=0.75;
+                page.side.layout.main_pad.right_top.y=0.85;
+                page.side.layout.stat_pad.left_bottom.x=0.755;
                 page.side.layout.stat_pad.left_bottom.y=0.3;
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
@@ -309,7 +309,7 @@ protected:
                 ll->AddText(0.01,0.5,text);
                 text = "#sqrt{s} = 8 TeV  L = ";
                 text = text + lumist;
-                ll->AddText(0.21, 0.6, text);
+                ll->AddText(0.25, 0.6, text);
 
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
@@ -320,9 +320,11 @@ protected:
                     histogram.SetLineWidth(1.);
                     //InitHist(&histogram,"","",category.color,1001);
                     ReweightWithBinWidth(histogram);
+                    SetErrorX(histogram);
                     std::string legend_option = "f";
                     if (!category.IsData()){
                         histogram.SetFillColor(category.color);
+                        //histogram.SetBinErrorOption(0);
                         if(category.IsSignal()){
 //                            histogram.Scale(10);
                         }
@@ -330,7 +332,7 @@ protected:
                     }
                     else {
                         legend_option = "LP";
-
+                        gStyle->SetErrorX(0.8);
                         if (isBlind){
                             TH1D* refilledData_histogram = refillData(&histogram);
                             data_histogram = refilledData_histogram;
@@ -348,7 +350,7 @@ protected:
                     else
                         leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
                 }
-                InitData(data_histogram);
+                //InitData(data_histogram);
                 printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
             }
         }
@@ -431,6 +433,14 @@ private:
             ss >> std::boolalpha >> hist.useLogY;
             histograms.push_back(hist);
           }
+    }
+
+    static void SetErrorX(TH1D& histogram)
+    {
+        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
+            const double binWidth = histogram.GetBinWidth(n);
+            histogram.SetBinError (n+1,binWidth);
+        }
     }
 
     static void ReweightWithBinWidth(TH1D& histogram)
