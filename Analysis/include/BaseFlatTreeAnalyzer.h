@@ -474,26 +474,39 @@ private:
         of << std::setprecision(1) << std::fixed;
 
         for(const auto& hist : histograms) {
-            of << hist.title << sep;
-            for (const auto& fullAnaDataEntry : fullAnaData) {
-                const EventCategory& eventCategory = fullAnaDataEntry.first;
-                of << eventCategory << sep;
+            PrintHistogram(of, sep, hist, false);
+            PrintHistogram(of, sep, hist, true);
+        }
+    }
+
+    void PrintHistogram(std::ostream& of, const std::string& sep, const HistogramDescriptor& hist, bool includeOverflow)
+    {
+        of << hist.title;
+        if(includeOverflow)
+            of << " with overflow";
+        of << sep;
+        for (const auto& fullAnaDataEntry : fullAnaData) {
+            const EventCategory& eventCategory = fullAnaDataEntry.first;
+            of << eventCategory << sep;
+        }
+        of << std::endl;
+        for (DataCategory& dataCategory : categories) {
+            if (dataCategory.IsReference()) continue;
+            of << dataCategory.title << sep;
+            for (auto& fullAnaDataEntry : fullAnaData) {
+                AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+                if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) {
+                    const double integral = includeOverflow ? histogram->Integral(0, histogram->GetNbinsX() + 1)
+                                                            : histogram->Integral();
+                    of << integral << sep;
+                }
+                else
+                    of << "NaN" << sep;
             }
             of << std::endl;
-            for (DataCategory& dataCategory : categories) {
-                if (dataCategory.IsReference()) continue;
-                of << dataCategory.title << sep;
-                for (auto& fullAnaDataEntry : fullAnaData) {
-                    AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-                    if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) )
-                        of << histogram->Integral() << sep;
-                    else
-                        of << "NaN" << sep;
-                }
-                of << std::endl;
-            }
-            of << std::endl << std::endl;
         }
+        of << std::endl << std::endl;
+
     }
 
     void SetLegendStyle(TLegend* leg)
