@@ -177,8 +177,9 @@ private:
         data_hist.Draw("samepPE10");
         pave_text.Draw("same");
 
-        TPad padRatio("padRatio","",0,0,1,0.2);
-        padRatio.cd();
+        TPad* padRatio = new TPad("padRatio","",0,0,1,0.2);
+        padRatio->Draw();
+        padRatio->cd();
 
         // Draw the ratio of the historgrams
 
@@ -194,11 +195,10 @@ private:
         ratioData_Bkg.SetMarkerStyle(7);
         ratioData_Bkg.SetMarkerColor(2);
         ratioData_Bkg.Draw("histp");
-        TLine line;
-        line.DrawLine(ratioData_Bkg.GetXaxis()->GetXmin(),1,ratioData_Bkg.GetXaxis()->GetXmax(),1);
+        TLine* line = new TLine();
+        line->DrawLine(ratioData_Bkg.GetXaxis()->GetXmin(),1,ratioData_Bkg.GetXaxis()->GetXmax(),1);
 
 
-        padRatio.Draw();
         if(stat_pad)
             stat_pad->cd();
         leg.Draw("same");

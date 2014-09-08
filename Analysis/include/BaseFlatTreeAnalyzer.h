@@ -353,7 +353,10 @@ protected:
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
                     if(category.IsReference() || category.IsData() || category.IsSignal()) continue;
                     TH1D& bkg = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
-                    bkg_sum->Add(&bkg);
+                    if(!bkg_sum)
+                        bkg_sum = static_cast<TH1D*>(bkg.Clone());
+                    else
+                        bkg_sum->Add(&bkg);
                 }
                 TH1D* ratioData_Bkg = (TH1D*)data_histogram->Clone("ratioData_Bkg");
                 ratioData_Bkg->Divide(bkg_sum);
