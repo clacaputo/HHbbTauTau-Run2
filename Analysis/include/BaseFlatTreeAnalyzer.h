@@ -146,10 +146,27 @@ static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
+    TH1D_ENTRY(pt_1, 10, 0, 200)
+    TH1D_ENTRY(eta_1, 60, -3, 3)
+    TH1D_ENTRY(pt_2, 10, 0, 200)
+    TH1D_ENTRY(eta_2, 60, -3, 3)
+    TH1D_ENTRY(pt_b1, 10, 0, 200)
+    TH1D_ENTRY(eta_b1, 60, -3, 3)
+    TH1D_ENTRY(pt_b2, 10, 0, 200)
+    TH1D_ENTRY(eta_b2, 60, -3, 3)
+    TH1D_ENTRY(pt_H_tt, 10, 0, 500)
+    TH1D_ENTRY(pt_H_bb, 10, 0, 500)
+    TH1D_ENTRY(pt_H_hh, 10, 0, 500)
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
     TH1D_ENTRY(m_bb, 15, 0, 600)
     TH1D_ENTRY(m_ttbb, 15, 0, 600)
+    TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
+    TH1D_ENTRY(DeltaR_tt, 30, 0, 4)
+    TH1D_ENTRY(DeltaR_bb, 30, 0, 4)
+    TH1D_ENTRY(DeltaR_hh, 30, 0, 4)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -264,10 +281,17 @@ protected:
     virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
     {
         anaData.m_sv().Fill(event.m_sv, weight);
+        anaData.pt_1().Fill(event.pt_1, weight);
+        anaData.eta_1().Fill(event.eta_1, weight);
+        anaData.pt_2().Fill(event.pt_2, weight);
+        anaData.eta_2().Fill(event.eta_2, weight);
         TLorentzVector first_cand, second_cand;
         first_cand.SetPtEtaPhiE(event.pt_1,event.eta_1,event.phi_1,event.energy_1);
         second_cand.SetPtEtaPhiE(event.pt_2,event.eta_2,event.phi_2,event.energy_2);
+        anaData.DeltaPhi_tt().Fill(first_cand.DeltaPhi(second_cand), weight);
+        anaData.DeltaR_tt().Fill(first_cand.DeltaR(second_cand), weight);
         TLorentzVector Htt = first_cand + second_cand;
+        anaData.pt_H_tt().Fill(Htt.Pt(),weight);
         anaData.m_vis().Fill(Htt.M(),weight);
         TLorentzVector MET;
         MET.SetPtEtaPhiE(event.mvamet,0,event.mvametphi,0);
@@ -276,10 +300,20 @@ protected:
             for(size_t n = 0; n < b_momentums.size(); ++n)
                 b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
                                                event.mass_Bjets.at(n));
-            const double mass_bb = (b_momentums.at(0) + b_momentums.at(1)).M();
-            anaData.m_bb().Fill(mass_bb, weight);
-            const double mass_ttbb = (b_momentums.at(0) + b_momentums.at(1) + Htt + MET).M();
-            anaData.m_ttbb().Fill(mass_ttbb, weight);
+            anaData.pt_b1.Fill(b_momentums.at(0).Pt(), weight);
+            anaData.eta_b1().Fill(b_momentums.at(0).Eta(), weight);
+            anaData.pt_b2.Fill(b_momentums.at(1).Pt(), weight);
+            anaData.eta_b2().Fill(b_momentums.at(1).Eta(), weight);
+            anaData.DeltaPhi_bb().Fill(b_momentums.at(0).DeltaPhi(b_momentums.at(1)), weight);
+            anaData.DeltaR_bb().Fill(b_momentums.at(0).DeltaR(b_momentums.at(1)), weight);
+            TLorentzVector Hbb = b_momentums.at(0) + b_momentums.at(1);
+            anaData.pt_H_bb().Fill(Hbb.Pt(),weight);
+            anaData.m_bb().Fill(Hbb.M(), weight);
+            anaData.DeltaPhi_hh().Fill(Htt.DeltaPhi(Hbb), weight);
+            anaData.DeltaR_hh().Fill(Htt.DeltaR(Hbb), weight);
+            TLorentzVector Candidate_ttbb = Hbb + Htt + MET;
+            anaData.m_ttbb().Fill(Candidate_ttbb.M(), weight);
+            anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
         }
     }
 
