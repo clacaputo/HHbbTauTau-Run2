@@ -174,6 +174,7 @@ public:
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
+        //TH1::SetDefaultSumw2();
     }
 
     void Run()
@@ -200,7 +201,7 @@ public:
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const auto& hist : histograms) {
                 EstimateQCD(eventCategory, anaData, hist);
-                //EstimateWjets(eventCategory, anaData, hist);
+                EstimateWjets(eventCategory, anaData, hist);
             }
         }
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
@@ -319,7 +320,7 @@ protected:
                     histogram.SetLineWidth(1.);
                     //InitHist(&histogram,"","",category.color,1001);
                     ReweightWithBinWidth(histogram);
-                    SetErrorX(histogram);
+
                     std::string legend_option = "f";
                     if (!category.IsData()){
                         histogram.SetFillColor(category.color);
@@ -331,7 +332,7 @@ protected:
                     }
                     else {
                         legend_option = "LP";
-                        gStyle->SetErrorX(0.8);
+
                         if (isBlind){
                             TH1D* refilledData_histogram = refillData(&histogram);
                             data_histogram = refilledData_histogram;
@@ -432,14 +433,6 @@ private:
             ss >> std::boolalpha >> hist.useLogY;
             histograms.push_back(hist);
           }
-    }
-
-    static void SetErrorX(TH1D& histogram)
-    {
-        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
-            const double binWidth = histogram.GetBinWidth(n);
-            histogram.SetBinError (n+1,binWidth);
-        }
     }
 
     static void ReweightWithBinWidth(TH1D& histogram)

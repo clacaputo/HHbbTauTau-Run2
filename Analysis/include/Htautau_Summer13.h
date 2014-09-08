@@ -226,8 +226,13 @@ namespace TauTau {
                                                      // MVA3 is recommended, but it does not exists any more for new tauID
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5; // equivalent to the medium working point
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1; // not equivalent to the medium working point (1.5)
+                                                     // custom value used for QCD estimation
                                                      // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+
+        namespace BackgroundEstimation {
+            const double Isolation_upperLimit = 4; // < upper value of isolation for QCD data driven estimation
+        }
 
     }
 }

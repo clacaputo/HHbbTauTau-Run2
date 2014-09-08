@@ -40,6 +40,7 @@ protected:
     {
         using analysis::EventType_QCD;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
+        using namespace cuts::Htautau_Summer13::TauTau::tauID::BackgroundEstimation;
 
         if (event.againstElectronLooseMVA_2 < againstElectronLooseMVA3)
             return EventType_QCD::Unknown;
@@ -54,13 +55,17 @@ protected:
                 (event.q_1 * event.q_2 == +1))
             return EventType_QCD::SS_Isolated;
 
-        if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits ||
-                 event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits) &&
+        if (((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+              event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < Isolation_upperLimit) ||
+                 (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+                  event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < Isolation_upperLimit)) &&
                  (event.q_1 * event.q_2 == -1))
             return EventType_QCD::OS_NotIsolated;
 
-        if ((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits ||
-                 event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits) &&
+        if (((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+              event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < Isolation_upperLimit) ||
+                 (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+                  event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < Isolation_upperLimit)) &&
                  (event.q_1 * event.q_2 == +1))
             return EventType_QCD::SS_NotIsolated;
 
