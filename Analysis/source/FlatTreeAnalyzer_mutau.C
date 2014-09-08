@@ -141,6 +141,7 @@ protected:
         const analysis::DataCategory& ewk = FindCategory("EWK");
         TH1D* histEWK;
         if(!(histEWK = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name)))
+            throw analysis::exception("histogram not found: ") << hist.name;
         histEWK->Add(histData_HighMt);
     }
 
