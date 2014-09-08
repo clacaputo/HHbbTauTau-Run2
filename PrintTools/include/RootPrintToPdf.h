@@ -177,26 +177,26 @@ private:
         data_hist.Draw("samepPE10");
         pave_text.Draw("same");
 
-        TPad* padRatio = new TPad("padRatio","",0,0,1,0.2);
-        padRatio->Draw();
-        padRatio->cd();
+//        TPad* padRatio = new TPad("padRatio","",0,0,1,0.2);
+//        padRatio->Draw();
+//        padRatio->cd();
 
-        // Draw the ratio of the historgrams
+//        // Draw the ratio of the historgrams
 
-        ratioData_Bkg.GetYaxis()->SetRangeUser(0.9,1.1);
-        ratioData_Bkg.GetYaxis()->SetNdivisions(3);
-        ratioData_Bkg.GetYaxis()->SetLabelSize(0.1);
-        ratioData_Bkg.GetYaxis()->SetTitleSize(0.1);
-        ratioData_Bkg.GetYaxis()->SetTitleOffset(0.5);
-        ratioData_Bkg.GetYaxis()->SetTitle("Ratio");
-        ratioData_Bkg.GetXaxis()->SetNdivisions(-1);
-        ratioData_Bkg.GetXaxis()->SetTitle("");
-        ratioData_Bkg.GetXaxis()->SetLabelSize(0.0001);
-        ratioData_Bkg.SetMarkerStyle(7);
-        ratioData_Bkg.SetMarkerColor(2);
-        ratioData_Bkg.Draw("histp");
-        TLine* line = new TLine();
-        line->DrawLine(ratioData_Bkg.GetXaxis()->GetXmin(),1,ratioData_Bkg.GetXaxis()->GetXmax(),1);
+//        ratioData_Bkg.GetYaxis()->SetRangeUser(0.9,1.1);
+//        ratioData_Bkg.GetYaxis()->SetNdivisions(3);
+//        ratioData_Bkg.GetYaxis()->SetLabelSize(0.1);
+//        ratioData_Bkg.GetYaxis()->SetTitleSize(0.1);
+//        ratioData_Bkg.GetYaxis()->SetTitleOffset(0.5);
+//        ratioData_Bkg.GetYaxis()->SetTitle("Ratio");
+//        ratioData_Bkg.GetXaxis()->SetNdivisions(-1);
+//        ratioData_Bkg.GetXaxis()->SetTitle("");
+//        ratioData_Bkg.GetXaxis()->SetLabelSize(0.0001);
+//        ratioData_Bkg.SetMarkerStyle(7);
+//        ratioData_Bkg.SetMarkerColor(2);
+//        ratioData_Bkg.Draw("histp");
+//        TLine* line = new TLine();
+//        line->DrawLine(ratioData_Bkg.GetXaxis()->GetXmin(),1,ratioData_Bkg.GetXaxis()->GetXmax(),1);
 
 
         if(stat_pad)
