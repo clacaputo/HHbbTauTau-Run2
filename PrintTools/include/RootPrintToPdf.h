@@ -79,7 +79,7 @@ public:
     }
 
 
-    void PrintStack(const Page& page, THStack& stack, TH1D& data_hist, TLegend& leg, TPaveText& pave_text)
+    void PrintStack(const Page& page, THStack& stack, TH1D& data_hist, TH1D&ratioData_Bkg, TLegend& leg, TPaveText& pave_text)
     {
         TH1::SetDefaultSumw2();
         cms_tdr::setTDRStyle();
@@ -97,7 +97,7 @@ public:
         for(Page::RegionCollection::const_iterator iter = page_regions.begin(); iter != page_regions.end(); ++iter)
         {
             canvas->cd();
-            DrawStack(*(*iter), stack, data_hist, leg, pave_text);
+            DrawStack(*(*iter), stack, data_hist, ratioData_Bkg, leg, pave_text);
         }
 
         canvas->Draw();
@@ -145,7 +145,7 @@ private:
                           page_side.draw_options);
     }
 
-    void DrawStack(const PageSide& page_side, THStack& stack, TH1D& data_hist, TLegend& leg, TPaveText& pave_text)
+    void DrawStack(const PageSide& page_side, THStack& stack, TH1D& data_hist, TH1D&ratioData_Bkg, TLegend& leg, TPaveText& pave_text)
     {
         TPad* stat_pad = 0;
         if(page_side.layout.has_stat_pad) {
@@ -176,6 +176,29 @@ private:
         data_hist.SetMarkerStyle(7);
         data_hist.Draw("samepPE10");
         pave_text.Draw("same");
+
+        TPad padRatio("padRatio","",0,0,1,0.2);
+        padRatio.cd();
+
+        // Draw the ratio of the historgrams
+
+        ratioData_Bkg.GetYaxis()->SetRangeUser(0.9,1.1);
+        ratioData_Bkg.GetYaxis()->SetNdivisions(3);
+        ratioData_Bkg.GetYaxis()->SetLabelSize(0.1);
+        ratioData_Bkg.GetYaxis()->SetTitleSize(0.1);
+        ratioData_Bkg.GetYaxis()->SetTitleOffset(0.5);
+        ratioData_Bkg.GetYaxis()->SetTitle("Ratio");
+        ratioData_Bkg.GetXaxis()->SetNdivisions(-1);
+        ratioData_Bkg.GetXaxis()->SetTitle("");
+        ratioData_Bkg.GetXaxis()->SetLabelSize(0.0001);
+        ratioData_Bkg.SetMarkerStyle(7);
+        ratioData_Bkg.SetMarkerColor(2);
+        ratioData_Bkg.Draw("histp");
+        TLine line;
+        line.DrawLine(ratioData_Bkg.GetXaxis()->GetXmin(),1,ratioData_Bkg.GetXaxis()->GetXmax(),1);
+
+
+        padRatio.Draw();
         if(stat_pad)
             stat_pad->cd();
         leg.Draw("same");

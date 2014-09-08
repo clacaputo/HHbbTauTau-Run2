@@ -290,6 +290,8 @@ protected:
                 page.side.layout.has_stat_pad = true;
                 page.side.layout.main_pad.right_top.x=0.75;
                 page.side.layout.main_pad.right_top.y=0.85;
+                page.side.layout.main_pad.left_bottom.x=0.;
+                page.side.layout.main_pad.left_bottom.y=0.2;
                 page.side.layout.stat_pad.left_bottom.x=0.755;
                 page.side.layout.stat_pad.left_bottom.y=0.3;
 
@@ -298,6 +300,7 @@ protected:
                 TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
                 leg->SetFillColor(0);
                 leg->SetTextSize(0.055);
+                SetLegendStyle(leg);
                 TString lumist="19.7 fb^{-1}";
                 TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
                 ll->SetTextSize(0.03);
@@ -319,16 +322,12 @@ protected:
                     TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     histogram.SetLineColor(colorMapName.at("black"));
                     histogram.SetLineWidth(1.);
-                    //InitHist(&histogram,"","",category.color,1001);
                     ReweightWithBinWidth(histogram);
 
                     std::string legend_option = "f";
                     if (!category.IsData()){
                         histogram.SetFillColor(category.color);
-                        //histogram.SetBinErrorOption(0);
-                        if(category.IsSignal()){
-//                            histogram.Scale(10);
-                        }
+//                        if(category.IsSignal()) histogram.Scale(10);
                         stack->Add(&histogram);
                     }
                     else {
@@ -340,19 +339,26 @@ protected:
                         }
                         else
                             data_histogram = &histogram;
-
                     }
                     if (category.IsSignal()){
-                        //InitSignal(&histogram);
                         leg->AddEntry(&histogram , category.title.c_str() , "F" );
-                        //leg->SetLineStyle(2);
                         leg->SetLineColor(category.color);
                     }
                     else
                         leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
                 }
-                //InitData(data_histogram);
-                printer.PrintStack(page, *stack, *data_histogram, *leg, *ll);
+
+                TH1D* bkg_sum = nullptr;
+                for(const DataCategory& category : categories) {
+                    if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
+                    if(category.IsReference() || category.IsData() || category.IsSignal()) continue;
+                    TH1D& bkg = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
+                    bkg_sum->Add(&bkg);
+                }
+                TH1D* ratioData_Bkg = (TH1D*)data_histogram->Clone("ratioData_Bkg");
+                ratioData_Bkg->Divide(bkg_sum);
+                printer.PrintStack(page, *stack, *data_histogram, *ratioData_Bkg, *leg, *ll);
+
             }
         }
     }
@@ -471,7 +477,8 @@ private:
                 of << eventCategory << sep;
             }
             of << std::endl;
-            for (auto& dataCategory : categories) {
+            for (DataCategory& dataCategory : categories) {
+                if (dataCategory.IsReference()) continue;
                 of << dataCategory.title << sep;
                 for (auto& fullAnaDataEntry : fullAnaData) {
                     AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
@@ -493,69 +500,7 @@ private:
       leg->SetBorderSize(0);
     }
 
-    void InitData(TH1* hist)
-    {
-      hist->SetMarkerStyle(20.);
-      hist->SetMarkerSize (1.3);
-      hist->SetLineWidth  ( 1.);
-    }
 
-    void InitSignal(TH1 *hist)
-    {
-      hist->SetLineStyle(2);
-      hist->SetLineWidth(2.);
-      hist->SetLineColor(kBlue);
-    }
-
-    void CMSPrelim(const char* dataset, const char* channel, double lowX, double lowY)
-    {
-      TPaveText* lumi  = new TPaveText(lowX, lowY+0.06, lowX+0.30, lowY+0.16, "NDC");
-      lumi->SetBorderSize(   0 );
-      lumi->SetFillStyle(    0 );
-      lumi->SetTextAlign(   12 );
-      lumi->SetTextSize ( 0.035 );
-      lumi->SetTextColor(    1 );
-      lumi->SetTextFont (   62 );
-      lumi->AddText(dataset);
-      lumi->Draw();
-
-      TPaveText* chan     = new TPaveText(lowX+0.68, lowY+0.061, lowX+0.80, lowY+0.161, "NDC");
-      chan->SetBorderSize(   0 );
-      chan->SetFillStyle(    0 );
-      chan->SetTextAlign(   12 );
-      chan->SetTextSize ( 0.04 );
-      chan->SetTextColor(    1 );
-      chan->SetTextFont (   62 );
-      chan->AddText(channel);
-      chan->Draw();
-    }
-
-    void InitHist(TH1 *hist, const char *xtit, const char *ytit, int color, int style)
-    {
-      hist->SetXTitle(xtit);
-      hist->SetYTitle(ytit);
-      hist->SetLineColor(kBlack);
-      hist->SetLineWidth(    1.);
-      hist->SetFillColor(color );
-      hist->SetFillStyle(style );
-      hist->SetTitleSize  (0.055,"Y");
-      hist->SetTitleOffset(1.600,"Y");
-      hist->SetLabelOffset(0.014,"Y");
-      hist->SetLabelSize  (0.040,"Y");
-      hist->SetLabelFont  (42   ,"Y");
-      hist->SetTitleSize  (0.055,"X");
-      hist->SetTitleOffset(1.300,"X");
-      hist->SetLabelOffset(0.014,"X");
-      hist->SetLabelSize  (0.040,"X");
-      hist->SetLabelFont  (42   ,"X");
-      hist->SetMarkerStyle(20);
-      hist->SetMarkerColor(color);
-      hist->SetMarkerSize (0.6);
-      hist->GetYaxis()->SetTitleFont(42);
-      hist->GetXaxis()->SetTitleFont(42);
-      hist->SetTitle("");
-      return;
-    }
 
 protected:
     std::string inputPath;
