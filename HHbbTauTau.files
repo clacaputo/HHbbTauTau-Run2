@@ -238,5 +238,4 @@ Analysis/include/BaseFlatTreeAnalyzer.h
 Analysis/source/FlatTreeAnalyzer_tautau.C
 Analysis/source/FlatTreeAnalyzer_etau.C
 Analysis/source/FlatTreeAnalyzer_mutau.C
-PrintTools/config/signal.txt
-PrintTools/config/signal.txt
+Analysis/include/AnalysisMath.h

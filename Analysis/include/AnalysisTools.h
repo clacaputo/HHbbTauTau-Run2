@@ -37,6 +37,7 @@
 #include "Particles.h"
 #include "EventDescriptor.h"
 #include "Htautau_Summer13.h"
+#include "AnalysisMath.h"
 
 namespace analysis {
 
@@ -177,26 +178,6 @@ inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, 
     if(outputFile)
         outputFile->cd();
     return std::shared_ptr<TH1D>(static_cast<TH1D*>(originalWeights->Clone("PUweights")));
-}
-
-//see AN-13-178
-inline double Calculate_MT(const TLorentzVector& lepton_momentum, double met_pt, double met_phi)
-{
-    const double delta_phi = TVector2::Phi_mpi_pi(lepton_momentum.Phi() - met_phi);
-    return std::sqrt( 2.0 * lepton_momentum.Pt() * met_pt * ( 1.0 - std::cos(delta_phi) ) );
-}
-
-// from DataFormats/TrackReco/interface/TrackBase.h
-inline double Calculate_dxy(const TVector3& legV, const TVector3& PV, const TLorentzVector& leg)
-{
-    return ( - (legV.x()-PV.x()) * leg.Py() + (legV.y()-PV.y()) * leg.Px() ) / leg.Pt();
-}
-
-// from DataFormats/TrackReco/interface/TrackBase.h
-inline double Calculate_dz(const TVector3& trkV, const TVector3& PV, const TVector3& trkP)
-{
-  return (trkV.z() - PV.z()) - ( (trkV.x() - PV.x()) * trkP.x() + (trkV.y() - PV.y()) * trkP.y() ) / trkP.Pt()
-                               * trkP.z() / trkP.Pt();
 }
 
 template<typename CandidateCollection>

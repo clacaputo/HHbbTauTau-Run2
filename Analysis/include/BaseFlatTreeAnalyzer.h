@@ -30,12 +30,14 @@
 #include <cmath>
 #include <list>
 #include <TColor.h>
+#include <TLorentzVector.h>
 
 #include "AnalyzerData.h"
 #include "FlatTree.h"
+#include "AnalysisMath.h"
 #include "PrintTools/include/RootPrintToPdf.h"
-#include "../include/Htautau_Summer13.h"
-#include "../include/exception.h"
+#include "Htautau_Summer13.h"
+#include "exception.h"
 
 namespace analysis {
 
@@ -145,6 +147,7 @@ class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
+    TH1D_ENTRY(m_bb, 15, 0, 600)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -164,9 +167,10 @@ public:
     typedef std::map<EventCategory, AnaDataForDataCategory> FullAnaData;
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                         const std::string& outputFileName, const std::string& _signalName,
+                         const std::string& _outputFileName, const std::string& _signalName,
                          const std::string& _dataName, bool _isBlind=false)
-        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), printer(outputFileName), isBlind(_isBlind)
+        : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
+          isBlind(_isBlind)
     {
         ReadSourceCfg(source_cfg);
         ReadHistCfg(hist_cfg);
@@ -199,7 +203,9 @@ public:
                 //EstimateWjets(eventCategory, anaData, hist);
             }
         }
-        std::cout << "Printing stacked plots... " << std::endl;
+        std::cout << "Saving tables and printing stacked plots... " << std::endl;
+        PrintTables("comma", ",");
+        PrintTables("semicolon", ";");
         PrintStackedPlots();
     }
 
@@ -213,8 +219,10 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
-            for(auto eventCategory : eventCategories)
-                FillHistograms(dataCategory.name, event, eventTypeQCD, eventTypeWjets, eventCategory, weight);
+            for(auto eventCategory : eventCategories) {
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight);
+            }
         }
     }
 
@@ -249,15 +257,22 @@ protected:
     virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
                                const HistogramDescriptor& hist) = 0;
 
-    void FillHistograms(const std::string& dataCategoryName, const ntuple::Flat& event, EventType_QCD eventTypeQCD,
-                        EventType_Wjets eventTypeWjets, const EventCategory& eventCategory, double weight)
+    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
     {
-        fullAnaData[eventCategory][dataCategoryName].QCD[eventTypeQCD].m_sv().Fill(event.m_sv, weight);
-        fullAnaData[eventCategory][dataCategoryName].Wjets[eventTypeWjets].m_sv().Fill(event.m_sv, weight);
+        anaData.m_sv().Fill(event.m_sv, weight);
+        if(event.mass_Bjets.size() >= 2) {
+            std::vector<TLorentzVector> b_momentums(2);
+            for(size_t n = 0; n < b_momentums.size(); ++n)
+                b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
+                                               event.mass_Bjets.at(n));
+            const double mass_bb = (b_momentums.at(0) + b_momentums.at(1)).M();
+            anaData.m_bb().Fill(mass_bb);
+        }
     }
 
     void PrintStackedPlots()
     {
+        Printer printer(outputFileName + ".pdf");
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
@@ -278,11 +293,7 @@ protected:
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
-//                const char* dataset = "CMS, 19.7 fb^{-1} at 8 TeV";
-//                CMSPrelim(dataset, "", 0.16, 0.835);
-                //TLegend* leg = new TLegend(0.52, 0.58, 0.92, 0.89);
-                TLegend* leg = new TLegend ( 0, 0.4, 1.0, 1.0);
-                SetLegendStyle(leg);
+                TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
                 leg->SetFillColor(0);
                 leg->SetTextSize(0.055);
                 TString lumist="19.7 fb^{-1}";
@@ -453,6 +464,32 @@ private:
 
     }
 
+    void PrintTables(const std::string& name_suffix, const std::string& sep)
+    {
+        std::ofstream of(outputFileName + "_" + name_suffix + ".csv");
+        of << std::setprecision(1) << std::fixed;
+
+        for(const auto& hist : histograms) {
+            of << hist.title << sep;
+            for (const auto& fullAnaDataEntry : fullAnaData) {
+                const EventCategory& eventCategory = fullAnaDataEntry.first;
+                of << eventCategory << sep;
+            }
+            of << std::endl;
+            for (auto& dataCategory : categories) {
+                of << dataCategory.title << sep;
+                for (auto& fullAnaDataEntry : fullAnaData) {
+                    AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+                    if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) )
+                        of << histogram->Integral() << sep;
+                    else
+                        of << "NaN" << sep;
+                }
+                of << std::endl;
+            }
+            of << std::endl << std::endl;
+        }
+    }
 
     void SetLegendStyle(TLegend* leg)
     {
@@ -474,7 +511,6 @@ private:
       hist->SetLineWidth(2.);
       hist->SetLineColor(kBlue);
     }
-
 
     void CMSPrelim(const char* dataset, const char* channel, double lowX, double lowY)
     {
@@ -526,13 +562,12 @@ private:
       return;
     }
 
-
 protected:
     std::string inputPath;
     std::string signalName, dataName;
+    std::string outputFileName;
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
-    Printer printer;
     root_ext::SingleSidedPage page;
     FullAnaData fullAnaData;
     bool isBlind;
