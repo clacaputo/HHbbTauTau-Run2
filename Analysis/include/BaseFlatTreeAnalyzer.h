@@ -147,7 +147,9 @@ class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
+    TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
     TH1D_ENTRY(m_bb, 15, 0, 600)
+    TH1D_ENTRY(m_ttbb, 15, 0, 600)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -262,6 +264,13 @@ protected:
     virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
     {
         anaData.m_sv().Fill(event.m_sv, weight);
+        TLorentzVector first_cand, second_cand;
+        first_cand.SetPtEtaPhiE(event.pt_1,event.eta_1,event.phi_1,event.energy_1);
+        second_cand.SetPtEtaPhiE(event.pt_2,event.eta_2,event.phi_2,event.energy_2);
+        TLorentzVector Htt = first_cand + second_cand;
+        anaData.m_vis().Fill(Htt.M(),weight);
+        TLorentzVector MET;
+        MET.SetPtEtaPhiE(event.mvamet,0,event.mvametphi,0);
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -269,6 +278,8 @@ protected:
                                                event.mass_Bjets.at(n));
             const double mass_bb = (b_momentums.at(0) + b_momentums.at(1)).M();
             anaData.m_bb().Fill(mass_bb, weight);
+            const double mass_ttbb = (b_momentums.at(0) + b_momentums.at(1) + Htt + MET).M();
+            anaData.m_ttbb().Fill(mass_ttbb, weight);
         }
     }
 
