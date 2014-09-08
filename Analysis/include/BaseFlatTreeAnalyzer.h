@@ -204,7 +204,8 @@ public:
             }
         }
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
-        PrintTables();
+        PrintTables("comma", ",");
+        PrintTables("semicolon", ";");
         PrintStackedPlots();
     }
 
@@ -453,11 +454,9 @@ private:
 
     }
 
-    void PrintTables()
+    void PrintTables(const std::string& name_suffix, const std::string& sep)
     {
-        static const std::string sep = ",";
-
-        std::ofstream of(outputFileName + ".csv");
+        std::ofstream of(outputFileName + "_" + name_suffix + ".csv");
         of << std::setprecision(1) << std::fixed;
 
         for(const auto& hist : histograms) {
