@@ -161,7 +161,7 @@ private:
         pad->Draw();
         pad->cd();
 
-        stack.Draw();
+        stack.Draw("HIST");
 
 //        const Int_t firstBin = stack.GetXaxis()->FindBin(page_side.xRange.min);
 //        const Int_t lastBin = stack.GetXaxis()->FindBin(page_side.xRange.max);
