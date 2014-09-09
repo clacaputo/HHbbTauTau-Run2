@@ -240,3 +240,4 @@ Analysis/source/FlatTreeAnalyzer_etau.C
 Analysis/source/FlatTreeAnalyzer_mutau.C
 Analysis/include/AnalysisMath.h
 PrintTools/config/sources_mutau.txt
+PrintTools/config/signal.txt
