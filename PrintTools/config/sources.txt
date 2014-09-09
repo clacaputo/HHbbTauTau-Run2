@@ -5,30 +5,45 @@
 # file_name_2 scale-factor_2
 # ...
 
-[SIGNAL Radion300]
-Radion 300 GeV
-blue
-Radion300.root 0.3704
+#[SIGNAL Radion300]
+#Radion 300 GeV
+#blue
+#Radion300.root 0.3704
 
-[SIGNAL Radion500]
-Radion 500 GeV
-blue
-Radion500.root 0.0680
+#[SIGNAL Radion500]
+#Radion 500 GeV
+#blue
+#Radion500.root 0.0680
 
-[SIGNAL Radion700]
-Radion 700 GeV
-blue
-Radion700.root 0.0256
+#[SIGNAL Radion700]
+#Radion 700 GeV
+#blue
+#Radion700.root 0.0256
 
-[SIGNAL Radion1000]
-Radion 1000 GeV
+#[SIGNAL Radion1000]
+#Radion 1000 GeV
+#blue
+#Radion1000.root 0.0079
+
+[SIGNAL ggHhh260]
+hh#rightarrow#tau#taubb(m_{H}=260  tan#beta=2.5))
 blue
-Radion1000.root 0.0079
+ggH_hh_bbtautau_260.root 0.0424
 
 [SIGNAL ggHhh300]
 hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5))
 blue
-ggH.root 0.0037
+ggH.root 0.0431
+
+#[SIGNAL ggHhh300]
+#hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5))
+#blue
+#ggH.root 0.0037
+
+[qqH125]
+VBF
+azure
+vbf.root 0.0020
 
 [VIRTUAL QCD]
 QCD
@@ -53,8 +68,10 @@ WZJetsTo3LNu.root 0.0103
 [REFERENCE Wjets]
 Wjets
 black
-#WJetsToLNu_v1.root 9.3855
-#WJetsToLNu_v2.root 9.3855
+W1JetsToLNu_V19.root 3.5716
+W2JetsToLNu_V19.root 1.1232
+W3JetsToLNu_V19.root 0.6708
+W4Jets.root 0.3150
 
 [TTbar]
 t#bar{t}
@@ -84,15 +101,19 @@ DYJetsToLL.root 2.2662
 #DY3Jets.root 0.0914
 #DY4Jets.root 0.0708
 
-#[DiBoson]
-#DiBoson
-#green
-#ZZJetsTo4L.root 0.0007
-#ZZJetsTo2L2Nu.root 0.0148
-#ZZJetsTo2L2Q.root 0.0254
-#WWJetsTo2L2Nu.root 0.0593
-#WZJetsTo2L2Q.root 0.0135
-#WZJetsTo3LNu.root 0.0103
+[REFERENCE Ztautau]
+Z #rightarrow tautau
+yellow_custom
+
+[REFERENCE DiBoson]
+DiBoson
+green
+ZZJetsTo4L.root 0.0007
+ZZJetsTo2L2Nu.root 0.0148
+ZZJetsTo2L2Q.root 0.0254
+WWJetsTo2L2Nu.root 0.0593
+WZJetsTo2L2Q.root 0.0135
+WZJetsTo3LNu.root 0.0103
 
 [DATA TauPlusX]
 Observed

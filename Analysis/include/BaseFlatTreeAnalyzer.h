@@ -29,6 +29,7 @@
 #include <iostream>
 #include <cmath>
 #include <list>
+#include <locale>
 #include <TColor.h>
 #include <TLorentzVector.h>
 
@@ -38,6 +39,7 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 #include "Htautau_Summer13.h"
 #include "exception.h"
+#include "Particles.h"
 
 namespace analysis {
 
@@ -158,6 +160,8 @@ public:
     TH1D_ENTRY(pt_H_bb, 10, 0, 500)
     TH1D_ENTRY(pt_H_hh, 10, 0, 500)
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
+    TH1D_ENTRY_CUSTOM(m_sv_up, mass_bins)
+    TH1D_ENTRY_CUSTOM(m_sv_down, mass_bins)
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
     TH1D_ENTRY(m_bb, 15, 0, 600)
     TH1D_ENTRY(m_ttbb, 15, 0, 600)
@@ -227,12 +231,16 @@ public:
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
         PrintTables("comma", ",");
         PrintTables("semicolon", ";");
+        ProduceFileForLimitsCalculation();
         PrintStackedPlots();
     }
 
 protected:
     void ProcessDataSource(const DataCategory& dataCategory, const DataSource& dataSource)
     {
+        const analysis::DataCategory& Ztautau = FindCategory("Ztautau");
+        const analysis::DataCategory& DYJets = FindCategory("DYJets");
+
         for(size_t current_entry = 0; current_entry < dataSource.tree->GetEntries(); ++current_entry) {
             dataSource.tree->GetEntry(current_entry);
             const ntuple::Flat& event = dataSource.tree->data;
@@ -243,9 +251,13 @@ protected:
             for(auto eventCategory : eventCategories) {
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight);
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight);
+                if(dataCategory.name == DYJets.name && std::abs(event.pdgId_2_MC) == particles::tau.RawCode())
+                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], event, weight);
             }
         }
     }
+
+    virtual const std::string& ChannelName() = 0;
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
@@ -281,6 +293,8 @@ protected:
     virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
     {
         anaData.m_sv().Fill(event.m_sv, weight);
+        anaData.m_sv_up().Fill(event.m_sv_Up, weight);
+        anaData.m_sv_down().Fill(event.m_sv_Down, weight);
         anaData.pt_1().Fill(event.pt_1, weight);
         anaData.eta_1().Fill(event.eta_1, weight);
         anaData.pt_2().Fill(event.pt_2, weight);
@@ -363,7 +377,7 @@ protected:
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    if(category.IsReference()) continue;
+                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName))) continue;
                     TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     histogram.SetLineColor(colorMapName.at("black"));
                     histogram.SetLineWidth(1.);
@@ -420,6 +434,68 @@ protected:
         throw analysis::exception("category not found : ") << prefix ;
     }
 
+    void ProduceFileForLimitsCalculation()
+    {
+        static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
+            { EventCategory::Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
+            { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" }
+        };
+
+        static const std::vector< std::pair<std::string, std::string> > dataCategoriesForLimits = {
+            { "VIRTUAL QCD", "QCD" }, { "TTbar", "TT" }, { "VH125", "VH125" },
+            { "REFERENCE DiBoson", "VV" }, { "REFERENCE Wjets", "W" }, { "ZJ", "ZJ" }, { "ZL", "ZL" },
+            { "ZLL", "ZLL" }, { "REFERENCE Ztautau", "ZTT" }, { "bbH100", "bbH100" }, { "bbH110", "bbH110" },
+            { "bbH120", "bbH120" }, { "bbH130", "bbH130" }, { "bbH140", "bbH140" }, { "bbH160", "bbH160" },
+            { "bbH180", "bbH180" }, { "bbH200", "bbH200" }, { "bbH250", "bbH250" }, { "bbH300", "bbH300" },
+            { "bbH350", "bbH350" }, { "bbH400", "bbH400" }, { "bbH90", "bbH90" }, { "data_obs", "data_obs" },
+            { "ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "ggAToZhToLLBB270", "ggAToZhToLLBB270" },
+            { "ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "ggAToZhToLLBB290", "ggAToZhToLLBB290" },
+            { "ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "ggAToZhToLLBB310", "ggAToZhToLLBB310" },
+            { "ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "ggAToZhToLLBB330", "ggAToZhToLLBB330" },
+            { "ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "ggAToZhToLLBB350", "ggAToZhToLLBB350" },
+            { "ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
+            { "ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
+            { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
+            { "ggAToZhToLLTauTau320", "ggAToZhToLLTauTau320" }, { "ggAToZhToLLTauTau330", "ggAToZhToLLTauTau330" },
+            { "ggAToZhToLLTauTau340", "ggAToZhToLLTauTau340" }, { "ggAToZhToLLTauTau350", "ggAToZhToLLTauTau350" },
+            { "ggH125", "ggH125" }, { "qqH125", "qqH125" },
+            { "SIGNAL ggHhh260", "ggHTohhTo2Tau2B260" }, { "ggHTohhTo2Tau2B270", "ggHTohhTo2Tau2B270" },
+            { "ggHTohhTo2Tau2B280", "ggHTohhTo2Tau2B280" }, { "ggHTohhTo2Tau2B290", "ggHTohhTo2Tau2B290" },
+            { "SIGNAL ggHhh300", "ggHTohhTo2Tau2B300" }, { "ggHTohhTo2Tau2B310", "ggHTohhTo2Tau2B310" },
+            { "ggHTohhTo2Tau2B320", "ggHTohhTo2Tau2B320" }, { "ggHTohhTo2Tau2B330", "ggHTohhTo2Tau2B330" },
+            { "ggHTohhTo2Tau2B340", "ggHTohhTo2Tau2B340" }, { "ggHTohhTo2Tau2B350", "ggHTohhTo2Tau2B350" }
+        };
+
+        std::string channel_name = ChannelName();
+        std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
+
+        std::shared_ptr<TFile> outputFile(new TFile((outputFileName + ".root").c_str(), "RECREATE"));
+        outputFile->cd();
+        for(auto& fullAnaDataEntry : fullAnaData) {
+            const EventCategory& eventCategory = fullAnaDataEntry.first;
+            AnaDataForDataCategory& anaDataForCategory = fullAnaDataEntry.second;
+            const std::string directoryName = ChannelName() + "_" + categoryToDirectoryNameSuffix.at(eventCategory);
+            outputFile->mkdir(directoryName.c_str());
+            outputFile->cd(directoryName.c_str());
+            for(const auto& limitDataCategory : dataCategoriesForLimits) {
+                if(!anaDataForCategory.count(limitDataCategory.first)) {
+                    std::cerr << "WARNING: Dataset '" << limitDataCategory.first << "' for event category '"
+                              << eventCategory << "' not found." << std::endl;
+                    continue;
+                }
+                FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
+                anaData.m_sv().Write(limitDataCategory.second.c_str());
+                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "8TeV";
+                const std::string nameDown = namePrefix + "Down";
+                const std::string nameUp = namePrefix + "Up";
+
+                anaData.m_sv_down().Write(nameDown.c_str());
+                anaData.m_sv_up().Write(nameUp.c_str());
+            }
+        }
+        outputFile->Close();
+    }
+
 private:
     void ReadSourceCfg(const std::string& cfg_name)
     {
@@ -455,12 +531,12 @@ private:
             categories.push_back(*currentCategory);
         DataCategoryCollection filteredCategories;
         for(const DataCategory& category : categories) {
-            if(category.IsSignal()) {
-                const size_t sub_name_pos = category.name.find(' ');
-                const std::string sub_name = category.name.substr(sub_name_pos + 1);
-                if(sub_name != signalName)
-                    continue;
-            }
+//            if(category.IsSignal()) {
+//                const size_t sub_name_pos = category.name.find(' ');
+//                const std::string sub_name = category.name.substr(sub_name_pos + 1);
+//                if(sub_name != signalName)
+//                    continue;
+//            }
             if(category.IsData()) {
                 const size_t sub_name_pos = category.name.find(' ');
                 const std::string sub_name = category.name.substr(sub_name_pos + 1);
@@ -500,14 +576,16 @@ private:
         }
     }
 
-    float blinding_SM(float mass){ return (100<mass && mass<150); }
+    static bool blinding_SM(double mass) { return (100<mass && mass<150); }
 
     TH1D* refillData(TH1D* histogram)
     {
         TH1D* histData = (TH1D*)histogram->Clone();
         histData->Clear();
         for(int i=1; i<=histData->GetNbinsX(); ++i){
-            histData->SetBinContent(i, blinding_SM (histData->GetBinCenter(i)) ? 0. : histData->GetBinContent(i));
+            const bool blinding = blinding_SM (histData->GetBinCenter(i));
+            histData->SetBinContent(i, blinding ? 0. : histogram->GetBinContent(i));
+            histData->SetBinError(i, blinding ? 0. : histogram->GetBinError(i));
         }
         return histData;
 
@@ -560,8 +638,6 @@ private:
       leg->SetFillColor (0);
       leg->SetBorderSize(0);
     }
-
-
 
 protected:
     std::string inputPath;
