@@ -177,7 +177,7 @@ private:
         data_hist.Draw("samepPE10");
         pave_text.Draw("same");
 
-//        TPad* padRatio = new TPad("padRatio","",0,0,1,0.2);
+//        TPad* padRatio = new TPad("padRatio","",0,0,1,0.1);
 //        padRatio->Draw();
 //        padRatio->cd();
 

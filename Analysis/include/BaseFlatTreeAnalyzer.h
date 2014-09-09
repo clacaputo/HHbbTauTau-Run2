@@ -148,29 +148,29 @@ static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
 
-    TH1D_ENTRY(pt_1, 10, 0, 200)
+    TH1D_ENTRY(pt_1, 50, 0, 200)
     TH1D_ENTRY(eta_1, 60, -3, 3)
-    TH1D_ENTRY(pt_2, 10, 0, 200)
+    TH1D_ENTRY(pt_2, 50, 0, 200)
     TH1D_ENTRY(eta_2, 60, -3, 3)
-    TH1D_ENTRY(pt_b1, 10, 0, 200)
+    TH1D_ENTRY(pt_b1, 50, 0, 200)
     TH1D_ENTRY(eta_b1, 60, -3, 3)
-    TH1D_ENTRY(pt_b2, 10, 0, 200)
+    TH1D_ENTRY(pt_b2, 50, 0, 200)
     TH1D_ENTRY(eta_b2, 60, -3, 3)
-    TH1D_ENTRY(pt_H_tt, 10, 0, 500)
-    TH1D_ENTRY(pt_H_bb, 10, 0, 500)
-    TH1D_ENTRY(pt_H_hh, 10, 0, 500)
+    TH1D_ENTRY(pt_H_tt, 35, 0, 350)
+    TH1D_ENTRY(pt_H_bb, 35, 0, 350)
+    TH1D_ENTRY(pt_H_hh, 35, 0, 350)
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_up, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_down, mass_bins)
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
-    TH1D_ENTRY(m_bb, 15, 0, 600)
-    TH1D_ENTRY(m_ttbb, 15, 0, 600)
+    TH1D_ENTRY(m_bb, 60, 0, 600)
+    TH1D_ENTRY(m_ttbb, 100, 0, 1000)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
-    TH1D_ENTRY(DeltaR_tt, 40, 0, 4)
-    TH1D_ENTRY(DeltaR_bb, 40, 0, 4)
-    TH1D_ENTRY(DeltaR_hh, 40, 0, 4)
+    TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
+    TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
+    TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -344,14 +344,15 @@ protected:
                 page.side.use_log_scaleY = hist.useLogY;
                 page.side.fit_range_x = false;
                 page.title = ss_title.str();
+                page.layout.has_title = false;
                 page.side.axis_titleX = hist.Xaxis_title;
                 page.side.axis_titleY = hist.Yaxis_title;
                 page.side.layout.has_stat_pad = true;
-                page.side.layout.main_pad.right_top.x=0.75;
-                page.side.layout.main_pad.right_top.y=0.85;
+                page.side.layout.main_pad.right_top.x=0.7;
+                page.side.layout.main_pad.right_top.y=1.;
                 page.side.layout.main_pad.left_bottom.x=0.;
                 page.side.layout.main_pad.left_bottom.y=0.2;
-                page.side.layout.stat_pad.left_bottom.x=0.755;
+                page.side.layout.stat_pad.left_bottom.x=0.75;
                 page.side.layout.stat_pad.left_bottom.y=0.3;
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
@@ -420,7 +421,6 @@ protected:
                 TH1D* ratioData_Bkg = (TH1D*)data_histogram->Clone("ratioData_Bkg");
                 ratioData_Bkg->Divide(bkg_sum);
                 printer.PrintStack(page, *stack, *data_histogram, *ratioData_Bkg, *leg, *ll);
-
             }
         }
     }

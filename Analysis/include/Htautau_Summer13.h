@@ -154,6 +154,8 @@ namespace ETau {
         const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Muon_Isolation
         const double scEta_min[2] = { 0.8, 1.479 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
         const double MVApogNonTrig[3] = { 0.925, 0.975, 0.985 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
+
+        const double mt = 30; // < not used for sync, only for the final selection.
     }
 
     namespace tauID {
@@ -197,6 +199,10 @@ namespace ETau {
         const double delta_phi[] = { 0.8, 0.7 }; // <
         const double HoverE[] = { 0.15, std::numeric_limits<double>::max() }; // <
         const double dZ_vtx[] = { 0.2, 0.2 }; // <
+    }
+
+    namespace BackgroundEstimation {
+        const double HighMtRegion = 70; // > For W-jets data driven estimation
     }
 }
 
