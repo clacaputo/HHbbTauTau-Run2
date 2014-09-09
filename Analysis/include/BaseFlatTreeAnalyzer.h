@@ -485,7 +485,7 @@ protected:
                 }
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
                 anaData.m_sv().Write(limitDataCategory.second.c_str());
-                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "8TeV";
+                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 

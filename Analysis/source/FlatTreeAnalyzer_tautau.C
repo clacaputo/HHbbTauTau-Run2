@@ -37,6 +37,12 @@ public:
     }
 
 protected:
+    virtual const std::string& ChannelName() override
+    {
+        static const std::string channelName = "tauTau";
+        return channelName;
+    }
+
     virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
     {
         using analysis::EventType_QCD;
