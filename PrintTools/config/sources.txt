@@ -25,25 +25,37 @@
 #blue
 #Radion1000.root 0.0079
 
-[SIGNAL ggHhh260]
-hh#rightarrow#tau#taubb(m_{H}=260  tan#beta=2.5))
+[LIMITS ggHhh260]
+hh#rightarrow#tau#taubb(m_{H}=260  tan#beta=2.5)) for limits
 blue
 ggH_hh_bbtautau_260.root 0.0424
+
+[LIMITS ggHhh300]
+hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5)) for limits
+blue
+ggH.root 0.0431
 
 [SIGNAL ggHhh300]
 hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5))
 blue
-ggH.root 0.0431
+ggH.root 0.0037
 
-#[SIGNAL ggHhh300]
-#hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5))
-#blue
-#ggH.root 0.0037
-
-[qqH125]
+[LIMITS qqH125]
 VBF
 azure
 vbf.root 0.0020
+
+# 2.64 * qqH125
+[LIMITS VH125]
+VH125
+azure
+vbf.root 0.0053
+
+# 0.313 * qqH125
+[LIMITS ggH125]
+ggH125
+azure
+vbf.root 0.000626
 
 [VIRTUAL QCD]
 QCD
@@ -65,7 +77,7 @@ WWJetsTo2L2Nu.root 0.0593
 WZJetsTo2L2Q.root 0.0135
 WZJetsTo3LNu.root 0.0103
 
-[REFERENCE Wjets]
+[LIMITS Wjets]
 Wjets
 black
 W1JetsToLNu_V19.root 3.5716
@@ -101,11 +113,11 @@ DYJetsToLL.root 2.2662
 #DY3Jets.root 0.0914
 #DY4Jets.root 0.0708
 
-[REFERENCE Ztautau]
+[LIMITS Ztautau]
 Z #rightarrow tautau
 yellow_custom
 
-[REFERENCE DiBoson]
+[LIMITS DiBoson]
 DiBoson
 green
 ZZJetsTo4L.root 0.0007

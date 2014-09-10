@@ -97,7 +97,8 @@ protected:
         TH1D& hist_SSnotIso = anaData[qcd.name].QCD[EventType_QCD::SS_NotIsolated].Clone(*hist_SSnotIso_data);
 
         for (const analysis::DataCategory& category : categories) {
-            if(category.IsData() || category.IsSignal() || category.name == qcd.name) continue;
+            if(category.IsData() || category.IsSignal() || category.name == qcd.name
+                    || category.IsForLimitsOnly()) continue;
 
             if( TH1D* nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name) )
                 histogram.Add(nonQCD_hist, -1);

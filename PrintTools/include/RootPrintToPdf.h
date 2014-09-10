@@ -168,7 +168,8 @@ private:
 //        stack.GetXaxis()->SetRange(firstBin,lastBin);
         const Double_t maxY = std::max(stack.GetMaximum(),data_hist.GetMaximum());
         stack.SetMaximum(maxY*1.1);
-        stack.SetMinimum(1);
+        const Double_t minY = page_side.use_log_scaleY ? 1 : 0;
+        stack.SetMinimum(minY);
 
         stack.GetXaxis()->SetTitle(page_side.axis_titleX.c_str());
         stack.GetYaxis()->SetTitle(page_side.axis_titleY.c_str());

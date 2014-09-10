@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <set>
 #include <list>
 #include <locale>
 #include <TColor.h>
@@ -72,6 +73,7 @@ public:
     bool IsSignal() const { return NameContains("SIGNAL"); }
     bool IsReference() const { return NameContains("REFERENCE"); }
     bool IsVirtual() const { return NameContains("VIRTUAL"); }
+    bool IsForLimitsOnly() const { return NameContains("LIMITS"); }
 
     bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
 };
@@ -130,11 +132,12 @@ std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
 
 enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
 enum class EventType_Wjets { Unknown, Signal, HighMt };
-enum class EventCategory { Inclusive, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
+enum class EventCategory { Inclusive, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
 static const std::map<EventCategory, std::string> eventCategoryMapName =
-          { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::TwoJets_ZeroBtag, "TwoJets_ZeroBtag" },
-          { EventCategory::TwoJets_OneBtag, "TwoJets_OneBtag"}, { EventCategory::TwoJets_TwoBtag, "TwoJets_TwoBtag" } };
+          { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0btag" },
+            { EventCategory::OneJet_OneBtag, "1jet1btag" }, { EventCategory::TwoJets_ZeroBtag, "2jets0btag" },
+          { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" } };
 typedef std::vector<EventCategory> EventCategoryVector;
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
@@ -143,11 +146,10 @@ std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
 }
 
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
-                                               160, 170, 180, 190, 200, 225, 250, 275, 300 };
+                                               160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
 
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
-
     TH1D_ENTRY(pt_1, 50, 0, 200)
     TH1D_ENTRY(eta_1, 60, -3, 3)
     TH1D_ENTRY(pt_2, 50, 0, 200)
@@ -165,6 +167,7 @@ public:
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
     TH1D_ENTRY(m_bb, 60, 0, 600)
     TH1D_ENTRY(m_ttbb, 100, 0, 1000)
+    TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
@@ -238,7 +241,7 @@ public:
 protected:
     void ProcessDataSource(const DataCategory& dataCategory, const DataSource& dataSource)
     {
-        const analysis::DataCategory& Ztautau = FindCategory("Ztautau");
+        const analysis::DataCategory& Ztautau = FindCategory("LIMITS Ztautau");
         const analysis::DataCategory& DYJets = FindCategory("DYJets");
 
         for(size_t current_entry = 0; current_entry < dataSource.tree->GetEntries(); ++current_entry) {
@@ -273,8 +276,14 @@ protected:
             goodCVSvalues.push_back(event.csv_Bjets.at(i));
         }
 
-        if (goodCVSvalues.size() >= 2) {
+        if (goodCVSvalues.size() == 1) {
+            if (goodCVSvalues.at(0) <= cuts::Htautau_Summer13::btag::CSVT )
+                categories.push_back(EventCategory::OneJet_ZeroBtag);
+            else
+                categories.push_back(EventCategory::OneJet_OneBtag);
+        }
 
+        if (goodCVSvalues.size() >= 2) {
             if (goodCVSvalues.at(0) <= cuts::Htautau_Summer13::btag::CSVM )
                 categories.push_back(EventCategory::TwoJets_ZeroBtag);
             else if ( goodCVSvalues.at(1) <= cuts::Htautau_Summer13::btag::CSVM )
@@ -320,14 +329,16 @@ protected:
             anaData.eta_b2().Fill(b_momentums.at(1).Eta(), weight);
             anaData.DeltaPhi_bb().Fill(b_momentums.at(0).DeltaPhi(b_momentums.at(1)), weight);
             anaData.DeltaR_bb().Fill(b_momentums.at(0).DeltaR(b_momentums.at(1)), weight);
-            TLorentzVector Hbb = b_momentums.at(0) + b_momentums.at(1);
+            const TLorentzVector Hbb = b_momentums.at(0) + b_momentums.at(1);
             anaData.pt_H_bb().Fill(Hbb.Pt(),weight);
             anaData.m_bb().Fill(Hbb.M(), weight);
             anaData.DeltaPhi_hh().Fill(Htt.DeltaPhi(Hbb), weight);
             anaData.DeltaR_hh().Fill(Htt.DeltaR(Hbb), weight);
-            TLorentzVector Candidate_ttbb = Hbb + Htt + MET;
+            const TLorentzVector Candidate_ttbb = Hbb + Htt + MET;
             anaData.m_ttbb().Fill(Candidate_ttbb.M(), weight);
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
+            const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
+            anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
         }
     }
 
@@ -377,49 +388,56 @@ protected:
 
                 TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
-                    if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName))) continue;
-                    TH1D& histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
-                    histogram.SetLineColor(colorMapName.at("black"));
-                    histogram.SetLineWidth(1.);
-                    ReweightWithBinWidth(histogram);
+                    TH1D* histogram;
+                    if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
+                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName))
+                            || category.IsForLimitsOnly()) continue;
+                    histogram->SetLineColor(colorMapName.at("black"));
+                    histogram->SetLineWidth(1.);
+                    ReweightWithBinWidth(*histogram);
 
                     std::string legend_option = "f";
                     if (!category.IsData()){
-                        histogram.SetFillColor(category.color);
+                        histogram->SetFillColor(category.color);
 //                        if(category.IsSignal()) histogram.Scale(10);
-                        stack->Add(&histogram);
+                        stack->Add(histogram);
                     }
                     else {
                         legend_option = "LP";
 
                         if (isBlind){
-                            TH1D* refilledData_histogram = refillData(&histogram);
+                            TH1D* refilledData_histogram = refillData(histogram);
                             data_histogram = refilledData_histogram;
                         }
                         else
-                            data_histogram = &histogram;
+                            data_histogram = histogram;
                     }
                     if (category.IsSignal()){
-                        leg->AddEntry(&histogram , category.title.c_str() , "F" );
+                        leg->AddEntry(histogram , category.title.c_str() , "F" );
                         leg->SetLineColor(category.color);
                     }
                     else
-                        leg->AddEntry(&histogram, category.title.c_str(), legend_option.c_str());
+                        leg->AddEntry(histogram, category.title.c_str(), legend_option.c_str());
                 }
-
+                if(!data_histogram) {
+                    std::cerr << "WARNING: DATA histogram not found for " << hist.name << std::endl;
+                    continue;
+                }
                 TH1D* bkg_sum = nullptr;
                 for(const DataCategory& category : categories) {
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    if(category.IsReference() || category.IsData() || category.IsSignal()) continue;
+                    if(category.IsReference() || category.IsData() || category.IsSignal()
+                            || category.IsForLimitsOnly()) continue;
                     TH1D& bkg = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     if(!bkg_sum)
                         bkg_sum = static_cast<TH1D*>(bkg.Clone());
                     else
                         bkg_sum->Add(&bkg);
                 }
+
                 TH1D* ratioData_Bkg = (TH1D*)data_histogram->Clone("ratioData_Bkg");
-                ratioData_Bkg->Divide(bkg_sum);
+                if(bkg_sum)
+                    ratioData_Bkg->Divide(bkg_sum);
                 printer.PrintStack(page, *stack, *data_histogram, *ratioData_Bkg, *leg, *ll);
             }
         }
@@ -437,14 +455,15 @@ protected:
     void ProduceFileForLimitsCalculation()
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
-            { EventCategory::Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
+            { EventCategory::Inclusive, "inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0tag" },
+            { EventCategory::OneJet_OneBtag, "1jet1tag" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
             { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" }
         };
 
         static const std::vector< std::pair<std::string, std::string> > dataCategoriesForLimits = {
-            { "VIRTUAL QCD", "QCD" }, { "TTbar", "TT" }, { "VH125", "VH125" },
-            { "REFERENCE DiBoson", "VV" }, { "REFERENCE Wjets", "W" }, { "ZJ", "ZJ" }, { "ZL", "ZL" },
-            { "ZLL", "ZLL" }, { "REFERENCE Ztautau", "ZTT" }, { "bbH100", "bbH100" }, { "bbH110", "bbH110" },
+            { "VIRTUAL QCD", "QCD" }, { "TTbar", "TT" }, { "LIMITS VH125", "VH125" },
+            { "LIMITS DiBoson", "VV" }, { "LIMITS Wjets", "W" }, { "ZJ", "ZJ" }, { "ZL", "ZL" },
+            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "bbH100", "bbH100" }, { "bbH110", "bbH110" },
             { "bbH120", "bbH120" }, { "bbH130", "bbH130" }, { "bbH140", "bbH140" }, { "bbH160", "bbH160" },
             { "bbH180", "bbH180" }, { "bbH200", "bbH200" }, { "bbH250", "bbH250" }, { "bbH300", "bbH300" },
             { "bbH350", "bbH350" }, { "bbH400", "bbH400" }, { "bbH90", "bbH90" }, { "data_obs", "data_obs" },
@@ -458,10 +477,10 @@ protected:
             { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
             { "ggAToZhToLLTauTau320", "ggAToZhToLLTauTau320" }, { "ggAToZhToLLTauTau330", "ggAToZhToLLTauTau330" },
             { "ggAToZhToLLTauTau340", "ggAToZhToLLTauTau340" }, { "ggAToZhToLLTauTau350", "ggAToZhToLLTauTau350" },
-            { "ggH125", "ggH125" }, { "qqH125", "qqH125" },
-            { "SIGNAL ggHhh260", "ggHTohhTo2Tau2B260" }, { "ggHTohhTo2Tau2B270", "ggHTohhTo2Tau2B270" },
+            { "LIMITS ggH125", "ggH125" }, { "LIMITS qqH125", "qqH125" },
+            { "LIMITS ggHhh260", "ggHTohhTo2Tau2B260" }, { "ggHTohhTo2Tau2B270", "ggHTohhTo2Tau2B270" },
             { "ggHTohhTo2Tau2B280", "ggHTohhTo2Tau2B280" }, { "ggHTohhTo2Tau2B290", "ggHTohhTo2Tau2B290" },
-            { "SIGNAL ggHhh300", "ggHTohhTo2Tau2B300" }, { "ggHTohhTo2Tau2B310", "ggHTohhTo2Tau2B310" },
+            { "LIMITS ggHhh300", "ggHTohhTo2Tau2B300" }, { "ggHTohhTo2Tau2B310", "ggHTohhTo2Tau2B310" },
             { "ggHTohhTo2Tau2B320", "ggHTohhTo2Tau2B320" }, { "ggHTohhTo2Tau2B330", "ggHTohhTo2Tau2B330" },
             { "ggHTohhTo2Tau2B340", "ggHTohhTo2Tau2B340" }, { "ggHTohhTo2Tau2B350", "ggHTohhTo2Tau2B350" }
         };
@@ -474,6 +493,7 @@ protected:
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaDataForCategory = fullAnaDataEntry.second;
+            if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
             const std::string directoryName = ChannelName() + "_" + categoryToDirectoryNameSuffix.at(eventCategory);
             outputFile->mkdir(directoryName.c_str());
             outputFile->cd(directoryName.c_str());
@@ -576,14 +596,29 @@ private:
         }
     }
 
-    static bool blinding_SM(double mass) { return (100<mass && mass<150); }
-
     TH1D* refillData(TH1D* histogram)
     {
+        static const std::vector< std::pair<double, double> > blindingRegions = { { 100, 150 }, { 250, 350 } };
+        static const std::map<std::string, size_t> histogramsToBlind = {
+            { "m_sv", 0 }, { "m_sv_up", 0 }, { "m_sv_down", 0 }, { "m_vis", 0 }, { "m_bb", 0 },
+            { "m_ttbb", 1 }, { "m_ttbb_nomet", 1 }
+        };
+
+        static auto need_blind = [&](double mass) -> bool {
+            if(!histogramsToBlind.count(histogram->GetName())) return false;
+            const size_t regionId = histogramsToBlind.at(histogram->GetName());
+            if(regionId >= blindingRegions.size())
+                throw analysis::exception("Bad blinding region index = ") << regionId;
+            const auto& region = blindingRegions.at(regionId);
+            return mass > region.first && mass < region.second;
+        };
+
+
         TH1D* histData = (TH1D*)histogram->Clone();
         histData->Clear();
         for(int i=1; i<=histData->GetNbinsX(); ++i){
-            const bool blinding = blinding_SM (histData->GetBinCenter(i));
+
+            const bool blinding = need_blind(histData->GetBinCenter(i));
             histData->SetBinContent(i, blinding ? 0. : histogram->GetBinContent(i));
             histData->SetBinError(i, blinding ? 0. : histogram->GetBinError(i));
         }
