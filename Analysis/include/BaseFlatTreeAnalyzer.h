@@ -146,6 +146,13 @@ std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     return s;
 }
 
+std::wostream& operator<<(std::wostream& s, const EventCategory& eventCategory) {
+    const std::string str = eventCategoryMapName.at(eventCategory);
+    s << std::wstring(str.begin(), str.end());
+    return s;
+}
+
+
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
 
@@ -242,8 +249,9 @@ public:
         }
 
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
-        PrintTables("comma", ",");
-        PrintTables("semicolon", ";");
+        static const std::wstring comma = L",", semicolon = L";";
+        PrintTables("comma", comma);
+        PrintTables("semicolon", semicolon);
         ProduceFileForLimitsCalculation();
         PrintStackedPlots();
     }
@@ -641,24 +649,26 @@ private:
 
     }
 
-    void PrintTables(const std::string& name_suffix, const std::string& sep)
+    void PrintTables(const std::string& name_suffix, const std::wstring& sep)
     {
-        std::ofstream of(outputFileName + "_" + name_suffix + ".csv");
+        std::wofstream of(outputFileName + "_" + name_suffix + ".csv");
         of << std::setprecision(1) << std::fixed;
 
         for(const HistogramDescriptor& hist : histograms) {
-            if (hist.name != "m_sv" || hist.title != "m_sv") continue;
+            if (hist.name != "m_sv") continue;
             PrintHistogram(of, sep, hist, false,false);
             PrintHistogram(of, sep, hist, true, false);
             PrintHistogram(of, sep, hist, false,true);
             PrintHistogram(of, sep, hist, true, true);
         }
+        of.flush();
+        of.close();
     }
 
-    void PrintHistogram(std::ostream& of, const std::string& sep, const HistogramDescriptor& hist, bool includeOverflow,
+    void PrintHistogram(std::wostream& of, const std::wstring& sep, const HistogramDescriptor& hist, bool includeOverflow,
                         bool includeError)
     {
-        of << hist.title;
+        of << std::wstring(hist.title.begin(), hist.title.end());
         if(includeOverflow){
             if (!includeError)
                 of << " with overflow" << sep;
@@ -669,6 +679,7 @@ private:
             of << "without overflow and error" << sep;
         else
             of << sep;
+
         for (const auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             of << eventCategory << sep;
@@ -676,7 +687,7 @@ private:
         of << std::endl;
         for (DataCategory& dataCategory : categories) {
             if (dataCategory.IsReference()) continue;
-            of << dataCategory.title << sep;
+            of << std::wstring(dataCategory.title.begin(), dataCategory.title.end()) << sep;
             for (auto& fullAnaDataEntry : fullAnaData) {
                 AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
                 if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) {
@@ -690,7 +701,7 @@ private:
                         const double integral = includeOverflow ?
                                     histogram->IntegralAndError(0, histogram->GetNbinsX() + 1,error)
                                   : histogram->IntegralAndError(0, histogram->GetNbinsX(),error);
-                        of << integral << " \u00B1 " << error << sep;
+                        of << integral << L" \u00B1 " << error << sep;
                     }
                 }
                 else
