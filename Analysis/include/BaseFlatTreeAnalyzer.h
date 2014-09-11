@@ -496,6 +496,10 @@ protected:
             { "LIMITS ggHhh340", "ggHTohhTo2Tau2B340" }, { "LIMITS ggHhh350", "ggHTohhTo2Tau2B350" }
         };
 
+        static const std::map<std::string, std::string> channelNameForFolder = {
+            { "eTau", "eleTau" }, { "muTau", "muTau" }, { "tauTau", "tauTau" }
+        };
+
         std::string channel_name = ChannelName();
         std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
 
@@ -505,7 +509,8 @@ protected:
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaDataForCategory = fullAnaDataEntry.second;
             if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
-            const std::string directoryName = ChannelName() + "_" + categoryToDirectoryNameSuffix.at(eventCategory);
+            const std::string directoryName = channelNameForFolder.at(ChannelName()) + "_"
+                    + categoryToDirectoryNameSuffix.at(eventCategory);
             outputFile->mkdir(directoryName.c_str());
             outputFile->cd(directoryName.c_str());
             for(const auto& limitDataCategory : dataCategoriesForLimits) {
