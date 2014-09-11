@@ -173,8 +173,8 @@ public:
     TH1D_ENTRY_CUSTOM(m_sv_up, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_down, mass_bins)
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
-    TH1D_ENTRY(m_bb, 60, 0, 600)
-    TH1D_ENTRY(m_ttbb, 100, 0, 1000)
+    TH1D_ENTRY(m_bb, 30, 0, 600)
+    TH1D_ENTRY(m_ttbb, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
@@ -386,7 +386,7 @@ protected:
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
-                TLegend* leg = new TLegend (0.63, 0.60, 0.7, 0.85);
+                TLegend* leg = new TLegend (0.60, 0.65, 0.67, 0.90);
                 leg->SetFillColor(0);
                 leg->SetTextSize(0.035);
                 SetLegendStyle(leg);
@@ -739,30 +739,8 @@ private:
             if(!(otherBkg_hist = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
             histogram.Add(otherBkg_hist);
         }
-//        categories.push_back(*sumBkg);
     }
 
-//    virtual void EstimateQCD(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
-//                             const analysis::HistogramDescriptor& hist) override
-//    {
-//        static const double scale_factor = 1.06;
-
-//        using analysis::EventType_QCD;
-//        const analysis::DataCategory& qcd = FindCategory("QCD");
-
-//        const analysis::DataCategory& data = FindCategory("DATA");
-//        root_ext::SmartHistogram<TH1D>* hist_data;
-//        if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
-//        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
-//        for (const analysis::DataCategory& category : categories){
-//            if (category.IsData() || category.IsSignal() || category.name == qcd.name
-//                    || category.IsForLimitsOnly()) continue;
-//            TH1D* nonQCD_hist;
-//            if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-//            histogram.Add(nonQCD_hist, -1);
-//        }
-//        histogram.Scale(scale_factor);
-//    }
 
 protected:
     std::string inputPath;
