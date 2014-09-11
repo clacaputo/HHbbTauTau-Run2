@@ -359,6 +359,11 @@ protected:
                 page.side.axis_titleX = hist.Xaxis_title;
                 page.side.axis_titleY = hist.Yaxis_title;
                 page.side.layout.has_stat_pad = true;
+                page.side.layout.legend_pad.right_top.x = 1.;
+                page.side.layout.legend_pad.right_top.y = 1.;
+                page.side.layout.legend_pad.left_bottom.x = 0.7;
+                page.side.layout.legend_pad.left_bottom.y = 0.6;
+
                 page.side.layout.main_pad.right_top.x=0.7;
                 page.side.layout.main_pad.right_top.y=1.;
                 page.side.layout.main_pad.left_bottom.x=0.;
@@ -479,11 +484,11 @@ protected:
             { "ggAToZhToLLTauTau320", "ggAToZhToLLTauTau320" }, { "ggAToZhToLLTauTau330", "ggAToZhToLLTauTau330" },
             { "ggAToZhToLLTauTau340", "ggAToZhToLLTauTau340" }, { "ggAToZhToLLTauTau350", "ggAToZhToLLTauTau350" },
             { "LIMITS ggH125", "ggH125" }, { "LIMITS qqH125", "qqH125" },
-            { "LIMITS ggHhh260", "ggHTohhTo2Tau2B260" }, { "ggHTohhTo2Tau2B270", "ggHTohhTo2Tau2B270" },
-            { "ggHTohhTo2Tau2B280", "ggHTohhTo2Tau2B280" }, { "ggHTohhTo2Tau2B290", "ggHTohhTo2Tau2B290" },
-            { "LIMITS ggHhh300", "ggHTohhTo2Tau2B300" }, { "ggHTohhTo2Tau2B310", "ggHTohhTo2Tau2B310" },
-            { "ggHTohhTo2Tau2B320", "ggHTohhTo2Tau2B320" }, { "ggHTohhTo2Tau2B330", "ggHTohhTo2Tau2B330" },
-            { "ggHTohhTo2Tau2B340", "ggHTohhTo2Tau2B340" }, { "ggHTohhTo2Tau2B350", "ggHTohhTo2Tau2B350" }
+            { "LIMITS ggHhh260", "ggHTohhTo2Tau2B260" }, { "LIMITS ggHhh270", "ggHTohhTo2Tau2B270" },
+            { "LIMITS ggHhh280", "ggHTohhTo2Tau2B280" }, { "LIMITS ggHhh290", "ggHTohhTo2Tau2B290" },
+            { "LIMITS ggHhh300", "ggHTohhTo2Tau2B300" }, { "LIMITS ggHhh310", "ggHTohhTo2Tau2B310" },
+            { "LIMITS ggHhh320", "ggHTohhTo2Tau2B320" }, { "LIMITS ggHhh330", "ggHTohhTo2Tau2B330" },
+            { "LIMITS ggHhh340", "ggHTohhTo2Tau2B340" }, { "LIMITS ggHhh350", "ggHTohhTo2Tau2B350" }
         };
 
         std::string channel_name = ChannelName();

@@ -175,7 +175,7 @@ private:
         stack.GetYaxis()->SetTitle(page_side.axis_titleY.c_str());
 
         data_hist.SetMarkerStyle(7);
-        data_hist.Draw("samepPE10");
+        data_hist.Draw("samepPE0");
         pave_text.Draw("same");
 
 //        TPad* padRatio = new TPad("padRatio","",0,0,1,0.1);
