@@ -83,23 +83,34 @@ ggH.root 0.0037
 [LIMITS qqH125]
 VBF
 azure
-vbf.root 0.0020
+VBF_HToTauTau.root 0.001967
 
-# 2.64 * qqH125
+# 2.64 * qqH125(from Rebecca)
 [LIMITS VH125]
 VH125
 azure
-vbf.root 0.0053
+VBF_HToTauTau.root 0.0052
 
-# 0.313 * qqH125
+# 0.313 * qqH125 = 0.000626 (from Rebecca)
 [LIMITS ggH125]
 ggH125
 azure
-vbf.root 0.000626
+GluGluToHToTauTau.root 0.0251
+
+[LIMITS SMhiggs]
+SMhiggs
+azure
+VBF_HToBB.root 0.01797
+VBF_HToTauTau.root 0.001967
+GluGluToHToTauTau.root 0.0251
 
 [VIRTUAL QCD]
 QCD
 pink_custom
+
+[SUM SUM]
+SumBkg
+black
 
 [EWK]
 Electroweak

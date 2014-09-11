@@ -74,6 +74,7 @@ public:
     bool IsReference() const { return NameContains("REFERENCE"); }
     bool IsVirtual() const { return NameContains("VIRTUAL"); }
     bool IsForLimitsOnly() const { return NameContains("LIMITS"); }
+    bool IsSumBkg() const { return NameContains("SUM"); }
 
     bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
 };
@@ -231,6 +232,15 @@ public:
                 if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
             }
         }
+        std::cout << "Estimating Sum od backgrounds... " << std::endl;
+        for (auto& fullAnaDataEntry : fullAnaData) {
+            const EventCategory& eventCategory = fullAnaDataEntry.first;
+            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            for (const auto& hist : histograms) {
+                EstimateSumBkg(eventCategory, anaData, hist);
+            }
+        }
+
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
         PrintTables("comma", ",");
         PrintTables("semicolon", ";");
@@ -363,12 +373,12 @@ protected:
                 page.side.layout.main_pad.right_top.y=1.;
                 page.side.layout.main_pad.left_bottom.x=0.;
                 page.side.layout.main_pad.left_bottom.y=0;
-                page.side.layout.stat_pad.left_bottom.x=0.75;
+                page.side.layout.stat_pad.left_bottom.x=0.7;
                 page.side.layout.stat_pad.left_bottom.y=0.3;
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
-                TLegend* leg = new TLegend (0.53, 0.60, 0.95, 0.90);
+                TLegend* leg = new TLegend (0.63, 0.60, 0.7, 0.85);
                 leg->SetFillColor(0);
                 leg->SetTextSize(0.035);
                 SetLegendStyle(leg);
@@ -390,8 +400,8 @@ protected:
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName))
-                            || category.IsForLimitsOnly()) continue;
+                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName)) ||
+                            category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     histogram->SetLineColor(colorMapName.at("black"));
                     histogram->SetLineWidth(1.);
                     ReweightWithBinWidth(*histogram);
@@ -426,7 +436,7 @@ protected:
                 TH1D* bkg_sum = nullptr;
                 for(const DataCategory& category : categories) {
                     if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    if(category.IsReference() || category.IsData() || category.IsSignal()
+                    if(category.IsReference() || category.IsData() || category.IsSignal() || category.IsSumBkg()
                             || category.IsForLimitsOnly()) continue;
                     TH1D& bkg = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
                     if(!bkg_sum)
@@ -631,18 +641,29 @@ private:
         std::ofstream of(outputFileName + "_" + name_suffix + ".csv");
         of << std::setprecision(1) << std::fixed;
 
-        for(const auto& hist : histograms) {
-            PrintHistogram(of, sep, hist, false);
-            PrintHistogram(of, sep, hist, true);
+        for(const HistogramDescriptor& hist : histograms) {
+            if (hist.name != "m_sv" || hist.title != "m_sv") continue;
+            PrintHistogram(of, sep, hist, false,false);
+            PrintHistogram(of, sep, hist, true, false);
+            PrintHistogram(of, sep, hist, false,true);
+            PrintHistogram(of, sep, hist, true, true);
         }
     }
 
-    void PrintHistogram(std::ostream& of, const std::string& sep, const HistogramDescriptor& hist, bool includeOverflow)
+    void PrintHistogram(std::ostream& of, const std::string& sep, const HistogramDescriptor& hist, bool includeOverflow,
+                        bool includeError)
     {
         of << hist.title;
-        if(includeOverflow)
-            of << " with overflow";
-        of << sep;
+        if(includeOverflow){
+            if (!includeError)
+                of << " with overflow" << sep;
+            else
+                of << "with overflow and error" << sep;
+        }
+        else if (includeError)
+            of << "without overflow and error" << sep;
+        else
+            of << sep;
         for (const auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             of << eventCategory << sep;
@@ -654,9 +675,18 @@ private:
             for (auto& fullAnaDataEntry : fullAnaData) {
                 AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
                 if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) {
-                    const double integral = includeOverflow ? histogram->Integral(0, histogram->GetNbinsX() + 1)
-                                                            : histogram->Integral();
-                    of << integral << sep;
+                    if (!includeError){
+                        const double integral = includeOverflow ? histogram->Integral(0, histogram->GetNbinsX() + 1)
+                                                                : histogram->Integral();
+                        of << integral << sep;
+                    }
+                    else if (includeError){
+                        double error = 0.;
+                        const double integral = includeOverflow ?
+                                    histogram->IntegralAndError(0, histogram->GetNbinsX() + 1,error)
+                                  : histogram->IntegralAndError(0, histogram->GetNbinsX(),error);
+                        of << integral << " \u00B1 " << error << sep;
+                    }
                 }
                 else
                     of << "NaN" << sep;
@@ -673,6 +703,50 @@ private:
       leg->SetFillColor (0);
       leg->SetBorderSize(0);
     }
+
+    void EstimateSumBkg(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+                             const analysis::HistogramDescriptor& hist)
+    {
+        const analysis::DataCategory& sumBkg = FindCategory("SUM");
+
+        std::cout << "created sumBkg" << std::endl;
+
+        const analysis::DataCategory& ewk = FindCategory("EWK");
+        root_ext::SmartHistogram<TH1D>* hist_ewk;
+        if(!(hist_ewk = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) return;
+        TH1D& histogram = anaData[sumBkg.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_ewk);
+        for (const analysis::DataCategory& category : categories){
+            if (category.IsReference() || category.IsData() || category.IsSignal() || category.name == ewk.name || category.IsSumBkg()
+                    || category.IsForLimitsOnly()) continue;
+
+            TH1D* otherBkg_hist;
+            if(!(otherBkg_hist = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
+            histogram.Add(otherBkg_hist);
+        }
+//        categories.push_back(*sumBkg);
+    }
+
+//    virtual void EstimateQCD(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+//                             const analysis::HistogramDescriptor& hist) override
+//    {
+//        static const double scale_factor = 1.06;
+
+//        using analysis::EventType_QCD;
+//        const analysis::DataCategory& qcd = FindCategory("QCD");
+
+//        const analysis::DataCategory& data = FindCategory("DATA");
+//        root_ext::SmartHistogram<TH1D>* hist_data;
+//        if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
+//        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
+//        for (const analysis::DataCategory& category : categories){
+//            if (category.IsData() || category.IsSignal() || category.name == qcd.name
+//                    || category.IsForLimitsOnly()) continue;
+//            TH1D* nonQCD_hist;
+//            if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
+//            histogram.Add(nonQCD_hist, -1);
+//        }
+//        histogram.Scale(scale_factor);
+//    }
 
 protected:
     std::string inputPath;
