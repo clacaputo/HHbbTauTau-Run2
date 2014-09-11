@@ -30,10 +30,50 @@ hh#rightarrow#tau#taubb(m_{H}=260  tan#beta=2.5)) for limits
 blue
 ggH_hh_bbtautau_260.root 0.0424
 
+[LIMITS ggHhh270]
+hh#rightarrow#tau#taubb(m_{H}=270  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_270.root 0.0401
+
+[LIMITS ggHhh280]
+hh#rightarrow#tau#taubb(m_{H}=280  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_280.root 0.0411
+
+[LIMITS ggHhh290]
+hh#rightarrow#tau#taubb(m_{H}=290  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_290.root 0.0317
+
 [LIMITS ggHhh300]
 hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5)) for limits
 blue
 ggH.root 0.0431
+
+[LIMITS ggHhh310]
+hh#rightarrow#tau#taubb(m_{H}=310  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_310.root 0.0402
+
+[LIMITS ggHhh320]
+hh#rightarrow#tau#taubb(m_{H}=320  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_320.root 0.0412
+
+[LIMITS ggHhh330]
+hh#rightarrow#tau#taubb(m_{H}=330  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_330.root 0.0395
+
+[LIMITS ggHhh340]
+hh#rightarrow#tau#taubb(m_{H}=340  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_340.root 0.0403
+
+[LIMITS ggHhh350]
+hh#rightarrow#tau#taubb(m_{H}=350  tan#beta=2.5)) for limits
+blue
+ggH_hh_bbtautau_350.root 0.0345
 
 [SIGNAL ggHhh300]
 hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5))
