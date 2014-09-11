@@ -358,19 +358,19 @@ protected:
                 page.layout.has_title = false;
                 page.side.axis_titleX = hist.Xaxis_title;
                 page.side.axis_titleY = hist.Yaxis_title;
-                page.side.layout.has_stat_pad = true;
-                page.side.layout.main_pad.right_top.x=0.7;
+                page.side.layout.has_stat_pad = false;
+                page.side.layout.main_pad.right_top.x=1;
                 page.side.layout.main_pad.right_top.y=1.;
                 page.side.layout.main_pad.left_bottom.x=0.;
-                page.side.layout.main_pad.left_bottom.y=0.2;
+                page.side.layout.main_pad.left_bottom.y=0;
                 page.side.layout.stat_pad.left_bottom.x=0.75;
                 page.side.layout.stat_pad.left_bottom.y=0.3;
 
                 std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
 
-                TLegend* leg = new TLegend ( 0, 0.6, 1, 1.0);
+                TLegend* leg = new TLegend (0.53, 0.60, 0.95, 0.90);
                 leg->SetFillColor(0);
-                leg->SetTextSize(0.055);
+                leg->SetTextSize(0.035);
                 SetLegendStyle(leg);
                 TString lumist="19.7 fb^{-1}";
                 TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
@@ -613,7 +613,6 @@ private:
             const auto& region = blindingRegions.at(regionId);
             return mass > region.first && mass < region.second;
         };
-
 
         TH1D* histData = (TH1D*)histogram->Clone();
         histData->Clear();
