@@ -227,3 +227,6 @@ Analysis/config/analyzers.cfg
 Analysis/source/H_BaselineSync.C
 RunTools/batch.sh
 RunTools/submitMultiAnalysis_Batch.sh
+PatProduction/crab/multicrab_ggAZh.cfg
+PatProduction/crab/multicrab_ggHhh.cfg
+PatProduction/crab/multicrab_ggbbH.cfg
