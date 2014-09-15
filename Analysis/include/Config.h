@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "BaseConfig.h"
+#include "AnalysisBase/include/BaseConfig.h"
 
 namespace analysis {
 

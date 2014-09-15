@@ -24,13 +24,12 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../HHbbTauTau/Analysis/include/TreeExtractor.h"
-#include "../HHbbTauTau/Analysis/include/Config.h"
-#include "../HHbbTauTau/Analysis/source/HmutauBaseline_sync.C"
-#include "../HHbbTauTau/Analysis/source/HetauBaseline_sync.C"
-#include "../HHbbTauTau/Analysis/source/HtautauBaseline_sync.C"
+#include "AnalysisBase/include/TreeExtractor.h"
+#include "Analysis/include/Config.h"
 
-
+#include "HmutauBaseline_sync.C"
+#include "HetauBaseline_sync.C"
+#include "HtautauBaseline_sync.C"
 
 class H_BaselineSync {
 public:

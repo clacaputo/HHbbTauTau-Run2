@@ -25,13 +25,15 @@
  */
 
 #pragma once
+
 #include <set>
 
 #include <TLorentzVector.h>
 
-#include "../include/Particles.h"
-#include "../include/iostream_operators.h"
 #include "TreeProduction/interface/GenParticle.h"
+
+#include "Particles.h"
+#include "iostream_operators.h"
 #include "exception.h"
 
 namespace analysis {

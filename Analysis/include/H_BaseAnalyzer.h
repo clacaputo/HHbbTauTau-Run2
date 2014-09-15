@@ -26,8 +26,9 @@
 
 #pragma once
 
+#include "AnalysisBase/include/SyncTree.h"
+
 #include "BaseAnalyzer.h"
-#include "SyncTree.h"
 
 namespace analysis {
 
@@ -250,7 +251,8 @@ protected:
     {
         analysis::CandidateVector triggeredHiggses;
         for (const auto& higgs : higgses){
-            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs))
+            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs,
+                                                                        cuts::Htautau_Summer13::DeltaR_triggerMatch))
                 triggeredHiggses.push_back(higgs);
             if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event,hltPaths,higgs))
                 triggeredHiggses.push_back(higgs);
@@ -375,7 +377,7 @@ protected:
             throw exception("more than one resonance to tautau per event");
 
         if(resonancesToTauTau.size() == 0){
-            if(config.ExpectedOneResonanceToTauTau())
+            if(config.ExpectedAtLeastOneSMResonanceToTauTauOrToBB()) /* ExpectedOneResonanceToTauTau */
                 throw exception("resonance to tautau not found");
             else
                 return false;

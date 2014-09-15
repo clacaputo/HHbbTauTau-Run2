@@ -24,11 +24,12 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../HHbbTauTau/Analysis/include/TreeExtractor.h"
-#include "../HHbbTauTau/Analysis/include/Config.h"
-#include "../HHbbTauTau/Analysis/source/HHbbmutau_FlatTreeProducer.C"
-#include "../HHbbTauTau/Analysis/source/HHbbetau_FlatTreeProducer.C"
-#include "../HHbbTauTau/Analysis/source/HHbbtautau_FlatTreeProducer.C"
+#include "AnalysisBase/include/TreeExtractor.h"
+#include "Analysis/include/Config.h"
+
+#include "HHbbmutau_FlatTreeProducer.C"
+#include "HHbbetau_FlatTreeProducer.C"
+#include "HHbbtautau_FlatTreeProducer.C"
 
 class H_FlatTreeProducer {
 public:

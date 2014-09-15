@@ -1,9 +1,9 @@
 /*!
- * \file iostream_operators.h
- * \brief Definition of iostream operators suitable for tau trigger analysis.
+ * \file DebugTools.h
+ * \brief Common tools and definitions suitable for debug purposes.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
- * \date 2013-05-10 created
+ * \date 2014-03-29 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
  *                Maria Teresa Grippo <grippomariateresa@gmail.com>
@@ -26,34 +26,31 @@
 
 #pragma once
 
-#include "TLorentzVector.h"
-#include "Particles.h"
+#include <vector>
 
+namespace debug {
 
-std::ostream& operator<<(std::ostream& s, const particles::Status& particleStatus){
-    s << particles::NameProvider<particles::Status>::Name(particleStatus);
-    return s;
+#define PRINT_SIZEOF(name) \
+    std::cout << "Sizeof " #name " = " << sizeof(name) << std::endl
+
+inline void PrintCommonTypeSizes()
+{
+    PRINT_SIZEOF(Float_t);
+    PRINT_SIZEOF(Double_t);
+    PRINT_SIZEOF(Int_t);
+    PRINT_SIZEOF(UInt_t);
+    PRINT_SIZEOF(Bool_t);
+    PRINT_SIZEOF(Long64_t);
+    PRINT_SIZEOF(int);
+    PRINT_SIZEOF(unsigned);
+    PRINT_SIZEOF(float);
+    PRINT_SIZEOF(double);
+    PRINT_SIZEOF(bool);
+    PRINT_SIZEOF(size_t);
+
+    typedef std::vector<double>::size_type std_collection_size_type;
+    PRINT_SIZEOF(std_collection_size_type);
 }
+#undef PRINT_SIZEOF
 
-std::ostream& operator<<(std::ostream& s, const particles::ParticleCode& code){
-    s << code.Name();
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const particles::PdgParticle& particle){
-    s << particle.Name();
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const TVector3& v){
-    s << "(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const TLorentzVector& v){
-    s << /*"(" <<*/ v.Pt() << " " << v.Eta() << " " << v.Phi() << " " << v.E() /*<< ")"*/;
-    return s;
-}
-
-
-
+} // debug

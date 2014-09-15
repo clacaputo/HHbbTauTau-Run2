@@ -26,20 +26,15 @@
 
 #pragma once
 
-//#include "HHbbTauTau/SVfit_standalone/src/LikelihoodFunctions.cc"
-//#include "HHbbTauTau/SVfit_standalone/src/SVfitStandaloneAlgorithm.cc"
-//#include "HHbbTauTau/SVfit_standalone/src/svFitStandaloneAuxFunctions.cc"
-//#include "HHbbTauTau/SVfit_standalone/src/SVfitStandaloneLikelihood.cc"
-//#include "HHbbTauTau/SVfit_standalone/src/SVfitStandaloneMarkovChainIntegrator.cc"
+#include "SVfit/source/generalAuxFunctions.cc"
+#include "SVfit/source/LikelihoodFunctions.cc"
+#include "SVfit/source/NSVfitStandaloneAlgorithm.cc"
+#include "SVfit/source/NSVfitStandaloneLikelihood.cc"
+#include "SVfit/source/svFitAuxFunctions.cc"
 
-#include "HHbbTauTau/SVfit/source/generalAuxFunctions.cc"
-#include "HHbbTauTau/SVfit/source/LikelihoodFunctions.cc"
-#include "HHbbTauTau/SVfit/source/NSVfitStandaloneAlgorithm.cc"
-#include "HHbbTauTau/SVfit/source/NSVfitStandaloneLikelihood.cc"
-#include "HHbbTauTau/SVfit/source/svFitAuxFunctions.cc"
+#include "TreeProduction/interface/MET.h"
 
 #include "Candidate.h"
-#include "HHbbTauTau/TreeProduction/interface/MET.h"
 
 namespace analysis {
 double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, double tauESfactor)

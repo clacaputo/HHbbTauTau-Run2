@@ -37,7 +37,7 @@
 #include <TSystem.h>
 #include <TTree.h>
 
-#include "../include/exception.h"
+#include "AnalysisBase/include/exception.h"
 
 class MergeRootFiles {
 public:

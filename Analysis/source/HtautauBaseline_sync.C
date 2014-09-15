@@ -24,8 +24,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/H_BaseAnalyzer.h"
-#include "../include/SyncTree.h"
+#include "Analysis/include/H_BaseAnalyzer.h"
 
 class AnalyzerDataTauTau : public analysis::BaseAnalyzerData {
 public:
@@ -194,7 +193,8 @@ protected:
                 const std::string& interestingPath = interestingPathIter.first;
                 const bool jetTriggerRequest = interestingPathIter.second;
 
-                if(!useStandardTriggerMatch && !analysis::HaveTriggerMatched(event->triggerObjects(), interestingPath, higgs))
+                if(!useStandardTriggerMatch && !analysis::HaveTriggerMatched(event->triggerObjects(), interestingPath,
+                                                                    higgs, cuts::Htautau_Summer13::DeltaR_triggerMatch))
                     continue;
 
                 if (useStandardTriggerMatch && !analysis::HaveTriggerMatched(*event,interestingPath,higgs))
@@ -204,7 +204,7 @@ protected:
                 if(jetTriggerRequest) {
                     for (const auto& jet : jets){
                         if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(),
-                                                                                     interestingPath, jet)){
+                                                   interestingPath, jet, cuts::Htautau_Summer13::DeltaR_triggerMatch)) {
                             jetMatched = true;
                             break;
                         }

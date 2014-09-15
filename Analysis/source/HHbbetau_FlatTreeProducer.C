@@ -24,7 +24,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/BaseFlatTreeProducer.h"
+#include "Analysis/include/BaseFlatTreeProducer.h"
 
 class HHbbetau_FlatTreeProducer : public analysis::BaseFlatTreeProducer {
 public:

@@ -26,10 +26,11 @@
 
 #pragma once
 
-#include "HHbbTauTau/METPUSubtraction/source/GBRForest.cxx"
-#include "HHbbTauTau/METPUSubtraction/source/GBRTree.cxx"
-#include "HHbbTauTau/METPUSubtraction/source/mvaMEtUtilities.cc"
-#include "HHbbTauTau/METPUSubtraction/source/PFMETAlgorithmMVA.cc"
+#include "METPUSubtraction/source/GBRForest.cxx"
+#include "METPUSubtraction/source/GBRTree.cxx"
+#include "METPUSubtraction/source/mvaMEtUtilities.cc"
+#include "METPUSubtraction/source/PFMETAlgorithmMVA.cc"
+
 #include "iostream_operators.h"
 #include "Candidate.h"
 #include "AnalysisTools.h"

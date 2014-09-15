@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "HHbbTauTau/TreeProduction/interface/SmartTree.h"
+#include "TreeProduction/interface/SmartTree.h"
 
 #define FLAT_DATA() \
     /* Event Variables */ \

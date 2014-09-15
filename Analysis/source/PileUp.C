@@ -28,10 +28,11 @@
 
 #pragma once
 
-#include "TH1D.h"
-#include "../include/TreeExtractor.h"
+#include <TH1.h>
 
-class PileUp{
+#include "AnalysisBase/include/TreeExtractor.h"
+
+class PileUp {
 public:
     PileUp(const std::string& MC_File_name, const std::string& Data_File_name, const std::string& reweight_fileName,
                  const std::string& histName, const std::string& _mode, const std::string& _prefix = "none",

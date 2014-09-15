@@ -36,7 +36,6 @@
 
 #include "Particles.h"
 #include "EventDescriptor.h"
-#include "Htautau_Summer13.h"
 #include "AnalysisMath.h"
 
 namespace analysis {
@@ -66,11 +65,11 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
                                const std::string& interestingPath,
-                               const analysis::Candidate& candidate)
+                               const analysis::Candidate& candidate, double deltaR_Limit)
 {
     if(candidate.finalStateDaughters.size()) {
         for(const Candidate& daughter : candidate.finalStateDaughters) {
-            if(!HaveTriggerMatched(triggerObjects, interestingPath, daughter))
+            if(!HaveTriggerMatched(triggerObjects, interestingPath, daughter, deltaR_Limit))
                 return false;
         }
         return true;
@@ -83,7 +82,7 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                    triggerObjectMomentum.DeltaR(candidate.momentum) < cuts::Htautau_Summer13::DeltaR_triggerMatch)
+                    triggerObjectMomentum.DeltaR(candidate.momentum) < deltaR_Limit /*cuts::Htautau_Summer13::DeltaR_triggerMatch*/)
                 return true;
         }
     }
@@ -131,10 +130,10 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
                                const std::vector<std::string>& interestingPaths,
-                               const analysis::Candidate& candidate)
+                               const analysis::Candidate& candidate, double deltaR_Limit)
 {
     for (const std::string& interestinPath : interestingPaths){
-        if (HaveTriggerMatched(triggerObjects,interestinPath,candidate)) return true;
+        if (HaveTriggerMatched(triggerObjects,interestinPath,candidate, deltaR_Limit)) return true;
     }
     return false;
 }

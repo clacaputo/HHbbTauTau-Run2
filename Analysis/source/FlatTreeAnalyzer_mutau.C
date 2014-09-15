@@ -28,8 +28,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/BaseFlatTreeAnalyzer.h"
-#include "../include/Htautau_Summer13.h"
+#include "Analysis/include/BaseFlatTreeAnalyzer.h"
 
 class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:

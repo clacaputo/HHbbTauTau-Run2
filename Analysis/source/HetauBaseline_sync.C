@@ -24,7 +24,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/H_BaseAnalyzer.h"
+#include "Analysis/include/H_BaseAnalyzer.h"
 
 class AnalyzerDataETau : public analysis::BaseAnalyzerData {
 public:

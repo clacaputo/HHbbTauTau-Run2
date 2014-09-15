@@ -26,8 +26,9 @@
 
 #pragma once
 
+#include "AnalysisBase/include/FlatTree.h"
+
 #include "BaseAnalyzer.h"
-#include "FlatTree.h"
 
 namespace analysis {
 

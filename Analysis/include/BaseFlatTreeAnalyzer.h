@@ -31,16 +31,18 @@
 #include <set>
 #include <list>
 #include <locale>
+
 #include <TColor.h>
 #include <TLorentzVector.h>
 
-#include "AnalyzerData.h"
-#include "FlatTree.h"
-#include "AnalysisMath.h"
+#include "AnalysisBase/include/AnalyzerData.h"
+#include "AnalysisBase/include/FlatTree.h"
+#include "AnalysisBase/include/AnalysisMath.h"
+#include "AnalysisBase/include/exception.h"
+#include "AnalysisBase/include/Particles.h"
 #include "PrintTools/include/RootPrintToPdf.h"
+
 #include "Htautau_Summer13.h"
-#include "exception.h"
-#include "Particles.h"
 
 namespace analysis {
 

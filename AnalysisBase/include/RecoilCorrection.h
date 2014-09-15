@@ -28,8 +28,8 @@
 
 #include <TLorentzVector.h>
 
-#include "HHbbTauTau/RecoilCorrector_v7/RecoilCorrector.hh"
-#include "HHbbTauTau/TreeProduction/interface/MET.h"
+#include "RecoilCorrector_v7/RecoilCorrector.hh"
+#include "TreeProduction/interface/MET.h"
 
 namespace analysis {
 

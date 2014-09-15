@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "HHbbTauTau/TreeProduction/interface/SmartTree.h"
+#include "TreeProduction/interface/SmartTree.h"
 
 #define SYNC_DATA() \
     SIMPLE_VAR(Int_t, run) /* Run */ \

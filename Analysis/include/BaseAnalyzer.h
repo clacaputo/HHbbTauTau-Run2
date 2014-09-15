@@ -30,26 +30,29 @@
 #define override
 #endif
 
-#include "MvaMet.h"
-#include "TreeExtractor.h"
-#include "AnalyzerData.h"
-#include "Htautau_Summer13.h"
-#include "CutTools.h"
-#include "GenParticle.h"
-#include "MCfinalState.h"
-#include "Candidate.h"
-#include "custom_cuts.h"
-#include "RecoilCorrection.h"
-#include "SVfit.h"
-#include "MvaMet.h"
 #include <iomanip>
 #include <functional>
-#include "RunReport.h"
-#include "Tools.h"
-#include "AnalysisTools.h"
+
+#include "AnalysisBase/include/MvaMet.h"
+#include "AnalysisBase/include/TreeExtractor.h"
+#include "AnalysisBase/include/AnalyzerData.h"
+#include "AnalysisBase/include/CutTools.h"
+#include "AnalysisBase/include/GenParticle.h"
+#include "AnalysisBase/include/MCfinalState.h"
+#include "AnalysisBase/include/Candidate.h"
+#include "AnalysisBase/include/RecoilCorrection.h"
+#include "AnalysisBase/include/SVfit.h"
+#include "AnalysisBase/include/MvaMet.h"
+#include "AnalysisBase/include/RunReport.h"
+#include "AnalysisBase/include/Tools.h"
+#include "AnalysisBase/include/AnalysisTools.h"
+
+#include "Htautau_Summer13.h"
 #include "Htautau_TriggerEfficiency.h"
 #include "BTagWeight.h"
 #include "Config.h"
+#include "custom_cuts.h"
+
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \
@@ -462,7 +465,8 @@ protected:
     {
         analysis::CandidateVector triggeredHiggses;
         for (const auto& higgs : higgses){
-            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs))
+            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs,
+                                                                        cuts::Htautau_Summer13::DeltaR_triggerMatch))
                 triggeredHiggses.push_back(higgs);
             if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event,hltPaths,higgs))
                 triggeredHiggses.push_back(higgs);

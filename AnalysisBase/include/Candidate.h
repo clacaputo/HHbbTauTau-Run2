@@ -25,8 +25,11 @@
  */
 
 #pragma once
-#include <TLorentzVector.h>
+
 #include <vector>
+
+#include <TLorentzVector.h>
+
 #include "EventDescriptor.h"
 #include "Particles.h"
 
