@@ -230,3 +230,5 @@ RunTools/submitMultiAnalysis_Batch.sh
 PatProduction/crab/multicrab_ggAZh.cfg
 PatProduction/crab/multicrab_ggHhh.cfg
 PatProduction/crab/multicrab_ggbbH.cfg
+PatProduction/crab/multicrab_Graviton.cfg
+PatProduction/crab/multicrab_Radion.cfg
