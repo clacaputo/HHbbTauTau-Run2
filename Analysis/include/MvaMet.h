@@ -31,9 +31,11 @@
 #include "METPUSubtraction/source/mvaMEtUtilities.cc"
 #include "METPUSubtraction/source/PFMETAlgorithmMVA.cc"
 
-#include "iostream_operators.h"
-#include "Candidate.h"
-#include "AnalysisTools.h"
+#include "AnalysisBase/include/iostream_operators.h"
+#include "AnalysisBase/include/Candidate.h"
+#include "AnalysisBase/include/AnalysisTools.h"
+
+#include "Htautau_Summer13.h"
 
 namespace analysis {
 
@@ -164,7 +166,7 @@ private:
         std::vector<mvaMEtUtilities::JetInfo> jetInfos;
         for(const ntuple::Jet& jet : jets) {
             //if(!jet.passLooseID) continue;
-            if(!analysis::passPFLooseId(jet)) continue;
+            if(!cuts::Htautau_Summer13::jetID::passPFLooseId(jet)) continue;
             mvaMEtUtilities::JetInfo jetInfo;
             jetInfo.p4_.SetPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
             double lType1Corr = 0;
@@ -220,9 +222,6 @@ private:
         if(!ptTotal) ptTotal = 1.0;
         return ptCharged / ptTotal;
     }
-
-
-
 
 private:
     PFMETAlgorithmMVA metAlgo;

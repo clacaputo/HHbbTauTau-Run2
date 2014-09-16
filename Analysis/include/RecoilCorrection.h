@@ -1,5 +1,5 @@
 /*!
- * \file PostRecoilCorrection.h
+ * \file RecoilCorrection.h
  * \brief Definition of wrapper for RecoilCorrector code to apply recoil correction.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)

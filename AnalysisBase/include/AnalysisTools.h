@@ -31,7 +31,7 @@
 #include <memory>
 
 #include <TFile.h>
-#include <TH1D.h>
+#include <TH1.h>
 #include <TLorentzVector.h>
 
 #include "Particles.h"
@@ -146,21 +146,6 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
         if (HaveTriggerMatched(event,interestinPath,candidate)) return true;
     }
     return false;
-}
-
-//https://github.com/ajgilbert/ICHiggsTauTau/blob/38f0bedebe1e7ff432bdcbd7753f38cfaf95405f/plugins/MVAMETPairProducer.cc#L410
-inline bool passPFLooseId(const ntuple::Jet& jet)
-{
-    TLorentzVector momentum;
-    momentum.SetPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
-    if(momentum.E() == 0)                                  return false;
-    if(jet.neutralHadronEnergyFraction > 0.99)   return false;
-    if(jet.neutralEmEnergyFraction     > 0.99)   return false;
-    if(jet.nConstituents <  2)                          return false;
-    if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
-    if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
-    if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
-    return true;
 }
 
 inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )

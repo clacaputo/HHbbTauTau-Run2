@@ -34,7 +34,7 @@
 
 #include "TreeProduction/interface/MET.h"
 
-#include "Candidate.h"
+#include "AnalysisBase/include/Candidate.h"
 
 namespace analysis {
 double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, double tauESfactor)
