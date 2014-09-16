@@ -38,39 +38,40 @@
 
 namespace analysis {
 
+struct HistogramDescriptor;
+typedef std::vector<HistogramDescriptor> HistogramDescriptorVector;
+
 struct HistogramDescriptor {
     std::string name;
     std::string title;
     std::string Xaxis_title;
     std::string Yaxis_title;
     bool useLogY;
-};
 
-typedef std::vector<HistogramDescriptor> HistogramDescriptorVector;
+    static HistogramDescriptorVector ReadFromFile(const std::string& config_name)
+    {
+        HistogramDescriptorVector histograms;
+        std::ifstream cfg(config_name);
+        while (cfg.good()) {
+            std::string cfgLine;
+            std::getline(cfg, cfgLine);
+            if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
+            std::istringstream ss(cfgLine);
+            HistogramDescriptor hist;
+            ss >> hist.name;
+            ss >> hist.title;
+            ss >> hist.Xaxis_title;
+            ss >> hist.Yaxis_title;
+            ss >> std::boolalpha >> hist.useLogY;
+            histograms.push_back(hist);
+        }
+        return histograms;
+    }
+};
 
 inline std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist) {
     s << "Name: " << hist.name << ", Title: " << hist.title << ", useLog: " << hist.useLogY  ;
     return s;
-}
-
-inline HistogramDescriptorVector ReadHistogramConfigurations(const std::string& config_name)
-{
-    HistogramDescriptorVector histograms;
-    std::ifstream cfg(config_name);
-    while (cfg.good()) {
-        std::string cfgLine;
-        std::getline(cfg, cfgLine);
-        if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
-        std::istringstream ss(cfgLine);
-        HistogramDescriptor hist;
-        ss >> hist.name;
-        ss >> hist.title;
-        ss >> hist.Xaxis_title;
-        ss >> hist.Yaxis_title;
-        ss >> std::boolalpha >> hist.useLogY;
-        histograms.push_back(hist);
-    }
-    return histograms;
 }
 
 class StackedPlotDescriptor {

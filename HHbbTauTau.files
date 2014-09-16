@@ -243,3 +243,4 @@ env.sh
 generate_file_list.sh
 runx.sh
 PrintTools/include/StackedPlotDescriptor.h
+Analysis/include/AnalysisCategories.h
