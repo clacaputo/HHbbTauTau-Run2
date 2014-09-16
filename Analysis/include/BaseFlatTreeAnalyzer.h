@@ -121,20 +121,14 @@ public:
             }
         }
 
-        std::cout << "Estimating QCD and Wjets... " << std::endl;
+        std::cout << "Estimating QCD, Wjets and bkg sum... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const auto& hist : histograms) {
                 EstimateQCD(eventCategory, anaData, hist);
                 if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
-            }
-        }
-        std::cout << "Estimating Sum od backgrounds... " << std::endl;
-        for (auto& fullAnaDataEntry : fullAnaData) {
-            const EventCategory& eventCategory = fullAnaDataEntry.first;
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const auto& hist : histograms) {
+
                 EstimateSumBkg(eventCategory, anaData, hist);
             }
         }
@@ -396,40 +390,36 @@ private:
                         bool includeError)
     {
         of << std::wstring(hist.title.begin(), hist.title.end());
-        if(includeOverflow){
-            if (!includeError)
-                of << " with overflow" << sep;
-            else
-                of << "with overflow and error" << sep;
-        }
-        else if (includeError)
-            of << "without overflow and error" << sep;
-        else
-            of << sep;
+
+        std::wstring table_name_suffix = L"";
+        if(includeOverflow && includeError)
+            table_name_suffix = L"with overflow and error";
+        else if(includeOverflow && !includeError)
+            table_name_suffix = L"with overflow";
+        else if(!includeOverflow && includeError)
+            table_name_suffix = L"with error";
+        of << table_name_suffix << sep;
 
         for (const auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             of << eventCategory << sep;
         }
         of << std::endl;
+
         for (DataCategory& dataCategory : categories) {
             if (dataCategory.IsReference()) continue;
             of << std::wstring(dataCategory.title.begin(), dataCategory.title.end()) << sep;
             for (auto& fullAnaDataEntry : fullAnaData) {
                 AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
                 if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) {
-                    if (!includeError){
-                        const double integral = includeOverflow ? histogram->Integral(0, histogram->GetNbinsX() + 1)
-                                                                : histogram->Integral();
-                        of << integral << sep;
-                    }
-                    else if (includeError){
-                        double error = 0.;
-                        const double integral = includeOverflow ?
-                                    histogram->IntegralAndError(0, histogram->GetNbinsX() + 1,error)
-                                  : histogram->IntegralAndError(0, histogram->GetNbinsX(),error);
-                        of << integral << L" \u00B1 " << error << sep;
-                    }
+                    double error = 0.;
+                    const double integral = includeOverflow
+                                          ? histogram->IntegralAndError(0, histogram->GetNbinsX() + 1, error)
+                                          : histogram->IntegralAndError(0, histogram->GetNbinsX(), error);
+                    of << integral;
+                    if(includeError)
+                        of << integral << L" \u00B1 " << error;
+                    of << sep;
                 }
                 else
                     of << "NaN" << sep;
@@ -444,16 +434,13 @@ private:
                              const analysis::HistogramDescriptor& hist)
     {
         const analysis::DataCategory& sumBkg = FindCategory("SUM");
-
-        std::cout << "created sumBkg" << std::endl;
-
         const analysis::DataCategory& ewk = FindCategory("EWK");
         root_ext::SmartHistogram<TH1D>* hist_ewk;
         if(!(hist_ewk = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) return;
         TH1D& histogram = anaData[sumBkg.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_ewk);
         for (const analysis::DataCategory& category : categories){
-            if (category.IsReference() || category.IsData() || category.IsSignal() || category.name == ewk.name || category.IsSumBkg()
-                    || category.IsForLimitsOnly()) continue;
+            if (category.IsReference() || category.IsData() || category.IsSignal() || category.name == ewk.name
+                    || category.IsSumBkg() || category.IsForLimitsOnly()) continue;
 
             TH1D* otherBkg_hist;
             if(!(otherBkg_hist = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;

@@ -55,14 +55,15 @@ struct DataCategory {
     DataSourceVector sources;
 
 public:
-    bool IsData() const { return NameContains("DATA"); }
-    bool IsSignal() const { return NameContains("SIGNAL"); }
-    bool IsReference() const { return NameContains("REFERENCE"); }
-    bool IsVirtual() const { return NameContains("VIRTUAL"); }
-    bool IsForLimitsOnly() const { return NameContains("LIMITS"); }
-    bool IsSumBkg() const { return NameContains("SUM"); }
+    bool IsData() const { return NameStartsWith("DATA "); }
+    bool IsSignal() const { return NameStartsWith("SIGNAL "); }
+    bool IsReference() const { return NameStartsWith("REFERENCE "); }
+    bool IsVirtual() const { return NameStartsWith("VIRTUAL "); }
+    bool IsForLimitsOnly() const { return NameStartsWith("LIMITS "); }
+    bool IsSumBkg() const { return NameStartsWith("SUM "); }
 
     bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
+    bool NameStartsWith(const std::string& prefix) const { return name.find(prefix) == 0; }
 
 public:
 
