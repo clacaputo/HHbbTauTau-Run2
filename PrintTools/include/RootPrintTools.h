@@ -25,6 +25,8 @@
 
 #include <limits>
 #include <vector>
+#include <map>
+
 #include <Rtypes.h>
 #include <TPaveStats.h>
 #include <TPaveLabel.h>
@@ -33,6 +35,16 @@
 #include <TLegend.h>
 
 namespace root_ext {
+
+static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
+                                                           {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
+                                                           {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
+                                                           {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
+                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink},
+                                                           {"pink_custom", (EColor) TColor::GetColor(250,202,255)},
+                                                           {"red_custom", (EColor) TColor::GetColor(222,90,106)},
+                                                           {"violet_custom", (EColor) TColor::GetColor(155,152,204)},
+                                                           {"yellow_custom", (EColor) TColor::GetColor(248,206,104)}};
 
 struct Range {
     Double_t min, max;
@@ -260,3 +272,27 @@ private:
 };
 
 } // root_ext
+
+
+std::istream& operator>>(std::istream& s, EColor& color){
+    std::string name;
+    s >> name;
+    if (!root_ext::colorMapName.count(name)){
+        std::ostringstream ss;
+        ss << "undefined color: '" << name ;
+        throw std::runtime_error(ss.str());
+    }
+    color = root_ext::colorMapName.at(name);
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const EColor& color){
+    for(const auto& entry : root_ext::colorMapName) {
+        if(entry.second == color) {
+            s << entry.first;
+            return s;
+        }
+    }
+    s << "Unknown color " << color;
+    return s;
+}

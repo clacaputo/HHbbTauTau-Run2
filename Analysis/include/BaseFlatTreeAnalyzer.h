@@ -53,14 +53,6 @@ struct DataSource {
     std::shared_ptr<ntuple::FlatTree> tree;
 };
 
-struct HistogramDescriptor {
-    std::string name;
-    std::string title;
-    std::string Xaxis_title;
-    std::string Yaxis_title;
-    bool useLogY;
-};
-
 typedef std::vector<DataSource> DataSourceVector;
 
 struct DataCategory {
@@ -83,39 +75,6 @@ public:
 
 typedef std::list<DataCategory> DataCategoryCollection;
 
-static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
-                                                           {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
-                                                           {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
-                                                           {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
-                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink},
-                                                           {"pink_custom", (EColor) TColor::GetColor(250,202,255)},
-                                                           {"red_custom", (EColor) TColor::GetColor(222,90,106)},
-                                                           {"violet_custom", (EColor) TColor::GetColor(155,152,204)},
-                                                           {"yellow_custom", (EColor) TColor::GetColor(248,206,104)}};
-
-std::istream& operator>>(std::istream& s, EColor& color){
-    std::string name;
-    s >> name;
-    if (!colorMapName.count(name)){
-        std::ostringstream ss;
-        ss << "undefined color: '" << name ;
-        throw std::runtime_error(ss.str());
-    }
-    color = colorMapName.at(name);
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const EColor& color){
-    for(const auto& entry : colorMapName) {
-        if(entry.second == color) {
-            s << entry.first;
-            return s;
-        }
-    }
-    s << "Unknown color " << color;
-    return s;
-}
-
 std::ostream& operator<<(std::ostream& s, const DataSource& source){
     s << "File: " << source.file_name << ", SF: " << source.scale_factor;
     return s;
@@ -128,10 +87,6 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
-    s << "Name: " << hist.name << ", Title: " << hist.title << ", useLog: " << hist.useLogY  ;
-    return s;
-}
 
 enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
 enum class EventType_Wjets { Unknown, Signal, HighMt };
@@ -211,7 +166,7 @@ public:
         TH1::SetDefaultSumw2();
 
         ReadSourceCfg(source_cfg);
-        ReadHistCfg(hist_cfg);
+        histograms = ReadHistogramConfigurations(hist_cfg);
     }
 
     void Run()
@@ -371,94 +326,21 @@ protected:
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
+                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(), true);
 
-                page.side.use_log_scaleY = hist.useLogY;
-                page.side.fit_range_x = false;
-                page.title = ss_title.str();
-                page.layout.has_title = false;
-                page.side.axis_titleX = hist.Xaxis_title;
-                page.side.axis_titleY = hist.Yaxis_title;
-                page.side.layout.has_stat_pad = false;
-                page.side.layout.main_pad.right_top.x=1;
-                page.side.layout.main_pad.right_top.y=1.;
-                page.side.layout.main_pad.left_bottom.x=0.;
-                page.side.layout.main_pad.left_bottom.y=0;
-                page.side.layout.stat_pad.left_bottom.x=0.7;
-                page.side.layout.stat_pad.left_bottom.y=0.3;
-
-                std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
-
-                TLegend* leg = new TLegend (0.60, 0.65, 0.67, 0.90);
-                leg->SetFillColor(0);
-                leg->SetTextSize(0.035);
-                SetLegendStyle(leg);
-                TString lumist="19.7 fb^{-1}";
-                TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
-                ll->SetTextSize(0.03);
-                ll->SetTextFont(42);
-                ll->SetFillColor(0);
-                ll->SetBorderSize(0);
-                ll->SetMargin(0.01);
-                ll->SetTextAlign(12); // align left
-                TString text = "CMS Preliminary";
-                ll->AddText(0.01,0.5,text);
-                text = "#sqrt{s} = 8 TeV  L = ";
-                text = text + lumist;
-                ll->AddText(0.25, 0.6, text);
-
-                TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
                     if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName)) ||
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
-                    histogram->SetLineColor(colorMapName.at("black"));
-                    histogram->SetLineWidth(1.);
-                    ReweightWithBinWidth(*histogram);
-
-                    std::string legend_option = "f";
-                    if (!category.IsData()){
-                        histogram->SetFillColor(category.color);
-//                        if(category.IsSignal()) histogram.Scale(10);
-                        stack->Add(histogram);
-                    }
-                    else {
-                        legend_option = "LP";
-
-                        if (isBlind){
-                            TH1D* refilledData_histogram = refillData(histogram);
-                            data_histogram = refilledData_histogram;
-                        }
-                        else
-                            data_histogram = histogram;
-                    }
-                    if (category.IsSignal()){
-                        leg->AddEntry(histogram , category.title.c_str() , "F" );
-                        leg->SetLineColor(category.color);
-                    }
+                    if(category.IsData())
+                        stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
+                    else if(category.IsSignal())
+                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
                     else
-                        leg->AddEntry(histogram, category.title.c_str(), legend_option.c_str());
+                        stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
-                if(!data_histogram) {
-                    std::cerr << "WARNING: DATA histogram not found for " << hist.name << std::endl;
-                    continue;
-                }
-                TH1D* bkg_sum = nullptr;
-                for(const DataCategory& category : categories) {
-                    if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    if(category.IsReference() || category.IsData() || category.IsSignal() || category.IsSumBkg()
-                            || category.IsForLimitsOnly()) continue;
-                    TH1D& bkg = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
-                    if(!bkg_sum)
-                        bkg_sum = static_cast<TH1D*>(bkg.Clone());
-                    else
-                        bkg_sum->Add(&bkg);
-                }
-
-                TH1D* ratioData_Bkg = (TH1D*)data_histogram->Clone("ratioData_Bkg");
-                if(bkg_sum)
-                    ratioData_Bkg->Divide(bkg_sum);
-                printer.PrintStack(page, *stack, *data_histogram, *ratioData_Bkg, *leg, *ll);
+                printer.PrintStack(stackDescriptor);
             }
         }
     }
@@ -594,61 +476,22 @@ private:
         categories = filteredCategories;
     }
 
-    void ReadHistCfg(const std::string& cfg_name)
-    {
-        std::ifstream cfg(cfg_name);
-        while (cfg.good()) {
-            std::string cfgLine;
-            std::getline(cfg,cfgLine);
-            if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
-            std::istringstream ss(cfgLine);
-            HistogramDescriptor hist;
-            ss >> hist.name;
-            ss >> hist.title;
-            ss >> hist.Xaxis_title;
-            ss >> hist.Yaxis_title;
-            ss >> std::boolalpha >> hist.useLogY;
-            histograms.push_back(hist);
-          }
-    }
 
-    static void ReweightWithBinWidth(TH1D& histogram)
+    static const std::pair<double, double>& GetBlindRegion(const std::string& hist_name)
     {
-        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
-            const double new_value = histogram.GetBinContent(n) / histogram.GetBinWidth(n);
-            const double new_bin_error = histogram.GetBinError(n) / histogram.GetBinWidth(n);
-            histogram.SetBinContent(n, new_value);
-            histogram.SetBinError(n, new_bin_error);
-        }
-    }
-
-    TH1D* refillData(TH1D* histogram)
-    {
-        static const std::vector< std::pair<double, double> > blindingRegions = { { 100, 150 }, { 250, 350 } };
+        static const std::vector< std::pair<double, double> > blindingRegions = {
+            { std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest() }, { 100, 150 }, { 250, 350 }
+        };
         static const std::map<std::string, size_t> histogramsToBlind = {
-            { "m_sv", 0 }, { "m_sv_up", 0 }, { "m_sv_down", 0 }, { "m_vis", 0 }, { "m_bb", 0 },
-            { "m_ttbb", 1 }, { "m_ttbb_nomet", 1 }
+            { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 }
         };
 
-        static auto need_blind = [&](double mass) -> bool {
-            if(!histogramsToBlind.count(histogram->GetName())) return false;
-            const size_t regionId = histogramsToBlind.at(histogram->GetName());
-            if(regionId >= blindingRegions.size())
-                throw analysis::exception("Bad blinding region index = ") << regionId;
-            const auto& region = blindingRegions.at(regionId);
-            return mass > region.first && mass < region.second;
-        };
-
-        TH1D* histData = (TH1D*)histogram->Clone();
-        histData->Clear();
-        for(int i=1; i<=histData->GetNbinsX(); ++i){
-
-            const bool blinding = need_blind(histData->GetBinCenter(i));
-            histData->SetBinContent(i, blinding ? 0. : histogram->GetBinContent(i));
-            histData->SetBinError(i, blinding ? 0. : histogram->GetBinError(i));
-        }
-        return histData;
-
+        if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
+        const size_t regionId = histogramsToBlind.at(hist_name);
+        if(regionId >= blindingRegions.size())
+            throw analysis::exception("Bad blinding region index = ") << regionId;
+        return blindingRegions.at(regionId);
     }
 
     void PrintTables(const std::string& name_suffix, const std::wstring& sep)
@@ -715,13 +558,6 @@ private:
 
     }
 
-    void SetLegendStyle(TLegend* leg)
-    {
-      leg->SetFillStyle (0);
-      leg->SetFillColor (0);
-      leg->SetBorderSize(0);
-    }
-
     void EstimateSumBkg(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
                              const analysis::HistogramDescriptor& hist)
     {
@@ -743,14 +579,12 @@ private:
         }
     }
 
-
 protected:
     std::string inputPath;
     std::string signalName, dataName;
     std::string outputFileName;
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
-    root_ext::SingleSidedPage page;
     FullAnaData fullAnaData;
     bool WjetsData;
     bool isBlind;
