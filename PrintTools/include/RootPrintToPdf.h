@@ -30,7 +30,7 @@
 #include <TStyle.h>
 #include <TFile.h>
 #include <Rtypes.h>
-
+#include <TError.h>
 #include <TH1.h>
 #include <TH2.h>
 #include <TProfile.h>
@@ -45,9 +45,8 @@ namespace root_ext {
 class PdfPrinter {
 public:
     PdfPrinter(const std::string& _output_file_name)
-        : output_file_name(_output_file_name)
+        : canvas(new TCanvas()), output_file_name(_output_file_name)
     {
-        canvas = new TCanvas();
         canvas->Print((output_file_name + "[").c_str());
     }
 
@@ -83,15 +82,21 @@ public:
     {
         canvas->cd();
         canvas->SetTitle(stackDescriptor.GetTitle().c_str());
-        stackDescriptor.Draw();
+        canvas->Clear();
+        stackDescriptor.Draw(*canvas);
         canvas->Draw();
         std::ostringstream print_options;
         print_options << "Title:" << stackDescriptor.GetTitle();
+        const Int_t old_gErrorIgnoreLevel = gErrorIgnoreLevel;
+        gErrorIgnoreLevel = kWarning;
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());
+        gErrorIgnoreLevel = old_gErrorIgnoreLevel;
     }
 
     ~PdfPrinter()
     {
+        canvas->Clear();
+        canvas->Print(output_file_name.c_str());
         canvas->Print((output_file_name+"]").c_str());
     }
 
@@ -130,7 +135,7 @@ private:
     }
 
 private:
-    TCanvas* canvas;
+    std::shared_ptr<TCanvas> canvas;
     std::string output_file_name;
 };
 

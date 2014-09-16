@@ -36,7 +36,10 @@ struct PageSideLayout {
     bool has_stat_pad;
     Box stat_pad;
     bool has_legend;
+    bool has_legend_pad;
     Box legend_pad;
+    bool has_ratio_pad;
+    Box ratio_pad;
 };
 
 struct PageSide {

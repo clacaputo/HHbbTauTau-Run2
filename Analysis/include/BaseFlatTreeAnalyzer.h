@@ -326,7 +326,7 @@ protected:
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
-                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(), true);
+                StackedPlotDescriptor stackDescriptor(hist, ss_title.str());
 
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
