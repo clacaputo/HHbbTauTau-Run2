@@ -39,14 +39,6 @@
 #include <TColor.h>
 #include <TLorentzVector.h>
 
-// --- Added by Francesco
-#include "HHKinFit/include/HHKinFitMaster.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TH1F.h"
-#include <vector>
-#include "TROOT.h"
-// -----
 
 #include "AnalysisBase/include/AnalyzerData.h"
 #include "AnalysisBase/include/FlatTree.h"
@@ -54,6 +46,7 @@
 #include "AnalysisBase/include/exception.h"
 #include "AnalysisBase/include/Particles.h"
 #include "PrintTools/include/RootPrintToPdf.h"
+#include "KinFit.h"
 
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
@@ -234,6 +227,11 @@ protected:
         anaData.m_vis().Fill(Htt.M(),weight);
         TLorentzVector MET;
         MET.SetPtEtaPhiE(event.mvamet,0,event.mvametphi,0);
+        TMatrixD metcov(2,2);
+        metcov(0,0)=event.metcov00;
+        metcov(1,0)=event.metcov10;
+        metcov(0,1)=event.metcov01;
+        metcov(1,1)=event.metcov11;
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -255,52 +253,9 @@ protected:
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-
-	        
-		TMatrixD metcov(2,2);
-    		metcov(0,0)=event.metcov00;
-    		metcov(1,0)=event.metcov10;
-    		metcov(0,1)=event.metcov01;    
-    		metcov(1,1)=event.metcov11;
-    
-		std::vector<Int_t> hypo_mh1;
-  		hypo_mh1.push_back(125);
-  		std::vector<Int_t> hypo_mh2;
-  		hypo_mh2.push_back(125);
-
-    		//intance of fitter master class
-    		HHKinFitMaster kinFits = HHKinFitMaster(&b_momentums[0],&b_momentums[1],&first_cand,&second_cand);
-    		kinFits.setAdvancedBalance(&MET,metcov);
-    		//kinFits.setSimpleBalance(ptmiss.Pt(),10); //alternative which uses only the absolute value of ptmiss in the fit
-    		kinFits.addMh1Hypothesis(hypo_mh1);
-    		kinFits.addMh2Hypothesis(hypo_mh2);
-    		kinFits.doFullFit();
-
-    		Double_t chi2_best = kinFits.getBestChi2FullFit();
-    		Double_t mh_best = kinFits.getBestMHFullFit();
-    		std::pair<Int_t, Int_t> bestHypo = kinFits.getBestHypoFullFit();
-    		std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_chi2 = kinFits.getChi2FullFit();
-    		std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_fitprob = kinFits.getFitProbFullFit();
-    		std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_mH = kinFits.getMHFullFit();
-    		std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_pull_b1 = kinFits.getPullB1FullFit();
-    		std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_pull_b2 = kinFits.getPullB2FullFit();
-    		std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_pull_balance = kinFits.getPullBalanceFullFit();
-    		std::map< std::pair<Int_t, Int_t>, Int_t> fit_convergence = kinFits.getConvergenceFullFit();
-
-		//individual loop over results
-    		for (std::vector<Int_t>::iterator mh2 = hypo_mh2.begin(); mh2 != hypo_mh2.end(); mh2++){
-      		 for (std::vector<Int_t>::iterator mh1 = hypo_mh1.begin(); mh1 != hypo_mh1.end(); mh1++){
-        	  std::pair< Int_t, Int_t > hypo(*mh1,*mh2);
-
-		if (fit_convergence.at(hypo)>0 && fit_results_chi2.at(hypo)<25 && fit_results_pull_balance.at(hypo)>0){
-        
-          	anaData.m_ttbb_kinfit().Fill(fit_results_mH.at(hypo), weight);
-
-        	     }
-    		  }
-  		}    
-
-
+            const double m_ttbb_kinFit =
+                    analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
         }
     }
 

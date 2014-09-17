@@ -264,3 +264,4 @@ HHKinFit/source/PSTools.cpp
 HHKinFit/compile.sh
 HHKinFit/main.C
 HHKinFit/README.md
+Analysis/include/KinFit.h
