@@ -48,7 +48,7 @@ ggH_hh_bbtautau_290.root 0.0317
 [LIMITS ggHhh300]
 hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5)) for limits
 blue
-ggH.root 0.0431
+ggh.root 0.0431
 
 [LIMITS ggHhh310]
 hh#rightarrow#tau#taubb(m_{H}=310  tan#beta=2.5)) for limits
@@ -78,7 +78,7 @@ ggH_hh_bbtautau_350.root 0.0345
 [SIGNAL ggHhh300]
 10x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)
 blue
-ggH.root 0.0037
+ggh.root 0.0037
 
 [LIMITS qqH125]
 VBF
@@ -120,7 +120,7 @@ red_custom
 W1JetsToLNu_V19.root 3.5716
 W2JetsToLNu_V19.root 1.1232
 W3JetsToLNu_V19.root 0.6708
-W4Jets.root 0.3150
+W4jets.root 0.3150
 ZZJetsTo4L.root 0.0007
 ZZJetsTo2L2Nu.root 0.0148
 ZZJetsTo2L2Q.root 0.0254
@@ -134,7 +134,7 @@ black
 W1JetsToLNu_V19.root 3.5716
 W2JetsToLNu_V19.root 1.1232
 W3JetsToLNu_V19.root 0.6708
-W4Jets.root 0.3150
+W4jets.root 0.3150
 
 [TTbar]
 t#bar{t}
