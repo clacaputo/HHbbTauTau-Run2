@@ -13,7 +13,7 @@
 class HHKinFitMaster
 {
 public:
-  HHKinFitMaster(const TLorentzVector* bjet1,const TLorentzVector* bjet2, const TLorentzVector* tauvis1,
+  HHKinFitMaster(const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1,
                  const TLorentzVector* tauvis2 );
 
   void doFullFit();

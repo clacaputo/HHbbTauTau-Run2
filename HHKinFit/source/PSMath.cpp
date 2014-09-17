@@ -76,8 +76,8 @@ PSMath::PSfit (Int_t iloop, Int_t &iter, Int_t &method, Int_t &mode,
   static Double_t epsx = 0.01, epsf = 0.01;
   Int_t convergence;
 
-  Int_t /*itemp,*/ ready;
-  Double_t /*temp,*/ d;
+  Int_t itemp, ready;
+  Double_t temp, d;
 
   //  std::cout << "PSfit ==== iloop " << iloop << "  chi2 " << chi2 << std::endl;
 
@@ -273,7 +273,7 @@ PSMath::PSNewtonAnalyzer (Int_t np, Double_t a[], Double_t alimit[][2],
     }
   }
   if (iNewton == 1) {                      // Newton Step width
-    //Double_t temp = PSMinverse (H, Hinv, np);
+    Double_t temp = PSMinverse (H, Hinv, np);
     for (Int_t ii = 0; ii < np; ii++) {
       for (Int_t jj = 0; jj < np; jj++) {
         daN[ii] = daN[ii] - Hinv[ii * np + jj] * g[jj];
@@ -860,9 +860,9 @@ PSMath::PSMCholtest ()
 { // test inversion of symmetric matrix via cholesky LR decomposition
   Double_t M[4 * 4], R[4 * 4], Rinv[4 * 4], Mtest[4 * 4];
   // test for  R- right triangular matrix
-//  Double_t Test1[1 * 1] = { 9. };
-//  Double_t Test2[2 * 2] = { 9., 3., 0., 5. };
-//  Double_t Test3[3 * 3] = { 9., 3., 2., 0., 5., -4., 0., 0., -9. };
+  Double_t Test1[1 * 1] = { 9. };
+  Double_t Test2[2 * 2] = { 9., 3., 0., 5. };
+  Double_t Test3[3 * 3] = { 9., 3., 2., 0., 5., -4., 0., 0., -9. };
   Double_t Test4[4 * 4] = { 9., 3., 2., 0., 0., 5., -4., 1., 0., 0., 60., -9.,
       0., 0., 0., 40. };
 
@@ -1184,7 +1184,7 @@ PSMath::PSfuncQuadratic (Double_t a[], Double_t amean[], Double_t F0,
                          Double_t g[], Double_t H[], Int_t np)
 {   // compute multi-dim quadratic function from mean, derivative and Hesse
   Double_t F = F0;
-//  Double_t temp;
+  Double_t temp;
   //  cout << F << "\n" ;
   //  PSVprint(" a",a,np) ;
   //  PSVprint(" amean",amean,np) ;
@@ -1244,17 +1244,17 @@ PSMath::PSderivative (Int_t icall, Int_t np, Double_t a[], Double_t h[],
   Int_t shiftp2 = shiftp1 + np - 1;
   Int_t shiftm1 = shiftp2 + 1;
   Int_t shiftm2 = shiftm1 + np - 1;
-//  Int_t shiftpp1 = shiftm2 + 1;
+  Int_t shiftpp1 = shiftm2 + 1;
   Int_t shiftpp2 = shiftm2 + np * (np - 1) / 2;
-//  Int_t shiftmm1 = shiftpp2 + 1;
+  Int_t shiftmm1 = shiftpp2 + 1;
   Int_t shiftmm2 = shiftpp2 + np * (np - 1) / 2;
 
   iter = icall / nstep;
   icalc = icall - iter * nstep;
   //  cout <<"nstep, icall, iter, icalc= " <<nstep<<"  "<<icall<<"  "<<iter<<"  "<<icalc<<"\n";
 
-  Int_t iaold = -1, /*ia1old = -1,*/ iaiold = -1, iajold = -1;
-  Int_t ianew = -1, /*ia1new = -1,*/ iainew = -1, iajnew = -1;
+  Int_t iaold = -1, ia1old = -1, iaiold = -1, iajold = -1;
+  Int_t ianew = -1, ia1new = -1, iainew = -1, iajnew = -1;
   Double_t signold = 0., signnew = 0.;
 
   if (icalc == shiftnom) { //cout <<" Nominal "<< chi2 << "\n" ;

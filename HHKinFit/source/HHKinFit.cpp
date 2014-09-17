@@ -50,7 +50,7 @@ HHKinFit::FitNew()
 
   //  ----------  for PSfit -----
   const Int_t np = 2;
-  //Double_t a[np];
+  Double_t a[np];
   Double_t astart[np];
   Double_t alimit[np][2];
 
@@ -245,7 +245,7 @@ HHKinFit::Fit()
 {
 
 //  V4Vector* ptmissrec = PTmissCalc(fitrecord);
-//  HHV4Vector* ptmissrec = m_recrecord->GetEntry(HHEventRecord::MET);
+  HHV4Vector* ptmissrec = m_recrecord->GetEntry(HHEventRecord::MET);
 
   //  ----------  for PSfit -----
   const Int_t np = 2;
@@ -260,8 +260,8 @@ HHKinFit::Fit()
   Int_t iter = 0;             //  number of iterations
   Int_t method = 1;           //  initial fit method, see PSfit()
   Int_t mode = 1;             //  mode =1 for start of a new fit by PSfit()
-//  Int_t icallNewton = -1;     //  init start of Newton Method
-//  Int_t iloop = 0;            // counter for falls to fit function
+  Int_t icallNewton = -1;     //  init start of Newton Method
+  Int_t iloop = 0;            // counter for falls to fit function
 
   // calculate htau from tauvis; recombine leaves measured entries in event record untouched
   m_recrecord->Recombine();
