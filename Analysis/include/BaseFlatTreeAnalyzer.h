@@ -26,6 +26,10 @@
 
 #pragma once
 
+#ifndef __APPLE__
+#define override
+#endif
+
 #include <iostream>
 #include <cmath>
 #include <set>
@@ -43,117 +47,9 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 
 #include "Htautau_Summer13.h"
+#include "AnalysisCategories.h"
 
 namespace analysis {
-
-struct DataSource {
-    std::string file_name;
-    double scale_factor;
-    TFile* file;
-    std::shared_ptr<ntuple::FlatTree> tree;
-};
-
-struct HistogramDescriptor {
-    std::string name;
-    std::string title;
-    std::string Xaxis_title;
-    std::string Yaxis_title;
-    bool useLogY;
-};
-
-typedef std::vector<DataSource> DataSourceVector;
-
-struct DataCategory {
-    std::string name;
-    std::string title;
-    EColor color;
-
-    DataSourceVector sources;
-
-public:
-    bool IsData() const { return NameContains("DATA"); }
-    bool IsSignal() const { return NameContains("SIGNAL"); }
-    bool IsReference() const { return NameContains("REFERENCE"); }
-    bool IsVirtual() const { return NameContains("VIRTUAL"); }
-    bool IsForLimitsOnly() const { return NameContains("LIMITS"); }
-    bool IsSumBkg() const { return NameContains("SUM"); }
-
-    bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
-};
-
-typedef std::list<DataCategory> DataCategoryCollection;
-
-static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
-                                                           {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
-                                                           {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
-                                                           {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
-                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink},
-                                                           {"pink_custom", (EColor) TColor::GetColor(250,202,255)},
-                                                           {"red_custom", (EColor) TColor::GetColor(222,90,106)},
-                                                           {"violet_custom", (EColor) TColor::GetColor(155,152,204)},
-                                                           {"yellow_custom", (EColor) TColor::GetColor(248,206,104)}};
-
-std::istream& operator>>(std::istream& s, EColor& color){
-    std::string name;
-    s >> name;
-    if (!colorMapName.count(name)){
-        std::ostringstream ss;
-        ss << "undefined color: '" << name ;
-        throw std::runtime_error(ss.str());
-    }
-    color = colorMapName.at(name);
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const EColor& color){
-    for(const auto& entry : colorMapName) {
-        if(entry.second == color) {
-            s << entry.first;
-            return s;
-        }
-    }
-    s << "Unknown color " << color;
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const DataSource& source){
-    s << "File: " << source.file_name << ", SF: " << source.scale_factor;
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const DataCategory& category){
-    s << "Name: " << category.name << ", Title: '" << category.title << "', Color: " << category.color << std::endl;
-    for(const DataSource& source : category.sources)
-        s << source << std::endl;
-    return s;
-}
-
-std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist){
-    s << "Name: " << hist.name << ", Title: " << hist.title << ", useLog: " << hist.useLogY  ;
-    return s;
-}
-
-enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
-enum class EventType_Wjets { Unknown, Signal, HighMt };
-enum class EventCategory { Inclusive, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
-
-static const std::map<EventCategory, std::string> eventCategoryMapName =
-          { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0btag" },
-            { EventCategory::OneJet_OneBtag, "1jet1btag" }, { EventCategory::TwoJets_ZeroBtag, "2jets0btag" },
-          { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" } };
-typedef std::vector<EventCategory> EventCategoryVector;
-
-std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
-    s << eventCategoryMapName.at(eventCategory);
-    return s;
-}
-
-std::wostream& operator<<(std::wostream& s, const EventCategory& eventCategory) {
-    const std::string str = eventCategoryMapName.at(eventCategory);
-    s << std::wstring(str.begin(), str.end());
-    return s;
-}
-
 
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
@@ -188,9 +84,6 @@ public:
 
 class BaseFlatTreeAnalyzer {
 public:
-    typedef root_ext::PdfPrinter Printer;
-
-
     typedef std::map<EventType_QCD, FlatAnalyzerData> AnaDataQCD;
     typedef std::map<EventType_Wjets, FlatAnalyzerData> AnaDataWjets;
 
@@ -210,8 +103,8 @@ public:
     {
         TH1::SetDefaultSumw2();
 
-        ReadSourceCfg(source_cfg);
-        ReadHistCfg(hist_cfg);
+        categories = DataCategory::ReadFromFile(source_cfg, dataName);
+        histograms = HistogramDescriptor::ReadFromFile(hist_cfg);
     }
 
     void Run()
@@ -232,28 +125,21 @@ public:
             }
         }
 
-        std::cout << "Estimating QCD and Wjets... " << std::endl;
+        std::cout << "Estimating QCD, Wjets and bkg sum... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const auto& hist : histograms) {
                 EstimateQCD(eventCategory, anaData, hist);
                 if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
-            }
-        }
-        std::cout << "Estimating Sum od backgrounds... " << std::endl;
-        for (auto& fullAnaDataEntry : fullAnaData) {
-            const EventCategory& eventCategory = fullAnaDataEntry.first;
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            for (const auto& hist : histograms) {
+
                 EstimateSumBkg(eventCategory, anaData, hist);
             }
         }
 
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
-        static const std::wstring comma = L",", semicolon = L";";
-        PrintTables("comma", comma);
-        PrintTables("semicolon", semicolon);
+        PrintTables("comma", L",");
+        PrintTables("semicolon", L";");
         ProduceFileForLimitsCalculation();
         PrintStackedPlots();
     }
@@ -364,101 +250,28 @@ protected:
 
     void PrintStackedPlots()
     {
-        Printer printer(outputFileName + ".pdf");
+        root_ext::PdfPrinter printer(outputFileName + ".pdf");
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
+                StackedPlotDescriptor stackDescriptor(hist, ss_title.str());
 
-                page.side.use_log_scaleY = hist.useLogY;
-                page.side.fit_range_x = false;
-                page.title = ss_title.str();
-                page.layout.has_title = false;
-                page.side.axis_titleX = hist.Xaxis_title;
-                page.side.axis_titleY = hist.Yaxis_title;
-                page.side.layout.has_stat_pad = false;
-                page.side.layout.main_pad.right_top.x=1;
-                page.side.layout.main_pad.right_top.y=1.;
-                page.side.layout.main_pad.left_bottom.x=0.;
-                page.side.layout.main_pad.left_bottom.y=0;
-                page.side.layout.stat_pad.left_bottom.x=0.7;
-                page.side.layout.stat_pad.left_bottom.y=0.3;
-
-                std::shared_ptr<THStack> stack = std::shared_ptr<THStack>(new THStack(hist.name.c_str(),hist.title.c_str()));
-
-                TLegend* leg = new TLegend (0.60, 0.65, 0.67, 0.90);
-                leg->SetFillColor(0);
-                leg->SetTextSize(0.035);
-                SetLegendStyle(leg);
-                TString lumist="19.7 fb^{-1}";
-                TPaveText *ll = new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC");
-                ll->SetTextSize(0.03);
-                ll->SetTextFont(42);
-                ll->SetFillColor(0);
-                ll->SetBorderSize(0);
-                ll->SetMargin(0.01);
-                ll->SetTextAlign(12); // align left
-                TString text = "CMS Preliminary";
-                ll->AddText(0.01,0.5,text);
-                text = "#sqrt{s} = 8 TeV  L = ";
-                text = text + lumist;
-                ll->AddText(0.25, 0.6, text);
-
-                TH1D* data_histogram = nullptr;
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
                     if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName)) ||
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
-                    histogram->SetLineColor(colorMapName.at("black"));
-                    histogram->SetLineWidth(1.);
-                    ReweightWithBinWidth(*histogram);
-
-                    std::string legend_option = "f";
-                    if (!category.IsData()){
-                        histogram->SetFillColor(category.color);
-//                        if(category.IsSignal()) histogram.Scale(10);
-                        stack->Add(histogram);
-                    }
-                    else {
-                        legend_option = "LP";
-
-                        if (isBlind){
-                            TH1D* refilledData_histogram = refillData(histogram);
-                            data_histogram = refilledData_histogram;
-                        }
-                        else
-                            data_histogram = histogram;
-                    }
-                    if (category.IsSignal()){
-                        leg->AddEntry(histogram , category.title.c_str() , "F" );
-                        leg->SetLineColor(category.color);
-                    }
+                    if(category.IsData())
+                        stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
+                    else if(category.IsSignal())
+                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
                     else
-                        leg->AddEntry(histogram, category.title.c_str(), legend_option.c_str());
+                        stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
-                if(!data_histogram) {
-                    std::cerr << "WARNING: DATA histogram not found for " << hist.name << std::endl;
-                    continue;
-                }
-                TH1D* bkg_sum = nullptr;
-                for(const DataCategory& category : categories) {
-                    if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].Contains(hist.name)) continue;
-                    if(category.IsReference() || category.IsData() || category.IsSignal() || category.IsSumBkg()
-                            || category.IsForLimitsOnly()) continue;
-                    TH1D& bkg = anaData[category.name].QCD[EventType_QCD::OS_Isolated].Get<TH1D>(hist.name);
-                    if(!bkg_sum)
-                        bkg_sum = static_cast<TH1D*>(bkg.Clone());
-                    else
-                        bkg_sum->Add(&bkg);
-                }
-
-                TH1D* ratioData_Bkg = (TH1D*)data_histogram->Clone("ratioData_Bkg");
-                if(bkg_sum)
-                    ratioData_Bkg->Divide(bkg_sum);
-                printer.PrintStack(page, *stack, *data_histogram, *ratioData_Bkg, *leg, *ll);
+                printer.PrintStack(stackDescriptor);
             }
         }
     }
@@ -543,118 +356,27 @@ protected:
     }
 
 private:
-    void ReadSourceCfg(const std::string& cfg_name)
-    {
-        std::ifstream cfg(cfg_name);
-        std::shared_ptr<DataCategory> currentCategory;
-        while (cfg.good()) {
-            std::string cfgLine;
-            std::getline(cfg,cfgLine);
-            if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
-            if (cfgLine.at(0) == '[') {
-                if(currentCategory)
-                    categories.push_back(*currentCategory);
-                currentCategory = std::shared_ptr<DataCategory>(new DataCategory());
-                const size_t pos = cfgLine.find(']');
-                currentCategory->name = cfgLine.substr(1, pos - 1);
-                std::getline(cfg, currentCategory->title);
-                std::string colorLine;
-                std::getline(cfg,colorLine);
-                std::istringstream ss(colorLine);
-                ss >> currentCategory->color;
-            }
-            else if (currentCategory) {
-                std::istringstream ss(cfgLine);
-                DataSource source;
-                ss >> source.file_name;
-                ss >> source.scale_factor;
-                currentCategory->sources.push_back(source);
-            }
-            else
-                throw std::runtime_error("bad source file format");
-          }
-        if(currentCategory)
-            categories.push_back(*currentCategory);
-        DataCategoryCollection filteredCategories;
-        for(const DataCategory& category : categories) {
-//            if(category.IsSignal()) {
-//                const size_t sub_name_pos = category.name.find(' ');
-//                const std::string sub_name = category.name.substr(sub_name_pos + 1);
-//                if(sub_name != signalName)
-//                    continue;
-//            }
-            if(category.IsData()) {
-                const size_t sub_name_pos = category.name.find(' ');
-                const std::string sub_name = category.name.substr(sub_name_pos + 1);
-                if(sub_name != dataName)
-                    continue;
-            }
-            filteredCategories.push_back(category);
-        }
-        categories = filteredCategories;
-    }
 
-    void ReadHistCfg(const std::string& cfg_name)
+    static const std::pair<double, double>& GetBlindRegion(const std::string& hist_name)
     {
-        std::ifstream cfg(cfg_name);
-        while (cfg.good()) {
-            std::string cfgLine;
-            std::getline(cfg,cfgLine);
-            if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
-            std::istringstream ss(cfgLine);
-            HistogramDescriptor hist;
-            ss >> hist.name;
-            ss >> hist.title;
-            ss >> hist.Xaxis_title;
-            ss >> hist.Yaxis_title;
-            ss >> std::boolalpha >> hist.useLogY;
-            histograms.push_back(hist);
-          }
-    }
-
-    static void ReweightWithBinWidth(TH1D& histogram)
-    {
-        for(Int_t n = 1; n <= histogram.GetNbinsX(); ++n) {
-            const double new_value = histogram.GetBinContent(n) / histogram.GetBinWidth(n);
-            const double new_bin_error = histogram.GetBinError(n) / histogram.GetBinWidth(n);
-            histogram.SetBinContent(n, new_value);
-            histogram.SetBinError(n, new_bin_error);
-        }
-    }
-
-    TH1D* refillData(TH1D* histogram)
-    {
-        static const std::vector< std::pair<double, double> > blindingRegions = { { 100, 150 }, { 250, 350 } };
+        static const std::vector< std::pair<double, double> > blindingRegions = {
+            { std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest() }, { 100, 150 }, { 250, 350 }
+        };
         static const std::map<std::string, size_t> histogramsToBlind = {
-            { "m_sv", 0 }, { "m_sv_up", 0 }, { "m_sv_down", 0 }, { "m_vis", 0 }, { "m_bb", 0 },
-            { "m_ttbb", 1 }, { "m_ttbb_nomet", 1 }
+            { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 }
         };
 
-        static auto need_blind = [&](double mass) -> bool {
-            if(!histogramsToBlind.count(histogram->GetName())) return false;
-            const size_t regionId = histogramsToBlind.at(histogram->GetName());
-            if(regionId >= blindingRegions.size())
-                throw analysis::exception("Bad blinding region index = ") << regionId;
-            const auto& region = blindingRegions.at(regionId);
-            return mass > region.first && mass < region.second;
-        };
-
-        TH1D* histData = (TH1D*)histogram->Clone();
-        histData->Clear();
-        for(int i=1; i<=histData->GetNbinsX(); ++i){
-
-            const bool blinding = need_blind(histData->GetBinCenter(i));
-            histData->SetBinContent(i, blinding ? 0. : histogram->GetBinContent(i));
-            histData->SetBinError(i, blinding ? 0. : histogram->GetBinError(i));
-        }
-        return histData;
-
+        if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
+        const size_t regionId = histogramsToBlind.at(hist_name);
+        if(regionId >= blindingRegions.size())
+            throw analysis::exception("Bad blinding region index = ") << regionId;
+        return blindingRegions.at(regionId);
     }
 
     void PrintTables(const std::string& name_suffix, const std::wstring& sep)
     {
         std::wofstream of(outputFileName + "_" + name_suffix + ".csv");
-        of << std::setprecision(1) << std::fixed;
 
         for(const HistogramDescriptor& hist : histograms) {
             if (hist.name != "m_sv") continue;
@@ -671,40 +393,34 @@ private:
                         bool includeError)
     {
         of << std::wstring(hist.title.begin(), hist.title.end());
-        if(includeOverflow){
-            if (!includeError)
-                of << " with overflow" << sep;
-            else
-                of << "with overflow and error" << sep;
-        }
-        else if (includeError)
-            of << "without overflow and error" << sep;
-        else
-            of << sep;
+
+        std::wstring table_name_suffix = L"";
+        if(includeOverflow && includeError)
+            table_name_suffix = L" with overflow and error";
+        else if(includeOverflow && !includeError)
+            table_name_suffix = L" with overflow";
+        else if(!includeOverflow && includeError)
+            table_name_suffix = L" with error";
+        of << table_name_suffix << sep;
 
         for (const auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             of << eventCategory << sep;
         }
         of << std::endl;
+
         for (DataCategory& dataCategory : categories) {
             if (dataCategory.IsReference()) continue;
             of << std::wstring(dataCategory.title.begin(), dataCategory.title.end()) << sep;
             for (auto& fullAnaDataEntry : fullAnaData) {
                 AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
                 if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) {
-                    if (!includeError){
-                        const double integral = includeOverflow ? histogram->Integral(0, histogram->GetNbinsX() + 1)
-                                                                : histogram->Integral();
-                        of << integral << sep;
-                    }
-                    else if (includeError){
-                        double error = 0.;
-                        const double integral = includeOverflow ?
-                                    histogram->IntegralAndError(0, histogram->GetNbinsX() + 1,error)
-                                  : histogram->IntegralAndError(0, histogram->GetNbinsX(),error);
-                        of << integral << L" \u00B1 " << error << sep;
-                    }
+                    typedef std::pair<Int_t, Int_t> limit_pair;
+                    const limit_pair limits = includeOverflow ? limit_pair(0, histogram->GetNbinsX() + 1)
+                                                              : limit_pair(1, histogram->GetNbinsX());
+                    double error = 0.;
+                    const double integral = histogram->IntegralAndError(limits.first, limits.second, error);
+                    of << MakeStringRepresentationForValueWithError(integral, error, includeError) << sep;
                 }
                 else
                     of << "NaN" << sep;
@@ -715,27 +431,17 @@ private:
 
     }
 
-    void SetLegendStyle(TLegend* leg)
-    {
-      leg->SetFillStyle (0);
-      leg->SetFillColor (0);
-      leg->SetBorderSize(0);
-    }
-
     void EstimateSumBkg(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
                              const analysis::HistogramDescriptor& hist)
     {
         const analysis::DataCategory& sumBkg = FindCategory("SUM");
-
-        std::cout << "created sumBkg" << std::endl;
-
         const analysis::DataCategory& ewk = FindCategory("EWK");
         root_ext::SmartHistogram<TH1D>* hist_ewk;
         if(!(hist_ewk = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) return;
         TH1D& histogram = anaData[sumBkg.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_ewk);
         for (const analysis::DataCategory& category : categories){
-            if (category.IsReference() || category.IsData() || category.IsSignal() || category.name == ewk.name || category.IsSumBkg()
-                    || category.IsForLimitsOnly()) continue;
+            if (category.IsReference() || category.IsData() || category.IsSignal() || category.name == ewk.name
+                    || category.IsSumBkg() || category.IsForLimitsOnly()) continue;
 
             TH1D* otherBkg_hist;
             if(!(otherBkg_hist = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
@@ -743,14 +449,12 @@ private:
         }
     }
 
-
 protected:
     std::string inputPath;
     std::string signalName, dataName;
     std::string outputFileName;
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
-    root_ext::SingleSidedPage page;
     FullAnaData fullAnaData;
     bool WjetsData;
     bool isBlind;

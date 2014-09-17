@@ -33,16 +33,12 @@
 #include <iomanip>
 #include <functional>
 
-#include "AnalysisBase/include/MvaMet.h"
 #include "AnalysisBase/include/TreeExtractor.h"
 #include "AnalysisBase/include/AnalyzerData.h"
 #include "AnalysisBase/include/CutTools.h"
 #include "AnalysisBase/include/GenParticle.h"
 #include "AnalysisBase/include/MCfinalState.h"
 #include "AnalysisBase/include/Candidate.h"
-#include "AnalysisBase/include/RecoilCorrection.h"
-#include "AnalysisBase/include/SVfit.h"
-#include "AnalysisBase/include/MvaMet.h"
 #include "AnalysisBase/include/RunReport.h"
 #include "AnalysisBase/include/Tools.h"
 #include "AnalysisBase/include/AnalysisTools.h"
@@ -52,6 +48,9 @@
 #include "BTagWeight.h"
 #include "Config.h"
 #include "custom_cuts.h"
+#include "MvaMet.h"
+#include "RecoilCorrection.h"
+#include "SVfit.h"
 
 
 #define SELECTION_ENTRY(name) \

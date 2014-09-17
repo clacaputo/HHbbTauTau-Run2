@@ -76,7 +76,7 @@ blue
 ggH_hh_bbtautau_350.root 0.0345
 
 [SIGNAL ggHhh300]
-hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5))
+10x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)
 blue
 ggH.root 0.0037
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <TStyle.h>
 
 namespace cms_tdr {

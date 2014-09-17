@@ -48,11 +48,11 @@ AnalysisBase/include/EventId.h
 AnalysisBase/include/FlatTree.h
 AnalysisBase/include/GenParticle.h
 AnalysisBase/include/MCfinalState.h
-AnalysisBase/include/MvaMet.h
+Analysis/include/MvaMet.h
 AnalysisBase/include/Particles.h
-AnalysisBase/include/RecoilCorrection.h
+Analysis/include/RecoilCorrection.h
 AnalysisBase/include/RunReport.h
-AnalysisBase/include/SVfit.h
+Analysis/include/SVfit.h
 AnalysisBase/include/SmartHistogram.h
 AnalysisBase/include/SyncTree.h
 AnalysisBase/include/Tools.h
@@ -242,3 +242,5 @@ TreeProduction/python/treeProducer.py
 env.sh
 generate_file_list.sh
 runx.sh
+PrintTools/include/StackedPlotDescriptor.h
+Analysis/include/AnalysisCategories.h

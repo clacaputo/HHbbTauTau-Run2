@@ -30,7 +30,7 @@
 #include <TStyle.h>
 #include <TFile.h>
 #include <Rtypes.h>
-
+#include <TError.h>
 #include <TH1.h>
 #include <TH2.h>
 #include <TProfile.h>
@@ -38,15 +38,15 @@
 
 #include "RootPrintSource.h"
 #include "TdrStyle.h"
+#include "StackedPlotDescriptor.h"
 
 namespace root_ext {
 
 class PdfPrinter {
 public:
     PdfPrinter(const std::string& _output_file_name)
-        : output_file_name(_output_file_name)
+        : canvas(new TCanvas()), output_file_name(_output_file_name)
     {
-        canvas = new TCanvas();
         canvas->Print((output_file_name + "[").c_str());
     }
 
@@ -78,37 +78,30 @@ public:
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());
     }
 
-
-    void PrintStack(const Page& page, THStack& stack, TH1D& data_hist, TH1D&ratioData_Bkg, TLegend& leg, TPaveText& pave_text)
+    void PrintStack(analysis::StackedPlotDescriptor& stackDescriptor)
     {
-        TH1::SetDefaultSumw2();
-        cms_tdr::setTDRStyle();
-
         canvas->cd();
-
-        canvas->SetTitle(page.title.c_str());
-        if(page.layout.has_title) {
-            TPaveLabel *title = Adapter::NewPaveLabel(page.layout.title_box, page.title);
-            title->SetTextFont(page.layout.title_font);
-            title->Draw();
-        }
-
-        Page::RegionCollection page_regions = page.Regions();
-        for(Page::RegionCollection::const_iterator iter = page_regions.begin(); iter != page_regions.end(); ++iter)
-        {
-            canvas->cd();
-            DrawStack(*(*iter), stack, data_hist, ratioData_Bkg, leg, pave_text);
-        }
-
+        canvas->SetTitle(stackDescriptor.GetTitle().c_str());
+        canvas->Clear();
+        stackDescriptor.Draw(*canvas);
         canvas->Draw();
         std::ostringstream print_options;
-        print_options << "Title:" << page.title;
+        print_options << "Title:" << stackDescriptor.GetTitle();
+        const Int_t old_gErrorIgnoreLevel = gErrorIgnoreLevel;
+        gErrorIgnoreLevel = kWarning;
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());
+        gErrorIgnoreLevel = old_gErrorIgnoreLevel;
     }
 
     ~PdfPrinter()
     {
+        const Int_t old_gErrorIgnoreLevel = gErrorIgnoreLevel;
+        gErrorIgnoreLevel = kWarning;
+        canvas->Clear();
+        canvas->Print(output_file_name.c_str());
         canvas->Print((output_file_name+"]").c_str());
+        gErrorIgnoreLevel = old_gErrorIgnoreLevel;
+        std::cout << "Info in <TCanvas::Print>: pdf file " << output_file_name << " has been closed" << std::endl;
     }
 
 private:
@@ -145,68 +138,8 @@ private:
                           page_side.draw_options);
     }
 
-    void DrawStack(const PageSide& page_side, THStack& stack, TH1D& data_hist, TH1D&ratioData_Bkg, TLegend& leg, TPaveText& pave_text)
-    {
-        TPad* stat_pad = 0;
-        if(page_side.layout.has_stat_pad) {
-            stat_pad = Adapter::NewPad(page_side.layout.stat_pad);
-            stat_pad->Draw();
-        }
-
-        TPad *pad = Adapter::NewPad(page_side.layout.main_pad);
-        if(page_side.use_log_scaleX)
-            pad->SetLogx();
-        if(page_side.use_log_scaleY)
-            pad->SetLogy();
-        pad->Draw();
-        pad->cd();
-
-        stack.Draw("HIST");
-
-//        const Int_t firstBin = stack.GetXaxis()->FindBin(page_side.xRange.min);
-//        const Int_t lastBin = stack.GetXaxis()->FindBin(page_side.xRange.max);
-//        stack.GetXaxis()->SetRange(firstBin,lastBin);
-        const Double_t maxY = std::max(stack.GetMaximum(),data_hist.GetMaximum());
-        stack.SetMaximum(maxY*1.1);
-        const Double_t minY = page_side.use_log_scaleY ? 1 : 0;
-        stack.SetMinimum(minY);
-
-        stack.GetXaxis()->SetTitle(page_side.axis_titleX.c_str());
-        stack.GetYaxis()->SetTitle(page_side.axis_titleY.c_str());
-
-        data_hist.SetMarkerStyle(7);
-        data_hist.Draw("samepPE0");
-        pave_text.Draw("same");
-
-//        TPad* padRatio = new TPad("padRatio","",0,0,1,0.1);
-//        padRatio->Draw();
-//        padRatio->cd();
-
-//        // Draw the ratio of the historgrams
-
-//        ratioData_Bkg.GetYaxis()->SetRangeUser(0.9,1.1);
-//        ratioData_Bkg.GetYaxis()->SetNdivisions(3);
-//        ratioData_Bkg.GetYaxis()->SetLabelSize(0.1);
-//        ratioData_Bkg.GetYaxis()->SetTitleSize(0.1);
-//        ratioData_Bkg.GetYaxis()->SetTitleOffset(0.5);
-//        ratioData_Bkg.GetYaxis()->SetTitle("Ratio");
-//        ratioData_Bkg.GetXaxis()->SetNdivisions(-1);
-//        ratioData_Bkg.GetXaxis()->SetTitle("");
-//        ratioData_Bkg.GetXaxis()->SetLabelSize(0.0001);
-//        ratioData_Bkg.SetMarkerStyle(7);
-//        ratioData_Bkg.SetMarkerColor(2);
-//        ratioData_Bkg.Draw("histp");
-//        TLine* line = new TLine();
-//        line->DrawLine(ratioData_Bkg.GetXaxis()->GetXmin(),1,ratioData_Bkg.GetXaxis()->GetXmax(),1);
-
-
-        if(stat_pad)
-            stat_pad->cd();
-        leg.Draw("same");
-    }
-
 private:
-    TCanvas* canvas;
+    std::shared_ptr<TCanvas> canvas;
     std::string output_file_name;
 };
 
