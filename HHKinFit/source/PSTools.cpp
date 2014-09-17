@@ -51,7 +51,7 @@ PSTools::wait(TPad* c1)  // wait during execution of script until key it hit
 void
 PSTools::next(TPad* c1)
 {       // select next pad on canvas for c1->Divide(nx,ny)
-  char *s = new char[1];
+//  char *s = new char[1];
   Int_t oldpad = gPad->GetNumber();
   if (oldpad < 1)             // no previous sub-pad defined
       {
@@ -120,8 +120,8 @@ void
 PSTools::Pprint(const char* filename, TCanvas* c1)
 {
   TString text;
-  if (filename == "")
-    filename = "temp";
+//  if (std::string(filename) == "")
+//    filename = "temp";
   text = filename;
   text = text + ".pdf";
   //  std::cout << "Pprint " << text << std::endl;
