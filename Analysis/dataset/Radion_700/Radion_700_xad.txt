@@ -1,0 +1,3 @@
+/store/user/kandroso/Radion_full/Radion_700/TREE/Tree_2_1_LP8.root
+/store/user/kandroso/Radion_full/Radion_700/TREE/Tree_3_1_DTR.root
+/store/user/kandroso/Radion_full/Radion_700/TREE/Tree_8_1_z8g.root
