@@ -26,6 +26,10 @@
 
 #pragma once
 
+#ifndef __APPLE__
+#define override
+#endif
+
 #include <iostream>
 #include <cmath>
 #include <set>
