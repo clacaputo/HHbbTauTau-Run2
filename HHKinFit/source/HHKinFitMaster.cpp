@@ -81,7 +81,8 @@ HHKinFitMaster::doFullFit()
 
 
 
-HHKinFitMaster::HHKinFitMaster(TLorentzVector* bjet1, TLorentzVector* bjet2, TLorentzVector* tauvis1, TLorentzVector* tauvis2):
+HHKinFitMaster::HHKinFitMaster(const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1,
+                               const TLorentzVector* tauvis2):
     m_mh1(std::vector<Int_t>()),
     m_mh2(std::vector<Int_t>()),
 
@@ -201,7 +202,7 @@ HHKinFitMaster::addMh2Hypothesis(std::vector<Int_t> v)
 }
 
 void
-HHKinFitMaster::setAdvancedBalance(TLorentzVector* met, TMatrixD met_cov)
+HHKinFitMaster::setAdvancedBalance(const TLorentzVector* met, TMatrixD met_cov)
 {
   m_advancedBalance = true;
   m_MET = met;

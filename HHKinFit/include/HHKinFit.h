@@ -47,12 +47,6 @@ public:
 
 
 private:
-  HHParticleList* m_particlelist;
-  HHEventRecord* m_recrecord;
-  HHEventRecord* m_fitrecord;
-
-  Bool_t m_advancedBalance;
-  Int_t m_logLevel;
 
   Double_t m_chi2;
   Double_t m_chi2_b1;
@@ -64,6 +58,12 @@ private:
   Int_t m_printlevel;
   Int_t m_graphicslevel;
   Int_t m_maxloops;
+  Bool_t m_advancedBalance;
+  Int_t m_logLevel;
+  HHEventRecord* m_recrecord;
+  HHEventRecord* m_fitrecord;
+  HHParticleList* m_particlelist;
+
 };
 
 
