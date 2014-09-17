@@ -95,9 +95,13 @@ public:
 
     ~PdfPrinter()
     {
+        const Int_t old_gErrorIgnoreLevel = gErrorIgnoreLevel;
+        gErrorIgnoreLevel = kWarning;
         canvas->Clear();
         canvas->Print(output_file_name.c_str());
         canvas->Print((output_file_name+"]").c_str());
+        gErrorIgnoreLevel = old_gErrorIgnoreLevel;
+        std::cout << "Info in <TCanvas::Print>: pdf file " << output_file_name << " has been closed" << std::endl;
     }
 
 private:

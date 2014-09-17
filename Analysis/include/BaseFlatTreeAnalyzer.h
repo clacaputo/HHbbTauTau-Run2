@@ -373,7 +373,6 @@ private:
     void PrintTables(const std::string& name_suffix, const std::wstring& sep)
     {
         std::wofstream of(outputFileName + "_" + name_suffix + ".csv");
-        of << std::setprecision(1) << std::fixed;
 
         for(const HistogramDescriptor& hist : histograms) {
             if (hist.name != "m_sv") continue;
@@ -393,11 +392,11 @@ private:
 
         std::wstring table_name_suffix = L"";
         if(includeOverflow && includeError)
-            table_name_suffix = L"with overflow and error";
+            table_name_suffix = L" with overflow and error";
         else if(includeOverflow && !includeError)
-            table_name_suffix = L"with overflow";
+            table_name_suffix = L" with overflow";
         else if(!includeOverflow && includeError)
-            table_name_suffix = L"with error";
+            table_name_suffix = L" with error";
         of << table_name_suffix << sep;
 
         for (const auto& fullAnaDataEntry : fullAnaData) {
@@ -412,14 +411,12 @@ private:
             for (auto& fullAnaDataEntry : fullAnaData) {
                 AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
                 if( TH1D* histogram = anaData[dataCategory.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) {
+                    typedef std::pair<Int_t, Int_t> limit_pair;
+                    const limit_pair limits = includeOverflow ? limit_pair(0, histogram->GetNbinsX() + 1)
+                                                              : limit_pair(1, histogram->GetNbinsX());
                     double error = 0.;
-                    const double integral = includeOverflow
-                                          ? histogram->IntegralAndError(0, histogram->GetNbinsX() + 1, error)
-                                          : histogram->IntegralAndError(0, histogram->GetNbinsX(), error);
-                    of << integral;
-                    if(includeError)
-                        of << integral << L" \u00B1 " << error;
-                    of << sep;
+                    const double integral = histogram->IntegralAndError(limits.first, limits.second, error);
+                    of << MakeStringRepresentationForValueWithError(integral, error, includeError) << sep;
                 }
                 else
                     of << "NaN" << sep;
