@@ -187,7 +187,7 @@ protected:
         cut(true, ">0 jet cand");
         cut(X(pt) > pt_loose, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        const bool passLooseID = analysis::passPFLooseId(object);
+        const bool passLooseID = passPFLooseId(object);
         cut(Y(passLooseID) == pfLooseID, "pfLooseID");
         const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
         cut(Y(passPUlooseID) == puLooseID, "puLooseID");
