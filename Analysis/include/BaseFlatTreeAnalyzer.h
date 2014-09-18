@@ -114,9 +114,8 @@ public:
     {
         std::cout << "Processing sources... " << std::endl;
         for(DataCategory& category : categories) {
-//            std::cout << category << std::endl;
-            if (!category.IsSignal()) continue;
             std::cout << category << std::endl;
+            //if (!category.IsSignal()) continue;
             for (DataSource& source : category.sources){
                 const std::string fullFileName = inputPath + "/" + source.file_name;
                 source.file = new TFile(fullFileName.c_str(), "READ");
@@ -129,10 +128,7 @@ public:
                 ProcessDataSource(category, source);
             }
         }
-        //start debugging kin fit
 
-        return;
-        //end debugging
         std::cout << "Estimating QCD, Wjets and bkg sum... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
@@ -231,7 +227,7 @@ protected:
         anaData.pt_H_tt().Fill(Htt.Pt(),weight);
         anaData.m_vis().Fill(Htt.M(),weight);
         TLorentzVector MET;
-        MET.SetPtEtaPhiE(event.mvamet,0,event.mvametphi,0);
+        MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
         TMatrixD metcov(2,2);
         metcov(0,0)=event.metcov00;
         metcov(1,0)=event.metcov10;
@@ -359,13 +355,14 @@ protected:
                     continue;
                 }
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
-                anaData.m_sv().Write(limitDataCategory.second.c_str());
+                //anaData.m_sv().Write(limitDataCategory.second.c_str());
+                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
                 const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-                anaData.m_sv_down().Write(nameDown.c_str());
-                anaData.m_sv_up().Write(nameUp.c_str());
+//                anaData.m_sv_down().Write(nameDown.c_str());
+//                anaData.m_sv_up().Write(nameUp.c_str());
             }
         }
         outputFile->Close();

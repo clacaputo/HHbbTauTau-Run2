@@ -44,7 +44,7 @@ namespace analysis {
 double CorrectMassByKinfit(const TLorentzVector& bjet1, const TLorentzVector& bjet2, const TLorentzVector& tau1,
                            const TLorentzVector& tau2, const TLorentzVector& MVAmet, const TMatrixD& metcov)
 {
-    static const bool debug = true;
+    static const bool debug = false;
 
     std::vector<Int_t> hypo_mh1;
     hypo_mh1.push_back(125);
@@ -89,7 +89,7 @@ double CorrectMassByKinfit(const TLorentzVector& bjet1, const TLorentzVector& bj
     if (fit_convergence.at(hypo)>0 && fit_results_chi2.at(hypo)<25 && fit_results_pull_balance.at(hypo)>0)
         return fit_results_mH.at(hypo);
     //std::cerr << "mass with kin Fit cannot be calculated" << std::endl;
-    return -100;
+    return std::numeric_limits<double>::lowest();
 
 }
 
