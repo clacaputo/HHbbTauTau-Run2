@@ -114,6 +114,8 @@ public:
     {
         std::cout << "Processing sources... " << std::endl;
         for(DataCategory& category : categories) {
+//            std::cout << category << std::endl;
+            if (!category.IsSignal()) continue;
             std::cout << category << std::endl;
             for (DataSource& source : category.sources){
                 const std::string fullFileName = inputPath + "/" + source.file_name;
@@ -127,7 +129,10 @@ public:
                 ProcessDataSource(category, source);
             }
         }
+        //start debugging kin fit
 
+        return;
+        //end debugging
         std::cout << "Estimating QCD, Wjets and bkg sum... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
