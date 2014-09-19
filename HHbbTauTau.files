@@ -265,3 +265,5 @@ HHKinFit/compile.sh
 HHKinFit/main.C
 HHKinFit/README.md
 Analysis/include/KinFit.h
+SVfit/interface/MarkovChainIntegrator.h
+SVfit/source/MarkovChainIntegrator.cc

@@ -1,6 +1,7 @@
-#include "Math/Factory.h"
-#include "Math/Functor.h"
-#include "Math/GSLMCIntegrator.h"
+#include <Math/Factory.h>
+#include <Math/Functor.h>
+#include <Math/GSLMCIntegrator.h>
+#include <Math/GenVector/PtEtaPhiM4D.h>
 
 #include "../interface/svFitAuxFunctions.h"
 #include "../interface/NSVfitStandaloneAlgorithm.h"
@@ -41,7 +42,13 @@ namespace NSVfitStandalone
 NSVfitStandaloneAlgorithm::NSVfitStandaloneAlgorithm(std::vector<NSVfitStandalone::MeasuredTauLepton> measuredTauLeptons, NSVfitStandalone::Vector measuredMET , const TMatrixD& covMET, unsigned int verbosity) : 
   fitStatus_(-1), 
   verbosity_(verbosity), 
-  maxObjFunctionCalls_(5000)
+  maxObjFunctionCalls_(5000),
+  mcObjectiveFunctionAdapter_(0),
+  mcPtEtaPhiMassAdapter_(0),
+  integrator2_(0),
+  integrator2_nDim_(0),
+  isInitialized2_(false),
+  maxObjFunctionCalls2_(100000)
 { 
   // instantiate minuit, the arguments might turn into configurables once
   minimizer_ = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
@@ -54,6 +61,9 @@ NSVfitStandaloneAlgorithm::~NSVfitStandaloneAlgorithm()
 {
   delete nll_;
   delete minimizer_;
+  delete mcObjectiveFunctionAdapter_;
+  delete mcPtEtaPhiMassAdapter_;
+  delete integrator2_;
 }
 
 void
@@ -274,6 +284,124 @@ NSVfitStandaloneAlgorithm::integrateVEGAS()
     std::cout << "--> mass  = " << mass_  << std::endl;
     std::cout << "--> pmax  = " << pMax   << std::endl;
     std::cout << "--> count = " << count  << std::endl;
+  }
+}
+
+void
+NSVfitStandaloneAlgorithm::integrateMarkovChain()
+{
+  if(verbosity_>0){
+    std::cout << "<NSVfitStandaloneAlgorithm::integrateMarkovChain()>:" << std::endl;
+  }
+  if(isInitialized2_){
+    mcPtEtaPhiMassAdapter_->Reset();
+  }
+  else{
+
+    integrator2_ = new MarkovChainIntegrator("NSVfitStandaloneAlgorithm", MoveMode::kMetropolis, InitMode::kNone,
+                                             TMath::Nint(0.10*maxObjFunctionCalls2_), maxObjFunctionCalls2_,
+                                             TMath::Nint(0.02*maxObjFunctionCalls2_), TMath::Nint(0.06*maxObjFunctionCalls2_),
+                                             15., 1.0 - 1.e+2/maxObjFunctionCalls2_, 1, 1, 1, 1.e-2, 0.71, -1);
+    mcObjectiveFunctionAdapter_ = new MCObjectiveFunctionAdapter();
+    integrator2_->setIntegrand(*mcObjectiveFunctionAdapter_);
+    integrator2_nDim_ = 0;
+    mcPtEtaPhiMassAdapter_ = new MCPtEtaPhiMassAdapter();
+    integrator2_->registerCallBackFunction(*mcPtEtaPhiMassAdapter_);
+    isInitialized2_= true;
+  }
+
+  const double pi = 3.14159265;
+  // number of hadronic decays
+  int khad = 0;
+  for(unsigned int idx=0; idx<nll_->measuredTauLeptons().size(); ++idx){
+    if(nll_->measuredTauLeptons()[idx].decayType() == kHadDecay){
+      ++khad;
+    }
+  }
+  // number of parameters for fit
+  int nDim = nll_->measuredTauLeptons().size()*NSVfitStandalone::kMaxFitParams - khad;
+  if(nDim != integrator2_nDim_){
+    mcObjectiveFunctionAdapter_->SetNDim(nDim);
+    integrator2_->setIntegrand(*mcObjectiveFunctionAdapter_);
+    mcPtEtaPhiMassAdapter_->SetNDim(nDim);
+    integrator2_nDim_ = nDim;
+  }
+  /* --------------------------------------------------------------------------------------
+     lower and upper bounds for integration. Boundaries are defined for each decay channel
+     separately. The order is:
+
+     - 4dim : fully hadronic {xhad1, phihad1, xhad2, phihad2}
+     - 5dim : semi  leptonic {xlep, nunuMass, philep, xhad, phihad}
+     - 6dim : fully leptonic {xlep1, nunuMass1, philep1, xlep2, nunuMass2, philep2}
+
+     x0* defines the start value for the integration, xl* defines the lower integation bound,
+     xu* defines the upper integration bound in the following definitions.
+     ATTENTION: order matters here! In the semi-leptonic decay the lepton must go first in
+     the parametrization, as it is first in the definition of integral boundaries. This is
+     the reason why the measuredLeptons are eventually re-ordered in the constructor of
+     this class before passing them on to NSVfitStandaloneLikelihood.
+  */
+  double x04[4] = { 0.5, 0.0, 0.5, 0.0 };
+  double xl4[4] = { 0.0, -pi, 0.0, -pi };
+  double xu4[4] = { 1.0,  pi, 1.0,  pi };
+  double x05[5] = { 0.5, 0.8, 0.0, 0.5, 0.0 };
+  double xl5[5] = { 0.0, 0.0, -pi, 0.0, -pi };
+  double xu5[5] = { 1.0, tauLeptonMass, pi, 1.0, pi };
+  xu5[1] = tauLeptonMass - TMath::Min(nll_->measuredTauLeptons()[0].mass(), 1.6);
+  x05[1] = 0.5*(xl5[1] + xu5[1]);
+  double x06[6] = { 0.5, 0.8, 0.0, 0.5, 0.8, 0.0 };
+  double xl6[6] = { 0.0, 0.0, -pi, 0.0, 0.0, -pi };
+  double xu6[6] = { 1.0, tauLeptonMass, pi, 1.0, tauLeptonMass, pi };
+  xu6[1] = tauLeptonMass - TMath::Min(nll_->measuredTauLeptons()[0].mass(), 1.6);
+  x06[1] = 0.5*(xl6[1] + xu6[1]);
+  xu6[4] = tauLeptonMass - TMath::Min(nll_->measuredTauLeptons()[1].mass(), 1.6);
+  x06[4] = 0.5*(xl6[4] + xu6[4]);
+  std::vector<double> x0(nDim);
+  std::vector<double> xl(nDim);
+  std::vector<double> xu(nDim);
+  for(int i = 0; i < nDim; ++i){
+    if(nDim == 4){
+      x0[i] = x04[i];
+      xl[i] = xl4[i];
+      xu[i] = xu4[i];
+    } else if(nDim == 5){
+      x0[i] = x05[i];
+      xl[i] = xl5[i];
+      xu[i] = xu5[i];
+    } else if(nDim == 6){
+      x0[i] = x06[i];
+      xl[i] = xl6[i];
+      xu[i] = xu6[i];
+    } else {
+      std::cout << " >> ERROR : the number of measured leptons must be 2" << std::endl;
+      assert(0);
+    }
+    // transform startPosition into interval ]0..1[
+    // expected by MarkovChainIntegrator class
+    x0[i] = (x0[i] - xl[i])/(xu[i] - xl[i]);
+    //std::cout << "x0[" << i << "] = " << x0[i] << std::endl;
+  }
+  integrator2_->initializeStartPosition_and_Momentum(x0);
+  nll_->addDelta(false);
+  nll_->addSinTheta(false);
+  nll_->addPhiPenalty(false);
+  double integral = 0.;
+  double integralErr = 0.;
+  int errorFlag = 0;
+  //integrator2_->integrate(xl, xu, integral, integralErr, errorFlag, "/data1/veelken/tmp/svFitStudies/svFitStandalone/debugMarkovChain.root");
+  integrator2_->integrate(xl, xu, integral, integralErr, errorFlag);
+  fitStatus_ = errorFlag;
+  pt_ = mcPtEtaPhiMassAdapter_->getPt();
+  ptUncert_ = mcPtEtaPhiMassAdapter_->getPtUncert();
+  eta_ = mcPtEtaPhiMassAdapter_->getEta();
+  etaUncert_ = mcPtEtaPhiMassAdapter_->getEtaUncert();
+  phi_ = mcPtEtaPhiMassAdapter_->getPhi();
+  phiUncert_ = mcPtEtaPhiMassAdapter_->getPhiUncert();
+  mass_ = mcPtEtaPhiMassAdapter_->getMass();
+  massUncert_ = mcPtEtaPhiMassAdapter_->getMassUncert();
+  fittedDiTauSystem_ = ROOT::Math::LorentzVector< ROOT::Math::PtEtaPhiM4D<double> >(pt_, eta_, phi_, mass_);
+  if(verbosity_ > 0){
+    std::cout << "--> Pt = " << pt_ << ", eta = " << eta_ << ", phi = " << phi_ << ", mass  = " << mass_  << std::endl;
   }
 }
 

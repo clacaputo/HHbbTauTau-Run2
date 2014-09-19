@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../interface/NSVfitStandaloneLikelihood.h"
+#include "../interface/MarkovChainIntegrator.h"
 #include "../interface/svFitAuxFunctions.h"
 
 #include <TMath.h>
@@ -49,6 +50,142 @@ namespace NSVfitStandalone{
     double mtest; //current mass hypothesis
   };
 
+  // for markov chain integration
+  void map_x(const double*, int, double*);
+  // class definitions for markov chain integration method
+  class MCObjectiveFunctionAdapter : public ROOT::Math::Functor
+  {
+   public:
+    void SetNDim(int nDim) { nDim_ = nDim; }
+    unsigned int NDim() const { return nDim_; }
+   private:
+    virtual double DoEval(const double* x) const
+    {
+      map_x(x, nDim_, x_mapped_);
+      double prob = NSVfitStandaloneLikelihood::gNSVfitStandaloneLikelihood->prob(x_mapped_);
+      if ( TMath::IsNaN(prob) ) prob = 0.;
+      return prob;
+    }
+    mutable double x_mapped_[6];
+    int nDim_;
+  };
+  class MCPtEtaPhiMassAdapter : public ROOT::Math::Functor
+  {
+   public:
+    MCPtEtaPhiMassAdapter()
+    {
+      histogramPt_ = makeHistogram("NSVfitStandaloneAlgorithm_histogramPt", 1., 1.e+3, 1.025);
+      histogramPt_density_ = (TH1*)histogramPt_->Clone(Form("%s_density", histogramPt_->GetName()));
+      histogramEta_ = new TH1D("NSVfitStandaloneAlgorithm_histogramEta", "NSVfitStandaloneAlgorithm_histogramEta", 198, -9.9, +9.9);
+      histogramEta_density_ = (TH1*)histogramEta_->Clone(Form("%s_density", histogramEta_->GetName()));
+      histogramPhi_ = new TH1D("NSVfitStandaloneAlgorithm_histogramPhi", "NSVfitStandaloneAlgorithm_histogramPhi", 180, -TMath::Pi(), +TMath::Pi());
+      histogramPhi_density_ = (TH1*)histogramPhi_->Clone(Form("%s_density", histogramPhi_->GetName()));
+      histogramMass_ = makeHistogram("NSVfitStandaloneAlgorithm_histogramMass", 1.e+1, 1.e+4, 1.025);
+      histogramMass_density_ = (TH1*)histogramMass_->Clone(Form("%s_density", histogramMass_->GetName()));
+    }
+    ~MCPtEtaPhiMassAdapter()
+    {
+      delete histogramPt_;
+      delete histogramPt_density_;
+      delete histogramEta_;
+      delete histogramEta_density_;
+      delete histogramPhi_;
+      delete histogramPhi_density_;
+      delete histogramMass_;
+      delete histogramMass_density_;
+    }
+    void SetNDim(int nDim) { nDim_ = nDim; }
+    unsigned int NDim() const { return nDim_; }
+    void Reset()
+    {
+      histogramPt_->Reset();
+      histogramEta_->Reset();
+      histogramPhi_->Reset();
+      histogramMass_->Reset();
+    }
+    double getPt() const { return extractValue(histogramPt_, histogramPt_density_); }
+    double getPtUncert() const { return extractUncertainty(histogramPt_, histogramPt_density_); }
+    double getEta() const { return extractValue(histogramEta_, histogramEta_density_); }
+    double getEtaUncert() const { return extractUncertainty(histogramEta_, histogramEta_density_); }
+    double getPhi() const { return extractValue(histogramPhi_, histogramPhi_density_); }
+    double getPhiUncert() const { return extractUncertainty(histogramPhi_, histogramPhi_density_); }
+    double getMass() const { return extractValue(histogramMass_, histogramMass_density_); }
+    double getMassUncert() const { return extractUncertainty(histogramMass_, histogramMass_density_); }
+   private:
+    TH1* makeHistogram(const std::string& histogramName, double xMin, double xMax, double logBinWidth)
+    {
+      int numBins = 1 + TMath::Log(xMax/xMin)/TMath::Log(logBinWidth);
+      TArrayF binning(numBins + 1);
+      binning[0] = 0.;
+      double x = xMin;
+      for ( int iBin = 1; iBin <= numBins; ++iBin ) {
+    binning[iBin] = x;
+    x *= logBinWidth;
+      }
+      TH1* histogram = new TH1D(histogramName.data(), histogramName.data(), numBins, binning.GetArray());
+      return histogram;
+    }
+    virtual double DoEval(const double* x) const
+    {
+      map_x(x, nDim_, x_mapped_);
+      NSVfitStandaloneLikelihood::gNSVfitStandaloneLikelihood->results(fittedTauLeptons_, x_mapped_);
+      fittedDiTauSystem_ = fittedTauLeptons_[0] + fittedTauLeptons_[1];
+      //std::cout << "<MCPtEtaPhiMassAdapter::DoEval>" << std::endl;
+      //std::cout << " Pt = " << fittedDiTauSystem_.pt() << ","
+      //	  << " eta = " << fittedDiTauSystem_.eta() << ","
+      //	  << " phi = " << fittedDiTauSystem_.phi() << ","
+      //	  << " mass = " << fittedDiTauSystem_.mass() << std::endl;
+      histogramPt_->Fill(fittedDiTauSystem_.pt());
+      histogramEta_->Fill(fittedDiTauSystem_.eta());
+      histogramPhi_->Fill(fittedDiTauSystem_.phi());
+      histogramMass_->Fill(fittedDiTauSystem_.mass());
+      return 0.;
+    }
+    void compHistogramDensity(const TH1* histogram, TH1* histogram_density) const
+    {
+      for ( int iBin = 1; iBin <= histogram->GetNbinsX(); ++iBin ) {
+    double binContent = histogram->GetBinContent(iBin);
+    double binError = histogram->GetBinError(iBin);
+    double binWidth = histogram->GetBinWidth(iBin);
+    //if ( histogram == histogramMass_ ) {
+    //  TAxis* xAxis = histogram->GetXaxis();
+    //  std::cout << "bin #" << iBin << " (x = " << xAxis->GetBinLowEdge(iBin) << ".." << xAxis->GetBinUpEdge(iBin) << ", width = " << binWidth << "):"
+    //	      << " " << binContent << " +/- " << binError << std::endl;
+    //}
+    assert(binWidth > 0.);
+    histogram_density->SetBinContent(iBin, binContent/binWidth);
+    histogram_density->SetBinError(iBin, binError/binWidth);
+      }
+    }
+    double extractValue(const TH1* histogram, TH1* histogram_density) const
+    {
+      double maximum, maximum_interpol, mean, quantile016, quantile050, quantile084;
+      compHistogramDensity(histogram, histogram_density);
+      extractHistogramProperties(histogram, histogram_density, maximum, maximum_interpol, mean, quantile016, quantile050, quantile084);
+      double value = maximum_interpol;
+      return value;
+    }
+    double extractUncertainty(const TH1* histogram, TH1* histogram_density) const
+    {
+      double maximum, maximum_interpol, mean, quantile016, quantile050, quantile084;
+      compHistogramDensity(histogram, histogram_density);
+      extractHistogramProperties(histogram, histogram_density, maximum, maximum_interpol, mean, quantile016, quantile050, quantile084);
+      double uncertainty = TMath::Sqrt(0.5*(TMath::Power(quantile084 - maximum_interpol, 2.) + TMath::Power(maximum_interpol - quantile016, 2.)));
+      return uncertainty;
+    }
+    mutable std::vector<NSVfitStandalone::LorentzVector> fittedTauLeptons_;
+    mutable LorentzVector fittedDiTauSystem_;
+    mutable TH1* histogramPt_;
+    mutable TH1* histogramPt_density_;
+    mutable TH1* histogramEta_;
+    mutable TH1* histogramEta_density_;
+    mutable TH1* histogramPhi_;
+    mutable TH1* histogramPhi_density_;
+    mutable TH1* histogramMass_;
+    mutable TH1* histogramMass_density_;
+    mutable double x_mapped_[6];
+    int nDim_;
+  };
 
 /**
    \class   NSVfitStandaloneAlgorithm NSVfitStandaloneAlgorithm.h "TauAnalysis/CandidateTools/interface/NSVfitStandaloneAlgorithm.h"
@@ -131,6 +268,9 @@ class NSVfitStandaloneAlgorithm
   void integrate() { return integrateVEGAS(); }
   /// integration by VEGAS to be called from outside
   void integrateVEGAS();
+  /// integration by Markov Chain MC to be called from outside
+  void integrateMarkovChain();
+
 
   /// return status of minuit fit
   /*    
@@ -214,6 +354,14 @@ class NSVfitStandaloneAlgorithm
   std::vector<NSVfitStandalone::LorentzVector> fittedTauLeptons_;
   /// fitted di-tau system
   NSVfitStandalone::LorentzVector fittedDiTauSystem_;
+
+  /// needed for markov chain integration
+  NSVfitStandalone::MCObjectiveFunctionAdapter* mcObjectiveFunctionAdapter_;
+  NSVfitStandalone::MCPtEtaPhiMassAdapter* mcPtEtaPhiMassAdapter_;
+  MarkovChainIntegrator* integrator2_;
+  int integrator2_nDim_;
+  bool isInitialized2_;
+  unsigned maxObjFunctionCalls2_;
 
   /// pt of di-tau system
   double pt_;

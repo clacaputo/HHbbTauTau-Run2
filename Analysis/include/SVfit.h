@@ -28,6 +28,7 @@
 
 #include "SVfit/source/generalAuxFunctions.cc"
 #include "SVfit/source/LikelihoodFunctions.cc"
+#include "SVfit/source/MarkovChainIntegrator.cc"
 #include "SVfit/source/NSVfitStandaloneAlgorithm.cc"
 #include "SVfit/source/NSVfitStandaloneLikelihood.cc"
 #include "SVfit/source/svFitAuxFunctions.cc"
@@ -71,6 +72,7 @@ double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& me
     NSVfitStandalone::NSVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMET, covMET, 0);
     algo.addLogM(false);
     algo.integrateVEGAS();
+//    algo.integrateMarkovChain();
     if (!algo.isValidSolution()) {
         std::cerr << "Can't fit\n";
         return higgsCandidate.momentum.M();
