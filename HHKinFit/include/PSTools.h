@@ -5,24 +5,13 @@
 #ifndef PSTOOLS_H_
 #define PSTOOLS_H_
 
-#include "TCanvas.h"
+
 #include "TH1F.h"
 #include "TPad.h"
 #include "TString.h"
 
 class PSTools {
  public:
-	PSTools(int size);
-	static void ListHistos();
-	static TH1F* HistPointer(const char* histname);
-
-	static void wait(TPad* c1);
-	static void next(TPad* c1);
-
-	static TCanvas* Pcanvas (int flag=0);
-	static void Platex (Float_t x , Float_t y , Float_t size);
-	static void Pstyle();
-	static void Pprint(const char* filename, TCanvas* c1);
 
 	static void Pcolor(int icol = 1);
 	static void white()   {Pcolor(0);}
@@ -41,10 +30,7 @@ class PSTools {
 	static void coutf(int w,std::string s);
 	static void coutf(int w,double x);
 	static void coutf(int w,int p,double x);
-	static void PSDrawErrorEllipse(Double_t x=0., Double_t y=0., Double_t sx=3., Double_t sy=2., Double_t rho=0.5,Int_t nsigma=3);
-//	static Double_t fmax(Double_t a, Double_t b);
-//	static Double_t fmin(Double_t a, Double_t b);
-//	static void fsortup(Double_t *a, Double_t *b);
+
 };
 
 #endif /* PSTOOLS_H_ */

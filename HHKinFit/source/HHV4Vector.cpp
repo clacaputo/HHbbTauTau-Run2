@@ -282,16 +282,7 @@ HHV4Vector::Rotate(const HHV4Vector & q)
 //  //  cout << "E,Px,Py,Pztemp = " <<E3temp<< sp <<Px3temp<< sp <<Py3temp<< sp <<Pz3temp<< endl;
 //}
 
-void
-HHV4Vector::Draw(Int_t color, Int_t style) const
-{  // draw particle for event display in x-y view
-  TArrow *Ar = new TArrow(0, 0, Px(), Py(), 0.001, "|>");
-  Ar->SetLineColor(color);
-  Ar->SetFillColor(color);
-  Ar->SetLineWidth(3);
-  Ar->SetLineStyle(style);
-  Ar->Draw();
-}
+
 
 void
 HHV4Vector::CalcCov()
