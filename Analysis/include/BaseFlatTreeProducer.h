@@ -229,10 +229,9 @@ protected:
 
             bool doubleHiggsSignal = true;
             GenParticlePtrVector HiggsBosons;
-            if(!FindDecayProducts(*final_state.resonance, resonanceDecay_1, HiggsBosons)) {
-                if(!FindDecayProducts(*final_state.resonance, resonanceDecay_2, HiggsBosons))
-                    doubleHiggsSignal = false;
-            }
+            if(!FindDecayProducts(*final_state.resonance, resonanceDecay_1, HiggsBosons) ||
+                    !FindDecayProducts(*final_state.resonance, resonanceDecay_2, HiggsBosons))
+                doubleHiggsSignal = false;
 
             if(doubleHiggsSignal) {
                 GenParticleVector2D HiggsDecayProducts;
