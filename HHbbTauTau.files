@@ -232,3 +232,8 @@ PatProduction/crab/multicrab_ggHhh.cfg
 PatProduction/crab/multicrab_ggbbH.cfg
 PatProduction/crab/multicrab_Graviton.cfg
 PatProduction/crab/multicrab_Radion.cfg
+PatProduction/crab/multicrab_Embedded_EMu.cfg
+PatProduction/crab/multicrab_Embedded_ETau.cfg
+PatProduction/crab/multicrab_Embedded_MuMu.cfg
+PatProduction/crab/multicrab_Embedded_MuTau.cfg
+PatProduction/crab/multicrab_Embedded_TauTau.cfg
