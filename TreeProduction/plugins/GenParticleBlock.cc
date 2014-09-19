@@ -75,7 +75,8 @@ private:
 
 void GenParticleBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    if (iEvent.isRealData()) return;
+
+    //if (iEvent.isRealData()) return;
 
     genParticleTree.RunId() = iEvent.id().run();
     genParticleTree.LumiBlock() = iEvent.id().luminosityBlock();
