@@ -441,34 +441,6 @@ PSMath::PSfitShow (Int_t iloop, Int_t convergence, Int_t iter, Int_t method,
     }
   }
   chi2Memory = chi2;
-  if (graphiklevel > 0) { // ------------------------ Plots iterations in plane a[0] - a[1]
-    //    c1->Clear();
-    static const Int_t nloopmax = 100;
-    static Double_t Xloop[nloopmax];
-    static Double_t Yloop[nloopmax];
-    static TPolyMarker * iterMarker = NULL;
-    static TPolyMarker * loopMarker = NULL;
-    if (iloop == 0) {
-      iterMarker = new TPolyMarker (100);
-      iterMarker->SetMarkerColor (kBlue);
-      iterMarker->SetMarkerSize (1.5);
-
-      loopMarker = new TPolyMarker (100);
-      loopMarker->SetMarkerColor (kBlack);
-      loopMarker->SetMarkerSize (0.5);
-
-    }
-
-    if (iter >= 0 && iter < nloopmax) {
-      iterMarker->SetPoint (iter, a[0], a[1]);
-    }
-    if (iloop >= 0 && iloop < nloopmax) {
-      Xloop[iloop] = a[0];
-      Yloop[iloop] = a[1];
-    }
-
-
-  }
 }
 //------------------------------------------------------------------
 Double_t
