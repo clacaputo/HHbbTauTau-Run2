@@ -208,9 +208,10 @@ protected:
 
     bool FindAnalysisFinalState(finalState::bbTauTau& final_state)
     {
-        static const particles::ParticleCodes resonanceCodes = { particles::MSSM_H };
-        static const particles::ParticleCodes resonanceDecay = { particles::Higgs, particles::Higgs };
-        static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z };
+        static const particles::ParticleCodes resonanceCodes = { particles::MSSM_H, particles::MSSM_A };
+        static const particles::ParticleCodes resonanceDecay_1 = { particles::Higgs, particles::Higgs };
+        static const particles::ParticleCodes resonanceDecay_2 = { particles::Z, particles::Higgs };
+        static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z, particles::MSSM_H };
         static const particles::ParticleCodes SM_ResonanceDecay_1 = { particles::tau, particles::tau };
         static const particles::ParticleCodes SM_ResonanceDecay_2 = { particles::b, particles::b };
         static const particles::ParticleCodes2D HiggsDecays = { SM_ResonanceDecay_1, SM_ResonanceDecay_2 };
@@ -226,27 +227,32 @@ protected:
         if (resonances.size() == 1) {
             final_state.resonance = *resonances.begin();
 
+            bool doubleHiggsSignal = true;
             GenParticlePtrVector HiggsBosons;
-            if(!FindDecayProducts(*final_state.resonance, resonanceDecay, HiggsBosons))
-                throw exception("Resonance does not decay into 2 Higgs");
-
-            GenParticleVector2D HiggsDecayProducts;
-            GenParticleIndexVector HiggsIndexes;
-            if(!FindDecayProducts2D(HiggsBosons, HiggsDecays, HiggsDecayProducts, HiggsIndexes))
-                throw exception("NOT HH -> bb tautau");
-
-            for(const GenParticle* tau : HiggsDecayProducts.at(0)) {
-                const VisibleGenObject tau_products(tau);
-                final_state.taus.push_back(tau_products);
-                if(tau_products.finalStateChargedHadrons.size() != 0)
-                    final_state.hadronic_taus.push_back(tau_products);
+            if(!FindDecayProducts(*final_state.resonance, resonanceDecay_1, HiggsBosons)) {
+                if(!FindDecayProducts(*final_state.resonance, resonanceDecay_2, HiggsBosons))
+                    doubleHiggsSignal = false;
             }
-            for(const GenParticle* b : HiggsDecayProducts.at(1))
-                final_state.b_jets.push_back(VisibleGenObject(b));
 
-            final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
-            final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
-            return true;
+            if(doubleHiggsSignal) {
+                GenParticleVector2D HiggsDecayProducts;
+                GenParticleIndexVector HiggsIndexes;
+                if(!FindDecayProducts2D(HiggsBosons, HiggsDecays, HiggsDecayProducts, HiggsIndexes))
+                    throw exception("NOT HH -> bb tautau");
+
+                for(const GenParticle* tau : HiggsDecayProducts.at(0)) {
+                    const VisibleGenObject tau_products(tau);
+                    final_state.taus.push_back(tau_products);
+                    if(tau_products.finalStateChargedHadrons.size() != 0)
+                        final_state.hadronic_taus.push_back(tau_products);
+                }
+                for(const GenParticle* b : HiggsDecayProducts.at(1))
+                    final_state.b_jets.push_back(VisibleGenObject(b));
+
+                final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
+                final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
+                return true;
+            }
         }
 
         if(config.ExpectedOneNonSMResonance())
