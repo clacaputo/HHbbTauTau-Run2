@@ -17,6 +17,9 @@ class HHKinFit{
 public:
   HHKinFit(HHEventRecord* recrecord);
 
+  ~HHKinFit(){
+      delete m_fitrecord;
+  }
   void FitNew();
   void Fit();
   void ConstrainE2(Int_t iv4, Int_t iv41, Int_t iv42);

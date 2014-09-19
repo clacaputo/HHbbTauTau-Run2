@@ -456,20 +456,7 @@ PSMath::PSfitShow (Int_t iloop, Int_t convergence, Int_t iter, Int_t method,
       loopMarker = new TPolyMarker (100);
       loopMarker->SetMarkerColor (kBlack);
       loopMarker->SetMarkerSize (0.5);
-      //      static Double_t *Xloop = loopMarker->GetX() ;
-      //      static Double_t *Yloop = loopMarker->GetY() ;
 
-      //      TF2 * f2 = new TF2("Test-Function","(x**2 + y**2 -1.9*x*y)**2 + x**2 + y**2 -1.9*x*y",
-      //			 alimit[0][0], alimit[0][1], alimit[1][0], alimit[1][1] ) ;
-      //      f2->SetMinimum( 0.);
-      //      f2->SetMaximum(20.);
-      //      Double_t levels[] = {1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.,18.,19.,20.}
-      //      f2->SetContour(20,levels) ;
-      //      f2->Draw("CONT1Z");
-
-      //      TArrow  *ar=new TArrow(a[0], a[1], a[0]+daN[0],  a[1]+daN[1], 0.02,"|>") ;
-      //      ar->SetLineColor(kRed);   ar->SetFillColor(kRed);
-      //      ar->DrawClone();
     }
 
     if (iter >= 0 && iter < nloopmax) {
@@ -480,23 +467,7 @@ PSMath::PSfitShow (Int_t iloop, Int_t convergence, Int_t iter, Int_t method,
       Yloop[iloop] = a[1];
     }
 
-    if (convergence != 0) {
 
-      Double_t *Xiter = iterMarker->GetX ();
-      Double_t *Yiter = iterMarker->GetY ();
-      loopMarker->DrawPolyMarker (iloop, Xloop, Yloop, "same");
-      iterMarker->DrawPolyMarker (iter, Xiter, Yiter, "same");
-
-      TMarker *mi = new TMarker (Xiter[0], Yiter[0], 20);
-      mi->SetMarkerColor (kRed);
-      TMarker *mf = new TMarker (Xiter[iter], Yiter[iter], 20);
-      mf->SetMarkerColor (kGreen);
-      TMarker *ma = new TMarker (a[0], a[1], 20);
-      ma->SetMarkerColor (kMagenta);
-      mi->Draw ();
-      mf->Draw ();
-      ma->Draw ();
-    }
   }
 }
 //------------------------------------------------------------------

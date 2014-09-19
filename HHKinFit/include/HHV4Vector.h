@@ -74,7 +74,7 @@ public:
 
   void Print() const;
   void PrintErrors () const;
-  void Draw(Int_t color=1, Int_t style=1) const;
+
 
   void Boost(Double_t bx, Double_t by, Double_t bz);
   void Rotate(const HHV4Vector & q);

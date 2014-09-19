@@ -119,16 +119,6 @@ HHEventRecord::GetEntry(Int_t i) const
   return m_eventrecord->at(i);
 }
 
-void
-HHEventRecord::EventDisplayXY(Int_t style)
-{        // Event Display in x-y view
-//  std::cout << "V4EventDisplayXY ------------" << std::endl;
-  for (Int_t index = GetNEntries() - 1; index >= 0; index--) {
-    HHPID::pid pid = GetEntry(index)->ID();
-    Int_t color = m_particlelist->GetParticleInfo(pid)->Color();
-    m_eventrecord->at(index)->Draw(color, style);
-  }
-}
 
 void
 HHEventRecord::Recombine()

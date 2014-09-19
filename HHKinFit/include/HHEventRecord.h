@@ -45,9 +45,9 @@ public:
   HHV4Vector* GetEntry (Int_t i) const;
   HHParticleList* GetParticleList () const;
   HHV4Vector* UpdateEntry (Int_t i);
-  HHV4Vector* UpdateEntry (entry i) {int temp = i; return UpdateEntry(temp);};
+  HHV4Vector* UpdateEntry (entry i) {int temp = i; return UpdateEntry(temp);}
   void Print(TString name="",Int_t mode=1);
-  void EventDisplayXY(Int_t style);
+
   void Recombine();
   void UpdateMothers(Int_t ivDaughter);
 
