@@ -320,8 +320,7 @@ protected:
       return false ; // to avoid warnings, smarter solutions exist
     }
 
-    void FillFlatTree(const Candidate& higgs      , double m_sv,
-                      double m_sv_Up, double m_sv_Down,
+    void FillFlatTree(const Candidate& higgs, const analysis::SVFitResultsUncertainties& svfitResults,
                       const CandidateVector& jets , const CandidateVector& jetsPt20,
                       const CandidateVector& bjets, const CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
@@ -356,12 +355,15 @@ protected:
 
         // HTT candidate
         flatTree->mvis()           = higgs.momentum.M();
-        flatTree->m_sv()           = m_sv;
-        flatTree->m_sv_Up()        = m_sv_Up;
-        flatTree->m_sv_Down()      = m_sv_Down;
-        flatTree->pt_sv()          = default_value; // SVfit not ready yet
-        flatTree->eta_sv()         = default_value; // SVfit not ready yet
-        flatTree->phi_sv()         = default_value; // SVfit not ready yet
+        flatTree->m_sv_vegas()           = svfitResults.svfitResults.mass_Vegas;
+        flatTree->m_sv_Up_vegas()        = svfitResults.svfitResults_Up.mass_Vegas;
+        flatTree->m_sv_Down_vegas()      = svfitResults.svfitResults_Down.mass_Vegas;
+        flatTree->m_sv_MC()           = svfitResults.svfitResults.momentum_MarkovChain.M();
+        flatTree->m_sv_Up_MC()        = svfitResults.svfitResults_Up.momentum_MarkovChain.M();
+        flatTree->m_sv_Down_MC()      = svfitResults.svfitResults_Down.momentum_MarkovChain.M();
+        flatTree->pt_sv_MC()          = svfitResults.svfitResults_Down.momentum_MarkovChain.Pt();
+        flatTree->eta_sv_MC()         = svfitResults.svfitResults_Down.momentum_MarkovChain.Eta();
+        flatTree->phi_sv_MC()         = svfitResults.svfitResults_Down.momentum_MarkovChain.Phi();
         flatTree->DeltaR_leptons() = leg1.momentum.DeltaR(leg2.momentum) ;
         flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
 

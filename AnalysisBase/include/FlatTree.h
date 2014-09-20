@@ -114,12 +114,15 @@
     /* H_tautau variables */ \
     SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of H_tautau candidate */ \
     SIMPLE_VAR(Float_t, mvis) /* Visible mass of H_tautau */ \
-    SIMPLE_VAR(Float_t, m_sv) /* Mass of H_tautau corrected by svFit using integration method */ \
-    SIMPLE_VAR(Float_t, m_sv_Up) /* Mass of H_tautau corrected by svFit using integration method when TauES is scaled up by 3% */ \
-    SIMPLE_VAR(Float_t, m_sv_Down) /* Mass of H_tautau corrected by svFit using integration method when TauES is scaled down by 3% */ \
-    SIMPLE_VAR(Float_t, pt_sv) /* Pt of H_tautau corrected by svFit using integration method */ \
-    SIMPLE_VAR(Float_t, eta_sv) /* Eta of H_tautau corrected by svFit using integration method */ \
-    SIMPLE_VAR(Float_t, phi_sv) /* Phi of H_tautau corrected by svFit using integration method */ \
+    SIMPLE_VAR(Float_t, m_sv_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS*/ \
+    SIMPLE_VAR(Float_t, m_sv_Up_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_Down_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_MC) /* Mass of H_tautau corrected by svFit using integration method MC*/ \
+    SIMPLE_VAR(Float_t, m_sv_Up_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_Down_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, pt_sv_MC) /* Pt of H_tautau corrected by svFit using integration method MC*/ \
+    SIMPLE_VAR(Float_t, eta_sv_MC) /* Eta of H_tautau corrected by svFit using integration method MC*/ \
+    SIMPLE_VAR(Float_t, phi_sv_MC) /* Phi of H_tautau corrected by svFit using integration method MC*/ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
     \
