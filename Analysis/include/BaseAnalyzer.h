@@ -477,7 +477,7 @@ protected:
                                        const size_t njets, const ntuple::MET& correctedMET)
     {
         if (config.ApplyRecoilCorrection()){
-            if(!resonance)
+            if(!resonance && config.ApplyRecoilCorrectionForW())
                 resonance = FindWboson();
             if(resonance)
                 return recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
