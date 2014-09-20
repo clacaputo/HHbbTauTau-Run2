@@ -41,56 +41,120 @@
 #include "AnalysisBase/include/Candidate.h"
 
 namespace analysis {
-double CorrectMassByKinfit(const TLorentzVector& bjet1, const TLorentzVector& bjet2, const TLorentzVector& tau1,
-                           const TLorentzVector& tau2, const TLorentzVector& MVAmet, const TMatrixD& metcov)
+
+namespace four_body_kinematic_fit {
+
+struct FitInput {
+    std::vector<TLorentzVector> bjet_momentums;
+    std::vector<TLorentzVector> tau_momentums;
+    TLorentzVector mvaMET;
+    TMatrixD metCov;
+
+    FitInput(const TLorentzVector& bjet1, const TLorentzVector& bjet2,
+             const TLorentzVector& tau1, const TLorentzVector& tau2,
+             const TLorentzVector& _mvaMET, const TMatrixD& _metCov)
+        : mvaMET(_mvaMET), metCov(_metCov)
+    {
+        bjet_momentums.push_back(bjet1);
+        bjet_momentums.push_back(bjet2);
+        tau_momentums.push_back(tau1);
+        tau_momentums.push_back(tau2);
+    }
+
+    FitInput(const FitInput& input, double bjet_scale_factor, double tau_scale_factor)
+        : mvaMET(input.mvaMET), metCov(input.metCov)
+    {
+        for(const TLorentzVector& momentum : input.bjet_momentums)
+            bjet_momentums.push_back(momentum * bjet_scale_factor);
+
+        for(const TLorentzVector& momentum : input.tau_momentums)
+            tau_momentums.push_back(momentum * tau_scale_factor);
+    }
+};
+
+struct FitResultsWithUncertainties {
+    double mass;
+    double mass_bb_down_tt_down;
+    double mass_bb_down_tt_up;
+    double mass_bb_up_tt_down;
+    double mass_bb_up_tt_up;
+};
+
+inline double Fit(const FitInput& input)
 {
     static const bool debug = false;
+    static const Int_t higgs_mass_hypotesis = 125;
+    static const Int_t convergence_cut = 0;
+    static const Double_t chi2_cut = 25;
+    static const Double_t pull_balance_cut = 0;
 
-    std::vector<Int_t> hypo_mh1;
-    hypo_mh1.push_back(125);
-    std::vector<Int_t> hypo_mh2;
-    hypo_mh2.push_back(125);
+    const std::vector<Int_t> hypo_mh1 = { higgs_mass_hypotesis };
+    const std::vector<Int_t> hypo_mh2 = { higgs_mass_hypotesis };
 
-//    std::cout << "metcov00 = " << metcov[0][0] << ", metcov01 = " << metcov[0][1] << ",metcov10 = " << metcov[1][0]
-//            << ", metcov11 = " << metcov[1][1] << std::endl;
-//    std::cout << "metDet = " << metcov.Determinant() << std::endl;
+    if(debug) {
+        input.metCov.Print();
+        std::cout << "metDet = " << input.metCov.Determinant() << std::endl;
+    }
+
     //intance of fitter master class
-    HHKinFitMaster kinFits = HHKinFitMaster(&bjet1,&bjet2,&tau1,&tau2);
-    kinFits.setAdvancedBalance(&MVAmet,metcov);
+    HHKinFitMaster kinFits = HHKinFitMaster(&input.bjet_momentums.at(0), &input.bjet_momentums.at(1),
+                                            &input.tau_momentums.at(0), &input.tau_momentums.at(1));
+    kinFits.setAdvancedBalance(&input.mvaMET, input.metCov);
     //kinFits.setSimpleBalance(ptmiss.Pt(),10); //alternative which uses only the absolute value of ptmiss in the fit
     kinFits.addMh1Hypothesis(hypo_mh1);
     kinFits.addMh2Hypothesis(hypo_mh2);
     kinFits.doFullFit();
 
-    Double_t chi2_best = kinFits.getBestChi2FullFit();
-    Double_t mh_best = kinFits.getBestMHFullFit();
-    std::pair<Int_t, Int_t> bestHypo = kinFits.getBestHypoFullFit();
-    std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_chi2 = kinFits.getChi2FullFit();
-//    std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_fitprob = kinFits.getFitProbFullFit();
-    std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_mH = kinFits.getMHFullFit();
-//    std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_pull_b1 = kinFits.getPullB1FullFit();
-//    std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_pull_b2 = kinFits.getPullB2FullFit();
-    std::map< std::pair<Int_t, Int_t>, Double_t> fit_results_pull_balance = kinFits.getPullBalanceFullFit();
-    std::map< std::pair<Int_t, Int_t>, Int_t> fit_convergence = kinFits.getConvergenceFullFit();
+    if(debug) {
+        const Double_t chi2_best = kinFits.getBestChi2FullFit();
+        const Double_t mh_best = kinFits.getBestMHFullFit();
+        const std::pair<Int_t, Int_t> bestHypo = kinFits.getBestHypoFullFit();
 
-
-
-    std::pair< Int_t, Int_t > hypo(hypo_mh1.at(0),hypo_mh2.at(0));
-
-    if (debug){
         std::cout << "best chi2:       " << chi2_best << std::endl;
         std::cout << "best hypothesis: " << bestHypo.first << " " << bestHypo.second << std::endl;
         std::cout << "best mH=         " << mh_best << std::endl;
-        std::cout << "fit_convergence=         " << fit_convergence.at(hypo) << std::endl;
-        std::cout << "fit_results_pull_balance=         " << fit_results_pull_balance.at(hypo) << std::endl;
-        std::cout << "fit_results_mH=         " << fit_results_mH.at(hypo) << std::endl;
     }
 
-    if (fit_convergence.at(hypo)>0 && fit_results_chi2.at(hypo)<25 && fit_results_pull_balance.at(hypo)>0)
-        return fit_results_mH.at(hypo);
-    //std::cerr << "mass with kin Fit cannot be calculated" << std::endl;
-    return std::numeric_limits<double>::lowest();
+    const std::pair<Int_t, Int_t> hypo(hypo_mh1.at(0), hypo_mh2.at(0));
+    const Int_t convergence = kinFits.getConvergenceFullFit().at(hypo);
+    const Double_t chi2 = kinFits.getChi2FullFit().at(hypo);
+    const Double_t pull_balance = kinFits.getPullBalanceFullFit().at(hypo);
+    const Double_t mH = kinFits.getMHFullFit().at(hypo);
 
+    if (debug) {
+        const Double_t fitprob = kinFits.getFitProbFullFit().at(hypo);
+        const Double_t pull_b1 = kinFits.getPullB1FullFit().at(hypo);
+        const Double_t pull_b2 = kinFits.getPullB2FullFit().at(hypo);
+
+        std::cout << "fit convergence =  " << convergence << std::endl;
+        std::cout << "fit chi2 =         " << chi2 << std::endl;
+        std::cout << "fit fitprob =      " << fitprob << std::endl;
+        std::cout << "fit pull_b1 =      " << pull_b1 << std::endl;
+        std::cout << "fit pull_b2 =      " << pull_b2 << std::endl;
+        std::cout << "fit pull_balance = " << pull_balance << std::endl;
+        std::cout << "fit mH =           " << mH << std::endl;
+    }
+
+    if (convergence > convergence_cut && chi2 < chi2_cut && pull_balance > pull_balance_cut)
+        return mH;
+
+    if(debug)
+        std::cerr << "mass with kin Fit cannot be calculated" << std::endl;
+
+    return std::numeric_limits<double>::lowest();
 }
 
-} // analysis
+inline FitResultsWithUncertainties FitWithUncertainties(const FitInput& input, double bjet_energy_uncertanty,
+                                                      double tau_energy_uncertanty)
+{
+    FitResultsWithUncertainties result;
+    result.mass = Fit(input);
+    result.mass_bb_down_tt_down = Fit(FitInput(input, (1 - bjet_energy_uncertanty, 1 - tau_energy_uncertanty)));
+    result.mass_bb_down_tt_up = Fit(FitInput(input, (1 - bjet_energy_uncertanty, 1 + tau_energy_uncertanty)));
+    result.mass_bb_up_tt_down = Fit(FitInput(input, (1 + bjet_energy_uncertanty, 1 - tau_energy_uncertanty)));
+    result.mass_bb_up_tt_up = Fit(FitInput(input, (1 + bjet_energy_uncertanty, 1 + tau_energy_uncertanty)));
+    return result;
+}
+
+} // namespace four_body_kinematic_fit
+} // namespace analysis
