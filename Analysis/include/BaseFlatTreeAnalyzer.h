@@ -76,6 +76,8 @@ public:
     TH1D_ENTRY(m_bb, 30, 0, 600)
     TH1D_ENTRY(m_ttbb, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit, 50, 0, 1000)
+    TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
+    TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
@@ -257,6 +259,8 @@ protected:
             const double m_ttbb_kinFit =
                     analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
+            //anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
+            //anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
         }
     }
 
@@ -357,9 +361,12 @@ protected:
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
                 //anaData.m_sv().Write(limitDataCategory.second.c_str());
                 anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
-                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
+                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_4b_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
+
+		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
+		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
 
 //                anaData.m_sv_down().Write(nameDown.c_str());
 //                anaData.m_sv_up().Write(nameUp.c_str());
