@@ -128,15 +128,13 @@ public:
 
         postRecoilMET = ApplyRecoilCorrections(higgs, muTau_MC.resonance, jets.size(), correctedMET);
 
-        const double m_sv      = CorrectMassBySVfit(higgs, postRecoilMET,1   );
-        const double m_sv_Up   = CorrectMassBySVfit(higgs, postRecoilMET,1.03);
-        const double m_sv_Down = CorrectMassBySVfit(higgs, postRecoilMET,0.97);
+        const analysis::SVFitResultsUncertainties svfitResults = analysis::CollectSVFitResults(higgs, postRecoilMET);
 
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
 
-        FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
+        FillFlatTree(higgs, svfitResults, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
     }
 
 protected:
@@ -366,8 +364,7 @@ protected:
         DMweights.push_back(weight);
     }
 
-    void FillFlatTree(const analysis::Candidate& higgs, double m_sv,
-                      double m_sv_Up, double m_sv_Down,
+    void FillFlatTree(const analysis::Candidate& higgs, const analysis::SVFitResultsUncertainties& svfitResults ,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
@@ -379,7 +376,7 @@ protected:
         const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        BaseFlatTreeProducer::FillFlatTree(higgs, m_sv, m_sv_Up, m_sv_Down, jets, jetsPt20, bjets, retagged_bjets,
+        BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, jets, jetsPt20, bjets, retagged_bjets,
                                            vertices, muon, tau, pfMET, muTau_MC);
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);

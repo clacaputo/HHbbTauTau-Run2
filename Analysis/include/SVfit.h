@@ -38,9 +38,24 @@
 #include "AnalysisBase/include/Candidate.h"
 
 namespace analysis {
-double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, double tauESfactor)
+
+struct SVFitResults
+{
+    double mass_Vegas;
+    TLorentzVector momentum_MarkovChain;
+};
+
+struct SVFitResultsUncertainties
+{
+    SVFitResults svfitResults;
+    SVFitResults svfitResults_Up;
+    SVFitResults svfitResults_Down;
+};
+
+inline SVFitResults CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, double tauESfactor)
 {
     static const bool debug = false;
+    SVFitResults svfitresults;
 
     if(higgsCandidate.type != Candidate::Higgs)
         throw std::runtime_error("Invalid candidate type for SVfit");
@@ -69,31 +84,50 @@ double CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& me
     }
 
     // construct the class object from the minimal necesarry information
-    NSVfitStandalone::NSVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMET, covMET, 0);
-    algo.addLogM(false);
-    algo.integrateVEGAS();
-//    algo.integrateMarkovChain();
-    if (!algo.isValidSolution()) {
+    NSVfitStandalone::NSVfitStandaloneAlgorithm algoVegas(measuredTauLeptons, measuredMET, covMET, 0);
+    algoVegas.addLogM(false);
+    algoVegas.integrateVEGAS();
+
+    if (!algoVegas.isValidSolution()) {
         std::cerr << "Can't fit\n";
-        return higgsCandidate.momentum.M();
+        svfitresults.mass_Vegas = higgsCandidate.momentum.M();
         //throw std::runtime_error("SVFit algo is not valid");
     }
 
-//    Candidate correctedCandidate(higgsCandidate);
-//    correctedCandidate.momentum.SetPtEtaPhiM(algo.pt(),
-//                                             higgsCandidate.momentum.Eta(),
-//                                             higgsCandidate.momentum.Phi(),
-//                                             algo.mass());
+    svfitresults.mass_Vegas = algoVegas.mass();
+
+    NSVfitStandalone::NSVfitStandaloneAlgorithm algoMC(measuredTauLeptons, measuredMET, covMET, 0);
+    algoMC.integrateMarkovChain();
+    if (!algoMC.isValidSolution()) {
+        std::cerr << "Can't fit\n";
+        svfitresults.momentum_MarkovChain.SetPtEtaPhiM(higgsCandidate.momentum.Pt(), higgsCandidate.momentum.Eta(),
+                                                       higgsCandidate.momentum.Phi(), higgsCandidate.momentum.M());
+        //throw std::runtime_error("SVFit algo is not valid");
+    }
+
 
     if(debug) {
         std::cout << "original mass = " << higgsCandidate.momentum.M()
                   << "\nOriginal momentum = " << higgsCandidate.momentum
                   << "\nFirst daughter momentum = " << higgsCandidate.daughters.at(0).momentum
                   << "\nSecond daughter momentum = " << higgsCandidate.daughters.at(1).momentum
-                  << "\nSVfit mass = " << algo.mass() << ", SVfit pt = " << algo.pt() << std::endl;
+                     << "\nSVfit mass Vegas = " << algoVegas.mass()
+                  << "\nSVfit mass MC = " << algoMC.mass() << ", SVfit pt MC = " << algoMC.pt() << std::endl;
     }
-    return algo.mass();
-//    return correctedCandidate;
+    svfitresults.momentum_MarkovChain.SetPtEtaPhiM(algoMC.pt(), higgsCandidate.momentum.Eta(),
+                                                   higgsCandidate.momentum.Phi(), algoMC.mass());
+
+    return svfitresults;
+}
+
+inline SVFitResultsUncertainties CollectSVFitResults(const Candidate& higgsCandidate, const ntuple::MET& met)
+{
+    SVFitResultsUncertainties svfitResultsUncertainties;
+    svfitResultsUncertainties.svfitResults = CorrectMassBySVfit(higgsCandidate,met,1.);
+    svfitResultsUncertainties.svfitResults_Up = CorrectMassBySVfit(higgsCandidate,met,1.03);
+    svfitResultsUncertainties.svfitResults_Down = CorrectMassBySVfit(higgsCandidate,met,0.97);
+    return svfitResultsUncertainties;
 }
 
 } // analysis
+
