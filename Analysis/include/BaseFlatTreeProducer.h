@@ -515,6 +515,8 @@ protected:
 
         for (const Candidate& jet : csv_sorted_jetsPt20) {
             const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
+            if(std::abs(jet.momentum.Eta()) >= cuts::Htautau_Summer13::btag::eta) continue;
+
             flatTree->pt_Bjets()      .push_back( jet.momentum.Pt() );
             flatTree->eta_Bjets()     .push_back( jet.momentum.Eta() );
             flatTree->phi_Bjets()     .push_back( jet.momentum.Phi() );
