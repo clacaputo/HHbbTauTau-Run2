@@ -315,7 +315,8 @@ protected:
             const FourBodyFitInput input(bjets.at(0).momentum, bjets.at(1).momentum,
                                          higgs_to_taus.daughters.at(0).momentum, higgs_to_taus.daughters.at(1).momentum,
                                          met_momentum, met_cov);
-            result = FitWithUncertainties(input, 0.05, tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
+            result = FitWithUncertainties(input, cuts::jetCorrections::energyUncertainty,
+                                          tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
         }
         return result;
     }

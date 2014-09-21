@@ -125,19 +125,22 @@ public:
 
 
         const auto jets = CollectJets(filteredLooseJets);
-        const auto bjets = CollectBJets(filteredLooseJets, false);
-        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC());
+        const auto bjets_all = CollectBJets(filteredLooseJets, false, false);
+        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC(), true);
 
 
         postRecoilMET = ApplyRecoilCorrections(higgs, eTau_MC.resonance, jets.size(), correctedMET);
 
-        const analysis::SVFitResultsUncertainties svfitResults = analysis::CollectSVFitResults(higgs, postRecoilMET);
+        const auto svfitResults = analysis::sv_fit::FitWithUncertainties(higgs, postRecoilMET,
+                                                                         tauCorrections::energyUncertainty,
+                                                                         true, true);
+        const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
 
-        FillFlatTree(higgs, svfitResults, jets, filteredLooseJets, bjets, retagged_bjets, vertices, pfMET);
+        FillFlatTree(higgs, svfitResults, kinfitResults, jets, filteredLooseJets, bjets_all, retagged_bjets, vertices, pfMET);
     }
 
 protected:
@@ -369,9 +372,11 @@ protected:
         DMweights.push_back(weight);
     }
 
-    void FillFlatTree(const analysis::Candidate& higgs, const analysis::SVFitResultsUncertainties& svfitResults ,
+    void FillFlatTree(const analysis::Candidate& higgs,
+                      const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
+                      const analysis::kinematic_fit::FitResultsWithUncertainties& kinfitResults,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets, const analysis::CandidateVector& retagged_bjets,
+                      const analysis::CandidateVector& bjets_all, const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
@@ -381,7 +386,7 @@ protected:
         const ntuple::Electron& ntuple_electron = event->electrons().at(electron.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
-        BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, jets, jetsPt20, bjets, retagged_bjets,
+        BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, kinfitResults, jets, jetsPt20, bjets_all, retagged_bjets,
                                            vertices, electron, tau, pfMET, eTau_MC);
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::ETau);

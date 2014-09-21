@@ -31,6 +31,10 @@ namespace cuts {
 
     const double DeltaR_MC_Match = 0.3; // <
 
+    namespace jetCorrections {
+        const double energyUncertainty = 0.05;
+    }
+
     namespace skim {
         namespace TauTau {
 
