@@ -51,7 +51,7 @@
 #include "MvaMet.h"
 #include "RecoilCorrection.h"
 #include "SVfit.h"
-
+#include "KinFit.h"
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \

@@ -114,17 +114,28 @@
     /* H_tautau variables */ \
     SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of H_tautau candidate */ \
     SIMPLE_VAR(Float_t, mvis) /* Visible mass of H_tautau */ \
-    SIMPLE_VAR(Float_t, m_sv_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS*/ \
-    SIMPLE_VAR(Float_t, m_sv_Up_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled up by 3% */ \
-    SIMPLE_VAR(Float_t, m_sv_Down_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled down by 3% */ \
-    SIMPLE_VAR(Float_t, m_sv_MC) /* Mass of H_tautau corrected by svFit using integration method MC*/ \
-    SIMPLE_VAR(Float_t, m_sv_Up_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
-    SIMPLE_VAR(Float_t, m_sv_Down_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
-    SIMPLE_VAR(Float_t, pt_sv_MC) /* Pt of H_tautau corrected by svFit using integration method MC*/ \
-    SIMPLE_VAR(Float_t, eta_sv_MC) /* Eta of H_tautau corrected by svFit using integration method MC*/ \
-    SIMPLE_VAR(Float_t, phi_sv_MC) /* Phi of H_tautau corrected by svFit using integration method MC*/ \
+    SIMPLE_VAR(Float_t, m_sv_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS */ \
+    SIMPLE_VAR(Float_t, m_sv_up_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_down_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_MC) /* Mass of H_tautau corrected by svFit using integration method MC */ \
+    SIMPLE_VAR(Float_t, pt_sv_MC) /* Pt of H_tautau corrected by svFit using integration method MC */ \
+    SIMPLE_VAR(Float_t, m_sv_up_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, pt_sv_up_MC) /* Pt of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, m_sv_down_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, pt_sv_down_MC) /* Pt of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
+    \
+    \
+    /* Kinematic fit variables */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_tt) /* Four body mass calculated using kinematic fit */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_down) /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled down by their uncertainties */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_up) /* Four body mass calculated using kinematic fit when BjetES scaled down and TauES scaled up by their uncertainties */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_down) /* Four body mass calculated using kinematic fit when BjetES scaled up and TauES scaled down by their uncertainties */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_up) /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled up by their uncertainties */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb) /* Mass of two bjets with highest CSV value calculated using kinematic fit */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_down) /* Mass of two bjets with highest CSV value calculated using kinematic fit when BjetES scaled down by it uncertainty */ \
+    SIMPLE_VAR(Float_t, m_kinfit_bb_up) /* Mass of two bjets with highest CSV value calculated using kinematic fit when BjetES scaled up by it uncertainty */ \
     \
     \
     /* Met related variables */ \

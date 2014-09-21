@@ -342,6 +342,8 @@ namespace tauCorrections {
 
     const double deltaR = 0.3; // < Updated to be compatible with H->tautau code
 
+    const double energyUncertainty = 0.03;
+
     // For taus that matched MC truth.
     // Original corrections from HiggsToTauTauWorkingSummer2013. Updated to be compatible with H->tautau code.
     inline double MomentumScaleFactor(bool hasMCmatch, double pt, ntuple::tau_id::hadronicDecayMode decayMode,

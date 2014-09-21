@@ -142,7 +142,7 @@ protected:
         return muon;
     }
 
-    CandidateVector CollectBJets(const CandidateVector& looseJets, bool doReTag)
+    CandidateVector CollectBJets(const CandidateVector& looseJets, bool doReTag, bool applyCsvCut)
     {
         using namespace cuts::Htautau_Summer13::btag;
         analysis::CandidateVector bjets;
@@ -151,13 +151,13 @@ protected:
             if(looseJet.pt <= pt || std::abs(looseJet.eta) >= eta) continue;
             if(doReTag && !analysis::btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, 0, 0, CSV))
                 continue;
-            else if(!doReTag && looseJet.combinedSecondaryVertexBJetTags <= CSV)
+            else if(!doReTag && applyCsvCut && looseJet.combinedSecondaryVertexBJetTags <= CSV)
                 continue;
 
             bjets.push_back(looseJetCandidate);
         }
 
-        const auto bjetsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
+        const auto bjetsSelector = [&] (const Candidate& first, const Candidate& second) -> bool
         {
             const ntuple::Jet& first_bjet = event->jets().at(first.index);
             const ntuple::Jet& second_bjet = event->jets().at(second.index);
@@ -298,6 +298,28 @@ protected:
         return true;
     }
 
+    analysis::kinematic_fit::FitResultsWithUncertainties RunKinematicFit(const CandidateVector& bjets,
+                                                                         const Candidate& higgs_to_taus,
+                                                                         const ntuple::MET& met, bool fit_two_bjets,
+                                                                         bool fit_four_body)
+    {
+        using namespace analysis::kinematic_fit;
+        using namespace cuts::Htautau_Summer13;
+        if(bjets.size() < 2)
+            return FitResultsWithUncertainties();
+        FitResultsWithUncertainties result;
+        if(bjets.size() >= 2) {
+            TLorentzVector met_momentum;
+            met_momentum.SetPtEtaPhiM(met.pt, 0, met.phi, 0);
+            const TMatrix met_cov = ntuple::VectorToSignificanceMatrix(met.significanceMatrix);
+            const FourBodyFitInput input(bjets.at(0).momentum, bjets.at(1).momentum,
+                                         higgs_to_taus.daughters.at(0).momentum, higgs_to_taus.daughters.at(1).momentum,
+                                         met_momentum, met_cov);
+            result = FitWithUncertainties(input, 0.05, tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
+        }
+        return result;
+    }
+
     // you might want to move this somewhere else
     bool ComputeAntiElectronMVA3New(int category, float raw, int WP)
     {
@@ -320,9 +342,10 @@ protected:
       return false ; // to avoid warnings, smarter solutions exist
     }
 
-    void FillFlatTree(const Candidate& higgs, const analysis::SVFitResultsUncertainties& svfitResults,
+    void FillFlatTree(const Candidate& higgs, const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
+                      const analysis::kinematic_fit::FitResultsWithUncertainties& kinfitResults,
                       const CandidateVector& jets , const CandidateVector& jetsPt20,
-                      const CandidateVector& bjets, const CandidateVector& retagged_bjets,
+                      const CandidateVector& bjets_all, const CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
                       const ntuple::MET& pfMET, const finalState::bbTauTau& final_state_MC)
     {
@@ -354,18 +377,28 @@ protected:
         flatTree->embeddedWeight()  = 1.; // FIXME! once we have the embedded samples
 
         // HTT candidate
-        flatTree->mvis()           = higgs.momentum.M();
-        flatTree->m_sv_vegas()           = svfitResults.svfitResults.mass_Vegas;
-        flatTree->m_sv_Up_vegas()        = svfitResults.svfitResults_Up.mass_Vegas;
-        flatTree->m_sv_Down_vegas()      = svfitResults.svfitResults_Down.mass_Vegas;
-        flatTree->m_sv_MC()           = svfitResults.svfitResults.momentum_MarkovChain.M();
-        flatTree->m_sv_Up_MC()        = svfitResults.svfitResults_Up.momentum_MarkovChain.M();
-        flatTree->m_sv_Down_MC()      = svfitResults.svfitResults_Down.momentum_MarkovChain.M();
-        flatTree->pt_sv_MC()          = svfitResults.svfitResults_Down.momentum_MarkovChain.Pt();
-        flatTree->eta_sv_MC()         = svfitResults.svfitResults_Down.momentum_MarkovChain.Eta();
-        flatTree->phi_sv_MC()         = svfitResults.svfitResults_Down.momentum_MarkovChain.Phi();
+        flatTree->mvis() = higgs.momentum.M();
+        flatTree->m_sv_vegas() = svfitResults.fit_vegas.has_valid_mass ? svfitResults.fit_vegas.mass : default_value;
+        flatTree->m_sv_up_vegas() = svfitResults.fit_vegas_up.has_valid_mass ? svfitResults.fit_vegas_up.mass : default_value;
+        flatTree->m_sv_down_vegas() = svfitResults.fit_vegas_down.has_valid_mass ? svfitResults.fit_vegas_down.mass : default_value;
+        flatTree->m_sv_MC() = svfitResults.fit_mc.has_valid_mass ? svfitResults.fit_mc.mass : default_value;
+        flatTree->pt_sv_MC() = svfitResults.fit_mc.has_valid_pt ? svfitResults.fit_mc.pt : default_value;
+        flatTree->m_sv_up_MC() = svfitResults.fit_mc_up.has_valid_mass ? svfitResults.fit_mc_up.mass : default_value;
+        flatTree->pt_sv_up_MC() = svfitResults.fit_mc_up.has_valid_pt ? svfitResults.fit_mc_up.pt : default_value;
+        flatTree->m_sv_down_MC() = svfitResults.fit_mc_down.has_valid_mass ? svfitResults.fit_mc_down.mass : default_value;
+        flatTree->pt_sv_down_MC() = svfitResults.fit_mc_down.has_valid_pt ? svfitResults.fit_mc_down.pt : default_value;
         flatTree->DeltaR_leptons() = leg1.momentum.DeltaR(leg2.momentum) ;
         flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
+
+        // Kinematic fit
+        flatTree->m_kinfit_bb_tt() = kinfitResults.fit_bb_tt.has_valid_mass ? kinfitResults.fit_bb_tt.mass : default_value;
+        flatTree->m_kinfit_bb_down_tt_down() = kinfitResults.fit_bb_down_tt_down.has_valid_mass ? kinfitResults.fit_bb_down_tt_down.mass : default_value;
+        flatTree->m_kinfit_bb_down_tt_up() = kinfitResults.fit_bb_down_tt_up.has_valid_mass ? kinfitResults.fit_bb_down_tt_up.mass : default_value;
+        flatTree->m_kinfit_bb_up_tt_down() = kinfitResults.fit_bb_up_tt_down.has_valid_mass ? kinfitResults.fit_bb_up_tt_down.mass : default_value;
+        flatTree->m_kinfit_bb_up_tt_up() = kinfitResults.fit_bb_up_tt_up.has_valid_mass ? kinfitResults.fit_bb_up_tt_up.mass : default_value;
+        flatTree->m_kinfit_bb() = kinfitResults.fit_bb.has_valid_mass ? kinfitResults.fit_bb.mass : default_value;
+        flatTree->m_kinfit_bb_down() = kinfitResults.fit_bb_down.has_valid_mass ? kinfitResults.fit_bb_down.mass : default_value;
+        flatTree->m_kinfit_bb_up() = kinfitResults.fit_bb_up.has_valid_mass ? kinfitResults.fit_bb_up.mass : default_value;
 
         // Hhh generator info candidate
         if(final_state_MC.resonance) {
@@ -509,15 +542,8 @@ protected:
             flatTree->isJet_MC_Bjet_withLeptonicDecay().push_back( isJet_MC_Bjet_withLeptonicDecay );
         }
 
-        CandidateVector csv_sorted_jetsPt20 = jetsPt20;
-        std::sort( csv_sorted_jetsPt20.begin(), csv_sorted_jetsPt20.end(),
-                   [&]( const Candidate& a, const Candidate& b )
-            { return event->jets().at(a.index).combinedSecondaryVertexBJetTags >
-                     event->jets().at(b.index).combinedSecondaryVertexBJetTags; } ) ;
-
-        for (const Candidate& jet : csv_sorted_jetsPt20) {
+        for (const Candidate& jet : bjets_all) {
             const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
-            if(std::abs(jet.momentum.Eta()) >= cuts::Htautau_Summer13::btag::eta) continue;
 
             flatTree->pt_Bjets()      .push_back( jet.momentum.Pt() );
             flatTree->eta_Bjets()     .push_back( jet.momentum.Eta() );

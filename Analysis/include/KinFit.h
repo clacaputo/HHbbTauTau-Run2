@@ -42,17 +42,17 @@
 
 namespace analysis {
 
-namespace four_body_kinematic_fit {
+namespace kinematic_fit {
 
-struct FitInput {
+struct FourBodyFitInput {
     std::vector<TLorentzVector> bjet_momentums;
     std::vector<TLorentzVector> tau_momentums;
     TLorentzVector mvaMET;
     TMatrixD metCov;
 
-    FitInput(const TLorentzVector& bjet1, const TLorentzVector& bjet2,
-             const TLorentzVector& tau1, const TLorentzVector& tau2,
-             const TLorentzVector& _mvaMET, const TMatrixD& _metCov)
+    FourBodyFitInput(const TLorentzVector& bjet1, const TLorentzVector& bjet2,
+                     const TLorentzVector& tau1, const TLorentzVector& tau2,
+                     const TLorentzVector& _mvaMET, const TMatrixD& _metCov)
         : mvaMET(_mvaMET), metCov(_metCov)
     {
         bjet_momentums.push_back(bjet1);
@@ -61,7 +61,7 @@ struct FitInput {
         tau_momentums.push_back(tau2);
     }
 
-    FitInput(const FitInput& input, double bjet_scale_factor, double tau_scale_factor)
+    FourBodyFitInput(const FourBodyFitInput& input, double bjet_scale_factor, double tau_scale_factor)
         : mvaMET(input.mvaMET), metCov(input.metCov)
     {
         for(const TLorentzVector& momentum : input.bjet_momentums)
@@ -72,21 +72,36 @@ struct FitInput {
     }
 };
 
-struct FitResultsWithUncertainties {
+struct FitResults {
+    static constexpr double default_value = std::numeric_limits<double>::lowest();
+
+    bool has_valid_mass;
     double mass;
-    double mass_bb_down_tt_down;
-    double mass_bb_down_tt_up;
-    double mass_bb_up_tt_down;
-    double mass_bb_up_tt_up;
+
+    FitResults() : has_valid_mass(false), mass(default_value) {}
 };
 
-inline double Fit(const FitInput& input)
+struct FitResultsWithUncertainties {
+    FitResults fit_bb_tt;
+    FitResults fit_bb_down_tt_down;
+    FitResults fit_bb_down_tt_up;
+    FitResults fit_bb_up_tt_down;
+    FitResults fit_bb_up_tt_up;
+
+    FitResults fit_bb;
+    FitResults fit_bb_down;
+    FitResults fit_bb_up;
+};
+
+inline FitResults FourBodyFit(const FourBodyFitInput& input)
 {
     static const bool debug = false;
     static const Int_t higgs_mass_hypotesis = 125;
     static const Int_t convergence_cut = 0;
     static const Double_t chi2_cut = 25;
     static const Double_t pull_balance_cut = 0;
+
+    FitResults result;
 
     const std::vector<Int_t> hypo_mh1 = { higgs_mass_hypotesis };
     const std::vector<Int_t> hypo_mh2 = { higgs_mass_hypotesis };
@@ -135,26 +150,34 @@ inline double Fit(const FitInput& input)
         std::cout << "fit mH =           " << mH << std::endl;
     }
 
-    if (convergence > convergence_cut && chi2 < chi2_cut && pull_balance > pull_balance_cut)
-        return mH;
+    if (convergence > convergence_cut && chi2 < chi2_cut && pull_balance > pull_balance_cut) {
+        result.mass = mH;
+        result.has_valid_mass = true;
+    }
+    else if(debug)
+        std::cerr << "four body mass with kin Fit cannot be calculated" << std::endl;
 
-    if(debug)
-        std::cerr << "mass with kin Fit cannot be calculated" << std::endl;
-
-    return std::numeric_limits<double>::lowest();
-}
-
-inline FitResultsWithUncertainties FitWithUncertainties(const FitInput& input, double bjet_energy_uncertanty,
-                                                      double tau_energy_uncertanty)
-{
-    FitResultsWithUncertainties result;
-    result.mass = Fit(input);
-    result.mass_bb_down_tt_down = Fit(FitInput(input, (1 - bjet_energy_uncertanty, 1 - tau_energy_uncertanty)));
-    result.mass_bb_down_tt_up = Fit(FitInput(input, (1 - bjet_energy_uncertanty, 1 + tau_energy_uncertanty)));
-    result.mass_bb_up_tt_down = Fit(FitInput(input, (1 + bjet_energy_uncertanty, 1 - tau_energy_uncertanty)));
-    result.mass_bb_up_tt_up = Fit(FitInput(input, (1 + bjet_energy_uncertanty, 1 + tau_energy_uncertanty)));
     return result;
 }
 
-} // namespace four_body_kinematic_fit
+inline FitResultsWithUncertainties FitWithUncertainties(const FourBodyFitInput& input, double bjet_energy_uncertainty,
+                                                        double tau_energy_uncertainty, bool fit_two_bjets,
+                                                        bool fit_four_body)
+{
+    FitResultsWithUncertainties result;
+    if(fit_four_body) {
+        result.fit_bb_tt = FourBodyFit(input);
+        result.fit_bb_down_tt_down = FourBodyFit(FourBodyFitInput(input, 1 - bjet_energy_uncertainty,
+                                                                  1 - tau_energy_uncertainty));
+        result.fit_bb_down_tt_up = FourBodyFit(FourBodyFitInput(input, 1 - bjet_energy_uncertainty,
+                                                                1 + tau_energy_uncertainty));
+        result.fit_bb_up_tt_down = FourBodyFit(FourBodyFitInput(input, 1 + bjet_energy_uncertainty,
+                                                                1 - tau_energy_uncertainty));
+        result.fit_bb_up_tt_up = FourBodyFit(FourBodyFitInput(input, 1 + bjet_energy_uncertainty,
+                                                              1 + tau_energy_uncertainty));
+    }
+    return result;
+}
+
+} // namespace kinematic_fit
 } // namespace analysis

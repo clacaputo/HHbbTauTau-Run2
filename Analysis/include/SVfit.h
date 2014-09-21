@@ -39,23 +39,44 @@
 
 namespace analysis {
 
-struct SVFitResults
+namespace sv_fit {
+
+enum class FitAlgorithm { Vegas, MarkovChain };
+std::ostream& operator<< (std::ostream& s, FitAlgorithm algo)
 {
-    double mass_Vegas;
-    TLorentzVector momentum_MarkovChain;
+    static const std::map<FitAlgorithm, std::string> algo_names = { { FitAlgorithm::Vegas, "VEGAS" },
+                                                                    { FitAlgorithm::MarkovChain, "Markov chain" } };
+    s << algo_names.at(algo);
+    return s;
+}
+
+struct FitResults {
+    static constexpr double default_value = std::numeric_limits<double>::lowest();
+
+    bool has_valid_mass;
+    double mass;
+
+    bool has_valid_pt;
+    double pt;
+
+    FitResults() : has_valid_mass(false), mass(default_value), has_valid_pt(false), pt(default_value) {}
 };
 
-struct SVFitResultsUncertainties
-{
-    SVFitResults svfitResults;
-    SVFitResults svfitResults_Up;
-    SVFitResults svfitResults_Down;
+struct FitResultsWithUncertainties {
+    FitResults fit_vegas;
+    FitResults fit_vegas_down;
+    FitResults fit_vegas_up;
+
+    FitResults fit_mc;
+    FitResults fit_mc_down;
+    FitResults fit_mc_up;
 };
 
-inline SVFitResults CorrectMassBySVfit(const Candidate& higgsCandidate, const ntuple::MET& met, double tauESfactor)
+inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate, const ntuple::MET& met,
+                      double tauESfactor)
 {
     static const bool debug = false;
-    SVFitResults svfitresults;
+    FitResults result;
 
     if(higgsCandidate.type != Candidate::Higgs)
         throw std::runtime_error("Invalid candidate type for SVfit");
@@ -83,51 +104,61 @@ inline SVFitResults CorrectMassBySVfit(const Candidate& higgsCandidate, const nt
         measuredTauLeptons.push_back(NSVfitStandalone::MeasuredTauLepton(decayType, lepton));
     }
 
-    // construct the class object from the minimal necesarry information
-    NSVfitStandalone::NSVfitStandaloneAlgorithm algoVegas(measuredTauLeptons, measuredMET, covMET, 0);
-    algoVegas.addLogM(false);
-    algoVegas.integrateVEGAS();
+    NSVfitStandalone::NSVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMET, covMET, 0);
+    algo.addLogM(false);
 
-    if (!algoVegas.isValidSolution()) {
-        std::cerr << "Can't fit\n";
-        svfitresults.mass_Vegas = higgsCandidate.momentum.M();
-        //throw std::runtime_error("SVFit algo is not valid");
-    }
+    if(fitAlgorithm == FitAlgorithm::Vegas)
+        algo.integrateVEGAS();
+    else if(fitAlgorithm == FitAlgorithm::MarkovChain)
+        algo.integrateMarkovChain();
+    else
+        throw std::runtime_error("Unsupported algorithm.");
 
-    svfitresults.mass_Vegas = algoVegas.mass();
-
-    NSVfitStandalone::NSVfitStandaloneAlgorithm algoMC(measuredTauLeptons, measuredMET, covMET, 0);
-    algoMC.integrateMarkovChain();
-    if (!algoMC.isValidSolution()) {
-        std::cerr << "Can't fit\n";
-        svfitresults.momentum_MarkovChain.SetPtEtaPhiM(higgsCandidate.momentum.Pt(), higgsCandidate.momentum.Eta(),
-                                                       higgsCandidate.momentum.Phi(), higgsCandidate.momentum.M());
-        //throw std::runtime_error("SVFit algo is not valid");
-    }
-
+    if(algo.isValidSolution()) {
+        result.mass = algo.mass();
+        result.has_valid_mass = true;
+        if(fitAlgorithm == FitAlgorithm::MarkovChain) {
+            result.pt = algo.pt();
+            result.has_valid_pt = true;
+        }
+    } else
+        std::cerr << "Can't fit with " << fitAlgorithm << std::endl;
 
     if(debug) {
-        std::cout << "original mass = " << higgsCandidate.momentum.M()
+        std::cout << "Original mass = " << higgsCandidate.momentum.M()
                   << "\nOriginal momentum = " << higgsCandidate.momentum
                   << "\nFirst daughter momentum = " << higgsCandidate.daughters.at(0).momentum
                   << "\nSecond daughter momentum = " << higgsCandidate.daughters.at(1).momentum
-                     << "\nSVfit mass Vegas = " << algoVegas.mass()
-                  << "\nSVfit mass MC = " << algoMC.mass() << ", SVfit pt MC = " << algoMC.pt() << std::endl;
+                  << "\nSVfit algorithm = " << fitAlgorithm;
+        if(result.has_valid_mass)
+            std::cout << "\nSVfit mass = " << result.mass;
+        if(result.has_valid_pt)
+            std::cout << "\nSVfit pt = " << result.pt;
+        std::cout << std::endl;
     }
-    svfitresults.momentum_MarkovChain.SetPtEtaPhiM(algoMC.pt(), higgsCandidate.momentum.Eta(),
-                                                   higgsCandidate.momentum.Phi(), algoMC.mass());
 
-    return svfitresults;
+    return result;
 }
 
-inline SVFitResultsUncertainties CollectSVFitResults(const Candidate& higgsCandidate, const ntuple::MET& met)
+inline FitResultsWithUncertainties FitWithUncertainties(const Candidate& higgsCandidate, const ntuple::MET& met,
+                                                        double tau_energy_uncertainty, bool fitWithVegas,
+                                                        bool fitWithMarkovChain)
 {
-    SVFitResultsUncertainties svfitResultsUncertainties;
-    svfitResultsUncertainties.svfitResults = CorrectMassBySVfit(higgsCandidate,met,1.);
-    svfitResultsUncertainties.svfitResults_Up = CorrectMassBySVfit(higgsCandidate,met,1.03);
-    svfitResultsUncertainties.svfitResults_Down = CorrectMassBySVfit(higgsCandidate,met,0.97);
-    return svfitResultsUncertainties;
+    FitResultsWithUncertainties result;
+    if(fitWithVegas) {
+        result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1.);
+        result.fit_vegas_up = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 + tau_energy_uncertainty);
+        result.fit_vegas_down = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 - tau_energy_uncertainty);
+    }
+    if(fitWithMarkovChain) {
+        result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1.);
+        result.fit_mc_up = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 + tau_energy_uncertainty);
+        result.fit_mc_down = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 - tau_energy_uncertainty);
+    }
+    return result;
 }
 
-} // analysis
+} // namespace sv_fit
+
+} // namespace analysis
 

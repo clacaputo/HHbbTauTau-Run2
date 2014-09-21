@@ -94,20 +94,25 @@ public:
 
         correctedMET = config.ApplyTauESCorrection() ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
 
-        const auto bjets = CollectBJets(higgs_looseJetsMap.at(higgs), false);
-        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.isMC());
+        const auto bjets_all = CollectBJets(higgs_looseJetsMap.at(higgs), false, false);
+        const auto retagged_bjets = CollectBJets(higgs_looseJetsMap.at(higgs), config.isMC(), true);
 
 
         postRecoilMET = ApplyRecoilCorrections(higgs, tauTau_MC.resonance, jets.size(), correctedMET);
 
-        const analysis::SVFitResultsUncertainties svfitResults = analysis::CollectSVFitResults(higgs, postRecoilMET);
+        const auto svfitResults = analysis::sv_fit::FitWithUncertainties(higgs, postRecoilMET,
+                                                                         tauCorrections::energyUncertainty,
+                                                                         true, true);
+
+
+        const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
         CalculateFullEventWeight(higgs);
 
         const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
 
-        FillFlatTree(higgs, svfitResults, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs),
-                     bjets, retagged_bjets, vertices, pfMET);
+        FillFlatTree(higgs, svfitResults, kinfitResults, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs),
+                     bjets_all, retagged_bjets, vertices, pfMET);
     }
 
 protected:
@@ -270,9 +275,11 @@ protected:
         DMweights.push_back(subLeadWeight);
     }
 
-    void FillFlatTree(const analysis::Candidate& higgs, const analysis::SVFitResultsUncertainties& svfitResults ,
+    void FillFlatTree(const analysis::Candidate& higgs,
+                      const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
+                      const analysis::kinematic_fit::FitResultsWithUncertainties& kinfitResults,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets,  const analysis::CandidateVector& retagged_bjets,
+                      const analysis::CandidateVector& bjets_all,  const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
@@ -282,8 +289,8 @@ protected:
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
 
-        BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, jets, jetsPt20,
-                                           bjets, retagged_bjets, vertices, leadTau, subLeadTau,pfMET, tauTau_MC);
+        BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, kinfitResults, jets, jetsPt20,
+                                           bjets_all, retagged_bjets, vertices, leadTau, subLeadTau, pfMET, tauTau_MC);
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::TauTau);
         flatTree->pfRelIso_1() = default_value;
