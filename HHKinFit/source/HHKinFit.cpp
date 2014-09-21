@@ -326,10 +326,10 @@ HHKinFit::Fit()
   }
 
   static const Int_t nloopmax = 100;
-  static Double_t Xa[nloopmax], Ya[nloopmax];
-  static Double_t Xa1[nloopmax], Ya1[nloopmax];
-  static Double_t HPx[nloopmax], HPy[nloopmax];
-  static Double_t HPx1[nloopmax], HPy1[nloopmax];
+//  static Double_t Xa[nloopmax], Ya[nloopmax];
+//  static Double_t Xa1[nloopmax], Ya1[nloopmax];
+//  static Double_t HPx[nloopmax], HPy[nloopmax];
+//  static Double_t HPx1[nloopmax], HPy1[nloopmax];
 
   for (Int_t iloop = 0; iloop < m_maxloops * 10 && iter < m_maxloops; iloop++) { // FIT loop
     //    chi2        = testfunction(a,np) ;
