@@ -48,7 +48,7 @@ ggH_hh_bbtautau_290.root 0.0317
 [LIMITS ggHhh300]
 hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5)) for limits
 blue
-ggh.root 0.0431
+ggH_hh_bbtautau_300.root 0.0431
 
 [LIMITS ggHhh310]
 hh#rightarrow#tau#taubb(m_{H}=310  tan#beta=2.5)) for limits
@@ -78,7 +78,122 @@ ggH_hh_bbtautau_350.root 0.0345
 [SIGNAL ggHhh300]
 10x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)
 blue
-ggh.root 0.0037
+ggH_hh_bbtautau_300.root 0.0037
+
+[LIMITS bbH90]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=90  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_90.root 0.0197823
+
+[LIMITS bbH100]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=100  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_100.root 0.0196937
+
+[LIMITS bbH110]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=110  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_110.root 0.0197079
+
+[LIMITS bbH120]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=120  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_120.root 0.0198606
+
+[LIMITS bbH130]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=130  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_130.root 0.0196998
+
+[LIMITS bbH140]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=140  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_140.root 0.0198269
+
+[LIMITS bbH160]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=160  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_160.root 0.0202051
+
+[LIMITS bbH180]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=180  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_180.root 0.0200811
+
+[LIMITS bbH200]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=200  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_200.root 0.0197117
+
+[LIMITS bbH250]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=250  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_250.root 0.0199352
+
+[LIMITS bbH350]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=350  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_350.root 0.0200595
+
+[LIMITS bbH400]
+hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=400  tan#beta=2.5)) for limits
+blue
+gg_bbH_bbtautau_400.root 0.0197256
+
+[LIMITS ggAToZhToLLBB250]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=250  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_250.root 0.0656667
+
+[LIMITS ggAToZhToLLBB260]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=260  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_260.root 0.0455314
+
+[LIMITS ggAToZhToLLBB270]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=270  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_270.root 0.0628951
+
+[LIMITS ggAToZhToLLBB280]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=280  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_280.root 0.0397402
+
+[LIMITS ggAToZhToLLBB290]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=290  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_290.root 0.040147
+
+[LIMITS ggAToZhToLLBB300]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=300  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_300.root 0.0656667
+
+[LIMITS ggAToZhToLLBB310]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=310  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_310.root 0.0404064
+
+[LIMITS ggAToZhToLLBB320]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=320  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_320.root 0.0406403
+
+[LIMITS ggAToZhToLLBB330]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=330  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_330.root 0.040957
+
+[LIMITS ggAToZhToLLBB340]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=340  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_340.root 0.0406002
+
+[LIMITS ggAToZhToLLBB350]
+gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=350  tan#beta=2.5)) for limits
+blue
+ggA_Zh_bbtautau_350.root 0.0658264
 
 [LIMITS qqH125]
 VBF
@@ -89,7 +204,8 @@ VBF_HToTauTau.root 0.001967
 [LIMITS VH125]
 VH125
 azure
-VBF_HToTauTau.root 0.0052
+WH_ZH_TTH_HToTauTau.root 0.0075974
+
 
 # 0.313 * qqH125 = 0.000626 (from Rebecca)
 [LIMITS ggH125]
@@ -103,6 +219,10 @@ azure
 VBF_HToBB.root 0.01797
 VBF_HToTauTau.root 0.001967
 GluGluToHToTauTau.root 0.0251
+WH_ZH_TTH_HToTauTau.root 0.0075974
+WH_WToLNu_HToBB.root 0.0008668
+ZH_ZToLL_HToBB.root 0.0004528
+
 
 [VIRTUAL QCD]
 QCD

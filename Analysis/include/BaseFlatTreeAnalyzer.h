@@ -259,8 +259,8 @@ protected:
             const double m_ttbb_kinFit =
                     analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
-            //anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
-            //anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+            anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
+            anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
         }
     }
 
@@ -312,16 +312,17 @@ protected:
         static const std::vector< std::pair<std::string, std::string> > dataCategoriesForLimits = {
             { "VIRTUAL QCD", "QCD" }, { "TTbar", "TT" }, { "LIMITS VH125", "VH125" },
             { "LIMITS DiBoson", "VV" }, { "LIMITS Wjets", "W" }, { "ZJ", "ZJ" }, { "ZL", "ZL" },
-            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "bbH100", "bbH100" }, { "bbH110", "bbH110" },
-            { "bbH120", "bbH120" }, { "bbH130", "bbH130" }, { "bbH140", "bbH140" }, { "bbH160", "bbH160" },
-            { "bbH180", "bbH180" }, { "bbH200", "bbH200" }, { "bbH250", "bbH250" }, { "bbH300", "bbH300" },
-            { "bbH350", "bbH350" }, { "bbH400", "bbH400" }, { "bbH90", "bbH90" },
+            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "LIMITS bbH100", "bbH100" }, { "LIMITS bbH110", "bbH110" },
+            { "LIMITS bbH120", "bbH120" }, { "LIMITS bbH130", "bbH130" }, { "LIMITS bbH140", "bbH140" }, { "LIMITS bbH160", "bbH160" },
+            { "LIMITS bbH180", "bbH180" }, { "LIMITS bbH200", "bbH200" }, { "LIMITS bbH250", "bbH250" }, { "LIMITS bbH300", "bbH300" },
+            { "LIMITS bbH350", "bbH350" }, { "LIMITS bbH400", "bbH400" }, { "LIMITS bbH90", "bbH90" },
             { "DATA Tau", "data_obs" }, { "DATA TauPlusX", "data_obs" },
-            { "ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "ggAToZhToLLBB270", "ggAToZhToLLBB270" },
-            { "ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "ggAToZhToLLBB290", "ggAToZhToLLBB290" },
-            { "ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "ggAToZhToLLBB310", "ggAToZhToLLBB310" },
-            { "ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "ggAToZhToLLBB330", "ggAToZhToLLBB330" },
-            { "ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "ggAToZhToLLBB350", "ggAToZhToLLBB350" },
+            { "LIMITS ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "LIMITS ggAToZhToLLBB270", "ggAToZhToLLBB270" },
+            { "LIMITS ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "LIMITS ggAToZhToLLBB290", "ggAToZhToLLBB290" },
+            { "LIMITS ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "LIMITS ggAToZhToLLBB310", "ggAToZhToLLBB310" },
+            { "LIMITS ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "LIMITS ggAToZhToLLBB330", "ggAToZhToLLBB330" },
+            { "LIMITS ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "LIMITS ggAToZhToLLBB350", "ggAToZhToLLBB350" },
+	    { "LIMITS ggAToZhToLLBB250", "ggAToZhToLLBB250" },
             { "ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
             { "ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
             { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
@@ -361,7 +362,7 @@ protected:
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
                 //anaData.m_sv().Write(limitDataCategory.second.c_str());
                 anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
-                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_4b_" + channel_name + "_8TeV";
+                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
