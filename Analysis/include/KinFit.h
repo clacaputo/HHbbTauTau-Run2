@@ -287,8 +287,12 @@ inline FitResults TwoBodyFit(const TLorentzVector& momentum_1, const TLorentzVec
     if(fit_result == 0) {
         std::cout << "Old 1: " << momentum_1 << std::endl;
         std::cout << "Old 2: " << momentum_2 << std::endl;
+        std::cout << "Old mass 1: " << momentum_1.M() << std::endl;
+        std::cout << "Old mass 2: " << momentum_2.M() << std::endl;
         std::cout << "New 1: " << *_jet1.getCurr4Vec() << std::endl;
         std::cout << "New 2: " << *_jet2.getCurr4Vec() << std::endl;
+        std::cout << "New mass 1: " << _jet1.getCurr4Vec()->M() << std::endl;
+        std::cout << "New mass 2: " << _jet2.getCurr4Vec()->M() << std::endl;
         const double m_old = (momentum_1 + momentum_2).M();
         const double m_new = ((*_jet1.getCurr4Vec()) + (*_jet2.getCurr4Vec())).M();
         std::cout << "M old: " << m_old << std::endl;
