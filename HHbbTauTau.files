@@ -237,3 +237,4 @@ PatProduction/crab/multicrab_Embedded_ETau.cfg
 PatProduction/crab/multicrab_Embedded_MuMu.cfg
 PatProduction/crab/multicrab_Embedded_MuTau.cfg
 PatProduction/crab/multicrab_Embedded_TauTau.cfg
+TreeProduction/python/GenEventBlock_cfi.py

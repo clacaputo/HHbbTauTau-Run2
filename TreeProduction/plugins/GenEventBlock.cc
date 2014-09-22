@@ -36,6 +36,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
 
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/GenEvent.h"
@@ -43,61 +44,36 @@
 class GenEventBlock : public edm::EDAnalyzer {
 public:
     explicit GenEventBlock(const edm::ParameterSet& iConfig) :
-        _verbosity(iConfig.getUntrackedParameter<int>("verbosity", 0)),
-        _genEvtInfoInputTag(iConfig.getParameter<edm::InputTag>("GenEventInfoInputTag")),
-        _storePDFWeights(iConfig.getParameter<bool>("StorePDFWeights")),
-        _pdfWeightsInputTag(iConfig.getParameter<edm::InputTag>("PDFWeightsInputTag")) {}
+        _minVisPtFilter(iConfig.getParameter<std::string>("minVisPtFilterSrc")) {}
 
 private:
     virtual void endJob() { genEventTree.Write(); }
     virtual void analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup);
 
 private:
-    int _verbosity;
-    const edm::InputTag _genEvtInfoInputTag;
-    const bool          _storePDFWeights;
-    const edm::InputTag _pdfWeightsInputTag;
+    const std::string _minVisPtFilter;
+
 
     ntuple::GenEventTree genEventTree;
 };
 
 void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    if (iEvent.isRealData()) return;
 
     genEventTree.RunId() = iEvent.id().run();
     genEventTree.LumiBlock() = iEvent.id().luminosityBlock();
     genEventTree.EventId() = iEvent.id().event();
 
-    // GenEventInfo Part
-    edm::Handle<GenEventInfoProduct> genEvtInfoProduct;
-    iEvent.getByLabel(_genEvtInfoInputTag, genEvtInfoProduct);
-    if (genEvtInfoProduct.isValid()) {
-      edm::LogInfo("GenEventBlock") << "Success >> obtained GenEventInfoProduct for label:" 
-                                    << _genEvtInfoInputTag;
-      genEventTree.processID() = genEvtInfoProduct->signalProcessID();
-      genEventTree.ptHat()     = genEvtInfoProduct->hasBinningValues()
-                         ? genEvtInfoProduct->binningValues()[0] : 0.;
-    } 
-    else {
-      edm::LogError("GenEventBlock") << "Error >> Failed to get GenEventInfoProduct for label: " 
-                                     << _genEvtInfoInputTag;
-    }
-    // PDF Weights Part
-    if (_storePDFWeights) {
-      edm::Handle<std::vector<double> > pdfWeightsHandle;
-      iEvent.getByLabel(_pdfWeightsInputTag, pdfWeightsHandle);
-      if (pdfWeightsHandle.isValid()) {
-	edm::LogInfo("GenEventBlock") << "Success >> obtained PDF handle for label: " 
-                                      << _pdfWeightsInputTag;
-	for(double weight : *pdfWeightsHandle)
-		genEventTree.pdfWeights().push_back(weight);
-      } 
-      else {
-	edm::LogError("GenEventBlock") << "Error >>  Failed to get PDF handle for label: " 
-                                       << _pdfWeightsInputTag;
-      }
-    }
+    //Embedded part
+    edm::Handle<GenFilterInfo> genInfoEmbedded_Handle;
+    iEvent.getByLabel(edm::InputTag("generator",_minVisPtFilter,"EmbeddedRECO"),genInfoEmbedded_Handle);
+    const GenFilterInfo* genFilterInfo = genInfoEmbedded_Handle.product();
+    if(!genFilterInfo) genEventTree.embeddedWeight() = std::numeric_limits<float>::infinity();
+    genEventTree.embeddedWeight() = genFilterInfo->filterEfficiency();
+
+    edm::LogInfo("GenEventBlock") << "embeddedWeight : "
+                                     << genFilterInfo->filterEfficiency();
+
     genEventTree.Fill();
 }
 #include "FWCore/Framework/interface/MakerMacros.h"
