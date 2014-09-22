@@ -131,6 +131,7 @@ public:
         const auto svfitResults = analysis::sv_fit::FitWithUncertainties(higgs, postRecoilMET,
                                                                          tauCorrections::energyUncertainty,
                                                                          true, true);
+        std::cout << "Event ID: " << event->eventInfo().EventId << std::endl;
         const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
         CalculateFullEventWeight(higgs);
