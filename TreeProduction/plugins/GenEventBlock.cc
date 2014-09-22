@@ -67,12 +67,15 @@ void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     //Embedded part
     edm::Handle<GenFilterInfo> genInfoEmbedded_Handle;
     iEvent.getByLabel(_genEventSrc,genInfoEmbedded_Handle);
-    const GenFilterInfo* genFilterInfo = genInfoEmbedded_Handle.product();
-    if(!genFilterInfo) genEventTree.embeddedWeight() = std::numeric_limits<float>::infinity();
-    genEventTree.embeddedWeight() = genFilterInfo->filterEfficiency();
-
-    edm::LogInfo("GenEventBlock") << "embeddedWeight : "
-                                     << genFilterInfo->filterEfficiency();
+    if (!genInfoEmbedded_Handle.isValid()) {
+        edm::LogError("GenEventBlock") << "Error >> Failed to get GenFilterInfor for label: "
+                                     << _genEventSrc;
+        genEventTree.embeddedWeight() = std::numeric_limits<float>::lowest();
+    }
+    else {
+        const GenFilterInfo* genFilterInfo = genInfoEmbedded_Handle.product();
+        genEventTree.embeddedWeight() = genFilterInfo->filterEfficiency();
+    }
 
     genEventTree.Fill();
 }
