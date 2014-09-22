@@ -273,7 +273,7 @@ PSMath::PSNewtonAnalyzer (Int_t np, Double_t a[], Double_t alimit[][2],
     }
   }
   if (iNewton == 1) {                      // Newton Step width
-    //Double_t temp = PSMinverse (H, Hinv, np);
+    /*Double_t temp = */PSMinverse (H, Hinv, np);
     for (Int_t ii = 0; ii < np; ii++) {
       for (Int_t jj = 0; jj < np; jj++) {
         daN[ii] = daN[ii] - Hinv[ii * np + jj] * g[jj];
@@ -441,6 +441,63 @@ PSMath::PSfitShow (Int_t iloop, Int_t convergence, Int_t iter, Int_t method,
     }
   }
   chi2Memory = chi2;
+  if (graphiklevel > 0) { // ------------------------ Plots iterations in plane a[0] - a[1]
+    //    c1->Clear();
+    static const Int_t nloopmax = 100;
+    static Double_t Xloop[nloopmax];
+    static Double_t Yloop[nloopmax];
+    static TPolyMarker * iterMarker = NULL;
+    static TPolyMarker * loopMarker = NULL;
+    if (iloop == 0) {
+      iterMarker = new TPolyMarker (100);
+      iterMarker->SetMarkerColor (kBlue);
+      iterMarker->SetMarkerSize (1.5);
+
+      loopMarker = new TPolyMarker (100);
+      loopMarker->SetMarkerColor (kBlack);
+      loopMarker->SetMarkerSize (0.5);
+      //      static Double_t *Xloop = loopMarker->GetX() ;
+      //      static Double_t *Yloop = loopMarker->GetY() ;
+
+      //      TF2 * f2 = new TF2("Test-Function","(x**2 + y**2 -1.9*x*y)**2 + x**2 + y**2 -1.9*x*y",
+      //			 alimit[0][0], alimit[0][1], alimit[1][0], alimit[1][1] ) ;
+      //      f2->SetMinimum( 0.);
+      //      f2->SetMaximum(20.);
+      //      Double_t levels[] = {1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.,18.,19.,20.}
+      //      f2->SetContour(20,levels) ;
+      //      f2->Draw("CONT1Z");
+
+      //      TArrow  *ar=new TArrow(a[0], a[1], a[0]+daN[0],  a[1]+daN[1], 0.02,"|>") ;
+      //      ar->SetLineColor(kRed);   ar->SetFillColor(kRed);
+      //      ar->DrawClone();
+    }
+
+    if (iter >= 0 && iter < nloopmax) {
+      iterMarker->SetPoint (iter, a[0], a[1]);
+    }
+    if (iloop >= 0 && iloop < nloopmax) {
+      Xloop[iloop] = a[0];
+      Yloop[iloop] = a[1];
+    }
+
+    if (convergence != 0) {
+
+      Double_t *Xiter = iterMarker->GetX ();
+      Double_t *Yiter = iterMarker->GetY ();
+      loopMarker->DrawPolyMarker (iloop, Xloop, Yloop, "same");
+      iterMarker->DrawPolyMarker (iter, Xiter, Yiter, "same");
+
+      TMarker *mi = new TMarker (Xiter[0], Yiter[0], 20);
+      mi->SetMarkerColor (kRed);
+      TMarker *mf = new TMarker (Xiter[iter], Yiter[iter], 20);
+      mf->SetMarkerColor (kGreen);
+      TMarker *ma = new TMarker (a[0], a[1], 20);
+      ma->SetMarkerColor (kMagenta);
+      mi->Draw ();
+      mf->Draw ();
+      ma->Draw ();
+    }
+  }
 }
 //------------------------------------------------------------------
 Double_t
@@ -762,7 +819,7 @@ Double_t
 PSMath::PSMinverse (Double_t H[], Double_t Hinv[], Int_t p)
 {    // invert a symmetric matrix H[p,p]
   // for 2*2 and 3*3 inversion also works for a non-symmetric matrix
-  Double_t temp;
+//  Double_t temp;
   if (p == 2) {
     Double_t det = H[0 * p + 0] * H[1 * p + 1] - H[0 * p + 1] * H[1 * p + 0];
     Hinv[0 * p + 0] = H[1 * p + 1] / det;
@@ -791,9 +848,9 @@ PSMath::PSMinverse (Double_t H[], Double_t Hinv[], Int_t p)
     }
   }
   else {
-    temp = PSMCholesky (H, Hinv, p);
-    temp = PSMRTrianInvert2 (Hinv, p);
-    temp = PSMmultiplyMRRT (Hinv, p, p);
+    /*temp = */PSMCholesky (H, Hinv, p);
+    /*temp = */PSMRTrianInvert2 (Hinv, p);
+    /*temp = */PSMmultiplyMRRT (Hinv, p, p);
   };
   return 0.;
 }
@@ -810,8 +867,8 @@ PSMath::PSMCholtest ()
       0., 0., 0., 40. };
 
   Int_t n = 4;
-  Double_t temp;
-  temp = PSMmultiplyMT (M, Test4, n, n);
+//  Double_t temp;
+  /*temp = */PSMmultiplyMT (M, Test4, n, n);
   //  for (int ii=0; ii < n ; ii++) {
   //    for (int jj=0; jj < n ; jj++) {
   //      M[ii*n+jj] = 0. ; 
@@ -823,24 +880,24 @@ PSMath::PSMCholtest ()
   PSMprint ("Test input R", Test4, n, n);
   PSMprint ("Test   M", M, n, n);
 
-  temp = PSMCholesky (M, R, n);
+  /*temp = */PSMCholesky (M, R, n);
   PSMprint ("Test   R", R, n, n);
-  temp = PSMRTrianInvert2 (R, n);
+  /*temp = */PSMRTrianInvert2 (R, n);
 
-  temp = PSMmultiplyMT (Mtest, R, n, n);
+  /*temp = */PSMmultiplyMT (Mtest, R, n, n);
   PSMprint ("Test Inverse 1  ", Mtest, n, n);
-  temp = PSMmultiply (R, M, Mtest, n, n);
+  /*temp = */PSMmultiply (R, M, Mtest, n, n);
   PSMprint ("Test should be 1", R, n, n);
 
   std::cout << "self copy version   \n";
-  temp = PSMCholesky (M, R, n);
-  temp = PSMRTrianInvert2 (R, n);
-  temp = PSMmultiplyMRRT (R, n, n);
+  /*temp = */PSMCholesky (M, R, n);
+  /*temp = */PSMRTrianInvert2 (R, n);
+  /*temp = */PSMmultiplyMRRT (R, n, n);
   PSMprint ("Test   inverse R", R, n, n);
-  temp = PSMmultiply (Mtest, M, R, n, n);
+  /*temp = */PSMmultiply (Mtest, M, R, n, n);
   PSMprint ("Test should be 1", Mtest, n, n);
 
-  temp = PSMinverse (M, Rinv, n);
+  /*temp = */PSMinverse (M, Rinv, n);
   PSMprint ("Test   inverse Rinv", Rinv, n, n);
   return 0.;
 }
@@ -1375,13 +1432,13 @@ PSMath::PSfitMinStep (Int_t np, Double_t a[], Double_t h[], Double_t chi2iter[],
 {
   // calcuate Newton Step for minimisation
 
-  Double_t d = 99, temp;
+  Double_t d = 99/*, temp*/;
   PSVprint (" Parameters a", a, np);
   PSVprint (" StepSize   h", h, np);
   PSVprint (" Derivative g", g, np);
   PSMprint (" Hesse H", H, np, np);
   std::cout << "now calculate dN ! \n";
-  temp = PSMinverse (H, Hinv, np);
+  /*temp = */PSMinverse (H, Hinv, np);
   PSMprint (" Hesse Hinv", Hinv, np, np);
   d = PSminIterate (a, daN, h, np, g, H, Hinv, chi2iter[0]);
   std::cout << "chi2iter = " << chi2iter[0] << "  d = " << d << "\n";
