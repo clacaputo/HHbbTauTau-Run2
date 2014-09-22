@@ -44,14 +44,14 @@
 class GenEventBlock : public edm::EDAnalyzer {
 public:
     explicit GenEventBlock(const edm::ParameterSet& iConfig) :
-        _minVisPtFilter(iConfig.getParameter<std::string>("minVisPtFilterSrc")) {}
+        _genEventSrc(iConfig.getParameter<edm::InputTag>("genEventSrc")) {}
 
 private:
     virtual void endJob() { genEventTree.Write(); }
     virtual void analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup);
 
 private:
-    const std::string _minVisPtFilter;
+    const edm::InputTag _genEventSrc;
 
 
     ntuple::GenEventTree genEventTree;
@@ -66,7 +66,7 @@ void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     //Embedded part
     edm::Handle<GenFilterInfo> genInfoEmbedded_Handle;
-    iEvent.getByLabel(edm::InputTag("generator",_minVisPtFilter,"EmbeddedRECO"),genInfoEmbedded_Handle);
+    iEvent.getByLabel(_genEventSrc,genInfoEmbedded_Handle);
     const GenFilterInfo* genFilterInfo = genInfoEmbedded_Handle.product();
     if(!genFilterInfo) genEventTree.embeddedWeight() = std::numeric_limits<float>::infinity();
     genEventTree.embeddedWeight() = genFilterInfo->filterEfficiency();
