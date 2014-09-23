@@ -389,7 +389,8 @@ private:
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 }
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
+	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
