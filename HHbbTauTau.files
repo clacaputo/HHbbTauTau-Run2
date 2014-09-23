@@ -267,3 +267,4 @@ HHKinFit/README.md
 Analysis/include/KinFit.h
 SVfit/interface/MarkovChainIntegrator.h
 SVfit/source/MarkovChainIntegrator.cc
+MVASelections/include/MVAselections.h

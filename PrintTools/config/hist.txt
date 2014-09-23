@@ -24,6 +24,7 @@ DeltaPhi_hh DeltaPhi_hh #Delta#Phi_{#tau#taubb}[rad] dN/d#Delta#Phi[1/0.1rad] fa
 DeltaR_tt DeltaR_tt #DeltaR_{#tau#tau} dN/d#DeltaR[1/0.1] false
 DeltaR_bb DeltaR_bb #DeltaR_{bb}[rad] dN/d#DeltaR[1/0.1] false
 DeltaR_hh DeltaR_hh #DeltaR_{#tau#taubb}[rad] dN/d#DeltaR[1/0.1] false
+MVA_Distro MVA_Distro BDT_{output} Entries false
 #EventSelection EventSelection cuts n_entries -0.5 15.5 1 15 1
 #VertexSelection VertexSelection cuts n_entries -0.5 15.5 1 1
 #ElectronSelection ElectronSelection cuts n_entries -0.5 15.5 1 1
