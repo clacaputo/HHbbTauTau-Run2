@@ -27,14 +27,14 @@
 
 #pragma once
 
-#include "HHKinFit/source/HHEventRecord.cpp"
-#include "HHKinFit/source/HHKinFit.cpp"
-#include "HHKinFit/source/HHKinFitMaster.cpp"
-#include "HHKinFit/source/HHParticle.cpp"
-#include "HHKinFit/source/HHParticleList.cpp"
-#include "HHKinFit/source/HHV4Vector.cpp"
-#include "HHKinFit/source/PSMath.cpp"
-#include "HHKinFit/source/PSTools.cpp"
+#include "HHKinFit/src/HHEventRecord.cpp"
+#include "HHKinFit/src/HHKinFit.cpp"
+#include "HHKinFit/src/HHKinFitMaster.cpp"
+#include "HHKinFit/src/HHParticle.cpp"
+#include "HHKinFit/src/HHParticleList.cpp"
+#include "HHKinFit/src/HHV4Vector.cpp"
+#include "HHKinFit/src/PSMath.cpp"
+#include "HHKinFit/src/PSTools.cpp"
 
 
 
@@ -133,7 +133,7 @@ struct FitResultsWithUncertainties {
 
 inline FitResults FourBodyFit(const FourBodyFitInput& input)
 {
-    static const bool debug = false;
+    static const bool debug = true;
     static const Int_t higgs_mass_hypotesis = 125;
     static const Int_t convergence_cut = 0;
     static const Double_t chi2_cut = 25;
@@ -145,14 +145,23 @@ inline FitResults FourBodyFit(const FourBodyFitInput& input)
     const std::vector<Int_t> hypo_mh2 = { higgs_mass_hypotesis };
 
     if(debug) {
+        std::cout << "Format: (Pt, eta, phi, E)\n";
+        std::cout << "b1 momentum: " << input.bjet_momentums.at(0) << std::endl;
+        std::cout << "b2 momentum: " << input.bjet_momentums.at(1) << std::endl;
+        std::cout << "tau1 momentum: " << input.tau_momentums.at(0) << std::endl;
+        std::cout << "tau2 momentum: " << input.tau_momentums.at(1) << std::endl;
+        std::cout << "MET: " << input.mvaMET << std::endl;
+        std::cout << "MET covariance:\n";
         input.metCov.Print();
         std::cout << "metDet = " << input.metCov.Determinant() << std::endl;
     }
 
     //intance of fitter master class
-    HHKinFitMaster kinFits = HHKinFitMaster(&input.bjet_momentums.at(0), &input.bjet_momentums.at(1),
-                                            &input.tau_momentums.at(0), &input.tau_momentums.at(1));
-    kinFits.setAdvancedBalance(&input.mvaMET, input.metCov);
+    TLorentzVector b1(input.bjet_momentums.at(0)), b2(input.bjet_momentums.at(1)),
+            tau1(input.tau_momentums.at(0)), tau2(input.tau_momentums.at(1)),
+            mvaMET(input.mvaMET);
+    HHKinFitMaster kinFits = HHKinFitMaster(&b1, &b2, &tau1, &tau2);
+    kinFits.setAdvancedBalance(&mvaMET, input.metCov);
     //kinFits.setSimpleBalance(ptmiss.Pt(),10); //alternative which uses only the absolute value of ptmiss in the fit
     kinFits.addMh1Hypothesis(hypo_mh1);
     kinFits.addMh2Hypothesis(hypo_mh2);
@@ -197,7 +206,7 @@ inline FitResults FourBodyFit(const FourBodyFitInput& input)
 
     return result;
 }
-
+/*
 inline Double_t ErrEta(Float_t Et, Float_t Eta)
 {
     Double_t InvPerr2, a, b, c;
@@ -300,7 +309,7 @@ inline FitResults TwoBodyFit(const TLorentzVector& momentum_1, const TLorentzVec
     }
     return result;
 }
-
+*/
 inline FitResultsWithUncertainties FitWithUncertainties(const FourBodyFitInput& input, double bjet_energy_uncertainty,
                                                         double tau_energy_uncertainty, bool fit_two_bjets,
                                                         bool fit_four_body)
@@ -308,16 +317,16 @@ inline FitResultsWithUncertainties FitWithUncertainties(const FourBodyFitInput& 
     FitResultsWithUncertainties result;
     if(fit_four_body) {
         result.fit_bb_tt = FourBodyFit(input);
-        result.fit_bb_down_tt_down = FourBodyFit(FourBodyFitInput(input, 1 - bjet_energy_uncertainty,
-                                                                  1 - tau_energy_uncertainty));
-        result.fit_bb_down_tt_up = FourBodyFit(FourBodyFitInput(input, 1 - bjet_energy_uncertainty,
-                                                                1 + tau_energy_uncertainty));
-        result.fit_bb_up_tt_down = FourBodyFit(FourBodyFitInput(input, 1 + bjet_energy_uncertainty,
-                                                                1 - tau_energy_uncertainty));
-        result.fit_bb_up_tt_up = FourBodyFit(FourBodyFitInput(input, 1 + bjet_energy_uncertainty,
-                                                              1 + tau_energy_uncertainty));
+//        result.fit_bb_down_tt_down = FourBodyFit(FourBodyFitInput(input, 1 - bjet_energy_uncertainty,
+//                                                                  1 - tau_energy_uncertainty));
+//        result.fit_bb_down_tt_up = FourBodyFit(FourBodyFitInput(input, 1 - bjet_energy_uncertainty,
+//                                                                1 + tau_energy_uncertainty));
+//        result.fit_bb_up_tt_down = FourBodyFit(FourBodyFitInput(input, 1 + bjet_energy_uncertainty,
+//                                                                1 - tau_energy_uncertainty));
+//        result.fit_bb_up_tt_up = FourBodyFit(FourBodyFitInput(input, 1 + bjet_energy_uncertainty,
+//                                                              1 + tau_energy_uncertainty));
     }
-    TwoBodyFit(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
+    //TwoBodyFit(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
     return result;
 }
 

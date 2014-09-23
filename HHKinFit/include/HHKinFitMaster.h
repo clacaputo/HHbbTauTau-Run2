@@ -13,13 +13,12 @@
 class HHKinFitMaster
 {
 public:
-  HHKinFitMaster(const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1,
-                 const TLorentzVector* tauvis2 );
+  HHKinFitMaster( TLorentzVector* bjet1, TLorentzVector* bjet2, TLorentzVector* tauvis1, TLorentzVector* tauvis2 );
 
   void doFullFit();
   
   //Setters
-  void setAdvancedBalance(const TLorentzVector* met, TMatrixD met_cov);
+  void setAdvancedBalance(TLorentzVector* met, TMatrixD met_cov);
   void setSimpleBalance(Double_t balancePt, Double_t balanceUncert);
   
   //Getters for fit results
@@ -49,12 +48,12 @@ private:
   std::vector< Int_t > m_mh2;
 
   //input vectors
-  const TLorentzVector* m_bjet1;
-  const TLorentzVector* m_bjet2;
-  const TLorentzVector* m_tauvis1;
-  const TLorentzVector* m_tauvis2;
+  TLorentzVector* m_bjet1;
+  TLorentzVector* m_bjet2;
+  TLorentzVector* m_tauvis1;
+  TLorentzVector* m_tauvis2;
 
-  const TLorentzVector* m_MET;
+  TLorentzVector* m_MET;
   TMatrixD m_MET_COV;
 
   //full event fit

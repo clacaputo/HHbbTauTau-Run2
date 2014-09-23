@@ -74,7 +74,7 @@ public:
 
   void Print() const;
   void PrintErrors () const;
-
+  void Draw(Int_t color=1, Int_t style=1) const;
 
   void Boost(Double_t bx, Double_t by, Double_t bz);
   void Rotate(const HHV4Vector & q);
@@ -83,17 +83,14 @@ public:
 
 
 private:
-
-
+  Bool_t m_cov_manually_set;
+  TMatrixD m_cov_transversal;
   Double_t m_e, m_eta, m_phi, m_m;
   Double_t m_dE, m_dEta, m_dPhi;
-
+  TString m_name;
   HHPID::pid  m_id, m_id2;
   Int_t m_mother, m_daughter[10];
   Int_t m_nDaughter ;
-  TString m_name;
-  Bool_t m_cov_manually_set;
-  TMatrixD m_cov_transversal;
 };
 
 #endif /* V4_H_ */
