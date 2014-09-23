@@ -34,9 +34,10 @@ class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& _signalName,
-                           const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
-        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _WjetsData,
-                               _isBlind)
+                           const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
+                           bool _isBlind=false)
+         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _mvaXMLpath,
+                                _WjetsData, _isBlind)
     {
     }
 

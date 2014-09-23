@@ -48,6 +48,8 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 #include "KinFit.h"
 
+#include "MVASelections/include/MVAselections.h"
+
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
 
@@ -83,6 +85,7 @@ public:
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
+    TH1D_ENTRY(MVA_Distro, 40, -1, 1)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -100,9 +103,10 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
+                         const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
+                         bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
-          WjetsData(_WjetsData), isBlind(_isBlind)
+          mvaMethod("BDT",_mvaXMLpath), WjetsData(_WjetsData), isBlind(_isBlind)
     {
         TH1::SetDefaultSumw2();
 
@@ -254,9 +258,9 @@ protected:
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit =
-                    analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = 0;//analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
+            anaData.MVA_Distro().Fill(mvaMethod.GetMVA(first_cand,second_cand,b_momentums.at(0),b_momentums.at(1),MET),weight);
         }
     }
 
@@ -469,6 +473,7 @@ protected:
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
+    MVASelections mvaMethod;
     bool WjetsData;
     bool isBlind;
 };
