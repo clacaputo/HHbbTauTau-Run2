@@ -19,7 +19,8 @@ class MVASelections
 public:
 
     MVASelections(const std::string& _mvaMethodName, const std::string& _mvaXMLfile):mvaMethodName(_mvaMethodName),
-    mvaXMLfile(_mvaXMLfile){
+    mvaXMLfile(_mvaXMLfile)
+    {
         TMVA::Tools::Instance();
 
         reader = new TMVA::Reader("Silent");
@@ -27,15 +28,15 @@ public:
         reader->AddVariable("pt_tau", &var2);
         reader->AddVariable("pt_b1", &var3);
         reader->AddVariable("pt_b2", &var4);
-        reader->AddVariable("DRbb", &var5);
-        reader->AddVariable("DPhiBBMET", &var6);
-        reader->AddVariable("DRll", &var7);
-        reader->AddVariable("PtHtt", &var8);
+        reader->AddVariable("DR_bb", &var5);
+        reader->AddVariable("DPhi_BBMET", &var6);
+        reader->AddVariable("DR_ll", &var7);
+        reader->AddVariable("Pt_Htt", &var8);
         reader->AddVariable("DR_HBBHTT", &var9);
-//        reader->AddVariable("Pt_Hbb", &var10);
-//        reader->AddVariable("DeltaPhi_METTT", &var11 );
-//        reader->AddVariable("PtH", &var12);
-//        reader->AddVariable("mT2", &var13);
+        reader->AddVariable("Pt_Hbb", &var10);
+        reader->AddVariable("DeltaPhi_METTT", &var11 );
+        reader->AddVariable("PtH", &var12);
+        reader->AddVariable("mT2", &var13);
         reader->BookMVA(mvaMethodName.c_str(),mvaXMLfile.c_str());
     }
 
@@ -60,7 +61,7 @@ public:
         var12 = H.Pt();
         var13 = analysis::Calculate_MT(leg1_momentum,MET.Pt(),MET.Phi());
 
-        return reader->EvaluateMVA( "BDT" );
+        return reader->EvaluateMVA( mvaMethodName.c_str() );
 
     }
 

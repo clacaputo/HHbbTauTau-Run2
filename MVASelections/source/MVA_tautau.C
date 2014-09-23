@@ -12,7 +12,6 @@
 #include "TSystem.h"
 #include "TROOT.h"
 
-#include "/Users/rosmina/root/tmva/test/TMVAGui.C"
 
 #if not defined(__CINT__) || defined(__MAKECINT__)
 // needs to be included when makecint runs (ACLIC)
@@ -20,7 +19,7 @@
 #include "TMVA/Tools.h"
 #endif
 
-GetMVA(){
+TrainingMVA(const TString& filePath){
 	std::cout << "==> Start TMVAClassification" << std::endl;
 	
 	
@@ -29,13 +28,8 @@ GetMVA(){
 	TString outfileName( "./out_tautau.root" );
 	TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
 	
-	
-	
-    TFile *inputSignal  = TFile::Open("/Users/rosmina/Desktop/FLAT_TREE/tautau/ggH_tot.root");
-    TFile *inputBkg1    = TFile::Open("/Users/rosmina/Desktop/FLAT_TREE/tautau/tt_tot.root");
-	
 		
-    TMVA::Factory *factory = new TMVA::Factory( "TMVAClassification", outputFile,
+    TMVA::Factory *factory = new TMVA::Factory( "TMVA_tauTau", outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
     
     factory->AddVariable("pt_mu", 'F');
@@ -52,13 +46,14 @@ GetMVA(){
 	factory->AddVariable("PtH", 'F');
 	factory->AddVariable("mT2", 'F');
     
-	TTree* sigTree = (TTree*)inputSignal->Get("flatTree");
-    TTree* bkgTree = (TTree*)inputBkg1->Get("flatTree");
+    TChain *sigTree = new TChain("flatTree");
+    TChain *bkgTree = new TChain("flatTree");
 
-	
-	//TTree* sigTree = sigTree1->CopyTree("(againstMuonTight_2) && (againstElectronLooseMVA_2 ) && (byCombinedIsolationDeltaBetaCorrRaw3Hits_2<1.5) && (pfRelIso_1<0.1) && (q_1*q_2<0)");
-	//TTree* bkgTree = bkgTree1->CopyTree("(againstMuonTight_2) && (againstElectronLooseMVA_2 ) && (byCombinedIsolationDeltaBetaCorrRaw3Hits_2<1.5) && (pfRelIso_1<0.1) && (q_1*q_2<0)");
-	
+    sigTree->Add(filePath+"ggH_hh_bbtautau_*.root");
+
+    bkgTree->Add(filePath+"tt_*.root");
+    bkgTree->Add(filePath+"Tbar_tW.root");
+    bkgTree->Add(filePath+"T_tW.root");
 	
 	Double_t sigWeight = 1.;
 	Double_t bkgWeight = 1;
@@ -135,7 +130,7 @@ GetMVA(){
 	TH1F* hPtH= new TH1F("hPtH","hPtH",1000, 0, 1000);
 	TH1F* hmT2= new TH1F("hmT2","hmT2",600, 0, 600);
 	
-	for (UInt_t i=0; i<(sigTree->GetEntries()); i++) {
+    for (UInt_t i=0; i<(sigTree->GetEntriesFast()); i++) {
 		sigTree->GetEntry(i);
 		if((treevars[0]>45) && (treevars[1]>45) && (byCombinedIsolationDeltaBetaCorrRaw3Hits2<1) && (byCombinedIsolationDeltaBetaCorrRaw3Hits1<1) && (Q1*Q2<0)){
 			//if(!(nBjet>1)) continue;
@@ -283,7 +278,7 @@ GetMVA(){
 	bkgTree->SetBranchAddress("weight",&weight);
 	
 	
-	for (UInt_t i=0; i<bkgTree->GetEntries(); i++) {
+    for (UInt_t i=0; i<bkgTree->GetEntriesFast(); i++) {
 		//for (UInt_t i=0; i<2000; i++) {
         bkgTree->GetEntry(i);
 		//		 if(!(nBjet>1)) continue;
@@ -358,40 +353,10 @@ GetMVA(){
 		}
     }
 	
-	
-	// Set individual event weights (the variables must exist in the original TTree)
-	//    for signal    : factory->SetSignalWeightExpression    ("weight1*weight2");
-	//    for background: factory->SetBackgroundWeightExpression("weight1*weight2");
-	//factory->SetBackgroundWeightExpression( "weight" );
-	
-	// Apply additional cuts on the signal and background samples (can be different)
-	// TCut mycuts = "againstMuonTight_2>0 && byCombinedIsolationDeltaBetaCorrRaw3Hits_2<1.5 && pfRelIso_1<0.1 && q_1*q_2<0"; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
-	// TCut mycutb = "againstMuonTight_2>0 && byCombinedIsolationDeltaBetaCorrRaw3Hits_2<1.5 && pfRelIso_1<0.1 && q_1*q_2<0"; // for example: TCut mycutb = "abs(var1)<0.5";
-	
 	TCut mycuts = "";
 	TCut mycutb = "";
 	
     factory->PrepareTrainingAndTestTree(mycuts, mycutb,"SplitMode=Random" );
-	// Tell the factory how to use the training and testing events
-	//
-	// If no numbers of events are given, half of the events in the tree are used
-	// for training, and the other half for testing:
-	//    factory->PrepareTrainingAndTestTree( mycut, "SplitMode=random:!V" );
-	// To also specify the number of testing events, use:
-	//    factory->PrepareTrainingAndTestTree( mycut,
-	//                                         "NSigTrain=3000:NBkgTrain=3000:NSigTest=3000:NBkgTest=3000:SplitMode=Random:!V" );
-	//factory->PrepareTrainingAndTestTree( mycuts, mycutb,
-	//                                   "nTrain_Signal=0:nTrain_Background=0:SplitMode=Random:NormMode=NumEvents:!V" );
-	
-	// ---- Book MVA methods
-	//
-	// Please lookup the various method configuration options in the corresponding cxx files, eg:
-	// src/MethoCuts.cxx, etc, or here: http://tmva.sourceforge.net/optionRef.html
-	// it is possible to preset ranges in the option string in which the cut optimisation should be done:
-	// "...:CutRangeMin[2]=-1:CutRangeMax[2]=1"...", where [2] is the third input variable
-	
-	
-	// Cut optimisation
     
 	cout<<"*******************************************Call BDT***************************************"<<endl;
 	// Adaptive Boost
@@ -415,22 +380,6 @@ GetMVA(){
 	factory->BookMethod( TMVA::Types::kBDT, "BDTD","!H:!V:NTrees=400:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20:VarTransform=Decorrelate" );
 	cout<<"********************************************************************************"<<endl;
 	
-	
-	
-	
-	// For an example of the category classifier usage, see: TMVAClassificationCategory
-	
-	// --------------------------------------------------------------------------------------------------
-	
-	// ---- Now you can optimize the setting (configuration) of the MVAs using the set of training events
-	
-	// factory->OptimizeAllMethods("SigEffAt001","Scan");
-	// factory->OptimizeAllMethods("ROCIntegral","FitGA");
-	
-	// --------------------------------------------------------------------------------------------------
-	
-	// ---- Now you can tell the factory to train, test, and evaluate the MVAs
-	
 	// Train MVAs using the set of training events
 	factory->TrainAllMethods();
 	
@@ -449,6 +398,4 @@ GetMVA(){
 	std::cout << "==> TMVAClassification is done!" << std::endl;
 	
 	delete factory;
-	// Launch the GUI for the root macros
-	if (!gROOT->IsBatch()) TMVAGui( outfileName );
 }

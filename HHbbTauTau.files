@@ -268,3 +268,6 @@ Analysis/include/KinFit.h
 SVfit/interface/MarkovChainIntegrator.h
 SVfit/source/MarkovChainIntegrator.cc
 MVASelections/include/MVAselections.h
+MVASelections/source/MVA_etau.C
+MVASelections/source/MVA_mutau.C
+MVASelections/source/MVA_tautau.C

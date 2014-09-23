@@ -108,7 +108,7 @@ public:
                          const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
                          bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
-          mvaMethod("BDT",_mvaXMLpath), WjetsData(_WjetsData), isBlind(_isBlind)
+          mvaMethod("Classifier Name",_mvaXMLpath), WjetsData(_WjetsData), isBlind(_isBlind)
     {
         TH1::SetDefaultSumw2();
 
