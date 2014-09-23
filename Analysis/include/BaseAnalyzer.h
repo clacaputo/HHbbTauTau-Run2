@@ -125,6 +125,7 @@ public:
             throw exception("treeExtractor not initialized");
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor->ExtractNext(*_event); ++n) {
             timer->Report(n);
+//            std::cout << "event = " << _event->eventId().eventId << std::endl;
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
                 ProcessEvent(_event);
@@ -477,7 +478,7 @@ protected:
                                        const size_t njets, const ntuple::MET& correctedMET)
     {
         if (config.ApplyRecoilCorrection()){
-            if(!resonance)
+            if(!resonance && config.ApplyRecoilCorrectionForW())
                 resonance = FindWboson();
             if(resonance)
                 return recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
@@ -490,15 +491,14 @@ protected:
         static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
         static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
 
-//        genEvent.Print();
+        //genEvent.Print();
         const analysis::GenParticleSet all_resonances = genEvent.GetParticles(resonanceCodes);
 
         analysis::GenParticleSet resonances;
         for(const GenParticle* w : all_resonances) {
             if(w->mothers.size() == 1) {
                 const GenParticle* mother = w->mothers.at(0);
-                if(mother->pdg.Code != particles::tau &&
-                        !(mother->pdg.Code == particles::W_plus && mother->status == particles::Decayed_or_fragmented))
+                if(mother->pdg.Code == particles::W_plus && mother->status == particles::HardInteractionProduct)
                     resonances.insert(w);
             }
          }
@@ -535,6 +535,7 @@ protected:
         }
         else
             throw exception("two resonances are not in relationship");
+
 
         analysis::GenParticlePtrVector resonanceDecayProducts;
         if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){

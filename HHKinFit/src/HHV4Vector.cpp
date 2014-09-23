@@ -6,9 +6,8 @@
 #include "../include/PSTools.h"
 
 HHV4Vector::HHV4Vector(Double_t e, Double_t eta, Double_t phi, Double_t m)
-    : m_e(e), m_eta(eta), m_phi(phi), m_m(m), m_dE(0), m_dEta(0), m_dPhi(0),
-      m_id(HHPID::undef), m_id2(HHPID::undef), m_mother(-1), m_nDaughter(0), m_name("init"), m_cov_manually_set(false),
-      m_cov_transversal(TMatrixD(2,2))
+    : m_cov_manually_set(false), m_cov_transversal(TMatrixD(2,2)), m_e(e), m_eta(eta), m_phi(phi), m_m(m), m_dE(0),
+      m_dEta(0), m_dPhi(0), m_name("init"), m_id(HHPID::undef), m_id2(HHPID::undef), m_mother(-1), m_nDaughter(0)
 {
   m_cov_transversal(0,0)=0;
   m_cov_transversal(0,1)=0;
@@ -282,7 +281,16 @@ HHV4Vector::Rotate(const HHV4Vector & q)
 //  //  cout << "E,Px,Py,Pztemp = " <<E3temp<< sp <<Px3temp<< sp <<Py3temp<< sp <<Pz3temp<< endl;
 //}
 
-
+void
+HHV4Vector::Draw(Int_t color, Int_t style) const
+{  // draw particle for event display in x-y view
+  TArrow *Ar = new TArrow(0, 0, Px(), Py(), 0.001, "|>");
+  Ar->SetLineColor(color);
+  Ar->SetFillColor(color);
+  Ar->SetLineWidth(3);
+  Ar->SetLineStyle(style);
+  Ar->Draw();
+}
 
 void
 HHV4Vector::CalcCov()

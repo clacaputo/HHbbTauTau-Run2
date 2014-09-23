@@ -42,10 +42,10 @@ function submit_batch {
     fi
 
     if [ "$QUEUE" = "cms" -a "$STORAGE" = "Pisa" ] ; then
-        bsub -q $QUEUE -m borah -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
+        bsub -q $QUEUE -m austroh -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
              -J $JOB_NAME $RUN_SCRIPT_PATH ${@:6}
     elif [ "$QUEUE" = "local" -a "$STORAGE" = "Pisa" ] ; then
-        bsub -q $QUEUE -m borah -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
+        bsub -q $QUEUE -m austroh -E /usr/local/lsf/work/infn-pisa/scripts/testq-preexec-cms.bash \
              -J $JOB_NAME $RUN_SCRIPT_PATH ${@:6}
     elif [ "$QUEUE" = "local" -a "$STORAGE" = "Bari" ] ; then
         echo "$RUN_SCRIPT_PATH ${@:6}" | qsub -q $QUEUE -N $JOB_NAME -o $OUTPUT_PATH -e $OUTPUT_PATH -

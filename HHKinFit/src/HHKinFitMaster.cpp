@@ -81,8 +81,7 @@ HHKinFitMaster::doFullFit()
 
 
 
-HHKinFitMaster::HHKinFitMaster(const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1,
-                               const TLorentzVector* tauvis2):
+HHKinFitMaster::HHKinFitMaster(const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1, const TLorentzVector* tauvis2):
     m_mh1(std::vector<Int_t>()),
     m_mh2(std::vector<Int_t>()),
 

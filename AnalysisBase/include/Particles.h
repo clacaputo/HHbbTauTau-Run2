@@ -343,6 +343,13 @@ PARTICLE(f_zero_600, 9000221);
 PARTICLE(f_zero_980, 9010221);
 PARTICLE(eta_1405, 9020221);
 PARTICLE(f_zero_1500, 9030221);
+PARTICLE(psi_3770, 30443);
+PARTICLE(xi_c_zero_2790, 14312);
+PARTICLE(xi_c_plus_2790, 14322);
+PARTICLE(xi_b1_zero, 15322);
+PARTICLE(h_c_1P, 10443);
+PARTICLE(lambda_c_plus_2625, 4124);
+PARTICLE(xi_b1_minus, 15312);
 
 PARTICLE(Jet, 0);
 PARTICLE(NONEXISTENT, std::numeric_limits<int>::max());

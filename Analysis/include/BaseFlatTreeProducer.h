@@ -211,7 +211,8 @@ protected:
         static const particles::ParticleCodes resonanceCodes = { particles::MSSM_H, particles::MSSM_A };
         static const particles::ParticleCodes resonanceDecay_1 = { particles::Higgs, particles::Higgs };
         static const particles::ParticleCodes resonanceDecay_2 = { particles::Z, particles::Higgs };
-        static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z, particles::MSSM_H };
+        static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z,
+                                                                    particles::MSSM_H, particles::MSSM_A };
         static const particles::ParticleCodes SM_ResonanceDecay_1 = { particles::tau, particles::tau };
         static const particles::ParticleCodes SM_ResonanceDecay_2 = { particles::b, particles::b };
         static const particles::ParticleCodes2D HiggsDecays = { SM_ResonanceDecay_1, SM_ResonanceDecay_2 };
@@ -356,7 +357,7 @@ protected:
         // HTT candidate
         flatTree->mvis()           = higgs.momentum.M();
         flatTree->m_sv()           = m_sv;
-        flatTree->m_sv_Up()        = m_sv_Up;
+	flatTree->m_sv_Up()        = m_sv_Up;
         flatTree->m_sv_Down()      = m_sv_Down;
         flatTree->pt_sv()          = default_value; // SVfit not ready yet
         flatTree->eta_sv()         = default_value; // SVfit not ready yet

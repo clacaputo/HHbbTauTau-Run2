@@ -40,6 +40,7 @@ public:
     ANA_CONFIG_PARAMETER(bool, isMC, false)
     ANA_CONFIG_PARAMETER(bool, ApplyTauESCorrection, false)
     ANA_CONFIG_PARAMETER(bool, ApplyRecoilCorrection, false)
+    ANA_CONFIG_PARAMETER(bool, ApplyRecoilCorrectionForW, false)
     ANA_CONFIG_PARAMETER(bool, ExpectedOneNonSMResonance, false)
     ANA_CONFIG_PARAMETER(bool, ExpectedAtLeastOneSMResonanceToTauTauOrToBB, false)
     ANA_CONFIG_PARAMETER(bool, RequireSpecificFinalState, false)

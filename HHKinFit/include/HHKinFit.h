@@ -16,10 +16,9 @@
 class HHKinFit{
 public:
   HHKinFit(HHEventRecord* recrecord);
+  ~HHKinFit(){ delete m_fitrecord; }
 
-  ~HHKinFit(){
-      delete m_fitrecord;
-  }
+
   void FitNew();
   void Fit();
   void ConstrainE2(Int_t iv4, Int_t iv41, Int_t iv42);
@@ -50,6 +49,12 @@ public:
 
 
 private:
+  HHParticleList* m_particlelist;
+  HHEventRecord* m_recrecord;
+  HHEventRecord* m_fitrecord;
+
+  Bool_t m_advancedBalance;
+  Int_t m_logLevel;
 
   Double_t m_chi2;
   Double_t m_chi2_b1;
@@ -61,12 +66,6 @@ private:
   Int_t m_printlevel;
   Int_t m_graphicslevel;
   Int_t m_maxloops;
-  Bool_t m_advancedBalance;
-  Int_t m_logLevel;
-  HHEventRecord* m_recrecord;
-  HHEventRecord* m_fitrecord;
-  HHParticleList* m_particlelist;
-
 };
 
 

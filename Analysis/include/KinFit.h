@@ -27,14 +27,14 @@
 
 #pragma once
 
-#include "HHKinFit/source/HHEventRecord.cpp"
-#include "HHKinFit/source/HHKinFit.cpp"
-#include "HHKinFit/source/HHKinFitMaster.cpp"
-#include "HHKinFit/source/HHParticle.cpp"
-#include "HHKinFit/source/HHParticleList.cpp"
-#include "HHKinFit/source/HHV4Vector.cpp"
-#include "HHKinFit/source/PSMath.cpp"
-#include "HHKinFit/source/PSTools.cpp"
+#include "HHKinFit/src/HHEventRecord.cpp"
+#include "HHKinFit/src/HHKinFit.cpp"
+#include "HHKinFit/src/HHKinFitMaster.cpp"
+#include "HHKinFit/src/HHParticle.cpp"
+#include "HHKinFit/src/HHParticleList.cpp"
+#include "HHKinFit/src/HHV4Vector.cpp"
+#include "HHKinFit/src/PSMath.cpp"
+#include "HHKinFit/src/PSTools.cpp"
 
 #include "TreeProduction/interface/MET.h"
 
