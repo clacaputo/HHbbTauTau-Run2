@@ -235,10 +235,10 @@ protected:
         TLorentzVector MET;
         MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
         TMatrixD metcov(2,2);
-        metcov(0,0)=event.metcov00;
-        metcov(1,0)=event.metcov10;
-        metcov(0,1)=event.metcov01;
-        metcov(1,1)=event.metcov11;
+        metcov(0,0)=event.mvacov00;
+        metcov(1,0)=event.mvacov10;
+        metcov(0,1)=event.mvacov01;
+        metcov(1,1)=event.mvacov11;
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -260,7 +260,7 @@ protected:
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit = 0;//analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);

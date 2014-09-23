@@ -7,6 +7,8 @@ m_bb m_bb M_{bb}[GeV] dN/dm_{bb}[1/20GeV] false
 m_ttbb m_ttbb M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
 m_ttbb_nomet m_ttbb_nomet M_{#tau#taubb}[GeV] dN/dm_{bb}[1/10GeV] false
 m_ttbb_kinfit m_ttbb_kinfit M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
+m_ttbb_kinfit_up m_ttbb_kinfit_up M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
+m_ttbb_kinfit_down m_ttbb_kinfit_down M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
 pt_1 pt_1 P_{T}[GeV] dN/dP_{T}[1/4GeV] false
 eta_1 eta_1 #eta dN/d#eta[1/0.1] false
 pt_2 pt_2 P_{T}[GeV] dN/dP_{T}[1/4GeV] false
