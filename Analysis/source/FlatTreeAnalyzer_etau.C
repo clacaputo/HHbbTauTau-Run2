@@ -85,7 +85,7 @@ protected:
         if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
         TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
         for (const analysis::DataCategory& category : categories){
-            if (category.IsData() || category.IsSignal() || category.name == qcd.name
+            if (category.IsData() || category.IsSignal() || category.name == qcd.name || category.IsSumBkg()
                     || category.IsForLimitsOnly()) continue;
             TH1D* nonQCD_hist;
             if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
