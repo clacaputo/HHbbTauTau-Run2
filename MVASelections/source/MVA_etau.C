@@ -1,5 +1,3 @@
-
-
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -19,148 +17,69 @@
 
 #include "../include/MVA_common.h"
 
-void ApplySelection(TMVA::Factory *factory, FlatTree* tree, bool is_signal)
+
+bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Histograms& h)
 {
-    Double_t sigWeight = 1.;
-    Double_t bkgWeight = 1.;
+    if(tree->byCombinedIsolationDeltaBetaCorrRaw3Hits2 >= 1.5
+            || tree->pfRelIso1 >= 0.1
+            || tree->Q1 * tree->Q2 != -1 || tree->mt1 >= 30)
+        return false;
 
-    std::vector<Double_t> vars( 13 );
+    const IndexVector jet_indexes = tree->CollectJets();
+    if(jet_indexes.size() < 2)
+        return false;
 
-    const std::string prefix = is_signal ? "signal" : "bkg";
-    TH1F* hTauPt = MakeTH1F("hTauPt",prefix,200,0,200);
-    TH1F* hMuonPt = MakeTH1F("hMuonPt",prefix,200,0,200);
-    TH1F* hPtb1 = MakeTH1F("hPtb1",prefix,300, 0, 300);
-    TH1F* hptb2 = MakeTH1F("hPtb2",prefix,300, 0, 300);
-    TH1F* hDRbb = MakeTH1F("hDRbb",prefix,100, 0, 10);
-    TH1F* hDPhiBBMET = MakeTH1F("hDPhiBBMET",prefix,100, -3, 3);
-    TH1F* hDRll = MakeTH1F("hDRll",prefix,100, 0, 10);
-    TH1F* hPtHtt = MakeTH1F("hPtHtt",prefix,600, 0, 600);
-    TH1F* hDRHBBTT= MakeTH1F("hDRHBBTT",prefix,100, 0, 10);
-    TH1F* hPtHBB= MakeTH1F("hPtHBB",prefix,600, 0, 600);
-    TH1F* hDeltaPhi_METTT= MakeTH1F("hDeltaPhi_METTT",prefix,100, -3, 3);
-    TH1F* hPtH= MakeTH1F("hPtH",prefix,1000, 0, 1000);
-    TH1F* hmT2= MakeTH1F("hmT2",prefix,600, 0, 600);
+    const IndexVector bjet_indexes = tree->CollectMediumBJets();
+    if(bjet_indexes.size() < 2)
+        return false;
 
-    for (Long64_t i=0; i<(tree->GetEntriesFast()); i++) {
-        tree->GetEntry(i);
+    const TLorentzVector b1 = tree->GetBJetMomentum(bjet_indexes.at(0));
+    const TLorentzVector b2 = tree->GetBJetMomentum(bjet_indexes.at(1));
+    const TLorentzVector BB = b1 + b2;
+    const TLorentzVector l1 = tree->GetLeptonMomentum(1);
+    const TLorentzVector l2 = tree->GetLeptonMomentum(2);
+    const TLorentzVector TT = l1 + l2;
+    const TLorentzVector H = BB + TT;
+    const TLorentzVector MET = tree->GetMetMomentum();
 
-        if((tree->byCombinedIsolationDeltaBetaCorrRaw3Hits2<1.5) && (tree->pfRelIso1<0.1) && (tree->Q1*tree->Q2<0) &&
-                (tree->mt1<30)){
-            //if(!(nBjet>1)) continue;
-            vars[2]=0;
-            vars[3]=0;
+    vars.assign(13, 0);
+    vars[0] = tree->pt1;
+    vars[1] = tree->pt2;
+    vars[2] = b1.Pt();
+    vars[3] = b2.Pt();
+    vars[4] = b1.DeltaR(b2);
+    vars[5] = MET.DeltaPhi(BB);
+    vars[6] = tree->drLT;
+    vars[7]=  TT.Pt();
+    vars[8] = TT.DeltaR(BB);
+    vars[9] = BB.Pt();
+    vars[10] = MET.DeltaPhi(TT);
+    vars[11] = H.Pt();
+    vars[12] = tree->mt2;
 
-            std::vector<int> IndexNjetEta2p4, IndexBjetsMedium;
-            for (unsigned int k =0; k<tree->nBjet; k++){
-                if((TMath::Abs(tree->eta_BJets->at(k)) <2.4   )  ) {IndexNjetEta2p4.push_back(k);}
-            }
+    h.pt_l1->Fill(vars[0]);
+    h.pt_l2->Fill(vars[1]);
+    h.pt_b1->Fill(vars[2]);
+    h.pt_b2->Fill(vars[3]);
+    h.dR_bb->Fill(vars[4] );
+    h.dPhi_bb_MET->Fill(vars[5] );
+    h.dR_ll->Fill(vars[6] );
+    h.pt_Htt->Fill(vars[7] );
+    h.dR_Hbb_Htt->Fill(vars[8] );
+    h.pt_Hbb->Fill(vars[9] );
+    h.dPhi_MET_tt->Fill(vars[10] );
+    h.pt_H->Fill(vars[11] );
+    h.mT2->Fill(vars[12] );
 
-            if ((IndexNjetEta2p4.size() > 1)) {
-
-
-                for (unsigned int k =0; k<IndexNjetEta2p4.size() ; k++){
-                    //cout<<i<<"pt bjets  "<<(*pt_BJets).at(IndexNjetEta2p4.at(k)) <<" csv  "<<(*csv_BJets).at(IndexNjetEta2p4.at(k))<<endl;
-                    if(! ( tree->pt_BJets->at(IndexNjetEta2p4.at(k)) > 20  )) continue;
-                    if(!(TMath::Abs(tree->eta_BJets->at(IndexNjetEta2p4.at(k))) <2.4   )  ) continue;
-                    if(! (tree->csv_BJets->at(IndexNjetEta2p4.at(k)) > 0.689 )  ) continue;
-                    IndexBjetsMedium.push_back(IndexNjetEta2p4.at(k));
-                }
-
-                bool BjetsCut =false;
-                if(  IndexBjetsMedium.size() >1 )  BjetsCut = true;
-                if ((BjetsCut == true)){
-
-                    TLorentzVector b1, b2, BB, MET, l1, l2, TT, H;
-                    b1.SetPtEtaPhiE(tree->pt_BJets->at(IndexBjetsMedium.at(0)), tree->eta_BJets->at(IndexBjetsMedium.at(0)), tree->phi_BJets->at(IndexBjetsMedium.at(0)) ,tree->energy_BJets->at(IndexBjetsMedium.at(0)) );
-                    b2.SetPtEtaPhiE(tree->pt_BJets->at(IndexBjetsMedium.at(1)), tree->eta_BJets->at(IndexBjetsMedium.at(1)), tree->phi_BJets->at(IndexBjetsMedium.at(1)) ,tree->energy_BJets->at(IndexBjetsMedium.at(1)) );
-
-                    l1.SetPtEtaPhiE( tree->pt1 , tree->eta1, tree->phi1, tree->e1 );
-                    l2.SetPtEtaPhiE( tree->pt2 , tree->eta2, tree->phi2, tree->e2 );
-
-                    MET.SetPtEtaPhiE(tree->met, 0., tree->mvamet_phi, tree->met);
-
-                    BB = b1+b2;
-                    TT=l2+l1;
-                    H = BB+TT;
-
-
-
-                    //////////////////////////////
-                    vars[0] = tree->pt1;
-                    vars[1] = tree->pt2;
-                    vars[2] = tree->pt_BJets->at(IndexBjetsMedium.at(0));
-                    vars[3] = tree->pt_BJets->at(IndexBjetsMedium.at(1));
-                    vars[4] = b1.DeltaR(b2);
-                    vars[5] = MET.DeltaPhi(BB);  //cout<<"  Delta phi MET*****************  "<<vars[5]<<endl;
-                    vars[6] = tree->drLT;              // cout<<"  Delta leptoni *****************  "<<vars[6]<<endl;
-                    vars[7]=  TT.Pt();            //cout<<"  PT SV *****************  "<<vars[7]<<endl;
-                    vars[8] = TT.DeltaR(BB);
-                    vars[9] = BB.Pt();
-                    vars[10] = MET.DeltaPhi(TT);
-                    vars[11] = H.Pt();
-                    vars[12] = tree->mt2;
-
-                    hMuonPt->Fill(vars[0]);
-                    hTauPt->Fill(vars[1]);
-                    hPtb1->Fill(vars[2]);
-                    hptb2->Fill(vars[3]);
-                    hDRbb->Fill(vars[4] );
-                    hDPhiBBMET->Fill(vars[5] );
-                    hDRll->Fill(vars[6] );
-                    hPtHtt->Fill(vars[7] );
-                    hDRHBBTT->Fill(vars[8] );
-                    hPtHBB->Fill(vars[9] );
-                    hDeltaPhi_METTT->Fill(vars[10] );
-                    hPtH->Fill(vars[11] );
-                    hmT2->Fill(vars[12] );
-
-                    //cout<<" rnd "<<gRandom->Uniform(0, 1)<<endl;
-                    double r = gRandom->Uniform(0, 1);
-
-
-                    if (r<0.5)  {
-                        //cout<<"Riempi Training ev="<<i<<endl;
-                        if(is_signal)
-                            factory->AddSignalTrainingEvent(vars, tree->weight*sigWeight );
-                        else
-                            factory->AddBackgroundTrainingEvent( vars, tree->weight*bkgWeight );
-                    } else {
-                        if(is_signal)
-                            factory->AddSignalTestEvent(vars, tree->weight*sigWeight );
-                        else
-                            factory->AddBackgroundTestEvent(vars, tree->weight*bkgWeight );
-                    }
-
-                }
-            }
-        }
-    }
-
-    hMuonPt->Write();
-    hTauPt->Write();
-    hPtb1->Write();
-    hptb2->Write();
-    hDRbb->Write();
-    hDPhiBBMET->Write();
-    hDRll->Write();
-    hPtHtt->Write();
-    hDRHBBTT->Write();
-    hPtHBB->Write();
-    hDeltaPhi_METTT->Write();
-    hPtH->Write();
-    hmT2->Write();
+    return true;
 }
 
 void MVA_etau(const TString& filePath)
 {
     std::cout << "==> Start TMVAClassification" << std::endl;
 
-
-    // --------------------------------------------------------------------------------------------------
-
     TString outfileName( "./out_etau.root" );
     TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
-
 
     TMVA::Factory *factory = new TMVA::Factory( "TMVA_eTau", outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
@@ -183,18 +102,15 @@ void MVA_etau(const TString& filePath)
     FlatTree* bkgTree = new FlatTree();
 
     sigTree->Add(filePath+"ggH_hh_bbtautau_*.root");
-
     bkgTree->Add(filePath+"tt_*.root");
 
     outputFile->cd();
 
     ApplySelection(factory, sigTree, true);
-    cout<<"********************* Background *********************"<<endl;
     ApplySelection(factory, bkgTree, false);
 
     TMVAtestAndTraining(factory);
 
-    // Save the output
     outputFile->Close();
 
     std::cout << "==> Wrote root file: " << outputFile->GetName() << std::endl;
@@ -204,5 +120,8 @@ void MVA_etau(const TString& filePath)
     delete sigTree;
     delete bkgTree;
 }
+
+
+
 
 

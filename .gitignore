@@ -10,3 +10,5 @@ PatProduction/python/*.log
 cmsenv.sh
 .DS_Store
 /tools
+*.so
+*.d
