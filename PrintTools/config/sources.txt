@@ -295,6 +295,8 @@ ZZJetsTo2L2Q.root 0.0254
 WWJetsTo2L2Nu.root 0.0593
 WZJetsTo2L2Q.root 0.0135
 WZJetsTo3LNu.root 0.0103
+T_tW.root 0.4394
+Tbar_tW.root 0.4431
 
 [LIMITS Wjets]
 Wjets
@@ -310,8 +312,7 @@ violet_custom
 tt_hadr.root 0.0719
 tt_lept.root 0.0430
 tt_semi.root 0.0862
-T_tW.root 0.4394
-Tbar_tW.root 0.4431
+
 
 #[WJets]
 #Wjets
@@ -345,6 +346,8 @@ ZZJetsTo2L2Q.root 0.0254
 WWJetsTo2L2Nu.root 0.0593
 WZJetsTo2L2Q.root 0.0135
 WZJetsTo3LNu.root 0.0103
+T_tW.root 0.4394
+Tbar_tW.root 0.4431
 
 [DATA TauPlusX]
 Observed
