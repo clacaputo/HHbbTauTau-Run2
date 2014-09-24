@@ -48,6 +48,8 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 #include "KinFit.h"
 
+#include "MVASelections/include/MVAselections.h"
+
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
 
@@ -85,6 +87,7 @@ public:
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
+    TH1D_ENTRY(MVA_Distro, 40, -1, 1)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -102,9 +105,10 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
+                         const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
+                         bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
-          WjetsData(_WjetsData), isBlind(_isBlind)
+          mvaMethod("Classifier Name",_mvaXMLpath), WjetsData(_WjetsData), isBlind(_isBlind)
     {
         TH1::SetDefaultSumw2();
 
@@ -231,10 +235,10 @@ protected:
         TLorentzVector MET;
         MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
         TMatrixD metcov(2,2);
-        metcov(0,0)=event.metcov00;
-        metcov(1,0)=event.metcov10;
-        metcov(0,1)=event.metcov01;
-        metcov(1,1)=event.metcov11;
+        metcov(0,0)=event.mvacov00;
+        metcov(1,0)=event.mvacov10;
+        metcov(0,1)=event.mvacov01;
+        metcov(1,1)=event.mvacov11;
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -256,11 +260,11 @@ protected:
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit =
-                    analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+            anaData.MVA_Distro().Fill(mvaMethod.GetMVA(first_cand,second_cand,b_momentums.at(0),b_momentums.at(1),MET),weight);
         }
     }
 
@@ -390,7 +394,8 @@ private:
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 }
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
+	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
@@ -482,6 +487,7 @@ protected:
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
+    MVASelections mvaMethod;
     bool WjetsData;
     bool isBlind;
 };

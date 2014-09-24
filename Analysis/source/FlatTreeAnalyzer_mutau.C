@@ -34,9 +34,10 @@ class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& _signalName,
-                           const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
-        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _WjetsData,
-                               _isBlind)
+                           const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
+                           bool _isBlind=false)
+         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _mvaXMLpath,
+                                _WjetsData, _isBlind)
     {
     }
 
@@ -85,7 +86,7 @@ protected:
         if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
         TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
         for (const analysis::DataCategory& category : categories){
-            if (category.IsData() || category.IsSignal() || category.name == qcd.name
+            if (category.IsData() || category.IsSignal() || category.name == qcd.name || category.IsSumBkg()
                     || category.IsForLimitsOnly()) continue;
             TH1D* nonQCD_hist;
             if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
