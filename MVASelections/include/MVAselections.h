@@ -65,7 +65,6 @@ public:
 
     }
 
-
 private:
     TMVA::Reader* reader;
     std::string mvaMethodName;
