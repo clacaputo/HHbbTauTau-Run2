@@ -1,0 +1,13 @@
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_46_1_p9P.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_35_1_A5f.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_42_1_IUB.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_43_1_EE0.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_5_1_Jd1.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_6_1_h4D.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_41_1_h0F.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_33_1_tg1.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_45_1_iAZ.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_4_1_y78.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_34_1_oKX.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_25_1_4a3.root
+/store/user/kandroso/MSSM_A_Zh_tautau/ggA_Zh_lltautau_310/TREE/Tree_31_1_1fl.root
