@@ -25,6 +25,54 @@
 #blue
 #Radion1000.root 0.0079
 
+
+[LIMITS Radion300]
+Radion 300 GeV
+blue
+Radion_300.root 0.1973236
+
+[LIMITS Radion500]
+Radion 500 GeV
+blue
+Radion_500.root 0.1971045
+
+[LIMITS Radion700]
+Radion 700 GeV
+blue
+Radion_700.root 0.1970847
+
+[LIMITS Radion1000]
+Radion 1000 GeV
+blue
+Radion_1000.root 0.1978527
+
+
+[LIMITS Graviton270]
+Graviton 270 GeV
+blue
+Graviton_270.root 0.1973948
+
+[LIMITS Graviton300]
+Graviton 300 GeV
+blue
+Graviton_300.root 0.1972703
+
+[LIMITS Graviton500]
+Graviton 500 GeV
+blue
+Graviton_500.root 0.1970808
+
+[LIMITS Graviton700]
+Graviton 700 GeV
+blue
+Graviton_700.root 0.2043971
+
+[LIMITS Graviton1000]
+Graviton 1000 GeV
+blue
+Graviton_1000.root 0.1970493
+
+
 [LIMITS ggHhh260]
 hh#rightarrow#tau#taubb(m_{H}=260  tan#beta=2.5)) for limits
 blue

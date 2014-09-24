@@ -317,12 +317,12 @@ protected:
             { "LIMITS bbH180", "bbH180" }, { "LIMITS bbH200", "bbH200" }, { "LIMITS bbH250", "bbH250" }, { "LIMITS bbH300", "bbH300" },
             { "LIMITS bbH350", "bbH350" }, { "LIMITS bbH400", "bbH400" }, { "LIMITS bbH90", "bbH90" },
             { "DATA Tau", "data_obs" }, { "DATA TauPlusX", "data_obs" },
+            { "LIMITS ggAToZhToLLBB250", "ggAToZhToLLBB250" },
             { "LIMITS ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "LIMITS ggAToZhToLLBB270", "ggAToZhToLLBB270" },
             { "LIMITS ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "LIMITS ggAToZhToLLBB290", "ggAToZhToLLBB290" },
             { "LIMITS ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "LIMITS ggAToZhToLLBB310", "ggAToZhToLLBB310" },
             { "LIMITS ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "LIMITS ggAToZhToLLBB330", "ggAToZhToLLBB330" },
             { "LIMITS ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "LIMITS ggAToZhToLLBB350", "ggAToZhToLLBB350" },
-	    { "LIMITS ggAToZhToLLBB250", "ggAToZhToLLBB250" },
             { "ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
             { "ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
             { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
@@ -333,7 +333,12 @@ protected:
             { "LIMITS ggHhh280", "ggHTohhTo2Tau2B280" }, { "LIMITS ggHhh290", "ggHTohhTo2Tau2B290" },
             { "LIMITS ggHhh300", "ggHTohhTo2Tau2B300" }, { "LIMITS ggHhh310", "ggHTohhTo2Tau2B310" },
             { "LIMITS ggHhh320", "ggHTohhTo2Tau2B320" }, { "LIMITS ggHhh330", "ggHTohhTo2Tau2B330" },
-            { "LIMITS ggHhh340", "ggHTohhTo2Tau2B340" }, { "LIMITS ggHhh350", "ggHTohhTo2Tau2B350" }
+            { "LIMITS ggHhh340", "ggHTohhTo2Tau2B340" }, { "LIMITS ggHhh350", "ggHTohhTo2Tau2B350" },
+            { "LIMITS Radion300", "ggRadionTohhTo2Tau2B300" }, { "LIMITS Radion500", "ggRadionTohhTo2Tau2B500" },
+            { "LIMITS Radion700", "ggRadionTohhTo2Tau2B700" }, { "LIMITS Radion1000", "ggRadionTohhTo2Tau2B1000" },
+            { "LIMITS Graviton270", "ggGravitonTohhTo2Tau2B270" }, { "LIMITS Graviton300", "ggGravitonTohhTo2Tau2B300" },
+            { "LIMITS Graviton500", "ggGravitonTohhTo2Tau2B500" }, { "LIMITS Graviton700", "ggGravitonTohhTo2Tau2B700" },
+            { "LIMITS Graviton1000", "ggGravitonTohhTo2Tau2B1000" }
         };
 
         static const std::map<std::string, std::string> channelNameForFolder = {
