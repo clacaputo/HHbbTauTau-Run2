@@ -357,7 +357,7 @@ protected:
         // HTT candidate
         flatTree->mvis()           = higgs.momentum.M();
         flatTree->m_sv()           = m_sv;
-        flatTree->m_sv_Up()        = m_sv_Up;
+	flatTree->m_sv_Up()        = m_sv_Up;
         flatTree->m_sv_Down()      = m_sv_Down;
         flatTree->pt_sv()          = default_value; // SVfit not ready yet
         flatTree->eta_sv()         = default_value; // SVfit not ready yet

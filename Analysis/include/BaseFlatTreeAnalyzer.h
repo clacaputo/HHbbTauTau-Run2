@@ -48,6 +48,8 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 #include "KinFit.h"
 
+#include "MVASelections/include/MVAselections.h"
+
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
 
@@ -85,6 +87,7 @@ public:
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
+    TH1D_ENTRY(MVA_Distro, 40, -1, 1)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -102,9 +105,10 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
+                         const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
+                         bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
-          WjetsData(_WjetsData), isBlind(_isBlind)
+          mvaMethod("Classifier Name",_mvaXMLpath), WjetsData(_WjetsData), isBlind(_isBlind)
     {
         TH1::SetDefaultSumw2();
 
@@ -231,10 +235,10 @@ protected:
         TLorentzVector MET;
         MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
         TMatrixD metcov(2,2);
-        metcov(0,0)=event.metcov00;
-        metcov(1,0)=event.metcov10;
-        metcov(0,1)=event.metcov01;
-        metcov(1,1)=event.metcov11;
+        metcov(0,0)=event.mvacov00;
+        metcov(1,0)=event.mvacov10;
+        metcov(0,1)=event.mvacov01;
+        metcov(1,1)=event.mvacov11;
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -256,11 +260,11 @@ protected:
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit =
-                    analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
-            //anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
-            //anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+            anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
+            anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+            anaData.MVA_Distro().Fill(mvaMethod.GetMVA(first_cand,second_cand,b_momentums.at(0),b_momentums.at(1),MET),weight);
         }
     }
 
@@ -312,16 +316,17 @@ protected:
         static const std::vector< std::pair<std::string, std::string> > dataCategoriesForLimits = {
             { "VIRTUAL QCD", "QCD" }, { "TTbar", "TT" }, { "LIMITS VH125", "VH125" },
             { "LIMITS DiBoson", "VV" }, { "LIMITS Wjets", "W" }, { "ZJ", "ZJ" }, { "ZL", "ZL" },
-            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "bbH100", "bbH100" }, { "bbH110", "bbH110" },
-            { "bbH120", "bbH120" }, { "bbH130", "bbH130" }, { "bbH140", "bbH140" }, { "bbH160", "bbH160" },
-            { "bbH180", "bbH180" }, { "bbH200", "bbH200" }, { "bbH250", "bbH250" }, { "bbH300", "bbH300" },
-            { "bbH350", "bbH350" }, { "bbH400", "bbH400" }, { "bbH90", "bbH90" },
+            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "LIMITS bbH100", "bbH100" }, { "LIMITS bbH110", "bbH110" },
+            { "LIMITS bbH120", "bbH120" }, { "LIMITS bbH130", "bbH130" }, { "LIMITS bbH140", "bbH140" }, { "LIMITS bbH160", "bbH160" },
+            { "LIMITS bbH180", "bbH180" }, { "LIMITS bbH200", "bbH200" }, { "LIMITS bbH250", "bbH250" }, { "LIMITS bbH300", "bbH300" },
+            { "LIMITS bbH350", "bbH350" }, { "LIMITS bbH400", "bbH400" }, { "LIMITS bbH90", "bbH90" },
             { "DATA Tau", "data_obs" }, { "DATA TauPlusX", "data_obs" },
-            { "ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "ggAToZhToLLBB270", "ggAToZhToLLBB270" },
-            { "ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "ggAToZhToLLBB290", "ggAToZhToLLBB290" },
-            { "ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "ggAToZhToLLBB310", "ggAToZhToLLBB310" },
-            { "ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "ggAToZhToLLBB330", "ggAToZhToLLBB330" },
-            { "ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "ggAToZhToLLBB350", "ggAToZhToLLBB350" },
+            { "LIMITS ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "LIMITS ggAToZhToLLBB270", "ggAToZhToLLBB270" },
+            { "LIMITS ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "LIMITS ggAToZhToLLBB290", "ggAToZhToLLBB290" },
+            { "LIMITS ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "LIMITS ggAToZhToLLBB310", "ggAToZhToLLBB310" },
+            { "LIMITS ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "LIMITS ggAToZhToLLBB330", "ggAToZhToLLBB330" },
+            { "LIMITS ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "LIMITS ggAToZhToLLBB350", "ggAToZhToLLBB350" },
+	    { "LIMITS ggAToZhToLLBB250", "ggAToZhToLLBB250" },
             { "ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
             { "ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
             { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
@@ -361,7 +366,7 @@ protected:
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
                 //anaData.m_sv().Write(limitDataCategory.second.c_str());
                 anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
-                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_4b_" + channel_name + "_8TeV";
+                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
@@ -384,7 +389,8 @@ private:
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 }
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
+	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
@@ -476,6 +482,7 @@ protected:
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
+    MVASelections mvaMethod;
     bool WjetsData;
     bool isBlind;
 };
