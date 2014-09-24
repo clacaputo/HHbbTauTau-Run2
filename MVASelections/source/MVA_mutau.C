@@ -3,6 +3,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "TChain.h"
 #include "TFile.h"
@@ -41,7 +42,9 @@ void ApplySelection(TMVA::Factory *factory, FlatTree* tree, bool is_signal)
 
     for (Long64_t i=0; i<(tree->GetEntriesFast()); i++) {
         tree->GetEntry(i);
-        if((tree->againstMuonTight2) && (tree->againstElectronLooseMVA2 ) && (tree->byCombinedIsolationDeltaBetaCorrRaw3Hits2<1.5) && (tree->pfRelIso1<0.1) && (tree->Q1*tree->Q2<0) && (tree->mt1<30)){
+        if((tree->againstMuonTight2) && (tree->againstElectronLooseMVA2 ) &&
+                (tree->byCombinedIsolationDeltaBetaCorrRaw3Hits2<1.5) && (tree->pfRelIso1<0.1) && (tree->Q1*tree->Q2<0)
+                && (tree->mt1<30)){
             //if(!(nBjet>1)) continue;
             vars[2]=0;
             vars[3]=0;
@@ -188,44 +191,7 @@ void MVA_mutau(const TString& filePath)
     cout<<"********************* Background *********************"<<endl;
     ApplySelection(factory, bkgTree, false);
 	
-	TCut mycuts = "";
-	TCut mycutb = "";
-	
-    factory->PrepareTrainingAndTestTree(mycuts, mycutb,"SplitMode=Random" );
-    
-	cout<<"*******************************************Call BDT***************************************"<<endl;
-	// Adaptive Boost
-//	factory->BookMethod( TMVA::Types::kBDT, "BDT",
-//						"!H:!V:NTrees=850:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
-	
-	
-	factory->BookMethod( TMVA::Types::kBDT, "BDT",
-						"!H:!V:NTrees=850:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
-
-    
-    cout<<"**************************************	Call Fisher******************************************"<<endl;
-	
-	factory->BookMethod( TMVA::Types::kBDT, "BDTMitFisher",
-							"!H:!V:NTrees=50:UseFisherCuts:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
-
-	cout<<"********************************************************************************"<<endl;
-	
-	cout<<"**************************************	Call Decorrelation + AdaBoost******************************************"<<endl;
-	// Decorrelation + Adaptive Boost
-	factory->BookMethod( TMVA::Types::kBDT, "BDTD","!H:!V:NTrees=400:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20:VarTransform=Decorrelate" );
-	cout<<"********************************************************************************"<<endl;
-	
-	
-	// Train MVAs using the set of training events
-	factory->TrainAllMethods();
-	
-	// ---- Evaluate all MVAs using the set of test events
-	factory->TestAllMethods();
-	
-	// ----- Evaluate and compare performance of all configured MVAs
-	factory->EvaluateAllMethods();
-	
-	// --------------------------------------------------------------
+    TMVAtestAndTraining(factory);
 	
 	// Save the output
 	outputFile->Close();
