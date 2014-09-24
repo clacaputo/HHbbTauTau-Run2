@@ -81,13 +81,19 @@ public:
     TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
+    TH1D_ENTRY(pt_ttbb_nomet, 35, 0, 350)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_bb_MET, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_tt_MET, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
     TH1D_ENTRY(MVA_Distro, 40, -1, 1)
+    TH1D_ENTRY(mt_1, 50, 0, 300)
+    TH1D_ENTRY(mt_2, 50, 0, 300)
+    TH1D_ENTRY(pt_H_tt_MET, 35, 0, 350)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -239,6 +245,11 @@ protected:
         metcov(1,0)=event.mvacov10;
         metcov(0,1)=event.mvacov01;
         metcov(1,1)=event.mvacov11;
+        TLorentzVector Htt_MET = Htt + MET;
+        anaData.pt_H_tt_MET().Fill(Htt_MET.Pt(), weight);
+        anaData.DeltaPhi_tt_MET().Fill(Htt.DeltaPhi(MET), weight);
+        anaData.mt_1().Fill(event.mt_1, weight);
+        anaData.mt_2().Fill(event.mt_2, weight);
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -253,14 +264,17 @@ protected:
             const TLorentzVector Hbb = b_momentums.at(0) + b_momentums.at(1);
             anaData.pt_H_bb().Fill(Hbb.Pt(),weight);
             anaData.m_bb().Fill(Hbb.M(), weight);
+            anaData.DeltaPhi_bb_MET().Fill(Hbb.DeltaPhi(MET), weight);
             anaData.DeltaPhi_hh().Fill(Htt.DeltaPhi(Hbb), weight);
             anaData.DeltaR_hh().Fill(Htt.DeltaR(Hbb), weight);
             const TLorentzVector Candidate_ttbb = Hbb + Htt + MET;
             anaData.m_ttbb().Fill(Candidate_ttbb.M(), weight);
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
+            anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
             const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            //const double m_ttbb_kinFit = 10;
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
