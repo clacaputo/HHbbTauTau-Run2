@@ -91,7 +91,7 @@ public:
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
     TH1D_ENTRY(MVA_Distro, 40, -1, 1)
-    TH1D_ENTRY(mt_1, 50, 0, 300)
+    TH1D_ENTRY(mt_1, 50, 0, 50)
     TH1D_ENTRY(mt_2, 50, 0, 300)
     TH1D_ENTRY(pt_H_tt_MET, 35, 0, 350)
 };

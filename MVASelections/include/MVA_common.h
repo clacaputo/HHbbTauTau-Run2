@@ -164,7 +164,7 @@ private:
 
 struct MVA_Histograms {
     TH1F_Ptr pt_l1, pt_l2, pt_b1, pt_b2, dR_bb, dPhi_bb_MET, dR_ll,
-             pt_Htt, dR_Hbb_Htt, pt_Hbb, dPhi_MET_tt, pt_H, mT2;
+             pt_Htt, dR_Hbb_Htt, pt_Hbb, dPhi_MET_tt, pt_H, mT2, mT1, pt_Htt_MET;
 
     MVA_Histograms(bool is_signal)
     {
@@ -182,6 +182,8 @@ struct MVA_Histograms {
         dPhi_MET_tt= MakeTH1F("hDeltaPhi_METTT",prefix,100, -3, 3);
         pt_H= MakeTH1F("hPtH",prefix,1000, 0, 1000);
         mT2= MakeTH1F("hmT2",prefix,600, 0, 600);
+        mT1= MakeTH1F("hmT1",prefix,600, 0, 600);
+        pt_Htt_MET= MakeTH1F("hPtHttMET",prefix,600, 0, 600);
     }
 };
 

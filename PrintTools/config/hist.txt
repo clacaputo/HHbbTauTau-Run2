@@ -30,7 +30,7 @@ DeltaR_hh DeltaR_hh #DeltaR_{#tau#taubb}[rad] dN/d#DeltaR[1/0.1] false
 pt_ttbb_nomet pt_ttbb_nomet P_{T}[GeV] dN/dP_{T}[1/10GeV] false
 DeltaPhi_bb_MET DeltaPhi_bb_MET #Delta#Phi_{bb,MET}[rad] dN/d#Delta#Phi[1/0.1rad] false
 DeltaPhi_tt_MET DeltaPhi_tt_MET #Delta#Phi_{#tau#tau,MET}[rad] dN/d#Delta#Phi[1/0.1rad] false
-mt_1 mt_1 M_{T}[GeV] dN/dM_{T}[1/6GeV] false
+mt_1 mt_1 M_{T}[GeV] dN/dM_{T}[1/1GeV] false
 mt_2 mt_2 M_{T}[GeV] dN/dM_{T}[1/6GeV] false
 pt_H_tt_MET pt_H_tt_MET P_{T}[GeV] dN/dP_{T}[1/10GeV] false
 #EventSelection EventSelection cuts n_entries -0.5 15.5 1 15 1

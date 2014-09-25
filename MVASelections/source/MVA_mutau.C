@@ -42,8 +42,9 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     const TLorentzVector TT = l1 + l2;
     const TLorentzVector H = BB + TT;
     const TLorentzVector MET = tree->GetMetMomentum();
+    const TLorentzVector TT_MET = TT + MET;
 
-    vars.assign(13, 0);
+    vars.assign(15, 0);
     vars[0] = tree->pt1;
     vars[1] = tree->pt2;
     vars[2] = b1.Pt();
@@ -57,6 +58,8 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     vars[10] = MET.DeltaPhi(TT);
     vars[11] = H.Pt();
     vars[12] = tree->mt2;
+    vars[13] = tree->mt1;
+    vars[14] = TT_MET.Pt();
 
     h.pt_l1->Fill(vars[0]);
     h.pt_l2->Fill(vars[1]);
@@ -71,6 +74,8 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     h.dPhi_MET_tt->Fill(vars[10] );
     h.pt_H->Fill(vars[11] );
     h.mT2->Fill(vars[12] );
+    h.mT1->Fill(vars[13]);
+    h.pt_Htt_MET->Fill(vars[14]);
 
     return true;
 }
@@ -98,6 +103,8 @@ void MVA_mutau(const TString& filePath)
     factory->AddVariable("DeltaPhi_METTT", 'F');
     factory->AddVariable("PtH", 'F');
     factory->AddVariable("mT2", 'F');
+    factory->AddVariable("mT1", 'F');
+    factory->AddVariable("Pt_Htt_MET", 'F');
 
     FlatTree* sigTree = new FlatTree();
     FlatTree* bkgTree = new FlatTree();
