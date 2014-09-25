@@ -80,19 +80,17 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     return true;
 }
 
-void MVA_etau(const std::string& filePath, const std::string& category_name)
+void MVA_etau(const std::string& filePath, const std::string& category_name, const std::string& suffix)
 {
     std::cout << "==> Start TMVAClassification" << std::endl;
 
     FlatTree::EventCategory eventCategory = FlatTree::EventCategoryFromString(category_name);
     std::cout << "Training for event category: " << category_name << std::endl;
 
-    const std::string namePrefix = "./out_etau_" + category_name + ".root";
-    TString outfileName(namePrefix);
-    TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
+    const std::string output_name = "TMVA_etau_" + category_name + "_" + suffix;
+    TFile* outputFile = TFile::Open( (output_name + ".root").c_str(), "RECREATE" );
 
-    const std::string mvaPrefix = "TMVA_eTau_" + category_name;
-    TMVA::Factory *factory = new TMVA::Factory( mvaPrefix, outputFile,
+    TMVA::Factory *factory = new TMVA::Factory( output_name, outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
 
 
