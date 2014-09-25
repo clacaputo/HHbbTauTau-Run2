@@ -296,12 +296,12 @@ protected:
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName)) ||
+                    if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) ||*/
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
                     else if(category.IsSignal())
-                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 50);
                     else
                         stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
