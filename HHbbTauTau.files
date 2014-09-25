@@ -272,3 +272,4 @@ MVASelections/source/MVA_etau.C
 MVASelections/source/MVA_mutau.C
 MVASelections/source/MVA_tautau.C
 MVASelections/include/MVA_common.h
+MVASelections/include/MVA_variables.h

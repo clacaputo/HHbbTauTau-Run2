@@ -6,26 +6,11 @@
 #include <TMVA/Tools.h>
 #include <TLorentzVector.h>
 
+#include "MVA_variables.h"
 
 typedef std::vector<size_t> IndexVector;
 
 struct FlatTree {
-    enum EventCategory { UnknownCategory, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
-
-    static EventCategory EventCategoryFromString(const std::string& category_name)
-    {
-        static std::map<std::string, EventCategory> category_name_map;
-        if(!category_name_map.size()) {
-            category_name_map["1jet0btag"] = OneJet_ZeroBtag;
-            category_name_map["1jet1btag"] = OneJet_OneBtag;
-            category_name_map["2jets0btag"] = TwoJets_ZeroBtag;
-            category_name_map["2jets1btag"] = TwoJets_OneBtag;
-            category_name_map["2jets2btag"] = TwoJets_TwoBtag;
-        }
-        if(!category_name_map.count(category_name))
-            throw std::runtime_error("Unknown category name");
-        return category_name_map[category_name];
-    }
 
     TChain* chain;
 
@@ -153,23 +138,23 @@ struct FlatTree {
         return momentum;
     }
 
-    EventCategory DetermineEventCategory() const
+    MVA_Selections::EventCategory DetermineEventCategory() const
     {
         const IndexVector jet_indexes = CollectJets();
         if(jet_indexes.size() == 1) {
             const IndexVector bjet_indexes = CollectTightBJets();
-            if(bjet_indexes.size() == 0) return OneJet_ZeroBtag;
-            if(bjet_indexes.size() == 1) return OneJet_OneBtag;
+            if(bjet_indexes.size() == 0) return MVA_Selections::OneJet_ZeroBtag;
+            if(bjet_indexes.size() == 1) return MVA_Selections::OneJet_OneBtag;
         }
 
         if(jet_indexes.size() >= 2) {
             const IndexVector bjet_indexes = CollectMediumBJets();
-            if(bjet_indexes.size() == 0) return TwoJets_ZeroBtag;
-            if(bjet_indexes.size() == 1) return TwoJets_OneBtag;
-            if(bjet_indexes.size() >= 2) return TwoJets_TwoBtag;
+            if(bjet_indexes.size() == 0) return MVA_Selections::TwoJets_ZeroBtag;
+            if(bjet_indexes.size() == 1) return MVA_Selections::TwoJets_OneBtag;
+            if(bjet_indexes.size() >= 2) return MVA_Selections::TwoJets_TwoBtag;
         }
 
-        return UnknownCategory;
+        return MVA_Selections::UnknownCategory;
     }
 
 };
@@ -279,10 +264,10 @@ inline Double_t GetFileScaleFactor(const std::string& file_name)
     return file_name_map[file_name];
 }
 
-bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, FlatTree::EventCategory selectedCategory,
+bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Selections::EventCategory selectedCategory,
                              MVA_Histograms& h);
 
-void ApplySelection(TMVA::Factory *factory, FlatTree* tree, FlatTree::EventCategory selectedCategory, bool is_signal)
+void ApplySelection(TMVA::Factory *factory, FlatTree* tree, MVA_Selections::EventCategory selectedCategory, bool is_signal)
 {
     MVA_Histograms h(is_signal);
 
@@ -348,3 +333,15 @@ void TMVAtestAndTraining(TMVA::Factory *factory)
     // --------------------------------------------------------------
 }
 
+inline void AddVariablesToMVA(TMVA::Factory* factory, const MVA_Selections::str_vector& vars)
+{
+    for(size_t n = 0; n < vars.size(); ++n)
+        factory->AddVariable(vars[n]);
+}
+
+inline void SetMvaInput(std::vector<Double_t>& vars, const MVA_Selections::var_map& var_names,
+                        const std::string name, Double_t value)
+{
+    if(var_names.count(name))
+       vars.at(var_names.find(name)->second) = value;
+}
