@@ -17,8 +17,7 @@
 
 #include "../include/MVA_common.h"
 
-
-bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, FlatTree::EventCategory selectedCategory,
+bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Selections::EventCategory selectedCategory,
                              MVA_Histograms& h)
 {
     if(!tree->againstMuonTight2 || !tree->againstElectronLooseMVA2 ||
@@ -27,8 +26,8 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
             || tree->Q1 * tree->Q2 != -1 || tree->mt1 >= 30)
         return false;
 
-    if(selectedCategory != FlatTree::TwoJets_TwoBtag && selectedCategory != FlatTree::TwoJets_OneBtag &&
-            selectedCategory != FlatTree::TwoJets_ZeroBtag)
+    if(selectedCategory != MVA_Selections::TwoJets_TwoBtag && selectedCategory != MVA_Selections::TwoJets_OneBtag &&
+            selectedCategory != MVA_Selections::TwoJets_ZeroBtag)
         throw std::runtime_error("Unsupported event category.");
 
     const IndexVector bjet_indexes = tree->CollectJets(); //to run categories 2jets_*tag
@@ -45,62 +44,23 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     const TLorentzVector MET = tree->GetMetMomentum();
     const TLorentzVector TT_MET = TT + MET;
 
-    if(selectedCategory == FlatTree::TwoJets_ZeroBtag) {
-        vars.assign(15, 0);
-        vars[0] = tree->pt1;
-        vars[1] = tree->pt2;
-        vars[2] = b1.Pt();
-        vars[3] = b2.Pt();
-        vars[4] = b1.DeltaR(b2);
-        vars[5] = MET.DeltaPhi(BB);
-        vars[6] = tree->drLT;
-        vars[7]=  TT.Pt();
-        vars[8] = TT.DeltaR(BB);
-        vars[9] = BB.Pt();
-        vars[10] = MET.DeltaPhi(TT);
-        vars[11] = H.Pt();
-        vars[12] = tree->mt2;
-        vars[13] = tree->mt1;
-        vars[14] = TT_MET.Pt();
-    }
-
-    if(selectedCategory == FlatTree::TwoJets_OneBtag) {
-        vars.assign(15, 0);
-        vars[0] = tree->pt1;
-        vars[1] = tree->pt2;
-        vars[2] = b1.Pt();
-        vars[3] = b2.Pt();
-        vars[4] = b1.DeltaR(b2);
-        vars[5] = MET.DeltaPhi(BB);
-        vars[6] = tree->drLT;
-        vars[7]=  TT.Pt();
-        vars[8] = TT.DeltaR(BB);
-        vars[9] = BB.Pt();
-        vars[10] = MET.DeltaPhi(TT);
-        vars[11] = H.Pt();
-        vars[12] = tree->mt2;
-        vars[13] = tree->mt1;
-        vars[14] = TT_MET.Pt();
-    }
-
-    if(selectedCategory == FlatTree::TwoJets_TwoBtag) {
-        vars.assign(15, 0);
-        vars[0] = tree->pt1;
-        vars[1] = tree->pt2;
-        vars[2] = b1.Pt();
-        vars[3] = b2.Pt();
-        vars[4] = b1.DeltaR(b2);
-        vars[5] = MET.DeltaPhi(BB);
-        vars[6] = tree->drLT;
-        vars[7]=  TT.Pt();
-        vars[8] = TT.DeltaR(BB);
-        vars[9] = BB.Pt();
-        vars[10] = MET.DeltaPhi(TT);
-        vars[11] = H.Pt();
-        vars[12] = tree->mt2;
-        vars[13] = tree->mt1;
-        vars[14] = TT_MET.Pt();
-    }
+    const MVA_Selections::var_map& var_names = MVA_Selections::Input_Variables_Map(MVA_Selections::MuTau, selectedCategory);
+    vars.assign(var_names.size(), 0);
+    SetMvaInput(vars, var_names, "pt_mu", tree->pt1);
+    SetMvaInput(vars, var_names, "pt_tau", tree->pt2);
+    SetMvaInput(vars, var_names, "pt_b1", b1.Pt());
+    SetMvaInput(vars, var_names, "pt_b2", b2.Pt());
+    SetMvaInput(vars, var_names, "DR_bb", b1.DeltaR(b2));
+    SetMvaInput(vars, var_names, "DPhi_BBMET", MET.DeltaPhi(BB));
+    SetMvaInput(vars, var_names, "DR_ll", tree->drLT);
+    SetMvaInput(vars, var_names, "Pt_Htt", TT.Pt());
+    SetMvaInput(vars, var_names, "DR_HBBHTT", TT.DeltaR(BB));
+    SetMvaInput(vars, var_names, "Pt_Hbb", BB.Pt());
+    SetMvaInput(vars, var_names, "DeltaPhi_METTT", MET.DeltaPhi(TT));
+    SetMvaInput(vars, var_names, "PtH", H.Pt());
+    SetMvaInput(vars, var_names, "mT2", tree->mt2);
+    SetMvaInput(vars, var_names, "mT1", tree->mt1);
+    SetMvaInput(vars, var_names, "Pt_Htt_MET", TT_MET.Pt());
 
     h.pt_l1->Fill(tree->pt1);
     h.pt_l2->Fill(tree->pt2);
@@ -125,7 +85,7 @@ void MVA_mutau(const std::string& filePath, const std::string& category_name, co
 {
     std::cout << "==> Start TMVAClassification" << std::endl;
 
-    FlatTree::EventCategory eventCategory = FlatTree::EventCategoryFromString(category_name);
+    MVA_Selections::EventCategory eventCategory = MVA_Selections::EventCategoryFromString(category_name);
     std::cout << "Training for event category: " << category_name << std::endl;
 
     const std::string output_name = "TMVA_mutau_" + category_name + "_" + suffix;
@@ -134,59 +94,7 @@ void MVA_mutau(const std::string& filePath, const std::string& category_name, co
     TMVA::Factory *factory = new TMVA::Factory( output_name, outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
 
-    if(eventCategory == FlatTree::TwoJets_ZeroBtag) {
-        factory->AddVariable("pt_mu", 'F');
-        factory->AddVariable("pt_tau", 'F');
-        factory->AddVariable("pt_b1", 'F');
-        factory->AddVariable("pt_b2", 'F');
-        factory->AddVariable("DR_bb", 'F');
-        factory->AddVariable("DPhi_BBMET", 'F');
-        factory->AddVariable("DR_ll", 'F');
-        factory->AddVariable("Pt_Htt", 'F');
-        factory->AddVariable("DR_HBBHTT", 'F');
-        factory->AddVariable("Pt_Hbb", 'F');
-        factory->AddVariable("DeltaPhi_METTT", 'F');
-        factory->AddVariable("PtH", 'F');
-        factory->AddVariable("mT2", 'F');
-        factory->AddVariable("mT1", 'F');
-        factory->AddVariable("Pt_Htt_MET", 'F');
-    }
-
-    if(eventCategory == FlatTree::TwoJets_OneBtag) {
-        factory->AddVariable("pt_mu", 'F');
-        factory->AddVariable("pt_tau", 'F');
-        factory->AddVariable("pt_b1", 'F');
-        factory->AddVariable("pt_b2", 'F');
-        factory->AddVariable("DR_bb", 'F');
-        factory->AddVariable("DPhi_BBMET", 'F');
-        factory->AddVariable("DR_ll", 'F');
-        factory->AddVariable("Pt_Htt", 'F');
-        factory->AddVariable("DR_HBBHTT", 'F');
-        factory->AddVariable("Pt_Hbb", 'F');
-        factory->AddVariable("DeltaPhi_METTT", 'F');
-        factory->AddVariable("PtH", 'F');
-        factory->AddVariable("mT2", 'F');
-        factory->AddVariable("mT1", 'F');
-        factory->AddVariable("Pt_Htt_MET", 'F');
-    }
-
-    if(eventCategory == FlatTree::TwoJets_TwoBtag) {
-        factory->AddVariable("pt_mu", 'F');
-        factory->AddVariable("pt_tau", 'F');
-        factory->AddVariable("pt_b1", 'F');
-        factory->AddVariable("pt_b2", 'F');
-        factory->AddVariable("DR_bb", 'F');
-        factory->AddVariable("DPhi_BBMET", 'F');
-        factory->AddVariable("DR_ll", 'F');
-        factory->AddVariable("Pt_Htt", 'F');
-        factory->AddVariable("DR_HBBHTT", 'F');
-        factory->AddVariable("Pt_Hbb", 'F');
-        factory->AddVariable("DeltaPhi_METTT", 'F');
-        factory->AddVariable("PtH", 'F');
-        factory->AddVariable("mT2", 'F');
-        factory->AddVariable("mT1", 'F');
-        factory->AddVariable("Pt_Htt_MET", 'F');
-    }
+    AddVariablesToMVA(factory, MVA_Selections::Input_Variables(MVA_Selections::MuTau, eventCategory));
 
     FlatTree* sigTree = new FlatTree();
     FlatTree* bkgTree = new FlatTree();
