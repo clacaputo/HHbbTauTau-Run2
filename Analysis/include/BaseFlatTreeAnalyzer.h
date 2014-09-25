@@ -48,7 +48,7 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 #include "KinFit.h"
 
-#include "MVASelections/include/MVAselections.h"
+#include "MVASelections/include/MvaReader.h"
 
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
@@ -90,7 +90,9 @@ public:
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
-    TH1D_ENTRY(MVA_Distro, 40, -1, 1)
+    TH1D_ENTRY(MVA_BDT, 40, -1, 1)
+    TH1D_ENTRY(MVA_BDTD, 40, -1, 1)
+    TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
     TH1D_ENTRY(mt_1, 50, 0, 50)
     TH1D_ENTRY(mt_2, 50, 0, 300)
     TH1D_ENTRY(pt_H_tt_MET, 35, 0, 350)
@@ -114,7 +116,7 @@ public:
                          const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
                          bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
-          /*mvaMethod("Classifier Name",_mvaXMLpath),*/ WjetsData(_WjetsData), isBlind(_isBlind)
+          WjetsData(_WjetsData), isBlind(_isBlind)
     {
         TH1::SetDefaultSumw2();
 
@@ -174,10 +176,10 @@ protected:
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
             for(auto eventCategory : eventCategories) {
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight);
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                 if(dataCategory.name == DYJets.name && std::abs(event.pdgId_2_MC) == particles::tau.RawCode())
-                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], event, weight);
+                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], event, weight, eventCategory);
             }
         }
     }
@@ -221,7 +223,8 @@ protected:
     virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
                                const HistogramDescriptor& hist) = 0;
 
-    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
+    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight,
+                                EventCategory eventCategory)
     {
         anaData.m_sv().Fill(event.m_sv, weight);
         anaData.m_sv_up().Fill(event.m_sv_Up, weight);
@@ -273,12 +276,30 @@ protected:
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
-            //const double m_ttbb_kinFit = 10;
+//            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = 10;
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
-            //anaData.MVA_Distro().Fill(mvaMethod.GetMVA(first_cand,second_cand,b_momentums.at(0),b_momentums.at(1),MET),weight);
+
+            const std::string category_name = eventCategoryMapName.at(eventCategory);
+            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
+            const double mva_BDT = mvaReader_BDT
+                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+                    : std::numeric_limits<double>::lowest();
+            anaData.MVA_BDT().Fill(mva_BDT, weight);
+
+            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
+            const double mva_BDTD = mvaReader_BDTD
+                    ? mvaReader_BDTD->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+                    : std::numeric_limits<double>::lowest();
+            anaData.MVA_BDTD().Fill(mva_BDTD, weight);
+
+            auto mvaReader_BDTMitFisher = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTMitFisher);
+            const double mva_BDTMitFisher = mvaReader_BDTMitFisher
+                    ? mvaReader_BDTMitFisher->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+                    : std::numeric_limits<double>::lowest();
+            anaData.MVA_BDTMitFisher().Fill(mva_BDTMitFisher, weight);
         }
     }
 
@@ -501,7 +522,6 @@ protected:
     DataCategoryCollection categories;
     std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
-    //MVASelections mvaMethod;
     bool WjetsData;
     bool isBlind;
 };

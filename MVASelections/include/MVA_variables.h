@@ -8,33 +8,45 @@ namespace MVA_Selections {
 enum EventCategory { UnknownCategory, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 inline EventCategory EventCategoryFromString(const std::string& category_name)
 {
-    static std::map<std::string, EventCategory> category_name_map;
-    if(!category_name_map.size()) {
-        category_name_map["1jet0btag"] = OneJet_ZeroBtag;
-        category_name_map["1jet1btag"] = OneJet_OneBtag;
-        category_name_map["2jets0btag"] = TwoJets_ZeroBtag;
-        category_name_map["2jets1btag"] = TwoJets_OneBtag;
-        category_name_map["2jets2btag"] = TwoJets_TwoBtag;
+    static std::map<std::string, EventCategory> m;
+    if(!m.size()) {
+        m["1jet0btag"] = OneJet_ZeroBtag;
+        m["1jet1btag"] = OneJet_OneBtag;
+        m["2jets0btag"] = TwoJets_ZeroBtag;
+        m["2jets1btag"] = TwoJets_OneBtag;
+        m["2jets2btag"] = TwoJets_TwoBtag;
     }
-    if(!category_name_map.count(category_name))
+    if(!m.count(category_name))
         throw std::runtime_error("Unknown category name");
-    return category_name_map[category_name];
+    return m[category_name];
 }
 
 enum Channel { ETau, MuTau, TauTau };
+inline Channel ChannelFromString(const std::string& channel_name)
+{
+    static std::map<std::string, Channel> m;
+    if(!m.size()) {
+        m["eTau"] = ETau;
+        m["muTau"] = MuTau;
+        m["tauTau"] = TauTau;
+    }
+    if(!m.count(channel_name))
+        throw std::runtime_error("Unknown channel");
+    return m[channel_name];
+}
 
 enum MvaMethod { BDT, BDTMitFisher, BDTD };
 inline MvaMethod MvaMethodFromString(const std::string& method_name)
 {
-    static std::map<std::string, MvaMethod> method_name_map;
-    if(!method_name_map.size()) {
-        method_name_map["BDT"] = BDT;
-        method_name_map["BDTMitFisher"] = BDTMitFisher;
-        method_name_map["BDTD"] = BDTD;
+    static std::map<std::string, MvaMethod> m;
+    if(!m.size()) {
+        m["BDT"] = BDT;
+        m["BDTMitFisher"] = BDTMitFisher;
+        m["BDTD"] = BDTD;
     }
-    if(!method_name_map.count(method_name))
+    if(!m.count(method_name))
         throw std::runtime_error("Unknown MVA method");
-    return method_name_map[method_name];
+    return m[method_name];
 }
 
 struct ParamId {
@@ -69,7 +81,7 @@ inline var_map MakeVarMap(const str_vector& vars)
     return result;
 }
 
-const str_vector& Input_Variables(Channel channel, EventCategory category, MvaMethod method)
+const str_vector& Input_Variables(const ParamId& key)
 {
     static var_list l;
     if(!l.size()) {
@@ -236,18 +248,16 @@ const str_vector& Input_Variables(Channel channel, EventCategory category, MvaMe
             v.push_back("Pt_Htt_MET");
         }
     }
-    const ParamId key(channel, category, method);
     if(!l.count(key))
         throw std::runtime_error("Unknown combination channel-category");
     return l[key];
 }
 
-const var_map& Input_Variables_Map(Channel channel, EventCategory category, MvaMethod method)
+const var_map& Input_Variables_Map(const ParamId& key)
 {
     static var_map_list l;
-    const ParamId key(channel, category, method);
     if(!l.count(key))
-        l[key] = MakeVarMap(Input_Variables(channel, category, method));
+        l[key] = MakeVarMap(Input_Variables(key));
     return l[key];
 }
 
