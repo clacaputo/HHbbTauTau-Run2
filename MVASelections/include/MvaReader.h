@@ -16,63 +16,93 @@
 
 namespace MVA_Selections {
 
+class MvaReader;
+typedef std::shared_ptr<MvaReader> MvaReaderPtr;
+
 class MvaReader {
 public:
-
-    MvaReader(const std::string& _mvaMethodName, const std::string& _mvaXMLfile)
-        : mvaMethodName(_mvaMethodName), mvaXMLfile(_mvaXMLfile)
+    MvaReader(const ParamId& paramId, const std::string& mvaXMLfile)
+        : reader(new TMVA::Reader("Silent")), var_names_map(&Input_Variables_Map(paramId))
     {
-//        TMVA::Tools::Instance();
+        //        TMVA::Tools::Instance();
+        std::ostringstream ss;
+        ss << paramId.channel << "_" << paramId.category << "_" << paramId.method;
+        label = ss.str();
+        const str_vector& var_names = Input_Variables(paramId);
+        vars.assign(var_names.size(), 0);
+        for(size_t n = 0; n < var_names.size(); ++n)
+            reader->AddVariable(var_names.at(n), &vars.at(n));
 
-        reader = new TMVA::Reader("Silent");
-
-        const MVA_Selections::str_vector& vars
-        reader->AddVariable("pt_mu", &var1);
-        reader->AddVariable("pt_tau", &var2);
-        reader->AddVariable("pt_b1", &var3);
-        reader->AddVariable("pt_b2", &var4);
-        reader->AddVariable("DR_bb", &var5);
-        reader->AddVariable("DPhi_BBMET", &var6);
-        reader->AddVariable("DR_ll", &var7);
-        reader->AddVariable("Pt_Htt", &var8);
-        reader->AddVariable("DR_HBBHTT", &var9);
-        reader->AddVariable("Pt_Hbb", &var10);
-        reader->AddVariable("DeltaPhi_METTT", &var11 );
-        reader->AddVariable("PtH", &var12);
-        reader->AddVariable("mT2", &var13);
-        reader->BookMVA(mvaMethodName.c_str(),mvaXMLfile.c_str());
+        reader->BookMVA(label.c_str(), mvaXMLfile.c_str());
     }
 
-    double GetMVA (const TLorentzVector& leg1_momentum, const TLorentzVector& leg2_momentum,
-                        const TLorentzVector& b1_momentum, const TLorentzVector& b2_momentum, const TLorentzVector& MET){
+    double GetMva (const TLorentzVector& l1, const TLorentzVector& l2,
+                   const TLorentzVector& b1, const TLorentzVector& b2, const TLorentzVector& MET)
+    {
+        const TLorentzVector BB = b1 + b2;
+        const TLorentzVector TT = l1 + l2;
+        const TLorentzVector H = BB + TT;
+        const TLorentzVector TT_MET = TT + MET;
 
-        TLorentzVector h_tt   = leg1_momentum + leg2_momentum;
-        TLorentzVector h_bb   = b1_momentum   + b2_momentum;
-        TLorentzVector H      = h_tt + h_bb;
+        vars.assign(vars.size(), 0);
+        SetMvaInput("pt_mu", l1.Pt());
+        SetMvaInput("pt_tau", l2.Pt());
+        SetMvaInput("pt_b1", b1.Pt());
+        SetMvaInput("pt_b2", b2.Pt());
+        SetMvaInput("DR_bb", b1.DeltaR(b2));
+        SetMvaInput("DPhi_BBMET", MET.DeltaPhi(BB));
+        SetMvaInput("DR_ll", l1.DeltaR(l2));
+        SetMvaInput("Pt_Htt", TT.Pt());
+        SetMvaInput("DR_HBBHTT", TT.DeltaR(BB));
+        SetMvaInput("Pt_Hbb", BB.Pt());
+        SetMvaInput("DeltaPhi_METTT", MET.DeltaPhi(TT));
+        SetMvaInput("PtH", H.Pt());
+        SetMvaInput("mT2", analysis::Calculate_MT(l2, MET.Pt(), MET.Phi()));
+        SetMvaInput("mT1", analysis::Calculate_MT(l1, MET.Pt(), MET.Phi()));
+        SetMvaInput("Pt_Htt_MET", TT_MET.Pt());
 
-        var1  = leg1_momentum.Pt();
-        var2  = leg2_momentum.Pt();
-        var3  = b1_momentum.Pt();
-        var4  = b2_momentum.Pt();
-        var5  = b1_momentum.DeltaR(b2_momentum);
-        var6  = h_bb.DeltaPhi(MET);
-        var7  = leg1_momentum.DeltaR(leg2_momentum);
-        var8  = h_tt.Pt();
-        var9  = h_bb.DeltaR(h_tt);
-        var10 = h_bb.Pt();
-        var11 = MET.DeltaPhi(h_tt);
-        var12 = H.Pt();
-        var13 = analysis::Calculate_MT(leg1_momentum,MET.Pt(),MET.Phi());
+        return reader->EvaluateMVA(label.c_str());
+    }
 
-        return reader->EvaluateMVA( mvaMethodName.c_str() );
-
+private:
+    void SetMvaInput(const std::string& name, float value)
+    {
+        if(var_names_map->count(name))
+           vars.at(var_names_map->find(name)->second) = value;
     }
 
 private:
     std::shared_ptr<TMVA::Reader> reader;
-    std::string mvaMethodName;
-    std::string mvaXMLfile;
-    float var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13;
+    std::vector<float> vars;
+    const var_map* var_names_map;
+    std::string label;
+
+public:
+    static MvaReaderPtr Get(const std::string& channel_name, const std::string& event_category_name, MvaMethod mva_method)
+    {
+        typedef std::map<ParamId, std::string> FileNameMap;
+        typedef std::map<ParamId, MvaReaderPtr> MvaReaderMap;
+
+        static FileNameMap file_names;
+        if(!file_names.size()) {
+//            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDT)] = "";
+//            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTMitFisher)] = "";
+//            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTD)] = "";
+        }
+
+        if(event_category_name == "Inclusive")
+            return MvaReaderPtr();
+
+        const ParamId key(ChannelFromString(channel_name), EventCategoryFromString(event_category_name), mva_method);
+        if(!file_names.count(key))
+            return MvaReaderPtr();
+
+        static MvaReaderMap readers;
+        if(!readers.count(key))
+            readers[key] = MvaReaderPtr(new MvaReader(key, file_names.at(key)));
+
+        return readers.at(key);
+    }
 };
 
 } // namespace MVA_Selections

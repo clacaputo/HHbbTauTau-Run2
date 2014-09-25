@@ -44,16 +44,16 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     const TLorentzVector MET = tree->GetMetMomentum();
     const TLorentzVector TT_MET = TT + MET;
 
-    const MVA_Selections::var_map& var_names = MVA_Selections::Input_Variables_Map(MVA_Selections::MuTau,
-                                                                                   selectedCategory, method);
+    const MVA_Selections::ParamId key(MVA_Selections::MuTau, selectedCategory, method);
+    const MVA_Selections::var_map& var_names = MVA_Selections::Input_Variables_Map(key);
     vars.assign(var_names.size(), 0);
-    SetMvaInput(vars, var_names, "pt_mu", tree->pt1);
-    SetMvaInput(vars, var_names, "pt_tau", tree->pt2);
+    SetMvaInput(vars, var_names, "pt_mu", l1.Pt());
+    SetMvaInput(vars, var_names, "pt_tau", l2.Pt());
     SetMvaInput(vars, var_names, "pt_b1", b1.Pt());
     SetMvaInput(vars, var_names, "pt_b2", b2.Pt());
     SetMvaInput(vars, var_names, "DR_bb", b1.DeltaR(b2));
     SetMvaInput(vars, var_names, "DPhi_BBMET", MET.DeltaPhi(BB));
-    SetMvaInput(vars, var_names, "DR_ll", tree->drLT);
+    SetMvaInput(vars, var_names, "DR_ll", l1.DeltaR(l2));
     SetMvaInput(vars, var_names, "Pt_Htt", TT.Pt());
     SetMvaInput(vars, var_names, "DR_HBBHTT", TT.DeltaR(BB));
     SetMvaInput(vars, var_names, "Pt_Hbb", BB.Pt());
@@ -97,7 +97,8 @@ void MVA_mutau(const std::string& filePath, const std::string& category_name, co
     TMVA::Factory *factory = new TMVA::Factory( output_name, outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
 
-    AddVariablesToMVA(factory, MVA_Selections::Input_Variables(MVA_Selections::MuTau, eventCategory, method));
+    const MVA_Selections::ParamId key(MVA_Selections::MuTau, eventCategory, method);
+    AddVariablesToMVA(factory, MVA_Selections::Input_Variables(key));
 
     FlatTree* sigTree = new FlatTree();
     FlatTree* bkgTree = new FlatTree();
