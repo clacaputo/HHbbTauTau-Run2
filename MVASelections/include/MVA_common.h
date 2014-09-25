@@ -265,9 +265,10 @@ inline Double_t GetFileScaleFactor(const std::string& file_name)
 }
 
 bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Selections::EventCategory selectedCategory,
-                             MVA_Histograms& h);
+                             MVA_Selections::MvaMethod method, MVA_Histograms& h);
 
-void ApplySelection(TMVA::Factory *factory, FlatTree* tree, MVA_Selections::EventCategory selectedCategory, bool is_signal)
+void ApplySelection(TMVA::Factory *factory, FlatTree* tree, MVA_Selections::EventCategory selectedCategory,
+                    MVA_Selections::MvaMethod method, bool is_signal)
 {
     MVA_Histograms h(is_signal);
 
@@ -285,52 +286,30 @@ void ApplySelection(TMVA::Factory *factory, FlatTree* tree, MVA_Selections::Even
         if(tree->DetermineEventCategory() != selectedCategory)
             continue;
         std::vector<Double_t> vars;
-        const bool event_passed = ApplyFullEventSelection(tree, vars, selectedCategory, h);
+        const bool event_passed = ApplyFullEventSelection(tree, vars, selectedCategory, method, h);
         if(event_passed)
             AddEvent(factory, vars, is_signal, tree->weight * file_scale_factor);
     }
 }
 
-void TMVAtestAndTraining(TMVA::Factory *factory)
+void TMVAtestAndTraining(TMVA::Factory *factory, MVA_Selections::MvaMethod method)
 {
-    TCut mycuts = "";
-    TCut mycutb = "";
+    factory->PrepareTrainingAndTestTree("", "","SplitMode=Random");
 
-    factory->PrepareTrainingAndTestTree(mycuts, mycutb,"SplitMode=Random" );
-
-    cout<<"*******************************************Call BDT***************************************"<<endl;
-    // Adaptive Boost
-//	factory->BookMethod( TMVA::Types::kBDT, "BDT",
-//						"!H:!V:NTrees=850:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
-
-
-    factory->BookMethod( TMVA::Types::kBDT, "BDT",
+    if(method == MVA_Selections::BDT)
+        factory->BookMethod( TMVA::Types::kBDT, "BDT",
                         "!H:!V:NTrees=850:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
 
-
-    cout<<"**************************************	Call Fisher******************************************"<<endl;
-
-    factory->BookMethod( TMVA::Types::kBDT, "BDTMitFisher",
+    if(method == MVA_Selections::BDTMitFisher)
+        factory->BookMethod( TMVA::Types::kBDT, "BDTMitFisher",
                             "!H:!V:NTrees=50:UseFisherCuts:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20" );
 
-    cout<<"********************************************************************************"<<endl;
+    if(method == MVA_Selections::BDTD)
+        factory->BookMethod( TMVA::Types::kBDT, "BDTD","!H:!V:NTrees=400:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20:VarTransform=Decorrelate" );
 
-    cout<<"**************************************	Call Decorrelation + AdaBoost******************************************"<<endl;
-    // Decorrelation + Adaptive Boost
-    factory->BookMethod( TMVA::Types::kBDT, "BDTD","!H:!V:NTrees=400:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20:VarTransform=Decorrelate" );
-    cout<<"********************************************************************************"<<endl;
-
-
-    // Train MVAs using the set of training events
     factory->TrainAllMethods();
-
-    // ---- Evaluate all MVAs using the set of test events
     factory->TestAllMethods();
-
-    // ----- Evaluate and compare performance of all configured MVAs
     factory->EvaluateAllMethods();
-
-    // --------------------------------------------------------------
 }
 
 inline void AddVariablesToMVA(TMVA::Factory* factory, const MVA_Selections::str_vector& vars)

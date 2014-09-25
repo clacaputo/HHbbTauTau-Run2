@@ -1,5 +1,4 @@
-#ifndef MVASELECTIONS_H
-#define MVASELECTIONS_H
+#pragma once
 
 #include "AnalysisBase/include/AnalyzerData.h"
 #include "AnalysisBase/include/FlatTree.h"
@@ -13,17 +12,21 @@
 #include "TMVA/Reader.h"
 #include "TMVA/MethodCuts.h"
 
+#include "MVA_variables.h"
 
-class MVASelections
-{
+namespace MVA_Selections {
+
+class MvaReader {
 public:
 
-    MVASelections(const std::string& _mvaMethodName, const std::string& _mvaXMLfile):mvaMethodName(_mvaMethodName),
-    mvaXMLfile(_mvaXMLfile)
+    MvaReader(const std::string& _mvaMethodName, const std::string& _mvaXMLfile)
+        : mvaMethodName(_mvaMethodName), mvaXMLfile(_mvaXMLfile)
     {
-        TMVA::Tools::Instance();
+//        TMVA::Tools::Instance();
 
         reader = new TMVA::Reader("Silent");
+
+        const MVA_Selections::str_vector& vars
         reader->AddVariable("pt_mu", &var1);
         reader->AddVariable("pt_tau", &var2);
         reader->AddVariable("pt_b1", &var3);
@@ -66,10 +69,10 @@ public:
     }
 
 private:
-    TMVA::Reader* reader;
+    std::shared_ptr<TMVA::Reader> reader;
     std::string mvaMethodName;
     std::string mvaXMLfile;
     float var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13;
 };
 
-#endif // MVASELECTIONS_H
+} // namespace MVA_Selections

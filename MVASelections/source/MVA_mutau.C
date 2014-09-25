@@ -18,7 +18,7 @@
 #include "../include/MVA_common.h"
 
 bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Selections::EventCategory selectedCategory,
-                             MVA_Histograms& h)
+                             MVA_Selections::MvaMethod method, MVA_Histograms& h)
 {
     if(!tree->againstMuonTight2 || !tree->againstElectronLooseMVA2 ||
             tree->byCombinedIsolationDeltaBetaCorrRaw3Hits2 >= 1.5
@@ -44,7 +44,8 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     const TLorentzVector MET = tree->GetMetMomentum();
     const TLorentzVector TT_MET = TT + MET;
 
-    const MVA_Selections::var_map& var_names = MVA_Selections::Input_Variables_Map(MVA_Selections::MuTau, selectedCategory);
+    const MVA_Selections::var_map& var_names = MVA_Selections::Input_Variables_Map(MVA_Selections::MuTau,
+                                                                                   selectedCategory, method);
     vars.assign(var_names.size(), 0);
     SetMvaInput(vars, var_names, "pt_mu", tree->pt1);
     SetMvaInput(vars, var_names, "pt_tau", tree->pt2);
@@ -81,20 +82,22 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     return true;
 }
 
-void MVA_mutau(const std::string& filePath, const std::string& category_name, const std::string& suffix)
+void MVA_mutau(const std::string& filePath, const std::string& category_name, const std::string& method_name,
+               const std::string& suffix)
 {
     std::cout << "==> Start TMVAClassification" << std::endl;
 
     MVA_Selections::EventCategory eventCategory = MVA_Selections::EventCategoryFromString(category_name);
-    std::cout << "Training for event category: " << category_name << std::endl;
+    MVA_Selections::MvaMethod method = MVA_Selections::MvaMethodFromString(method_name);
+    std::cout << "Training for event category = '" << category_name << "', mva method '" << method_name << "'" << std::endl;
 
-    const std::string output_name = "TMVA_mutau_" + category_name + "_" + suffix;
+    const std::string output_name = "TMVA_mutau_" + category_name + "_" + method_name + "_" + suffix;
     TFile* outputFile = TFile::Open( (output_name + ".root").c_str(), "RECREATE" );
 
     TMVA::Factory *factory = new TMVA::Factory( output_name, outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
 
-    AddVariablesToMVA(factory, MVA_Selections::Input_Variables(MVA_Selections::MuTau, eventCategory));
+    AddVariablesToMVA(factory, MVA_Selections::Input_Variables(MVA_Selections::MuTau, eventCategory, method));
 
     FlatTree* sigTree = new FlatTree();
     FlatTree* bkgTree = new FlatTree();
@@ -104,10 +107,10 @@ void MVA_mutau(const std::string& filePath, const std::string& category_name, co
 
     outputFile->cd();
 
-    ApplySelection(factory, sigTree, eventCategory, true);
-    ApplySelection(factory, bkgTree, eventCategory, false);
+    ApplySelection(factory, sigTree, eventCategory, method, true);
+    ApplySelection(factory, bkgTree, eventCategory, method, false);
 
-    TMVAtestAndTraining(factory);
+    TMVAtestAndTraining(factory, method);
 
     outputFile->Close();
 
