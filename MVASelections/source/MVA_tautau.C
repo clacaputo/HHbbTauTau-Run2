@@ -18,20 +18,20 @@
 #include "../include/MVA_common.h"
 
 
-bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Histograms& h)
+bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, FlatTree::EventCategory selectedCategory,
+                             MVA_Histograms& h)
 {
     if(tree->byCombinedIsolationDeltaBetaCorrRaw3Hits1 >= 1
             || tree->byCombinedIsolationDeltaBetaCorrRaw3Hits2 >= 1
             || tree->Q1 * tree->Q2 != -1)
         return false;
 
-    const IndexVector jet_indexes = tree->CollectJets();
-    if(jet_indexes.size() < 2)
-        return false;
+    if(selectedCategory != FlatTree::TwoJets_TwoBtag)
+        throw std::runtime_error("Unsupported event category.");
 
     const IndexVector bjet_indexes = tree->CollectMediumBJets();
     if(bjet_indexes.size() < 2)
-        return false;
+        throw std::runtime_error("Unconsistent category information.");
 
     const TLorentzVector b1 = tree->GetBJetMomentum(bjet_indexes.at(0));
     const TLorentzVector b2 = tree->GetBJetMomentum(bjet_indexes.at(1));
@@ -79,9 +79,12 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
     return true;
 }
 
-void MVA_tautau(const TString& filePath)
+void MVA_tautau(const std::string& filePath, const std::string& category_name)
 {
     std::cout << "==> Start TMVAClassification" << std::endl;
+
+    FlatTree::EventCategory eventCategory = FlatTree::EventCategoryFromString(category_name);
+    std::cout << "Training for event category: " << category_name << std::endl;
 
     TString outfileName( "./out_tautau.root" );
     TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
@@ -113,8 +116,8 @@ void MVA_tautau(const TString& filePath)
 
     outputFile->cd();
 
-    ApplySelection(factory, sigTree, true);
-    ApplySelection(factory, bkgTree, false);
+    ApplySelection(factory, sigTree, eventCategory, true);
+    ApplySelection(factory, bkgTree, eventCategory, false);
 
     TMVAtestAndTraining(factory);
 

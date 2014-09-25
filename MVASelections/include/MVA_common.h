@@ -10,6 +10,23 @@
 typedef std::vector<size_t> IndexVector;
 
 struct FlatTree {
+    enum EventCategory { UnknownCategory, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
+
+    static EventCategory EventCategoryFromString(const std::string& category_name)
+    {
+        static std::map<std::string, EventCategory> category_name_map;
+        if(!category_name_map.size()) {
+            category_name_map["1jet0btag"] = OneJet_ZeroBtag;
+            category_name_map["1jet1btag"] = OneJet_OneBtag;
+            category_name_map["2jets0btag"] = TwoJets_ZeroBtag;
+            category_name_map["2jets1btag"] = TwoJets_OneBtag;
+            category_name_map["2jets2btag"] = TwoJets_TwoBtag;
+        }
+        if(!category_name_map.count(category_name))
+            throw std::runtime_error("Unknown category name");
+        return category_name_map[category_name];
+    }
+
     TChain* chain;
 
     std::vector<Float_t> *pt_BJets;
@@ -63,7 +80,7 @@ struct FlatTree {
 
     ~FlatTree() { delete chain; }
 
-    Int_t Add(const char* name) { return chain->Add(name); }
+    Int_t Add(const std::string& name) { return chain->Add(name.c_str()); }
     Long64_t GetEntriesFast() const { return chain->GetEntriesFast(); }
     Int_t GetEntry(Long64_t entry) { return chain->GetEntry(entry); }
     std::string GetShortFileName()
@@ -77,9 +94,10 @@ struct FlatTree {
 
     IndexVector CollectJets() const
     {
+        static const Double_t eta_cut = 2.4;
         IndexVector jet_indexes;
         for(size_t k = 0; k < eta_BJets->size(); ++k) {
-            if(TMath::Abs(eta_BJets->at(k)) < 2.4)
+            if(TMath::Abs(eta_BJets->at(k)) < eta_cut)
                 jet_indexes.push_back(k);
         }
         return jet_indexes;
@@ -87,9 +105,22 @@ struct FlatTree {
 
     IndexVector CollectMediumBJets() const
     {
+        static const Double_t medium_csv_wp = 0.679;
+        return CollectBJets(medium_csv_wp);
+    }
+
+    IndexVector CollectTightBJets() const
+    {
+        static const Double_t tight_csv_wp = 0.898;
+        return CollectBJets(tight_csv_wp);
+    }
+
+    IndexVector CollectBJets(Double_t csv_cut) const
+    {
+        static const Double_t eta_cut = 2.4;
         IndexVector jet_indexes;
         for(size_t k = 0; k < eta_BJets->size(); ++k) {
-            if(TMath::Abs(eta_BJets->at(k)) < 2.4 && csv_BJets->at(k) > 0.679)
+            if(TMath::Abs(eta_BJets->at(k)) < eta_cut && csv_BJets->at(k) > csv_cut)
                 jet_indexes.push_back(k);
         }
         return jet_indexes;
@@ -121,6 +152,26 @@ struct FlatTree {
         momentum.SetPtEtaPhiE(mvamet, 0, mvamet_phi, mvamet);
         return momentum;
     }
+
+    EventCategory DetermineEventCategory() const
+    {
+        const IndexVector jet_indexes = CollectJets();
+        if(jet_indexes.size() == 1) {
+            const IndexVector bjet_indexes = CollectTightBJets();
+            if(bjet_indexes.size() == 0) return OneJet_ZeroBtag;
+            if(bjet_indexes.size() == 1) return OneJet_OneBtag;
+        }
+
+        if(jet_indexes.size() >= 2) {
+            const IndexVector bjet_indexes = CollectMediumBJets();
+            if(bjet_indexes.size() == 0) return TwoJets_ZeroBtag;
+            if(bjet_indexes.size() == 1) return TwoJets_OneBtag;
+            if(bjet_indexes.size() >= 2) return TwoJets_TwoBtag;
+        }
+
+        return UnknownCategory;
+    }
+
 };
 
 inline TH1F* MakeTH1F(const std::string& name, const std::string& prefix, Int_t nbinsx,Double_t xlow,Double_t xup)
@@ -228,9 +279,10 @@ inline Double_t GetFileScaleFactor(const std::string& file_name)
     return file_name_map[file_name];
 }
 
-bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, MVA_Histograms& h);
+bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, FlatTree::EventCategory selectedCategory,
+                             MVA_Histograms& h);
 
-void ApplySelection(TMVA::Factory *factory, FlatTree* tree, bool is_signal)
+void ApplySelection(TMVA::Factory *factory, FlatTree* tree, FlatTree::EventCategory selectedCategory, bool is_signal)
 {
     MVA_Histograms h(is_signal);
 
@@ -245,8 +297,10 @@ void ApplySelection(TMVA::Factory *factory, FlatTree* tree, bool is_signal)
             std::cout << "New file: " << current_file_name << ", SF = " << file_scale_factor << std::endl;
             file_name = current_file_name;
         }
+        if(tree->DetermineEventCategory() != selectedCategory)
+            continue;
         std::vector<Double_t> vars;
-        const bool event_passed = ApplyFullEventSelection(tree, vars, h);
+        const bool event_passed = ApplyFullEventSelection(tree, vars, selectedCategory, h);
         if(event_passed)
             AddEvent(factory, vars, is_signal, tree->weight * file_scale_factor);
     }
