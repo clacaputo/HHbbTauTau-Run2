@@ -81,18 +81,18 @@ const str_vector& Input_Variables(Channel channel, EventCategory category)
             str_vector& v = l[ChannelCategoryPair(MuTau, TwoJets_TwoBtag)];
             v.push_back("pt_mu");
             v.push_back("pt_tau");
-            v.push_back("pt_b1");
+            //v.push_back("pt_b1");
             v.push_back("pt_b2");
             v.push_back("DR_bb");
-            v.push_back("DPhi_BBMET");
+            //v.push_back("DPhi_BBMET");
             v.push_back("DR_ll");
-            v.push_back("Pt_Htt");
-            v.push_back("DR_HBBHTT");
-            v.push_back("Pt_Hbb");
-            v.push_back("DeltaPhi_METTT");
-            v.push_back("PtH");
+            //v.push_back("Pt_Htt");
+            //v.push_back("DR_HBBHTT");
+            //v.push_back("Pt_Hbb");
+            //v.push_back("DeltaPhi_METTT");
+            //v.push_back("PtH");
             v.push_back("mT2");
-            v.push_back("mT1");
+            //v.push_back("mT1");
             v.push_back("Pt_Htt_MET");
         }
     }
