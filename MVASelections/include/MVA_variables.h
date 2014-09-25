@@ -200,15 +200,15 @@ const str_vector& Input_Variables(const ParamId& key)
             v.push_back("pt_b1");
             v.push_back("pt_b2");
             v.push_back("DR_bb");
-            v.push_back("DPhi_BBMET");
+            //v.push_back("DPhi_BBMET");
             v.push_back("DR_ll");
-            v.push_back("Pt_Htt");
-            v.push_back("DR_HBBHTT");
-            v.push_back("Pt_Hbb");
-            v.push_back("DeltaPhi_METTT");
-            v.push_back("PtH");
+            //v.push_back("Pt_Htt");
+            //v.push_back("DR_HBBHTT");
+            //v.push_back("Pt_Hbb");
+            //v.push_back("DeltaPhi_METTT");
+            //v.push_back("PtH");
             v.push_back("mT2");
-            v.push_back("mT1");
+            //v.push_back("mT1");
             v.push_back("Pt_Htt_MET");
         }
         {
@@ -218,15 +218,15 @@ const str_vector& Input_Variables(const ParamId& key)
             v.push_back("pt_b1");
             v.push_back("pt_b2");
             v.push_back("DR_bb");
-            v.push_back("DPhi_BBMET");
+            //v.push_back("DPhi_BBMET");
             v.push_back("DR_ll");
-            v.push_back("Pt_Htt");
-            v.push_back("DR_HBBHTT");
-            v.push_back("Pt_Hbb");
-            v.push_back("DeltaPhi_METTT");
-            v.push_back("PtH");
+            //v.push_back("Pt_Htt");
+            //v.push_back("DR_HBBHTT");
+            //v.push_back("Pt_Hbb");
+            //v.push_back("DeltaPhi_METTT");
+            //v.push_back("PtH");
             v.push_back("mT2");
-            v.push_back("mT1");
+            //v.push_back("mT1");
             v.push_back("Pt_Htt_MET");
         }
         {
@@ -236,16 +236,16 @@ const str_vector& Input_Variables(const ParamId& key)
             v.push_back("pt_b1");
             v.push_back("pt_b2");
             v.push_back("DR_bb");
-            v.push_back("DPhi_BBMET");
+            //v.push_back("DPhi_BBMET");
             v.push_back("DR_ll");
-            v.push_back("Pt_Htt");
-            v.push_back("DR_HBBHTT");
-            v.push_back("Pt_Hbb");
-            v.push_back("DeltaPhi_METTT");
-            v.push_back("PtH");
+            //v.push_back("Pt_Htt");
+            //v.push_back("DR_HBBHTT");
+            //v.push_back("Pt_Hbb");
+            //v.push_back("DeltaPhi_METTT");
+            //v.push_back("PtH");
             v.push_back("mT2");
-            v.push_back("mT1");
-            v.push_back("Pt_Htt_MET");
+            //v.push_back("mT1");
+            //v.push_back("Pt_Htt_MET");
         }
     }
     if(!l.count(key))
