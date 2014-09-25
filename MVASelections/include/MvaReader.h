@@ -83,11 +83,13 @@ public:
         typedef std::map<ParamId, std::string> FileNameMap;
         typedef std::map<ParamId, MvaReaderPtr> MvaReaderMap;
 
+        static const std::string path = "MVASelections/weights/";
+
         static FileNameMap file_names;
         if(!file_names.size()) {
-//            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDT)] = "";
-//            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTMitFisher)] = "";
-//            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTD)] = "";
+            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDT)] = "TMVA_mutau_2jets2btag_BDT_8var_BDT.weights.xml";
+            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTD)] = "TMVA_mutau_2jets2btag_BDTD_7var_BDTD.weights.xml";
+            file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTMitFisher)] = "TMVA_mutau_2jets2btag_BDTMitFisher_8var_BDTMitFisher.weights.xml";
         }
 
         if(event_category_name == "Inclusive")
@@ -98,8 +100,10 @@ public:
             return MvaReaderPtr();
 
         static MvaReaderMap readers;
-        if(!readers.count(key))
-            readers[key] = MvaReaderPtr(new MvaReader(key, file_names.at(key)));
+        if(!readers.count(key)) {
+            const std::string full_file_name = path + file_names.at(key);
+            readers[key] = MvaReaderPtr(new MvaReader(key, full_file_name));
+        }
 
         return readers.at(key);
     }
