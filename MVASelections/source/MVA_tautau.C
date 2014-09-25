@@ -26,10 +26,11 @@ bool ApplyFullEventSelection(const FlatTree* tree, std::vector<Double_t>& vars, 
             || tree->Q1 * tree->Q2 != -1)
         return false;
 
-    if(selectedCategory != FlatTree::TwoJets_TwoBtag)
+    if(selectedCategory != FlatTree::TwoJets_TwoBtag && selectedCategory != FlatTree::TwoJets_OneBtag &&
+            selectedCategory != FlatTree::TwoJets_ZeroBtag)
         throw std::runtime_error("Unsupported event category.");
 
-    const IndexVector bjet_indexes = tree->CollectMediumBJets();
+    const IndexVector bjet_indexes = tree->CollectJets(); //to run categories 2jets_*tag
     if(bjet_indexes.size() < 2)
         throw std::runtime_error("Unconsistent category information.");
 
@@ -86,10 +87,12 @@ void MVA_tautau(const std::string& filePath, const std::string& category_name)
     FlatTree::EventCategory eventCategory = FlatTree::EventCategoryFromString(category_name);
     std::cout << "Training for event category: " << category_name << std::endl;
 
-    TString outfileName( "./out_tautau.root" );
+    const std::string namePrefix = "./out_tautau_" + category_name + ".root";
+    TString outfileName(namePrefix);
     TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
 
-    TMVA::Factory *factory = new TMVA::Factory( "TMVA_tauTau", outputFile,
+    const std::string mvaPrefix = "TMVA_tauTau_" + category_name;
+    TMVA::Factory *factory = new TMVA::Factory( mvaPrefix, outputFile,
                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
 
     factory->AddVariable("pt_mu", 'F');
