@@ -273,8 +273,8 @@ protected:
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            //const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
-            const double m_ttbb_kinFit = 10;
+            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            //const double m_ttbb_kinFit = 10;
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
@@ -296,12 +296,12 @@ protected:
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName)) ||
+                    if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) ||*/
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
                     else if(category.IsSignal())
-                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 50);
                     else
                         stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
