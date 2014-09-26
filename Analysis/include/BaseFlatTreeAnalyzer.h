@@ -176,6 +176,7 @@ protected:
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
             for(auto eventCategory : eventCategories) {
+                if(!PassMvaCut(event, eventCategory)) continue;
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                 if(dataCategory.name == DYJets.name && std::abs(event.pdgId_2_MC) == particles::tau.RawCode())
@@ -188,6 +189,7 @@ protected:
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
+    virtual bool PassMvaCut(const ntuple::Flat& event, EventCategory eventCategory) = 0;
 
     virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
     {
@@ -289,16 +291,18 @@ protected:
                     : std::numeric_limits<double>::lowest();
             anaData.MVA_BDT().Fill(mva_BDT, weight);
 
-            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
-            const double mva_BDTD = mvaReader_BDTD
-                    ? mvaReader_BDTD->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-                    : std::numeric_limits<double>::lowest();
+//            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
+//            const double mva_BDTD = mvaReader_BDTD
+//                    ? mvaReader_BDTD->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+//                    : std::numeric_limits<double>::lowest();
+            const double mva_BDTD = -1;
             anaData.MVA_BDTD().Fill(mva_BDTD, weight);
 
-            auto mvaReader_BDTMitFisher = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTMitFisher);
-            const double mva_BDTMitFisher = mvaReader_BDTMitFisher
-                    ? mvaReader_BDTMitFisher->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-                    : std::numeric_limits<double>::lowest();
+//            auto mvaReader_BDTMitFisher = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTMitFisher);
+//            const double mva_BDTMitFisher = mvaReader_BDTMitFisher
+//                    ? mvaReader_BDTMitFisher->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+//                    : std::numeric_limits<double>::lowest();
+            const double mva_BDTMitFisher = -1;
             anaData.MVA_BDTMitFisher().Fill(mva_BDTMitFisher, weight);
         }
     }
@@ -404,17 +408,17 @@ protected:
                     continue;
                 }
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
-                //anaData.m_sv().Write(limitDataCategory.second.c_str());
-                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
+                anaData.m_sv().Write(limitDataCategory.second.c_str());
+//                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
                 const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
-		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
+//		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
+//		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
 
-//                anaData.m_sv_down().Write(nameDown.c_str());
-//                anaData.m_sv_up().Write(nameUp.c_str());
+                anaData.m_sv_down().Write(nameDown.c_str());
+                anaData.m_sv_up().Write(nameUp.c_str());
             }
         }
         outputFile->Close();
