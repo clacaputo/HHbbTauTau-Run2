@@ -392,7 +392,7 @@ protected:
         flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
 
         // Kinematic fit
-        flatTree->m_kinfit_bb_tt() = kinfitResults.fit_bb_tt.has_valid_mass ? kinfitResults.fit_bb_tt.mass : default_value;
+        //flatTree->m_kinfit_bb_tt() = kinfitResults.fit_bb_tt.has_valid_mass ? kinfitResults.fit_bb_tt.mass : default_value;
         flatTree->m_kinfit_bb_down_tt_down() = kinfitResults.fit_bb_down_tt_down.has_valid_mass ? kinfitResults.fit_bb_down_tt_down.mass : default_value;
         flatTree->m_kinfit_bb_down_tt_up() = kinfitResults.fit_bb_down_tt_up.has_valid_mass ? kinfitResults.fit_bb_down_tt_up.mass : default_value;
         flatTree->m_kinfit_bb_up_tt_down() = kinfitResults.fit_bb_up_tt_down.has_valid_mass ? kinfitResults.fit_bb_up_tt_down.mass : default_value;
@@ -400,6 +400,11 @@ protected:
         flatTree->m_kinfit_bb() = kinfitResults.fit_bb.has_valid_mass ? kinfitResults.fit_bb.mass : default_value;
         flatTree->m_kinfit_bb_down() = kinfitResults.fit_bb_down.has_valid_mass ? kinfitResults.fit_bb_down.mass : default_value;
         flatTree->m_kinfit_bb_up() = kinfitResults.fit_bb_up.has_valid_mass ? kinfitResults.fit_bb_up.mass : default_value;
+
+        flatTree->m_kinfit_bb_tt() = kinfitResults.fit_bb_tt.mass;
+        flatTree->m_kinfit_bb_tt_convergence() = kinfitResults.fit_bb_tt.convergence;
+        flatTree->m_kinfit_bb_tt_chi2() = kinfitResults.fit_bb_tt.chi2;
+        flatTree->m_kinfit_bb_tt_pull_balance() = kinfitResults.fit_bb_tt.pull_balance;
 
         // Hhh generator info candidate
         if(final_state_MC.resonance) {

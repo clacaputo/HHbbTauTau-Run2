@@ -128,7 +128,10 @@
     \
     \
     /* Kinematic fit variables */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_tt) /* Four body mass calculated using kinematic fit */ \
+    SIMPLE_VAR(Double_t, m_kinfit_bb_tt) /* Four body mass calculated using kinematic fit */ \
+    SIMPLE_VAR(Int_t, m_kinfit_bb_tt_convergence) /* */ \
+    SIMPLE_VAR(Double_t, m_kinfit_bb_tt_chi2) /* */ \
+    SIMPLE_VAR(Double_t, m_kinfit_bb_tt_pull_balance) /* */ \
     SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_down) /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled down by their uncertainties */ \
     SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_up) /* Four body mass calculated using kinematic fit when BjetES scaled down and TauES scaled up by their uncertainties */ \
     SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_down) /* Four body mass calculated using kinematic fit when BjetES scaled up and TauES scaled down by their uncertainties */ \

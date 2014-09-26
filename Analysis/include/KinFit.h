@@ -115,6 +115,9 @@ struct FitResults {
 
     bool has_valid_mass;
     double mass;
+    Int_t convergence;
+    Double_t chi2;
+    Double_t pull_balance;
 
     FitResults() : has_valid_mass(false), mass(default_value) {}
 };
@@ -133,7 +136,7 @@ struct FitResultsWithUncertainties {
 
 inline FitResults FourBodyFit(const FourBodyFitInput& input)
 {
-    static const bool debug = true;
+    static const bool debug = false;
     static const Int_t higgs_mass_hypotesis = 125;
     static const Int_t convergence_cut = 0;
     static const Double_t chi2_cut = 25;
@@ -197,6 +200,10 @@ inline FitResults FourBodyFit(const FourBodyFitInput& input)
         std::cout << "fit mH =           " << mH << std::endl;
     }
 
+    result.convergence = convergence;
+    result.chi2 = chi2;
+    result.mass = mH;
+    result.pull_balance = pull_balance;
     if (convergence > convergence_cut && chi2 < chi2_cut && pull_balance > pull_balance_cut) {
         result.mass = mH;
         result.has_valid_mass = true;
