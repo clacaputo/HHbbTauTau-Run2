@@ -321,8 +321,18 @@ protected:
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
-                    else if(category.IsSignal())
-                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 50);
+                    else if(category.IsSignal()){
+                        if (eventCategory == EventCategory::TwoJets_TwoBtag){
+                            if (category.name == "SIGNAL ggHhh300")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)", category.color, 1);
+                            if (category.name == "SIGNAL Radion500")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                            if (category.name == "SIGNAL Graviton500")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                        }
+                        else
+                            stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                    }
                     else
                         stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
