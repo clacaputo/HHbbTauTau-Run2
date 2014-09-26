@@ -329,6 +329,10 @@ protected:
                             stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
                             if (category.name == "SIGNAL Graviton500")
                             stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                            if (category.name == "SIGNAL Radion1000")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
+                            if (category.name == "SIGNAL Graviton1000")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
                         }
                         else
                             stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
