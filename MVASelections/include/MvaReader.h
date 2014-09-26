@@ -87,6 +87,14 @@ public:
 
         static FileNameMap file_names;
         if(!file_names.size()) {
+            file_names[ParamId(MuTau, TwoJets_ZeroBtag, BDT)] = "TMVA_mutau_2jets0btag_BDT_8var_BDT.weights.xml";
+            file_names[ParamId(MuTau, TwoJets_ZeroBtag, BDTD)] = "TMVA_mutau_2jets0btag_BDTD_8var_BDTD.weights.xml";
+            file_names[ParamId(MuTau, TwoJets_ZeroBtag, BDTMitFisher)] = "TMVA_mutau_2jets0btag_BDTMitFisher_7var_BDTMitFisher.weights.xml";
+
+            file_names[ParamId(MuTau, TwoJets_OneBtag, BDT)] = "TMVA_mutau_2jets1btag_BDT_8var_BDT.weights.xml";
+            file_names[ParamId(MuTau, TwoJets_OneBtag, BDTD)] = "TMVA_mutau_2jets1btag_BDTD_8var_BDTD.weights.xml";
+            file_names[ParamId(MuTau, TwoJets_OneBtag, BDTMitFisher)] = "TMVA_mutau_2jets1btag_BDTMitFisher_8var_BDTMitFisher.weights.xml";
+
             file_names[ParamId(MuTau, TwoJets_TwoBtag, BDT)] = "TMVA_mutau_2jets2btag_BDT_8var_BDT.weights.xml";
             file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTD)] = "TMVA_mutau_2jets2btag_BDTD_7var_BDTD.weights.xml";
             file_names[ParamId(MuTau, TwoJets_TwoBtag, BDTMitFisher)] = "TMVA_mutau_2jets2btag_BDTMitFisher_8var_BDTMitFisher.weights.xml";
