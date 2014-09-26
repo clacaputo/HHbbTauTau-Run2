@@ -124,17 +124,17 @@ blue
 ggH_hh_bbtautau_350.root 0.0345
 
 [SIGNAL ggHhh300]
-50x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)
+10x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)
 blue
 ggH_hh_bbtautau_300.root 0.0037
 
 [SIGNAL Radion500]
-50x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)
+10x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)
 red
 Radion_500.root 0.0136
 
 [SIGNAL Graviton500]
-50x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)
+10x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)
 green
 Graviton_500.root 0.0051
 

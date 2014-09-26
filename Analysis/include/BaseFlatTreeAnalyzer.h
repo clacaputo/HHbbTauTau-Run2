@@ -278,8 +278,8 @@ protected:
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-//            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
-            const double m_ttbb_kinFit = 10;
+            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            //const double m_ttbb_kinFit = 10;
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
@@ -325,8 +325,22 @@ protected:
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
-                    else if(category.IsSignal())
-                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 50);
+                    else if(category.IsSignal()){
+                        if (eventCategory == EventCategory::TwoJets_TwoBtag){
+                            if (category.name == "SIGNAL ggHhh300")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)", category.color, 1);
+                            if (category.name == "SIGNAL Radion500")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                            if (category.name == "SIGNAL Graviton500")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                            if (category.name == "SIGNAL Radion1000")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
+                            if (category.name == "SIGNAL Graviton1000")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
+                        }
+                        else
+                            stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                    }
                     else
                         stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
