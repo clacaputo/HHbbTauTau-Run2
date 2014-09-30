@@ -37,10 +37,20 @@ namespace analysis {
 
 namespace detail {
 
-const std::vector<std::string> treeNames = {"events", "electrons", "muons", "taus", "PFCand", "jets",  "vertices", "genParticles",
-                                           "triggers", "triggerObjects", "METs", /*"METsMVAeTau", "METsMVAmuTau",
-                                            "METsMVAtauTau",*/ "METsPF", "METsTC",
-                                           "genMETs"};
+template<typename Tree>
+struct TreeVersionTag {
+    static unsigned GetVersion() { return 1; }
+};
+
+template<>
+struct TreeVersionTag<ntuple::GenEventTree> {
+    static unsigned GetVersion() { return 2; }
+};
+
+const std::vector<std::string> treeNames = { "events", "electrons", "muons", "taus", "PFCand", "jets", "vertices",
+                                             "genParticles", "triggers", "triggerObjects", "METs", "METsPF", "METsTC",
+                                             "genMETs", "genEvents"
+};
 
 typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::ElectronTree>,
@@ -55,29 +65,27 @@ typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::METTree>,
                     std::shared_ptr<ntuple::METTree>,
                     std::shared_ptr<ntuple::METTree>,
-//                    std::shared_ptr<ntuple::METTree>,
-//                    std::shared_ptr<ntuple::METTree>,
-//                    std::shared_ptr<ntuple::METTree>,
-                    std::shared_ptr<ntuple::GenMETTree> > Forest;
+                    std::shared_ptr<ntuple::GenMETTree>,
+                    std::shared_ptr<ntuple::GenEventTree> > Forest;
 
 template<typename Tree>
 inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile,
-                       const std::string& treeName ,bool extractMCtruth)
+                       const std::string& treeName, bool extractMCtruth, unsigned maxVersion)
 {
-    tree = Tree::IsMCtruth() && !extractMCtruth ? std::shared_ptr<Tree>()
-                                                : std::shared_ptr<Tree>( new Tree(inputFile, treeName) );
+    const bool createTree = TreeVersionTag<Tree>::GetVersion() <= maxVersion && (!Tree::IsMCtruth() || extractMCtruth);
+    tree = createTree ? std::shared_ptr<Tree>( new Tree(inputFile, treeName) ) : std::shared_ptr<Tree>();
 }
 
 template<size_t N = 0>
 inline typename std::enable_if< N == std::tuple_size<Forest>::value >::type
-CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth) {}
+CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth, unsigned maxVersion) {}
 
 template<size_t N = 0>
 inline typename std::enable_if< (N < std::tuple_size<Forest>::value) >::type
-CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth)
+CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth, unsigned maxVersion)
 {
-    CreateTree(std::get<N>(forest), inputFile, treeNames.at(N), extractMCtruth);
-    CreateForest<N + 1>(forest, inputFile, extractMCtruth);
+    CreateTree(std::get<N>(forest), inputFile, treeNames.at(N), extractMCtruth, maxVersion);
+    CreateForest<N + 1>(forest, inputFile, extractMCtruth, maxVersion);
 }
 
 template<typename Tree, typename ObjectType>
@@ -131,9 +139,8 @@ ReadForest(Forest& forest, EventTuple& data, Long64_t& current_entry,
 
 class TreeExtractor{
 public:
-    TreeExtractor(const std::string& prefix, const std::string& input, bool _extractMCtruth)
-        :  extractMCtruth(_extractMCtruth)
-
+    TreeExtractor(const std::string& prefix, const std::string& input, bool _extractMCtruth, unsigned _maxTreeVersion)
+        :  extractMCtruth(_extractMCtruth), maxTreeVersion(_maxTreeVersion)
     {
         if (input.find(".root") != std::string::npos)
             inputFileNames.push(input);
@@ -163,6 +170,7 @@ public:
 
 private:
     bool extractMCtruth;
+    unsigned maxTreeVersion;
     std::shared_ptr<TFile> inputFile;
     std::queue<std::string> inputFileNames;
     std::shared_ptr<detail::Forest> forest;
@@ -185,7 +193,7 @@ private:
         }
         std::cout << "File " << fileName << " is opened." << std::endl;
         current_entry = -1;
-        detail::CreateForest(*forest, *inputFile, extractMCtruth);
+        detail::CreateForest(*forest, *inputFile, extractMCtruth, maxTreeVersion);
         return true;
     }
 };

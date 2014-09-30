@@ -40,6 +40,7 @@
 #include "TreeProduction/interface/MET.h"
 #include "TreeProduction/interface/GenMET.h"
 #include "TreeProduction/interface/PFCand.h"
+#include "TreeProduction/interface/GenEvent.h"
 
 #include "EventId.h"
 
@@ -59,10 +60,8 @@ typedef std::tuple< ntuple::Event,
                     ntuple::METVector,
                     ntuple::METVector,
                     ntuple::METVector,
-//                    ntuple::METVector,
-//                    ntuple::METVector,
-//                    ntuple::METVector,
-                    ntuple::GenMETVector > EventTuple;
+                    ntuple::GenMETVector,
+                    ntuple::GenEventVector > EventTuple;
 
 template<typename ObjectType>
 void ClearContainer(ObjectType& container) {}
@@ -97,48 +96,11 @@ public:
     const ntuple::GenParticleVector& genParticles() const { return std::get<7>(_data); }
     const ntuple::TriggerVector& triggers() const { return std::get<8>(_data); }
     const ntuple::TriggerObjectVector& triggerObjects() const { return std::get<9>(_data); }
-    const ntuple::MET& met() const {
-        const ntuple::METVector& metVector = std::get<10>(_data);
-        if (metVector.size() == 1)
-            return metVector.at(0);
-        throw std::runtime_error("more than 1 MET in the event");
-    }
-    const ntuple::MET& metPF() const {
-        const ntuple::METVector& metVector = std::get<11>(_data);
-        if (metVector.size() == 1)
-            return metVector.at(0);
-        throw std::runtime_error("more than 1 MET PF in the event");
-    }
-    const ntuple::MET& metTC() const {
-        const ntuple::METVector& metVector = std::get<12>(_data);
-        if (metVector.size() == 1)
-            return metVector.at(0);
-        throw std::runtime_error("more than 1 MET TC in the event");
-    }
-    const ntuple::GenMET& genMet() const {
-        const ntuple::GenMETVector& genMetVector = std::get<13>(_data);
-        if (genMetVector.size() == 1)
-            return genMetVector.at(0);
-        throw std::runtime_error("more than 1 gen MET in the event");
-    }
-//    const ntuple::MET& metMVAeTau() const {
-//        const ntuple::METVector& metVector = std::get<14>(_data);
-//        if (metVector.size() == 1)
-//            return metVector.at(0);
-//        throw std::runtime_error("more than 1 MET MVA in the event");
-//    }
-//    const ntuple::MET& metMVAmuTau() const {
-//        const ntuple::METVector& metVector = std::get<15>(_data);
-//        if (metVector.size() == 1)
-//            return metVector.at(0);
-//        throw std::runtime_error("more than 1 MET MVA in the event");
-//    }
-//    const ntuple::MET& metMVAtauTau() const {
-//        const ntuple::METVector& metVector = std::get<16>(_data);
-//        if (metVector.size() == 1)
-//            return metVector.at(0);
-//        throw std::runtime_error("more than 1 MET MVA in the event");
-//    }
+    const ntuple::MET& met() const { return std::get<10>(_data).at(0); }
+    const ntuple::MET& metPF() const { return std::get<11>(_data).at(0); }
+    const ntuple::MET& metTC() const { return std::get<12>(_data).at(0); }
+    const ntuple::GenMET& genMet() const { return std::get<13>(_data).at(0); }
+    const ntuple::GenEvent& genEvent() const { return std::get<14>(_data).at(0); }
 
     detail::EventTuple& data() { return _data; }
     void Clear() { detail::ClearEventTuple(_data); }

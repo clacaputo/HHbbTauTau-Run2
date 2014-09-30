@@ -100,7 +100,8 @@ public:
         if ( _prefix != "external" ){
             timer = std::shared_ptr<tools::Timer>(new tools::Timer(config.ReportInterval()));
             treeExtractor = std::shared_ptr<TreeExtractor>(
-                        new TreeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()));
+                        new TreeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth(),
+                                          config.MaxTreeVersion()));
 
         }
         TH1::SetDefaultSumw2();
