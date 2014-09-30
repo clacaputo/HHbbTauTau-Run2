@@ -50,6 +50,8 @@ public:
 
         if (!FindAnalysisFinalState(muTau_MC) && config.RequireSpecificFinalState()) return;
 
+
+
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 

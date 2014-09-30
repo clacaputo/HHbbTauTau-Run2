@@ -164,15 +164,17 @@ public:
         }
     }
 
-    GenParticleSet GetParticles(const particles::ParticleCodes& particleCodes) const
+    GenParticleSet GetParticles(const particles::ParticleCodes& particleCodes, double pt = 0) const
     {
         GenParticleSet results;
         for (const particles::ParticleCode& code : particleCodes){
             const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(code);
             if (code_iter == particleCodeMap.end())
                 continue;
-            for (const GenParticle* particle : code_iter->second)
+            for (const GenParticle* particle : code_iter->second){
+                if (particle->momentum.Pt() <= pt) continue;
                 results.insert(particle);
+            }
         }
         return results;
     }

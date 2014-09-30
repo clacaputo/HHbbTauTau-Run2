@@ -364,6 +364,11 @@ namespace tauCorrections {
     }
 }
 
+namespace DrellYannCategorization {
+    const double minimal_genParticle_pt = 8; // > GeV
+    const double deltaR_matchGenParticle = 0.5; // <
+}
+
 namespace customTauMVA {
     bool ComputeAntiElectronMVA3New(int category, float raw, int WP)
     {

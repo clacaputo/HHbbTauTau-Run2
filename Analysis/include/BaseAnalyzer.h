@@ -579,6 +579,7 @@ protected:
     std::shared_ptr<TH1D> pu_weights;
     MvaMetProducer mvaMetProducer;
     std::shared_ptr<RecoilCorrectionProducer> recoilCorrectionProducer;
+
 };
 
 } // analysis

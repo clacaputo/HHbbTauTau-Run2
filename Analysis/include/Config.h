@@ -44,6 +44,7 @@ public:
     ANA_CONFIG_PARAMETER(bool, ExpectedOneNonSMResonance, false)
     ANA_CONFIG_PARAMETER(bool, ExpectedAtLeastOneSMResonanceToTauTauOrToBB, false)
     ANA_CONFIG_PARAMETER(bool, RequireSpecificFinalState, false)
+    ANA_CONFIG_PARAMETER(bool, DoZEventCategorization, false)
 
     ANA_CONFIG_PARAMETER(bool, ApplyPUreweight, false)
     ANA_CONFIG_PARAMETER(std::string, PUreweight_fileName, "")
@@ -63,7 +64,8 @@ public:
     bool extractMCtruth()
     {
         return ApplyTauESCorrection() || ApplyRecoilCorrection() || RequireSpecificFinalState()
-                || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB();
+                || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB()
+                || DoZEventCategorization();
     }
 
 };

@@ -34,6 +34,7 @@
     SIMPLE_VAR(Int_t, lumi) /* Lumi */ \
     SIMPLE_VAR(Int_t, evt) /* Event */ \
     SIMPLE_VAR(Int_t, channel) /* Analysis channel as defined in ntuple::Channel */ \
+    SIMPLE_VAR(Int_t, eventType) /* event type category */ \
     \
     \
     /* First signal lepton :  muon for MuTau, electron for ETau, leading (in pT) tau for TauTau */ \
@@ -245,4 +246,5 @@ namespace ntuple {
 inline float DefaultFloatFillValueForFlatTree() { return std::numeric_limits<float>::lowest(); }
 inline int DefaultIntegerFillValueForFlatTree() { return std::numeric_limits<int>::lowest(); }
 enum class Channel { ETau = 0, MuTau = 1, TauTau = 2 };
+enum class EventType { Unknown = 0, ZL = 1, ZJ = 2, ZTT = 3, OtherZ = 4 };
 }

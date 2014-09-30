@@ -51,6 +51,7 @@ public:
             flatTree->Write();
     }
 
+
 protected:
 
     virtual void CalculateTriggerWeights(const Candidate& candidate) override
@@ -298,6 +299,54 @@ protected:
         return true;
     }
 
+
+    ntuple::EventType DoEventCategorization(const analysis::Candidate& higgs)
+    {
+        using namespace cuts::Htautau_Summer13::DrellYannCategorization;
+        if(!config.DoZEventCategorization())
+            return ntuple::EventType::Unknown;
+
+        static const particles::ParticleCodes Zcode = { particles::Z };
+        static const particles::ParticleCodes ZDecay_1 = { particles::tau, particles::tau };
+        static const particles::ParticleCodes ZDecay_2 = { particles::e, particles::e };
+        static const particles::ParticleCodes ZDecay_3 = { particles::mu, particles::mu };
+
+        static const particles::ParticleCodes particlesCodes = { particles::e, particles::mu };
+
+        const GenParticleSet Zparticles = genEvent.GetParticles(Zcode);
+
+        if (Zparticles.size() > 1 || Zparticles.size() == 0)
+            throw exception("not 1 Z per event");
+
+        const GenParticle* Z_mc = *Zparticles.begin();
+        GenParticlePtrVector ZProducts;
+        if(FindDecayProducts(*Z_mc, ZDecay_1,ZProducts))
+            return ntuple::EventType::ZTT;
+
+        if (!FindDecayProducts(*Z_mc, ZDecay_2,ZProducts) &&
+                !FindDecayProducts(*Z_mc, ZDecay_3,ZProducts))
+            throw exception("not leptonic decay");
+
+
+        const GenParticleSet selectedParticles = genEvent.GetParticles(particlesCodes,minimal_genParticle_pt);
+
+        const analysis::Candidate& firstDaughter = higgs.daughters.at(0);
+        const analysis::Candidate& secondDaughter = higgs.daughters.at(1);
+        const GenParticleSet matchedParticles_first =
+                FindMatchedParticles(firstDaughter.momentum,selectedParticles,deltaR_matchGenParticle);
+        const GenParticleSet matchedParticles_second =
+                FindMatchedParticles(secondDaughter.momentum,selectedParticles,deltaR_matchGenParticle);
+
+        if (matchedParticles_first.size() == 1 && matchedParticles_second.size() == 1)
+            return ntuple::EventType::ZL;
+        else if (matchedParticles_first.size() == 0 && matchedParticles_second.size() == 0)
+            return ntuple::EventType::ZJ;
+        else
+            return ntuple::EventType::OtherZ;
+    }
+
+
+
     analysis::kinematic_fit::FitResultsWithUncertainties RunKinematicFit(const CandidateVector& bjets,
                                                                          const Candidate& higgs_to_taus,
                                                                          const ntuple::MET& met, bool fit_two_bjets,
@@ -329,11 +378,12 @@ protected:
                       const ntuple::MET& pfMET, const finalState::bbTauTau& final_state_MC)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
-
+        ntuple::EventType eventType = DoEventCategorization(higgs);
         // Event
         flatTree->run() = event->eventInfo().run;
         flatTree->lumi() = event->eventInfo().lumis;
         flatTree->evt() = event->eventInfo().EventId;
+        flatTree->eventType() = eventType;
 
         flatTree->npv() = vertices.size();
         if (config.ApplyPUreweight()){
