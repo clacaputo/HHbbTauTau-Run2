@@ -29,6 +29,9 @@
 class HHbbtautau_FlatTreeProducer : public analysis::BaseFlatTreeProducer {
 public:
     typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
+    typedef std::vector< std::pair<std::string, bool> > TriggerPathVector;
+    typedef std::pair<analysis::Candidate, TriggerPathVector> HiggsWithTriggerPath;
+    typedef std::map<analysis::Candidate, TriggerPathVector> Higgs_TriggerPathMap;
 
     HHbbtautau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
                                 const std::string& configFileName, const std::string& _prefix = "none",
@@ -86,7 +89,8 @@ public:
         const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
-        const Candidate higgs = SelectFullyHadronicHiggs(higgsTriggered);
+        selectedHiggsWithTriggerPath = SelectFullyHadronicHiggs(higgsTriggered);
+        const Candidate& higgs = selectedHiggsWithTriggerPath.first;
 
         const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
                                                                 event->jets(),primaryVertex,
@@ -173,9 +177,9 @@ protected:
         return higgs_JetsMap;
     }
 
-    analysis::CandidateVector ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap, bool useStandardTriggerMatch)
+    Higgs_TriggerPathMap ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap, bool useStandardTriggerMatch)
     {
-        analysis::CandidateVector triggeredHiggses;
+        Higgs_TriggerPathMap triggeredHiggses;
         for (const auto& higgs_iter : higgs_JetsMap) {
             const analysis::Candidate& higgs = higgs_iter.first;
             const analysis::CandidateVector& jets = higgs_iter.second;
@@ -206,24 +210,25 @@ protected:
                 }
 
                 if(!jetTriggerRequest || jetMatched) {
-                    triggeredHiggses.push_back(higgs);
-                    break;
+                    const TriggerPathVector::value_type path(interestingPath, jetTriggerRequest);
+                    triggeredHiggses[higgs].push_back(path);
                 }
             }
         }
         return triggeredHiggses;
     }
 
-    const analysis::Candidate& SelectFullyHadronicHiggs(const analysis::CandidateVector& higgses)
+    const Higgs_TriggerPathMap::value_type& SelectFullyHadronicHiggs(const Higgs_TriggerPathMap& higgses)
     {
         if(!higgses.size())
             throw std::runtime_error("no available higgs candidate to select");
-        const auto higgsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
+        const auto higgsSelector = [&] (const Higgs_TriggerPathMap::value_type& first,
+                const Higgs_TriggerPathMap::value_type& second) -> bool
         {
-            const ntuple::Tau& first_tau1 = correctedTaus.at(first.daughters.at(0).index);
-            const ntuple::Tau& first_tau2 = correctedTaus.at(first.daughters.at(1).index);
-            const ntuple::Tau& second_tau1 = correctedTaus.at(second.daughters.at(0).index);
-            const ntuple::Tau& second_tau2 = correctedTaus.at(second.daughters.at(1).index);
+            const ntuple::Tau& first_tau1 = correctedTaus.at(first.first.daughters.at(0).index);
+            const ntuple::Tau& first_tau2 = correctedTaus.at(first.first.daughters.at(1).index);
+            const ntuple::Tau& second_tau1 = correctedTaus.at(second.first.daughters.at(0).index);
+            const ntuple::Tau& second_tau2 = correctedTaus.at(second.first.daughters.at(1).index);
             const double first_iso = std::max(first_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
                                               first_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits);
             const double second_iso = std::max(second_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
@@ -254,9 +259,23 @@ protected:
     virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
     {
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::TauTau;
+        if(higgs != selectedHiggsWithTriggerPath.first)
+            throw analysis::exception("Inconsistet higgs selection");
         const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
         const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
-        triggerWeights = CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+
+        bool useDiTauJetWeight = true;
+        for(const auto& path : selectedHiggsWithTriggerPath.second) {
+            if(!path.second) {
+                useDiTauJetWeight = false;
+                break;
+            }
+        }
+
+        if(useDiTauJetWeight)
+            triggerWeights = DiTauJet::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+        else
+            triggerWeights = DiTau::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
     }
 
     virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
@@ -373,6 +392,7 @@ protected:
 private:
     analysis::BaseAnalyzerData anaData;
     analysis::finalState::bbTaujetTaujet tauTau_MC;
+    HiggsWithTriggerPath selectedHiggsWithTriggerPath;
 
 };
 
