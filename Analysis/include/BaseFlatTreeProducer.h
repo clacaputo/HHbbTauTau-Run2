@@ -378,12 +378,12 @@ protected:
                       const ntuple::MET& pfMET, const finalState::bbTauTau& final_state_MC)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
-        ntuple::EventType eventType = DoEventCategorization(higgs);
+
         // Event
         flatTree->run() = event->eventInfo().run;
         flatTree->lumi() = event->eventInfo().lumis;
         flatTree->evt() = event->eventInfo().EventId;
-        flatTree->eventType() = eventType;
+        flatTree->eventType() = static_cast<int>(DoEventCategorization(higgs));
 
         flatTree->npv() = vertices.size();
         if (config.ApplyPUreweight()){
