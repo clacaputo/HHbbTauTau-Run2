@@ -36,6 +36,7 @@ public:
     ANA_CONFIG_PARAMETER(unsigned, ReportInterval, 10)
     ANA_CONFIG_PARAMETER(bool, RunSingleEvent, false)
     ANA_CONFIG_PARAMETER(unsigned, SingleEventId, 0)
+    ANA_CONFIG_PARAMETER(unsigned, MaxTreeVersion, 1)
 
     ANA_CONFIG_PARAMETER(bool, isMC, false)
     ANA_CONFIG_PARAMETER(bool, ApplyTauESCorrection, false)
