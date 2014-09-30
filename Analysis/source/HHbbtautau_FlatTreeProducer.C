@@ -299,14 +299,14 @@ protected:
         flatTree->passiso_1() = false;
         flatTree->decayMode_1() = ntuple_tau_leg1.decayMode;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
-        flatTree->againstElectronLooseMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
-                                                                           ntuple_tau_leg1.againstElectronMVA3raw, 0);
-        flatTree->againstElectronMediumMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
-                                                                            ntuple_tau_leg1.againstElectronMVA3raw, 1);
-        flatTree->againstElectronTightMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
-                                                                           ntuple_tau_leg1.againstElectronMVA3raw, 2);
-        flatTree->againstElectronVTightMVA_1() = ComputeAntiElectronMVA3New(ntuple_tau_leg1.againstElectronMVA3category,
-                                                                            ntuple_tau_leg1.againstElectronMVA3raw, 3);
+        flatTree->againstElectronLooseMVA_1() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg1.againstElectronMVA3category, ntuple_tau_leg1.againstElectronMVA3raw, 0);
+        flatTree->againstElectronMediumMVA_1() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg1.againstElectronMVA3category, ntuple_tau_leg1.againstElectronMVA3raw, 1);
+        flatTree->againstElectronTightMVA_1() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg1.againstElectronMVA3category, ntuple_tau_leg1.againstElectronMVA3raw, 2);
+        flatTree->againstElectronVTightMVA_1() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg1.againstElectronMVA3category, ntuple_tau_leg1.againstElectronMVA3raw, 3);
         flatTree->againstElectronLoose_1() = ntuple_tau_leg1.againstElectronLoose;
         flatTree->againstElectronMedium_1() = ntuple_tau_leg1.againstElectronMedium;
         flatTree->againstElectronTight_1() = ntuple_tau_leg1.againstElectronTight;
