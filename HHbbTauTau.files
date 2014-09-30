@@ -273,3 +273,16 @@ MVASelections/source/MVA_mutau.C
 MVASelections/source/MVA_tautau.C
 MVASelections/include/MVA_common.h
 MVASelections/include/MVA_variables.h
+PatProduction/crab/multicrab_ggHhh.cfg
+PatProduction/crab/multicrab_ggAZh.cfg
+PatProduction/crab/multicrab_Embedded_EMu.cfg
+PatProduction/crab/multicrab_Embedded_ETau.cfg
+PatProduction/crab/multicrab_Embedded_MuMu.cfg
+PatProduction/crab/multicrab_Embedded_MuTau.cfg
+PatProduction/crab/multicrab_Embedded_TauTau.cfg
+PatProduction/crab/multicrab_Embedded_TT.cfg
+PatProduction/crab/multicrab_ggAZhTT.cfg
+PatProduction/crab/multicrab_ggbbH.cfg
+PatProduction/crab/multicrab_Graviton.cfg
+PatProduction/crab/multicrab_Radion.cfg
+TreeProduction/python/GenEventBlock_cfi.py
