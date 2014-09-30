@@ -48,6 +48,8 @@
 #include "PrintTools/include/RootPrintToPdf.h"
 #include "KinFit.h"
 
+#include "MVASelections/include/MvaReader.h"
+
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
 
@@ -79,12 +81,21 @@ public:
     TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
+    TH1D_ENTRY(pt_ttbb_nomet, 35, 0, 350)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_bb_MET, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_tt_MET, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
+    TH1D_ENTRY(MVA_BDT, 40, -1, 1)
+    TH1D_ENTRY(MVA_BDTD, 40, -1, 1)
+    TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
+    TH1D_ENTRY(mt_1, 50, 0, 50)
+    TH1D_ENTRY(mt_2, 50, 0, 300)
+    TH1D_ENTRY(pt_H_tt_MET, 35, 0, 350)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -102,7 +113,8 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
+                         const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
+                         bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
           WjetsData(_WjetsData), isBlind(_isBlind)
     {
@@ -164,10 +176,11 @@ protected:
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
             for(auto eventCategory : eventCategories) {
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight);
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight);
+                if(!PassMvaCut(event, eventCategory)) continue;
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                 if(dataCategory.name == DYJets.name && std::abs(event.pdgId_2_MC) == particles::tau.RawCode())
-                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], event, weight);
+                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], event, weight, eventCategory);
             }
         }
     }
@@ -176,6 +189,7 @@ protected:
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
+    virtual bool PassMvaCut(const ntuple::Flat& event, EventCategory eventCategory) = 0;
 
     virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
     {
@@ -211,7 +225,8 @@ protected:
     virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
                                const HistogramDescriptor& hist) = 0;
 
-    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight)
+    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight,
+                                EventCategory eventCategory)
     {
         anaData.m_sv().Fill(event.m_sv, weight);
         anaData.m_sv_up().Fill(event.m_sv_Up, weight);
@@ -231,10 +246,15 @@ protected:
         TLorentzVector MET;
         MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
         TMatrixD metcov(2,2);
-        metcov(0,0)=event.metcov00;
-        metcov(1,0)=event.metcov10;
-        metcov(0,1)=event.metcov01;
-        metcov(1,1)=event.metcov11;
+        metcov(0,0)=event.mvacov00;
+        metcov(1,0)=event.mvacov10;
+        metcov(0,1)=event.mvacov01;
+        metcov(1,1)=event.mvacov11;
+        TLorentzVector Htt_MET = Htt + MET;
+        anaData.pt_H_tt_MET().Fill(Htt_MET.Pt(), weight);
+        anaData.DeltaPhi_tt_MET().Fill(Htt.DeltaPhi(MET), weight);
+        anaData.mt_1().Fill(event.mt_1, weight);
+        anaData.mt_2().Fill(event.mt_2, weight);
         if(event.mass_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
@@ -249,18 +269,41 @@ protected:
             const TLorentzVector Hbb = b_momentums.at(0) + b_momentums.at(1);
             anaData.pt_H_bb().Fill(Hbb.Pt(),weight);
             anaData.m_bb().Fill(Hbb.M(), weight);
+            anaData.DeltaPhi_bb_MET().Fill(Hbb.DeltaPhi(MET), weight);
             anaData.DeltaPhi_hh().Fill(Htt.DeltaPhi(Hbb), weight);
             anaData.DeltaR_hh().Fill(Htt.DeltaR(Hbb), weight);
             const TLorentzVector Candidate_ttbb = Hbb + Htt + MET;
             anaData.m_ttbb().Fill(Candidate_ttbb.M(), weight);
             anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
+            anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit =
-                    analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            //const double m_ttbb_kinFit = 10;
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
-            //anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
-            //anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+            anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
+            anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+
+            const std::string category_name = eventCategoryMapName.at(eventCategory);
+            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
+            const double mva_BDT = mvaReader_BDT
+                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+                    : std::numeric_limits<double>::lowest();
+            anaData.MVA_BDT().Fill(mva_BDT, weight);
+
+//            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
+//            const double mva_BDTD = mvaReader_BDTD
+//                    ? mvaReader_BDTD->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+//                    : std::numeric_limits<double>::lowest();
+            const double mva_BDTD = -1;
+            anaData.MVA_BDTD().Fill(mva_BDTD, weight);
+
+//            auto mvaReader_BDTMitFisher = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTMitFisher);
+//            const double mva_BDTMitFisher = mvaReader_BDTMitFisher
+//                    ? mvaReader_BDTMitFisher->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+//                    : std::numeric_limits<double>::lowest();
+            const double mva_BDTMitFisher = -1;
+            anaData.MVA_BDTMitFisher().Fill(mva_BDTMitFisher, weight);
         }
     }
 
@@ -278,12 +321,26 @@ protected:
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-                    if(category.IsReference() || (category.IsSignal() && !category.NameContains(signalName)) ||
+                    if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) ||*/
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
-                    else if(category.IsSignal())
-                        stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                    else if(category.IsSignal()){
+                        if (eventCategory == EventCategory::TwoJets_TwoBtag){
+                            if (category.name == "SIGNAL ggHhh300")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x hh#rightarrow#tau#taubb(m_{H}=300 tan#beta=2.5)", category.color, 1);
+                            if (category.name == "SIGNAL Radion500")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                            if (category.name == "SIGNAL Graviton500")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=500)", category.color, 1);
+                            if (category.name == "SIGNAL Radion1000")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Radion#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
+                            if (category.name == "SIGNAL Graviton1000")
+                            stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
+                        }
+                        else
+                            stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                    }
                     else
                         stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
                 }
@@ -312,16 +369,17 @@ protected:
         static const std::vector< std::pair<std::string, std::string> > dataCategoriesForLimits = {
             { "VIRTUAL QCD", "QCD" }, { "TTbar", "TT" }, { "LIMITS VH125", "VH125" },
             { "LIMITS DiBoson", "VV" }, { "LIMITS Wjets", "W" }, { "ZJ", "ZJ" }, { "ZL", "ZL" },
-            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "bbH100", "bbH100" }, { "bbH110", "bbH110" },
-            { "bbH120", "bbH120" }, { "bbH130", "bbH130" }, { "bbH140", "bbH140" }, { "bbH160", "bbH160" },
-            { "bbH180", "bbH180" }, { "bbH200", "bbH200" }, { "bbH250", "bbH250" }, { "bbH300", "bbH300" },
-            { "bbH350", "bbH350" }, { "bbH400", "bbH400" }, { "bbH90", "bbH90" },
+            { "ZLL", "ZLL" }, { "LIMITS Ztautau", "ZTT" }, { "LIMITS bbH100", "bbH100" }, { "LIMITS bbH110", "bbH110" },
+            { "LIMITS bbH120", "bbH120" }, { "LIMITS bbH130", "bbH130" }, { "LIMITS bbH140", "bbH140" }, { "LIMITS bbH160", "bbH160" },
+            { "LIMITS bbH180", "bbH180" }, { "LIMITS bbH200", "bbH200" }, { "LIMITS bbH250", "bbH250" }, { "LIMITS bbH300", "bbH300" },
+            { "LIMITS bbH350", "bbH350" }, { "LIMITS bbH400", "bbH400" }, { "LIMITS bbH90", "bbH90" },
             { "DATA Tau", "data_obs" }, { "DATA TauPlusX", "data_obs" },
-            { "ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "ggAToZhToLLBB270", "ggAToZhToLLBB270" },
-            { "ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "ggAToZhToLLBB290", "ggAToZhToLLBB290" },
-            { "ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "ggAToZhToLLBB310", "ggAToZhToLLBB310" },
-            { "ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "ggAToZhToLLBB330", "ggAToZhToLLBB330" },
-            { "ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "ggAToZhToLLBB350", "ggAToZhToLLBB350" },
+            { "LIMITS ggAToZhToLLBB250", "ggAToZhToLLBB250" },
+            { "LIMITS ggAToZhToLLBB260", "ggAToZhToLLBB260" }, { "LIMITS ggAToZhToLLBB270", "ggAToZhToLLBB270" },
+            { "LIMITS ggAToZhToLLBB280", "ggAToZhToLLBB280" }, { "LIMITS ggAToZhToLLBB290", "ggAToZhToLLBB290" },
+            { "LIMITS ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "LIMITS ggAToZhToLLBB310", "ggAToZhToLLBB310" },
+            { "LIMITS ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "LIMITS ggAToZhToLLBB330", "ggAToZhToLLBB330" },
+            { "LIMITS ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "LIMITS ggAToZhToLLBB350", "ggAToZhToLLBB350" },
             { "ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
             { "ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
             { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
@@ -332,7 +390,12 @@ protected:
             { "LIMITS ggHhh280", "ggHTohhTo2Tau2B280" }, { "LIMITS ggHhh290", "ggHTohhTo2Tau2B290" },
             { "LIMITS ggHhh300", "ggHTohhTo2Tau2B300" }, { "LIMITS ggHhh310", "ggHTohhTo2Tau2B310" },
             { "LIMITS ggHhh320", "ggHTohhTo2Tau2B320" }, { "LIMITS ggHhh330", "ggHTohhTo2Tau2B330" },
-            { "LIMITS ggHhh340", "ggHTohhTo2Tau2B340" }, { "LIMITS ggHhh350", "ggHTohhTo2Tau2B350" }
+            { "LIMITS ggHhh340", "ggHTohhTo2Tau2B340" }, { "LIMITS ggHhh350", "ggHTohhTo2Tau2B350" },
+            { "LIMITS Radion300", "ggRadionTohhTo2Tau2B300" }, { "LIMITS Radion500", "ggRadionTohhTo2Tau2B500" },
+            { "LIMITS Radion700", "ggRadionTohhTo2Tau2B700" }, { "LIMITS Radion1000", "ggRadionTohhTo2Tau2B1000" },
+            { "LIMITS Graviton270", "ggGravitonTohhTo2Tau2B270" }, { "LIMITS Graviton300", "ggGravitonTohhTo2Tau2B300" },
+            { "LIMITS Graviton500", "ggGravitonTohhTo2Tau2B500" }, { "LIMITS Graviton700", "ggGravitonTohhTo2Tau2B700" },
+            { "LIMITS Graviton1000", "ggGravitonTohhTo2Tau2B1000" }
         };
 
         static const std::map<std::string, std::string> channelNameForFolder = {
@@ -359,17 +422,17 @@ protected:
                     continue;
                 }
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
-                //anaData.m_sv().Write(limitDataCategory.second.c_str());
-                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
-                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_4b_" + channel_name + "_8TeV";
+                anaData.m_sv().Write(limitDataCategory.second.c_str());
+//                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
+                const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
-		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
+//		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
+//		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
 
-//                anaData.m_sv_down().Write(nameDown.c_str());
-//                anaData.m_sv_up().Write(nameUp.c_str());
+                anaData.m_sv_down().Write(nameDown.c_str());
+                anaData.m_sv_up().Write(nameUp.c_str());
             }
         }
         outputFile->Close();
@@ -384,7 +447,8 @@ private:
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 }
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
+	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);

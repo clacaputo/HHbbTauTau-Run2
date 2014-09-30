@@ -23,7 +23,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
-cmsenv
+#cmsenv
+eval `scramv1 runtime -sh`
 export CMSSW_ROOT_PATH=$( cd $CMSSW_DATA_PATH/.. ; pwd )
 
 export GCC_PATH=$( find $CMSSW_ROOT_PATH/external/gcc/ -maxdepth 1 -type d | tail -n 1 )
