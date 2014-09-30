@@ -163,8 +163,8 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       electronTree.scET() = patElectron.superCluster()->energy()/cosh(patElectron.superCluster()->eta());
       electronTree.scRawEnergy() = patElectron.superCluster()->rawEnergy();
 
-      electronTree.dist_vec() = patElectron.userFloat("dist");
-      electronTree.dCotTheta() = patElectron.userFloat("dcot");
+//      electronTree.dist_vec() = patElectron.userFloat("dist");
+//      electronTree.dCotTheta() = patElectron.userFloat("dcot");
       electronTree.hasMatchedConversion() = ! patElectron.userInt("antiConv");
 
       // Vertex association

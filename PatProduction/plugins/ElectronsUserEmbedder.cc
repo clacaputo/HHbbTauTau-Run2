@@ -208,16 +208,18 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         float nHits = p_inner.numberOfHits();
 
         ConversionFinder convFinder;
-        vector<ConversionInfo> v_convInfos = convFinder.getConversionInfos(*(aElectron.core()), tracks_h,
-                                                                           gsftracks_h, evt_bField);
-        ConversionInfo convInfo  = convFinder.getConversionInfo(*aGsf, tracks_h, gsftracks_h, evt_bField);
-        double els_conv_dist     = convInfo.dist();
-        double els_conv_dcot     = convInfo.dcot();
+//        vector<ConversionInfo> v_convInfos = convFinder.getConversionInfos(*(aElectron.core()), tracks_h,
+//                                                                           gsftracks_h, evt_bField);
+//        std::cout << "before conversion" << std::endl;
+//        ConversionInfo convInfo  = convFinder.getConversionInfo(*aGsf, tracks_h, gsftracks_h, evt_bField);
+//        std::cout << "after conversion" << std::endl;
+//        double els_conv_dist     = convInfo.dist();
+//        double els_conv_dcot     = convInfo.dcot();
         //double els_conv_radius = convInfo.radiusOfConversion();
         //math::XYZPoint els_conv_Point = convInfo.pointOfConversion();
         //    std::cout<<els_conv_Point<<std::endl;
-        reco::TrackRef els_conv_ctfRef = convInfo.conversionPartnerCtfTk();
-        reco::GsfTrackRef els_conv_gsfRef = convInfo.conversionPartnerGsfTk();
+//        reco::TrackRef els_conv_ctfRef = convInfo.conversionPartnerCtfTk();
+//        reco::GsfTrackRef els_conv_gsfRef = convInfo.conversionPartnerGsfTk();
         //double els_conv_delMissHits = convInfo.deltaMissingHits();
 
         float dPhi  = aElectron.deltaPhiSuperClusterTrackAtVtx();
@@ -227,8 +229,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         //cout << "dEta " << dEta << " dPhi " << dPhi << " -- dcot " << els_conv_dcot << " -- nHits " << nHits << endl;
 
         aElectron.addUserFloat("nHits", nHits);
-        aElectron.addUserFloat("dist", fabs(els_conv_dist));
-        aElectron.addUserFloat("dcot", fabs(els_conv_dcot));
+//        aElectron.addUserFloat("dist", fabs(els_conv_dist));
+//        aElectron.addUserFloat("dcot", fabs(els_conv_dcot));
         aElectron.addUserFloat("dPhi", fabs(dPhi));
         aElectron.addUserFloat("dEta", fabs(dEta));
         aElectron.addUserFloat("sihih", sihih);

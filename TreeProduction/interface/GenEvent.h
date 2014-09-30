@@ -29,9 +29,7 @@
 #include "SmartTree.h"
 
 #define GENEVENT_DATA() \
-    SIMPLE_VAR(UInt_t, processID) \
-    SIMPLE_VAR(Float_t, ptHat) \
-    VECTOR_VAR(Float_t, pdfWeights) \
+    SIMPLE_VAR(Float_t, embeddedWeight) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

@@ -45,7 +45,8 @@ def addTreeSequence(process, includeSim, treeOutput):
     )
 
     process.simTreeContentSequence = cms.Sequence()
+
     if includeSim:
-        process.simTreeContentSequence = cms.Sequence(process.genParticleBlock + process.genMETBlock)
+        process.simTreeContentSequence = cms.Sequence(process.genParticleBlock + process.genEventBlock + process.genMETBlock)
 
     return

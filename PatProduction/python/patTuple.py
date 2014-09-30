@@ -38,6 +38,7 @@ process.source.inputCommands = cms.untracked.vstring(
 from HHbbTauTau.PatProduction.patOptions import *
 parseAndApplyOptions(process)
 
+
 from HHbbTauTau.PatProduction.patMuons import *
 applyMuonParameters(process)
 
