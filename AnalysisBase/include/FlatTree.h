@@ -129,17 +129,17 @@
     \
     \
     /* Kinematic fit variables */ \
-    SIMPLE_VAR(Double_t, m_kinfit_bb_tt) /* Four body mass calculated using kinematic fit */ \
-    SIMPLE_VAR(Int_t, m_kinfit_bb_tt_convergence) /* */ \
-    SIMPLE_VAR(Double_t, m_kinfit_bb_tt_chi2) /* */ \
-    SIMPLE_VAR(Double_t, m_kinfit_bb_tt_pull_balance) /* */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_down) /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled down by their uncertainties */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_up) /* Four body mass calculated using kinematic fit when BjetES scaled down and TauES scaled up by their uncertainties */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_down) /* Four body mass calculated using kinematic fit when BjetES scaled up and TauES scaled down by their uncertainties */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_up) /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled up by their uncertainties */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb) /* Mass of two bjets with highest CSV value calculated using kinematic fit */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_down) /* Mass of two bjets with highest CSV value calculated using kinematic fit when BjetES scaled down by it uncertainty */ \
-    SIMPLE_VAR(Float_t, m_kinfit_bb_up) /* Mass of two bjets with highest CSV value calculated using kinematic fit when BjetES scaled up by it uncertainty */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_mass) /* Four body mass calculated using kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Int_t, kinfit_bb_tt_convergence) /* Convergence of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_chi2) /* Chi-square of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_pull_balance) /* Pull balance of four body kinematic fit for each bjet combination */ \
+    /*SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_down)*/ /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled down by their uncertainties */ \
+    /*SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_up)*/ /* Four body mass calculated using kinematic fit when BjetES scaled down and TauES scaled up by their uncertainties */ \
+    /*SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_down)*/ /* Four body mass calculated using kinematic fit when BjetES scaled up and TauES scaled down by their uncertainties */ \
+    /*SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_up)*/ /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled up by their uncertainties */ \
+    VECTOR_VAR(Float_t, kinfit_bb_sv_mass) /* Four body mass calculated combining information of two body kinematic fit for b-jets and svFit for taus for each bjet combination */ \
+    VECTOR_VAR(Int_t, kinfit_bb_convergence) /* Convergence of two body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_chi2) /* Chi-square of two body kinematic fit for each bjet combination */ \
     \
     \
     /* Met related variables */ \
@@ -181,15 +181,6 @@
     /* Jets info */ \
     SIMPLE_VAR(Int_t, njets) /* number of jets passing jet id ( pt > 30 ) */ \
     SIMPLE_VAR(Int_t, njetspt20) /* number of jets passing jet id ( pt > 20 ) */ \
-    /* All jets passing jet id ( pt > 20 ) sorted by pt*/ \
-    VECTOR_VAR(Float_t, pt_jets) /* pt of jets */ \
-    VECTOR_VAR(Float_t, eta_jets) /* eta of jets */ \
-    VECTOR_VAR(Float_t, phi_jets) /* phi of jets */ \
-    VECTOR_VAR(Float_t, mass_jets) /* mass of jets */ \
-    VECTOR_VAR(Float_t, energy_jets) /* energy of jets */ \
-    VECTOR_VAR(Float_t, csv_jets) /* csv of jets */ \
-    VECTOR_VAR(Bool_t, isJet_MC_Bjet) /* Whether jet matches MC b-jet */ \
-    VECTOR_VAR(Bool_t, isJet_MC_Bjet_withLeptonicDecay) /* Whether jet matches MC b-jet that decayed leptonically */ \
     /* b-jets info */ \
     SIMPLE_VAR(Int_t, nBjets) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
     /* All b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \

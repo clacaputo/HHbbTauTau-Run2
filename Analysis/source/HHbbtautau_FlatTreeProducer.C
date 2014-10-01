@@ -296,7 +296,7 @@ protected:
 
     void FillFlatTree(const analysis::Candidate& higgs,
                       const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
-                      const analysis::kinematic_fit::FitResultsWithUncertainties& kinfitResults,
+                      const analysis::kinematic_fit::FitResultsMap& kinfitResults,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
                       const analysis::CandidateVector& bjets_all,  const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)

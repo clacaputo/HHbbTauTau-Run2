@@ -347,31 +347,35 @@ protected:
 
 
 
-    analysis::kinematic_fit::FitResultsWithUncertainties RunKinematicFit(const CandidateVector& bjets,
-                                                                         const Candidate& higgs_to_taus,
-                                                                         const ntuple::MET& met, bool fit_two_bjets,
-                                                                         bool fit_four_body)
+    analysis::kinematic_fit::FitResultsMap RunKinematicFit(const CandidateVector& bjets, const Candidate& higgs_to_taus,
+                                                           const ntuple::MET& met, bool fit_two_bjets,
+                                                           bool fit_four_body)
     {
         using namespace analysis::kinematic_fit;
         using namespace cuts::Htautau_Summer13;
-        if(bjets.size() < 2)
-            return FitResultsWithUncertainties();
-        FitResultsWithUncertainties result;
-        if(bjets.size() >= 2) {
-            TLorentzVector met_momentum;
-            met_momentum.SetPtEtaPhiM(met.pt, 0, met.phi, 0);
-            const TMatrix met_cov = ntuple::VectorToSignificanceMatrix(met.significanceMatrix);
-            const FourBodyFitInput input(bjets.at(0).momentum, bjets.at(1).momentum,
-                                         higgs_to_taus.daughters.at(0).momentum, higgs_to_taus.daughters.at(1).momentum,
-                                         met_momentum, met_cov);
-            result = FitWithUncertainties(input, cuts::jetCorrections::energyUncertainty,
-                                          tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
+
+        FitResultsMap result;
+        TLorentzVector met_momentum;
+        met_momentum.SetPtEtaPhiM(met.pt, 0, met.phi, 0);
+        const TMatrix met_cov = ntuple::VectorToSignificanceMatrix(met.significanceMatrix);
+
+        for(size_t n = 0; n < bjets.size(); ++n) {
+            for(size_t k = n + 1; k < bjets.size(); ++k) {
+                const FitId id(n, k);
+                const four_body::FitInput input(bjets.at(n).momentum, bjets.at(k).momentum,
+                                                higgs_to_taus.daughters.at(0).momentum,
+                                                higgs_to_taus.daughters.at(1).momentum,
+                                                met_momentum, met_cov);
+                result[id] = FitWithUncertainties(input, cuts::jetCorrections::energyUncertainty,
+                                                  tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
+
+            }
         }
         return result;
     }
 
     void FillFlatTree(const Candidate& higgs, const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
-                      const analysis::kinematic_fit::FitResultsWithUncertainties& kinfitResults,
+                      const analysis::kinematic_fit::FitResultsMap& kinfitResults,
                       const CandidateVector& jets , const CandidateVector& jetsPt20,
                       const CandidateVector& bjets_all, const CandidateVector& retagged_bjets,
                       const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
@@ -420,19 +424,23 @@ protected:
         flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
 
         // Kinematic fit
-        //flatTree->m_kinfit_bb_tt() = kinfitResults.fit_bb_tt.has_valid_mass ? kinfitResults.fit_bb_tt.mass : default_value;
-        flatTree->m_kinfit_bb_down_tt_down() = kinfitResults.fit_bb_down_tt_down.has_valid_mass ? kinfitResults.fit_bb_down_tt_down.mass : default_value;
-        flatTree->m_kinfit_bb_down_tt_up() = kinfitResults.fit_bb_down_tt_up.has_valid_mass ? kinfitResults.fit_bb_down_tt_up.mass : default_value;
-        flatTree->m_kinfit_bb_up_tt_down() = kinfitResults.fit_bb_up_tt_down.has_valid_mass ? kinfitResults.fit_bb_up_tt_down.mass : default_value;
-        flatTree->m_kinfit_bb_up_tt_up() = kinfitResults.fit_bb_up_tt_up.has_valid_mass ? kinfitResults.fit_bb_up_tt_up.mass : default_value;
-        flatTree->m_kinfit_bb() = kinfitResults.fit_bb.has_valid_mass ? kinfitResults.fit_bb.mass : default_value;
-        flatTree->m_kinfit_bb_down() = kinfitResults.fit_bb_down.has_valid_mass ? kinfitResults.fit_bb_down.mass : default_value;
-        flatTree->m_kinfit_bb_up() = kinfitResults.fit_bb_up.has_valid_mass ? kinfitResults.fit_bb_up.mass : default_value;
+        for(const auto& fit_result_entry : kinfitResults) {
+            const analysis::kinematic_fit::four_body::FitResults& result_4body = fit_result_entry.second.fit_bb_tt;
+            flatTree->kinfit_bb_tt_mass().push_back(result_4body.mass);
+            flatTree->kinfit_bb_tt_convergence().push_back(result_4body.convergence);
+            flatTree->kinfit_bb_tt_chi2().push_back(result_4body.chi2);
+            flatTree->kinfit_bb_tt_pull_balance().push_back(result_4body.pull_balance);
 
-        flatTree->m_kinfit_bb_tt() = kinfitResults.fit_bb_tt.mass;
-        flatTree->m_kinfit_bb_tt_convergence() = kinfitResults.fit_bb_tt.convergence;
-        flatTree->m_kinfit_bb_tt_chi2() = kinfitResults.fit_bb_tt.chi2;
-        flatTree->m_kinfit_bb_tt_pull_balance() = kinfitResults.fit_bb_tt.pull_balance;
+//            const analysis::kinematic_fit::two_body::FitResults& result_2body = fit_result_entry.second.fit_bb;
+//            TLorentzVector ditau_momentum;
+//            ditau_momentum.SetPtEtaPhiM(svfitResults.fit_mc.pt, higgs.momentum.Eta(), higgs.momentum.Phi(),
+//                                        svfitResults.fit_mc.mass);
+//            const TLorentzVector combined_momentum = ditau_momentum + result_2body.bjet_momentums.at(0)
+//                                                                    + result_2body.bjet_momentums.at(1);
+//            flatTree->kinfit_bb_sv_mass().push_back(combined_momentum.M());
+//            flatTree->kinfit_bb_convergence().push_back(result_2body.convergence);
+//            flatTree->kinfit_bb_chi2().push_back(result_2body.chi2);
+        }
 
         // Hhh generator info candidate
         if(final_state_MC.resonance) {
@@ -551,30 +559,6 @@ protected:
         flatTree->njets()     = jets.size()           ;
         flatTree->njetspt20() = jetsPt20.size()       ;
         flatTree->nBjets()    = retagged_bjets.size() ;
-
-        // RM: SAVE ALL THE JETS WITH PT > 20 (AND SAVE THE CSV DISCRIMINATOR)
-        CandidateVector pt_sorted_jetsPt20 = jetsPt20;
-        std::sort( pt_sorted_jetsPt20.begin(), pt_sorted_jetsPt20.end(),
-                   []( const Candidate& a, const Candidate& b ) { return a.momentum.Pt() > b.momentum.Pt(); } ) ;
-
-        // fill the jet collections
-        for (const Candidate& jet : pt_sorted_jetsPt20) {
-            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
-            flatTree->pt_jets()      .push_back( jet.momentum.Pt() );
-            flatTree->eta_jets()     .push_back( jet.momentum.Eta() );
-            flatTree->phi_jets()     .push_back( jet.momentum.Phi() );
-            flatTree->mass_jets()    .push_back( jet.momentum.M() );
-            flatTree->energy_jets()  .push_back( jet.momentum.E() );
-            flatTree->csv_jets()     .push_back( ntuple_jet.combinedSecondaryVertexBJetTags );
-            // inspect the flavour of the gen jet
-            const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet.momentum, final_state_MC.b_jets,
-                                                                               cuts::DeltaR_MC_Match);
-            const bool isJet_MC_Bjet = matched_bjets_MC.size() != 0;
-            const bool isJet_MC_Bjet_withLeptonicDecay = isJet_MC_Bjet
-                    && matched_bjets_MC.at(0).finalStateChargedLeptons.size() != 0;
-            flatTree->isJet_MC_Bjet()                  .push_back( isJet_MC_Bjet );
-            flatTree->isJet_MC_Bjet_withLeptonicDecay().push_back( isJet_MC_Bjet_withLeptonicDecay );
-        }
 
         for (const Candidate& jet : bjets_all) {
             const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);

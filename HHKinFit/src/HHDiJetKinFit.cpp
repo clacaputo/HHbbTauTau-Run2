@@ -26,8 +26,8 @@ HHDiJetKinFit::HHDiJetKinFit(HHEventRecord* recrecord)
     m_chi2_b1(-1), 
     m_chi2_b2(-1), 
     m_convergence(0), 
-    m_printlevel(1), 
-    m_graphicslevel(1),
+    m_printlevel(0),
+    m_graphicslevel(0),
     m_maxloops(100)
 {
   m_particlelist = m_recrecord->GetParticleList();
@@ -140,7 +140,7 @@ HHDiJetKinFit::FitNew()
 void
 HHDiJetKinFit::Fit()
 {
-std::cout << "<HHDiJetKinFit::Fit>:" << std::endl;
+//std::cout << "<HHDiJetKinFit::Fit>:" << std::endl;
   //  ----------  for PSfit -----
   const Int_t np = 1;
   Double_t a[np];

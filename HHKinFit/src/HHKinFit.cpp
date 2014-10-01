@@ -21,7 +21,7 @@
 HHKinFit::HHKinFit(HHEventRecord* recrecord)
     : m_chi2(-1), m_chi2_b1(-1), m_chi2_b2(-1), m_chi2_balance(-1),
       m_convergence(0), m_fittedmH(-1),
-      m_printlevel(1), m_graphicslevel(0),
+      m_printlevel(0), m_graphicslevel(0),
       m_maxloops(100),
       m_advancedBalance(kTRUE),
       m_logLevel(0),
@@ -448,7 +448,7 @@ HHKinFit::Fit()
   TMatrixDEigen eigenmatrixMET(Cov_MET);
   TMatrixDEigen eigenmatrix(cov);
 
-  if (eigenmatrix.GetEigenValues()(0,0)<0 || eigenmatrix.GetEigenValues()(1,1)<0){
+  if ((eigenmatrix.GetEigenValues()(0,0)<0 || eigenmatrix.GetEigenValues()(1,1)<0) && m_printlevel > 0){
     m_recrecord->Print("",1);
     std::cout << "COV_MET:    " << std::endl;
     PSTools::coutf(9, Cov_MET(0,0));
