@@ -68,6 +68,18 @@ std::vector<double> CalculateWeights(const TLorentzVector& momentum_leg1, const 
     return weights;
 }
 
+template<typename EffFunction>
+std::vector<double> CalculateTurnOnCurveData(const TLorentzVector& momentum_leg1, const TLorentzVector& momentum_leg2,
+                                     const EffFunction& eff_leg1_data_fn, const EffFunction& eff_leg2_data_fn)
+{
+    std::vector<double> weights;
+    const double eff_leg1_data = eff_leg1_data_fn(momentum_leg1.Pt(), momentum_leg1.Eta());
+    const double eff_leg2_data = eff_leg2_data_fn(momentum_leg2.Pt(), momentum_leg2.Eta());
+    weights.push_back(eff_leg1_data);
+    weights.push_back(eff_leg2_data);
+    return weights;
+}
+
 } // namespace detail
 
 namespace Run2012ABCD {
@@ -101,6 +113,12 @@ namespace ETau {
         return detail::CalculateWeights(ele_momentum, tau_momentum,
                                         &Data::electronEfficiency, &Data::tauEfficiency,
                                         &MC::electronEfficiency, &MC::tauEfficiency);
+    }
+
+    inline std::vector<double> CalculateTurnOnCurveData(const TLorentzVector& ele_momentum, const TLorentzVector& tau_momentum)
+    {
+        return detail::CalculateTurnOnCurveData(ele_momentum, tau_momentum,
+                                        &Data::electronEfficiency, &Data::tauEfficiency);
     }
 } // namespace ETau
 
@@ -143,6 +161,13 @@ namespace MuTau {
                                         &Data::muonEfficiency, &Data::tauEfficiency,
                                         &MC::muonEfficiency, &MC::tauEfficiency);
     }
+
+    inline std::vector<double> CalculateTurnOnCurveData(const TLorentzVector& mu_momentum, const TLorentzVector& tau_momentum)
+    {
+        return detail::CalculateTurnOnCurveData(mu_momentum, tau_momentum,
+                                        &Data::muonEfficiency, &Data::tauEfficiency);
+    }
+
 } // namespace MuTau
 
 namespace TauTau {
@@ -172,6 +197,13 @@ namespace DiTau {
         return detail::CalculateWeights(lead_tau_momentum, sublead_tau_momentum,
                                         &Data::tauEfficiency, &Data::tauEfficiency,
                                         &MC::tauEfficiency, &MC::tauEfficiency);
+    }
+
+    inline std::vector<double> CalculateTurnOnCurveData(const TLorentzVector& lead_tau_momentum,
+                                                const TLorentzVector& sublead_tau_momentum)
+    {
+        return detail::CalculateTurnOnCurveData(lead_tau_momentum, sublead_tau_momentum,
+                                        &Data::tauEfficiency, &Data::tauEfficiency);
     }
 }
 
@@ -232,6 +264,13 @@ inline std::vector<double> CalculateWeights(const TLorentzVector& lead_tau_momen
     return detail::CalculateWeights(lead_tau_momentum, sublead_tau_momentum,
                                     &Data::tauEfficiency, &Data::tauEfficiency,
                                     &MC::tauEfficiency, &MC::tauEfficiency);
+}
+
+inline std::vector<double> CalculateTurnOnCurveData(const TLorentzVector& lead_tau_momentum,
+                                            const TLorentzVector& sublead_tau_momentum)
+{
+    return detail::CalculateTurnOnCurveData(lead_tau_momentum, sublead_tau_momentum,
+                                    &Data::tauEfficiency, &Data::tauEfficiency);
 }
 
 }

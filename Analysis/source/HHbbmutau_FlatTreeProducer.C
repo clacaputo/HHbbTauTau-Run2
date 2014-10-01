@@ -47,15 +47,16 @@ public:
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
 
-
         if (!FindAnalysisFinalState(muTau_MC) && config.RequireSpecificFinalState()) return;
-
-
 
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
-        cut(HaveTriggerFired(trigger::hltPaths), "trigger");
+        if (config.isEmbeddedSample() && !GenFilterForZevents(muTau_MC)) return;
+
+        cut(config.isEmbeddedSample() ? HaveTriggerFired(Embedded::trigger::hltPaths) :
+                                        HaveTriggerFired(trigger::hltPaths), "trigger");
+
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
@@ -80,6 +81,7 @@ public:
 
         correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau_MC.hadronic_taus,false) : event->taus();
 
+
         const auto alltaus = CollectTaus();
         cut(alltaus.size(), "tau_cand");
 
@@ -95,7 +97,10 @@ public:
 
         cut(higgses.size(), "mu_tau");
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,false);
+
+        const auto higgsTriggered = config.isEmbeddedSample() ? higgses :
+                                                                ApplyTriggerMatch(higgses,trigger::hltPaths,false);
+
         cut(higgsTriggered.size(), "trigger obj match");
 
         const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
@@ -105,6 +110,7 @@ public:
                                                                 vertices,event->taus());
 
         correctedMET = config.ApplyTauESCorrection() ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
+
 
         const auto looseJets = CollectLooseJets();
 
@@ -119,17 +125,27 @@ public:
 
         postRecoilMET = ApplyRecoilCorrections(higgs, muTau_MC.resonance, jets.size(), correctedMET);
 
+
         const auto svfitResults = analysis::sv_fit::FitWithUncertainties(higgs, postRecoilMET,
                                                                          tauCorrections::energyUncertainty,
                                                                          true, true);
 //        std::cout << "Event ID: " << event->eventInfo().EventId << std::endl;
         const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
+
+        if (config.isEmbeddedSample() && !MatchTausFromHiggsWithGenTaus(higgs,muTau_MC)) return;
+
         CalculateFullEventWeight(higgs);
 
-        const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+        ntuple::MET pfMET;
+        if (!config.isMC() || config.isEmbeddedSample()){
+            pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+        }
+        else
+            pfMET = event->metPF();
 
         FillFlatTree(higgs, svfitResults, kinfitResults, jets, filteredLooseJets, bjets_all, retagged_bjets, vertices, pfMET);
+
     }
 
 protected:
@@ -296,7 +312,8 @@ protected:
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::MuTau;
         const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        triggerWeights = CalculateWeights(mu.momentum, tau.momentum);
+        triggerWeights = config.isEmbeddedSample() ? CalculateTurnOnCurveData(mu.momentum,tau.momentum) :
+                                                     CalculateWeights(mu.momentum, tau.momentum);
     }
 
     virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
@@ -373,8 +390,10 @@ protected:
         const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
 
+
         BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, kinfitResults, jets, jetsPt20, bjets_all,
                                            retagged_bjets, vertices, muon, tau, pfMET, muTau_MC);
+
 
         flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;

@@ -107,6 +107,11 @@ public:
         CollectInfo(origin);
     }
 
+    const GenParticle* GetOriginGenParticle() const
+    {
+        return origin;
+    }
+
 private:
     void CollectInfo(const GenParticle* particle)
     {

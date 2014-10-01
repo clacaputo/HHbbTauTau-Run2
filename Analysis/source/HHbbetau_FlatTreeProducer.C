@@ -52,7 +52,11 @@ public:
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
-        cut(HaveTriggerFired(trigger::hltPaths), "trigger");
+        if (config.isEmbeddedSample() && !GenFilterForZevents(eTau_MC)) return;
+
+        cut(config.isEmbeddedSample() ? HaveTriggerFired(Embedded::trigger::hltPaths) :
+                                        HaveTriggerFired(trigger::hltPaths), "trigger");
+
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
@@ -94,7 +98,9 @@ public:
 
         cut(higgses.size(), "e_tau");
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgses,trigger::hltPaths,false);
+        const auto higgsTriggered = config.isEmbeddedSample() ? higgses :
+                                                                ApplyTriggerMatch(higgses,trigger::hltPaths,false);
+
         cut(higgsTriggered.size(), "trigger obj match");
 
 
@@ -125,9 +131,16 @@ public:
                                                                          true, true);
         const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
+        if (config.isEmbeddedSample() && !MatchTausFromHiggsWithGenTaus(higgs,eTau_MC)) return;
+
         CalculateFullEventWeight(higgs);
 
-        const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+        ntuple::MET pfMET;
+        if (!config.isMC() || config.isEmbeddedSample()){
+            pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+        }
+        else
+            pfMET = event->metPF();
 
         FillFlatTree(higgs, svfitResults, kinfitResults, jets, filteredLooseJets, bjets_all, retagged_bjets, vertices, pfMET);
     }
@@ -310,7 +323,8 @@ protected:
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::ETau;
         const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        triggerWeights = CalculateWeights(ele.momentum, tau.momentum);
+        triggerWeights = config.isEmbeddedSample() ? CalculateTurnOnCurveData(ele.momentum, tau.momentum) :
+                                                     CalculateWeights(ele.momentum, tau.momentum);
     }
 
     virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
