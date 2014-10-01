@@ -32,6 +32,8 @@
 
 #include <iomanip>
 #include <functional>
+#include <string>
+#include <iostream>
 
 #include "AnalysisBase/include/TreeExtractor.h"
 #include "AnalysisBase/include/AnalyzerData.h"
@@ -105,6 +107,7 @@ public:
 
         }
         TH1::SetDefaultSumw2();
+        std::cout << "extracted Tree" << std::endl;
         if(config.ApplyPUreweight()){
             //std::cout << "I'm here" << std::endl;
             pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
@@ -152,6 +155,7 @@ public:
             SetPUWeight(eventInfo.trueNInt.at(bxIndex));
         }
         eventWeight *= PUweight;
+        if (config.isEmbeddedSample()) eventWeight *= event->genEvent().embeddedWeight;
     }
 
     double GetEventWeight() const
@@ -207,6 +211,21 @@ protected:
             for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPaths, n); ++n){
                 if (trigger.hltresults.at(n) == 1 && trigger.hltprescales.at(n) == 1)
                     return true;
+            }
+        }
+        return false;
+    }
+
+    bool HavePathForTriggerFired(const std::vector<std::string>& interestinghltPaths,
+                                 std::string& firedPath)
+    {
+        for (const ntuple::Trigger& trigger : event->triggers()){
+            for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPaths, n); ++n){
+                if (trigger.hltresults.at(n) == 1 && trigger.hltprescales.at(n) == 1){
+                    firedPath = trigger.hltpaths.at(n);
+                    //std::cout << "firedPath = " << firedPath << std::endl;
+                    return true;
+                }
             }
         }
         return false;

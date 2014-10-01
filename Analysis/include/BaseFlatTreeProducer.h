@@ -345,6 +345,30 @@ protected:
             return ntuple::EventType::OtherZ;
     }
 
+    bool GenFilterForZevents(const finalState::bbTauTau& final_state)
+    {
+        if (final_state.taus.size() != 2)
+            throw exception("not 2 taus in the event at Gen Level");
+        const GenParticle* firstTau = final_state.taus.at(0).GetOriginGenParticle();
+        const GenParticle* secondTau = final_state.taus.at(1).GetOriginGenParticle();
+        if ((firstTau->momentum + secondTau->momentum).M() > 50) return true;
+        return false;
+    }
+
+    bool MatchTausFromHiggsWithGenTaus(const analysis::Candidate& higgs, const finalState::bbTauTau& final_state)
+    {
+        using namespace cuts::Htautau_Summer13::Embedded;
+        const analysis::Candidate& firstDaughter = higgs.daughters.at(0);
+        const analysis::Candidate& secondDaughter = higgs.daughters.at(1);
+        const VisibleGenObjectVector matchedParticles_first =
+                FindMatchedObjects(firstDaughter.momentum,final_state.taus,deltaR_betweenTaus);
+        const VisibleGenObjectVector matchedParticles_second =
+                FindMatchedObjects(secondDaughter.momentum,final_state.taus,deltaR_betweenTaus);
+
+        if (matchedParticles_first.size() == 1 && matchedParticles_second.size() == 1)
+            return true;
+        return false;
+    }
 
 
     analysis::kinematic_fit::FitResultsWithUncertainties RunKinematicFit(const CandidateVector& bjets,
@@ -403,7 +427,8 @@ protected:
         flatTree->isoweight_2()     = IsoWeights.at(1);
         // flatTree->fakeweight()      = fakeWeights.at(1); // what's this?
         flatTree->weight()          = eventWeight;
-        flatTree->embeddedWeight()  = 1.; // FIXME! once we have the embedded samples
+        flatTree->embeddedWeight()  =
+                config.isEmbeddedSample() ? event->genEvent().embeddedWeight : 1.; // embedded weight
 
         // HTT candidate
         flatTree->mvis() = higgs.momentum.M();
@@ -582,8 +607,12 @@ protected:
             flatTree->pt_Bjets()      .push_back( jet.momentum.Pt() );
             flatTree->eta_Bjets()     .push_back( jet.momentum.Eta() );
             flatTree->phi_Bjets()     .push_back( jet.momentum.Phi() );
-            flatTree->mass_Bjets()    .push_back( jet.momentum.M() );
             flatTree->energy_Bjets()  .push_back( jet.momentum.E() );
+            flatTree->chargedHadronEF_Bjets().push_back( ntuple_jet.chargedHadronEnergyFraction );
+            flatTree->neutralHadronEF_Bjets()  .push_back( ntuple_jet.neutralHadronEnergyFraction );
+            flatTree->photonEF_Bjets()         .push_back( ntuple_jet.photonEnergyFraction );
+            flatTree->muonEF_Bjets()  .push_back( ntuple_jet.muonEnergyFraction );
+            flatTree->electronEF_Bjets()  .push_back( ntuple_jet.electronEnergyFraction );
             flatTree->csv_Bjets()     .push_back( ntuple_jet.combinedSecondaryVertexBJetTags );
             // inspect the flavour of the gen jet
             const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet.momentum, final_state_MC.b_jets,

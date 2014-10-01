@@ -286,3 +286,4 @@ PatProduction/crab/multicrab_ggbbH.cfg
 PatProduction/crab/multicrab_Graviton.cfg
 PatProduction/crab/multicrab_Radion.cfg
 TreeProduction/python/GenEventBlock_cfi.py
+Analysis/config/embedded.cfg

@@ -195,9 +195,13 @@
     /* All b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
     VECTOR_VAR(Float_t, pt_Bjets) /* pt of b-jets */ \
     VECTOR_VAR(Float_t, eta_Bjets) /* eta of b-jets */ \
-    VECTOR_VAR(Float_t, phi_Bjets) /* phi of b-jets */ \
-    VECTOR_VAR(Float_t, mass_Bjets) /* mass of b-jets */ \
+    VECTOR_VAR(Float_t, phi_Bjets) /* phi of b-jets */ \  
     VECTOR_VAR(Float_t, energy_Bjets) /* energy of b-jets */ \
+    VECTOR_VAR(Float_t, chargedHadronEF_Bjets) /* Charged hadron energy fraction of b-jets */ \
+    VECTOR_VAR(Float_t, neutralHadronEF_Bjets) /* Neutral hadron energy fraction of b-jets */ \
+    VECTOR_VAR(Float_t, photonEF_Bjets) /* photon energy fraction of b-jets */ \
+    VECTOR_VAR(Float_t, muonEF_Bjets) /* muon energy fraction of b-jets */ \
+    VECTOR_VAR(Float_t, electronEF_Bjets) /* electron energy fraction of b-jets */ \
     VECTOR_VAR(Float_t, csv_Bjets) /* csv of b-jets */ \
     VECTOR_VAR(Bool_t, isBjet_MC_Bjet) /* Whether b-jet matches MC b-jet */ \
     VECTOR_VAR(Bool_t, isBjet_MC_Bjet_withLeptonicDecay) /* Whether b-jet matches MC b-jet that decayed leptonically */ \

@@ -57,7 +57,11 @@ public:
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
-        cut(HaveTriggerFired(trigger::hltPaths), "trigger");
+        if (config.isEmbeddedSample() && !GenFilterForZevents(tauTau_MC)) return;
+
+        cut(config.isEmbeddedSample() ? HaveTriggerFired(Embedded::trigger::hltPaths) :
+                                        HaveTriggerFired(trigger::hltPaths), "trigger");
+
 
         const VertexVector vertices = CollectVertices();
         cut(vertices.size(), "vertex");
@@ -86,7 +90,8 @@ public:
         const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses,jets);
         const Higgs_JetsMap higgs_looseJetsMap = MatchedHiggsAndJets(higgses, looseJets);
 
-        const auto higgsTriggered = ApplyTriggerMatch(higgs_JetsMap,false);
+        const auto higgsTriggered = config.isEmbeddedSample() ? ApplyTriggerMatchForEmbedded(higgs_JetsMap) :
+                                                                ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
         selectedHiggsWithTriggerPath = SelectFullyHadronicHiggs(higgsTriggered);
@@ -111,9 +116,16 @@ public:
 
         const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
+        if (config.isEmbeddedSample() && !MatchTausFromHiggsWithGenTaus(higgs,tauTau_MC)) return;
+
         CalculateFullEventWeight(higgs);
 
-        const ntuple::MET pfMET = config.isMC() ? event->metPF() : mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+        ntuple::MET pfMET;
+        if (!config.isMC() || config.isEmbeddedSample()){
+            pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+        }
+        else
+            pfMET = event->metPF();
 
         FillFlatTree(higgs, svfitResults, kinfitResults, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs),
                      bjets_all, retagged_bjets, vertices, pfMET);
@@ -175,6 +187,20 @@ protected:
             higgs_JetsMap[higgs] = goodJets;
         }
         return higgs_JetsMap;
+    }
+
+    Higgs_TriggerPathMap ApplyTriggerMatchForEmbedded(const Higgs_JetsMap& higgs_JetsMap)
+    {
+        Higgs_TriggerPathMap triggeredHiggses;
+        for (const auto& higgs_iter : higgs_JetsMap){
+            const analysis::Candidate& higgs = higgs_iter.first;
+            std::string firedPath;
+            if (HavePathForTriggerFired(cuts::Htautau_Summer13::Embedded::trigger::hltPaths,firedPath)){
+                const TriggerPathVector::value_type path(firedPath, false);
+                triggeredHiggses[higgs].push_back(path);
+            }
+        }
+        return triggeredHiggses;
     }
 
     Higgs_TriggerPathMap ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap, bool useStandardTriggerMatch)
@@ -273,9 +299,12 @@ protected:
         }
 
         if(useDiTauJetWeight)
-            triggerWeights = DiTauJet::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+            triggerWeights = config.isEmbeddedSample() ? DiTauJet::CalculateTurnOnCurveData(leadTau.momentum, subLeadTau.momentum) :
+                                                     DiTauJet::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
         else
-            triggerWeights = DiTau::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+            triggerWeights = config.isEmbeddedSample() ? DiTau::CalculateTurnOnCurveData(leadTau.momentum, subLeadTau.momentum) :
+                                                         DiTau::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+
     }
 
     virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
