@@ -1,7 +1,7 @@
-#include "../include/HHKinFitMaster.h"
+#include "../include/HHDiJetKinFitMaster.h"
 
 #include "../include/HHEventRecord.h"
-#include "../include/HHKinFit.h"
+#include "../include/HHDiJetKinFit.h"
 #include "../include/HHParticleList.h"
 #include "../include/HHPID.h"
 #include "../include/HHV4Vector.h"
@@ -13,211 +13,121 @@
 #include <iterator>
 
 void
-HHKinFitMaster::doFullFit()
+HHDiJetKinFitMaster::doFullFit()
 {
   //Setup event
   HHParticleList* particlelist = new HHParticleList();
   HHEventRecord eventrecord_rec(particlelist);
 
-  eventrecord_rec.UpdateEntry(HHEventRecord::tauvis1)->SetVector(*m_tauvis1);
-  eventrecord_rec.UpdateEntry(HHEventRecord::tauvis2)->SetVector(*m_tauvis2);
-
   eventrecord_rec.UpdateEntry(HHEventRecord::b1)->SetVector(*m_bjet1);
-  eventrecord_rec.UpdateEntry(HHEventRecord::b1)->SetErrors(GetBjetResoultion(m_bjet1->Eta(),m_bjet1->Et()), 0, 0);
-
+  eventrecord_rec.UpdateEntry(HHEventRecord::b1)->SetErrors(GetBjetResolution(m_bjet1->Eta(),m_bjet1->Et()), 0, 0);
   eventrecord_rec.UpdateEntry(HHEventRecord::b2)->SetVector(*m_bjet2);
-  eventrecord_rec.UpdateEntry(HHEventRecord::b2)->SetErrors(GetBjetResoultion(m_bjet2->Eta(),m_bjet2->Et()), 0, 0);
+  eventrecord_rec.UpdateEntry(HHEventRecord::b2)->SetErrors(GetBjetResolution(m_bjet2->Eta(),m_bjet2->Et()), 0, 0);
 
-  if (!m_advancedBalance){
-    eventrecord_rec.UpdateEntry(HHEventRecord::MET)->SetEEtaPhiM(m_simpleBalancePt,0,0,0);
-    eventrecord_rec.UpdateEntry(HHEventRecord::MET)->SetErrors(m_simpleBalanceUncert,0,0);
-  }
-  else{
-    if ((m_MET != NULL) && (m_MET_COV.IsValid())){
-      eventrecord_rec.UpdateEntry(HHEventRecord::MET)->SetVector(*m_MET);
-      eventrecord_rec.UpdateEntry(HHEventRecord::MET)->SetCov(m_MET_COV);
-    }
-  }
   //loop over all hypotheses
-  for(std::vector<Int_t>::iterator mh1 = m_mh1.begin(); mh1 != m_mh1.end(); mh1++){
-    for(std::vector<Int_t>::iterator mh2 = m_mh2.begin(); mh2 != m_mh2.end(); mh2++){
-      particlelist->UpdateMass(HHPID::h1, *mh1);
-      particlelist->UpdateMass(HHPID::h2, *mh2);
+  for(std::vector<Int_t>::iterator mh = m_mh.begin(); mh != m_mh.end(); mh++){
+    particlelist->UpdateMass(HHPID::h2, *mh);
 
-      HHKinFit advancedfitter(&eventrecord_rec);
-      advancedfitter.SetPrintLevel(0);
-      advancedfitter.SetLogLevel(0);
-      advancedfitter.SetAdvancedBalance(m_advancedBalance);
-      advancedfitter.Fit();
-
-      Double_t chi2_full = advancedfitter.GetChi2();
-      Double_t prob_full = TMath::Prob(chi2_full,3);
-      Double_t mH_full   = advancedfitter.GetFittedMH();
-      std::pair< Int_t, Int_t > hypo_full(*mh1,*mh2);
-      std::pair< std::pair< Int_t, Int_t >, Double_t > entry_chi2_full (hypo_full, chi2_full);
-      std::pair< std::pair< Int_t, Int_t >, Double_t > entry_fitprob_full (hypo_full, prob_full);
-      std::pair< std::pair< Int_t, Int_t >, Double_t > entry_mH_full (hypo_full, mH_full);
-      std::pair< std::pair< Int_t, Int_t >, Double_t > entry_pullb1_full (hypo_full, advancedfitter.GetPullE(HHEventRecord::b1));
-      std::pair< std::pair< Int_t, Int_t >, Double_t > entry_pullb2_full (hypo_full, advancedfitter.GetPullE(HHEventRecord::b2));
-      std::pair< std::pair< Int_t, Int_t >, Double_t > entry_pullbalance_full (hypo_full, advancedfitter.GetPullBalance());
-      std::pair< std::pair< Int_t, Int_t >, Int_t >    entry_convergence_full (hypo_full, advancedfitter.GetConvergence());
-      m_fullFitResultChi2.insert(entry_chi2_full);
-      m_fullFitResultFitProb.insert(entry_fitprob_full);
-      m_fullFitResultMH.insert(entry_mH_full);
-      m_fullFitPullB1.insert(entry_pullb1_full);
-      m_fullFitPullB2.insert(entry_pullb2_full);
-      m_fullFitPullBalance.insert(entry_pullbalance_full);
-      m_fullFitConvergence.insert(entry_convergence_full);
-      if (chi2_full<m_bestChi2FullFit) {
-        m_bestChi2FullFit = chi2_full;
-        m_bestHypoFullFit = hypo_full;
-        m_bestMHFullFit = mH_full;
-      }
+    HHDiJetKinFit advancedfitter(&eventrecord_rec);
+    advancedfitter.SetPrintLevel(0);
+    advancedfitter.SetLogLevel(0);
+    advancedfitter.Fit();
+    
+    Double_t chi2_full = advancedfitter.GetChi2();
+    Double_t prob_full = TMath::Prob(chi2_full,3);
+    std::pair< Int_t, Int_t > hypo_full(*mh,-1);
+    std::pair< std::pair< Int_t, Int_t >, Double_t > entry_chi2_full (hypo_full, chi2_full);
+    std::pair< std::pair< Int_t, Int_t >, Double_t > entry_fitprob_full (hypo_full, prob_full);
+    std::pair< std::pair< Int_t, Int_t >, Double_t > entry_pullb1_full (hypo_full, advancedfitter.GetPullE(HHEventRecord::b1));
+    std::pair< std::pair< Int_t, Int_t >, Double_t > entry_pullb2_full (hypo_full, advancedfitter.GetPullE(HHEventRecord::b2));
+    std::pair< std::pair< Int_t, Int_t >, Int_t > entry_convergence_full (hypo_full, advancedfitter.GetConvergence());
+    m_fullFitResultChi2.insert(entry_chi2_full);
+    m_fullFitResultFitProb.insert(entry_fitprob_full);
+    m_fullFitPullB1.insert(entry_pullb1_full);
+    m_fullFitPullB2.insert(entry_pullb2_full);
+    m_fullFitConvergence.insert(entry_convergence_full);
+    if (chi2_full<m_bestChi2FullFit) {
+      m_bestChi2FullFit = chi2_full;
+      m_bestHypoFullFit = hypo_full;
     }
+
+    m_bjet1_fitted = advancedfitter.GetFitJet1();
+    m_bjet2_fitted = advancedfitter.GetFitJet2();
   }
 
   delete particlelist;
 }
 
-
-
-HHKinFitMaster::HHKinFitMaster(const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1, const TLorentzVector* tauvis2):
-    m_mh1(std::vector<Int_t>()),
-    m_mh2(std::vector<Int_t>()),
-
+HHDiJetKinFitMaster::HHDiJetKinFitMaster(TLorentzVector* bjet1, TLorentzVector* bjet2):
+    m_mh(std::vector<Int_t>()),
     m_bjet1(bjet1),
     m_bjet2(bjet2),
-    m_tauvis1(tauvis1),
-    m_tauvis2(tauvis2),
-
-    m_MET(NULL),
-    m_MET_COV(TMatrixD(2,2)),
-
-    m_advancedBalance(false),
-    m_simpleBalancePt(0.0),
-    m_simpleBalanceUncert(10.0),
     m_fullFitResultChi2(std::map< std::pair<Int_t,Int_t> , Double_t>()),
-    m_fullFitResultMH(std::map< std::pair<Int_t,Int_t> , Double_t>()),
     m_bestChi2FullFit(999),
-    m_bestMHFullFit(-1),
     m_bestHypoFullFit(std::pair<Int_t, Int_t>(-1,-1))
 {
 }
 
 Double_t
-HHKinFitMaster::getBestChi2FullFit()
+HHDiJetKinFitMaster::getBestChi2FullFit()
 {
   return m_bestChi2FullFit;
 }
 
-Double_t
-HHKinFitMaster::getBestMHFullFit()
-{
-  return m_bestMHFullFit;
-}
-
 std::map< std::pair< Int_t, Int_t >, Double_t >
-HHKinFitMaster::getChi2FullFit(){
+HHDiJetKinFitMaster::getChi2FullFit(){
   return m_fullFitResultChi2;
 }
 
 std::map< std::pair< Int_t, Int_t >, Double_t >
-HHKinFitMaster::getFitProbFullFit(){
+HHDiJetKinFitMaster::getFitProbFullFit(){
   return m_fullFitResultFitProb;
 }
 
 std::map< std::pair< Int_t, Int_t >, Double_t >
-HHKinFitMaster::getMHFullFit(){
-  return m_fullFitResultMH;
-}
-
-std::map< std::pair< Int_t, Int_t >, Double_t >
-HHKinFitMaster::getPullB1FullFit(){
+HHDiJetKinFitMaster::getPullB1FullFit(){
   return m_fullFitPullB1;
 }
 
 std::map< std::pair< Int_t, Int_t >, Double_t >
-HHKinFitMaster::getPullB2FullFit(){
+HHDiJetKinFitMaster::getPullB2FullFit(){
   return m_fullFitPullB2;
 }
 
-std::map< std::pair< Int_t, Int_t >, Double_t >
-HHKinFitMaster::getPullBalanceFullFit(){
-  return m_fullFitPullBalance;
-}
-
 std::map< std::pair< Int_t, Int_t >, Int_t >
-HHKinFitMaster::getConvergenceFullFit(){
+HHDiJetKinFitMaster::getConvergenceFullFit(){
   return m_fullFitConvergence;
 }
 
 std::pair<Int_t, Int_t>
-HHKinFitMaster::getBestHypoFullFit()
+HHDiJetKinFitMaster::getBestHypoFullFit()
 {
   return m_bestHypoFullFit;
 }
 
-
 void
-HHKinFitMaster::addMh1Hypothesis(Double_t m1, Double_t m2, Double_t m3, Double_t m4, Double_t m5, Double_t m6, Double_t m7, Double_t m8, Double_t m9, Double_t m10)
+HHDiJetKinFitMaster::addMhHypothesis(Double_t m1, Double_t m2, Double_t m3, Double_t m4, Double_t m5, Double_t m6, Double_t m7, Double_t m8, Double_t m9, Double_t m10)
 {
-  if (m1 != 0) m_mh1.push_back(m1);
-  if (m2 != 0) m_mh1.push_back(m2);
-  if (m3 != 0) m_mh1.push_back(m3);
-  if (m4 != 0) m_mh1.push_back(m4);
-  if (m5 != 0) m_mh1.push_back(m5);
-  if (m6 != 0) m_mh1.push_back(m6);
-  if (m7 != 0) m_mh1.push_back(m7);
-  if (m8 != 0) m_mh1.push_back(m8);
-  if (m9 != 0) m_mh1.push_back(m9);
-  if (m10 != 0) m_mh1.push_back(m10);
+  if (m1 != 0) m_mh.push_back(m1);
+  if (m2 != 0) m_mh.push_back(m2);
+  if (m3 != 0) m_mh.push_back(m3);
+  if (m4 != 0) m_mh.push_back(m4);
+  if (m5 != 0) m_mh.push_back(m5);
+  if (m6 != 0) m_mh.push_back(m6);
+  if (m7 != 0) m_mh.push_back(m7);
+  if (m8 != 0) m_mh.push_back(m8);
+  if (m9 != 0) m_mh.push_back(m9);
+  if (m10 != 0) m_mh.push_back(m10);
 }
 
 void
-HHKinFitMaster::addMh1Hypothesis(std::vector<Int_t> v)
+HHDiJetKinFitMaster::addMhHypothesis(std::vector<Int_t> v)
 {
-  m_mh1 = v;
-}
-
-void
-HHKinFitMaster::addMh2Hypothesis(Double_t m1, Double_t m2, Double_t m3, Double_t m4, Double_t m5, Double_t m6, Double_t m7, Double_t m8, Double_t m9, Double_t m10)
-{
-  if (m1 != 0) m_mh2.push_back(m1);
-  if (m2 != 0) m_mh2.push_back(m2);
-  if (m3 != 0) m_mh2.push_back(m3);
-  if (m4 != 0) m_mh2.push_back(m4);
-  if (m5 != 0) m_mh2.push_back(m5);
-  if (m6 != 0) m_mh2.push_back(m6);
-  if (m7 != 0) m_mh2.push_back(m7);
-  if (m8 != 0) m_mh2.push_back(m8);
-  if (m9 != 0) m_mh2.push_back(m9);
-  if (m10 != 0) m_mh2.push_back(m10);
-}
-
-void
-HHKinFitMaster::addMh2Hypothesis(std::vector<Int_t> v)
-{
-  m_mh2 = v;
-}
-
-void
-HHKinFitMaster::setAdvancedBalance(const TLorentzVector* met, TMatrixD met_cov)
-{
-  m_advancedBalance = true;
-  m_MET = met;
-  m_MET_COV = met_cov;
-}
-
-void
-HHKinFitMaster::setSimpleBalance(Double_t balancePt, Double_t balanceUncert)
-{
-  m_advancedBalance = false;
-  m_simpleBalancePt = balancePt;
-  m_simpleBalanceUncert = balanceUncert;
+  m_mh = v;
 }
 
 double
-HHKinFitMaster::GetBjetResoultion(double eta, double et){
+HHDiJetKinFitMaster::GetBjetResolution(double eta, double et){
   double det=0;
   double de=10;
 

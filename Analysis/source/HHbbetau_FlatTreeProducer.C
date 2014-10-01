@@ -71,15 +71,14 @@ public:
         cut(!muons_bkg.size(), "no_muon");
 
         const auto electrons = CollectSignalElectrons();
-        cut(electrons.size(), "electron_cand");
-        cut(electrons.size() == 1, "one_electron_cand");
 
         const auto electrons_bkg = CollectBackgroundElectrons();
-        const bool have_bkg_electron = electrons_bkg.size() > 1 ||
-                ( electrons_bkg.size() == 1 && electrons_bkg.front() != electrons.front() );
+        const bool have_bkg_electron = electrons_bkg.size() > 1 || electrons.size() > 1 ||
+                ( electrons_bkg.size() == 1 && electrons.size() == 1 && electrons_bkg.front() != electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
         const auto allelectrons = CollectElectrons();
+        cut(allelectrons.size(), "electron_cand");
 
         correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(eTau_MC.hadronic_taus,false) : event->taus();
 
@@ -89,23 +88,13 @@ public:
 
         const auto signaltaus = CollectSignalTaus() ;
 
-        analysis::CandidateVector higgses ;
-
         // First check OS, isolated higgs candidates
-        const auto higgses_sig = FindCompatibleObjects(electrons, signaltaus, DeltaR_betweenSignalObjects,
-                                                       Candidate::Higgs, "H_e_tau",0);
-
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
-        if (!higgses_sig.size())
-        {
-          const auto higgses_bkg = FindCompatibleObjects(allelectrons, alltaus, DeltaR_betweenSignalObjects,
-                                                         Candidate::Higgs, "H_e_tau");
-          higgses = higgses_bkg ;
-        }
-        else
-        {
-          higgses = higgses_sig ;
-        }
+        auto higgses = FindCompatibleObjects(electrons, signaltaus, DeltaR_betweenSignalObjects,
+                                             Candidate::Higgs, "H_e_tau", 0);
+        if (!higgses.size())
+          higgses = FindCompatibleObjects(allelectrons, alltaus, DeltaR_betweenSignalObjects,
+                                          Candidate::Higgs, "H_e_tau");
 
         cut(higgses.size(), "e_tau");
 
