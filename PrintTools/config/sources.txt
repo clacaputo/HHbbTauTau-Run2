@@ -333,6 +333,21 @@ tt_hadr.root 0.0719
 tt_lept.root 0.0430
 tt_semi.root 0.0862
 
+[LIMITS TTbar_hadr]
+t#bar{t}
+violet_custom
+tt_hadr.root 0.0719
+
+[LIMITS TTbar_lept]
+t#bar{t}
+violet_custom
+tt_lept.root 0.0430
+
+[LIMITS TTbar_semi]
+t#bar{t}
+violet_custom
+tt_semi.root 0.0862
+
 
 #[WJets]
 #Wjets

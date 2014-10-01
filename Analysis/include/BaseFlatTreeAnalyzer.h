@@ -175,8 +175,9 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
+            if(eventTypeQCD == EventType_QCD::Unknown) continue;
             for(auto eventCategory : eventCategories) {
-                if(!PassMvaCut(event, eventCategory)) continue;
+//                if(!PassMvaCut(event, eventCategory)) continue;
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                 if(dataCategory.name == DYJets.name && std::abs(event.pdgId_2_MC) == particles::tau.RawCode())
@@ -278,17 +279,18 @@ protected:
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
-            //const double m_ttbb_kinFit = 10;
+//            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = -1;
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
 
-            const std::string category_name = eventCategoryMapName.at(eventCategory);
-            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
-            const double mva_BDT = mvaReader_BDT
-                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-                    : std::numeric_limits<double>::lowest();
+//            const std::string category_name = eventCategoryMapName.at(eventCategory);
+//            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
+//            const double mva_BDT = mvaReader_BDT
+//                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+//                    : std::numeric_limits<double>::lowest();
+            const double mva_BDT = -1;
             anaData.MVA_BDT().Fill(mva_BDT, weight);
 
 //            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
@@ -395,7 +397,9 @@ protected:
             { "LIMITS Radion700", "ggRadionTohhTo2Tau2B700" }, { "LIMITS Radion1000", "ggRadionTohhTo2Tau2B1000" },
             { "LIMITS Graviton270", "ggGravitonTohhTo2Tau2B270" }, { "LIMITS Graviton300", "ggGravitonTohhTo2Tau2B300" },
             { "LIMITS Graviton500", "ggGravitonTohhTo2Tau2B500" }, { "LIMITS Graviton700", "ggGravitonTohhTo2Tau2B700" },
-            { "LIMITS Graviton1000", "ggGravitonTohhTo2Tau2B1000" }
+            { "LIMITS Graviton1000", "ggGravitonTohhTo2Tau2B1000" },
+            // Debug
+            { "LIMITS TTbar_hadr", "TT_hadr" }, { "LIMITS TTbar_lept", "TT_lept" }, { "LIMITS TTbar_semi", "TT_semi" }
         };
 
         static const std::map<std::string, std::string> channelNameForFolder = {
