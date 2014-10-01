@@ -13,31 +13,27 @@
 #include "TPolyMarker.h"
 #include "TMarker.h"
 #include "TMatrixD.h"
+#include "TMatrixDEigen.h"
 #include "TLatex.h"
 #include "TH2F.h"
 #include <iostream>
 
 HHKinFit::HHKinFit(HHEventRecord* recrecord)
-    : m_recrecord(recrecord), m_fitrecord (new HHEventRecord(*recrecord, "Fit")), m_advancedBalance(kTRUE),
-      m_logLevel(0), m_chi2(-1), m_chi2_b1(-1), m_chi2_b2(-1), m_chi2_balance(-1), m_convergence(0), m_fittedmH(-1),
-      m_printlevel(1), m_graphicslevel(0), m_maxloops(100)
+    : m_chi2(-1), m_chi2_b1(-1), m_chi2_b2(-1), m_chi2_balance(-1),
+      m_convergence(0), m_fittedmH(-1),
+      m_printlevel(1), m_graphicslevel(0),
+      m_maxloops(100),
+      m_advancedBalance(kTRUE),
+      m_logLevel(0),
+      m_recrecord(recrecord), m_fitrecord (new HHEventRecord(*recrecord, "Fit"))
 {
   m_particlelist = m_recrecord->GetParticleList();
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+HHKinFit::~HHKinFit(){
+  delete m_fitrecord;
+}
 
 
 void
@@ -239,7 +235,6 @@ HHKinFit::FitNew()
 void
 HHKinFit::Fit()
 {
-
 //  V4Vector* ptmissrec = PTmissCalc(fitrecord);
 //  HHV4Vector* ptmissrec = m_recrecord->GetEntry(HHEventRecord::MET);
 
@@ -256,8 +251,8 @@ HHKinFit::Fit()
   Int_t iter = 0;             //  number of iterations
   Int_t method = 1;           //  initial fit method, see PSfit()
   Int_t mode = 1;             //  mode =1 for start of a new fit by PSfit()
-//  Int_t icallNewton = -1;     //  init start of Newton Method
-//  Int_t iloop = 0;            // counter for falls to fit function
+//   Int_t icallNewton = -1;     //  init start of Newton Method
+//   Int_t iloop = 0;            // counter for falls to fit function
 
   // calculate htau from tauvis; recombine leaves measured entries in event record untouched
   m_recrecord->Recombine();
@@ -272,6 +267,41 @@ HHKinFit::Fit()
   Double_t mhtauReco  = m_recrecord->GetEntry(HHEventRecord::htau)->M();
   Double_t mtau  = m_particlelist->GetParticleInfo(HHPID::tau)->M();
 
+  // initialise tau1 and tau2 vectors
+  m_fitrecord->UpdateEntry(HHEventRecord::tau1)->SetEEtaPhiM(
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis1)->E(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis1)->Eta(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis1)->Phi(),
+                                    mtau);
+
+  m_fitrecord->UpdateEntry(HHEventRecord::tau2)->SetEEtaPhiM(
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->E(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Eta(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Phi(),
+                                    mtau);
+
+  //firstly, compute upper limit of E(tau1) by setting E(tau2)=E(tauvis2) and compute E(tau1)
+  m_fitrecord->UpdateEntry(HHEventRecord::tau2)->SetEEtaPhiM(
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->E(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Eta(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Phi(),
+                                    mtau);
+  ConstrainE2(HHEventRecord::htau, HHEventRecord::tau2, HHEventRecord::tau1);
+  Double_t maxEtau1 = m_fitrecord->GetEntry(HHEventRecord::tau1)->E();
+
+
+  //secondly, compute lower limit of E(tau1) by setting E(tau1)=E(tauvis1) and compute E(tau2)
+  //and check whether E(tau2)<E(tauvis2)
+  m_fitrecord->UpdateEntry(HHEventRecord::tau1)->SetEEtaPhiM(
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis1)->E(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis1)->Eta(),
+                                    m_recrecord->GetEntry(HHEventRecord::tauvis1)->Phi(),
+                                    mtau);
+  ConstrainE2(HHEventRecord::htau, HHEventRecord::tau1, HHEventRecord::tau2);
+  Double_t minEtau1 = m_fitrecord->GetEntry(HHEventRecord::tau1)->E();
+
+
+  //now set tau energies to reasonable start value
   Double_t Etaumean =  mhtauHypo / mhtauReco
                        * sqrt(   m_recrecord->GetEntry(HHEventRecord::tauvis1)->E()
                                * m_recrecord->GetEntry(HHEventRecord::tauvis2)->E() );
@@ -281,13 +311,27 @@ HHKinFit::Fit()
                                     m_recrecord->GetEntry(HHEventRecord::tauvis1)->Eta(),
                                     m_recrecord->GetEntry(HHEventRecord::tauvis1)->Phi(),
                                     mtau);
-  m_fitrecord->UpdateEntry(HHEventRecord::tau2)->SetEEtaPhiM(
-                                    Etaumean,
-                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Eta(),
-                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Phi(),
-                                    mtau);
+  ConstrainE2(HHEventRecord::htau, HHEventRecord::tau1, HHEventRecord::tau2);
+
+//  m_fitrecord->UpdateEntry(HHEventRecord::tau2)->SetEEtaPhiM(
+//                                    Etaumean,
+//                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Eta(),
+//                                    m_recrecord->GetEntry(HHEventRecord::tauvis2)->Phi(),
+//                                    mtau);
+
   m_fitrecord->UpdateMothers(HHEventRecord::b1);
   m_fitrecord->UpdateMothers(HHEventRecord::tau1);
+
+  if (minEtau1>m_recrecord->GetEntry(HHEventRecord::tauvis1)->E() || maxEtau1<m_recrecord->GetEntry(HHEventRecord::tauvis1)->E()){
+    std::cout << "tautau mass constraint cannot be fulfilled -> reconstructed visible tau energy greater/smaller than maximal/minimal allowed total tau energy." << std::endl;
+    m_convergence=0;
+    m_chi2=-1;
+    m_chi2_b1=-1;
+    m_chi2_b2=-1;
+    m_chi2_balance=-1;
+    m_fittedmH=-1;
+    return;
+  }
 
   // fill initial fit parameters
   astart[0] = m_fitrecord->GetEntry(HHEventRecord::b1)->E();         // energy of first b-jet
@@ -306,8 +350,8 @@ HHKinFit::Fit()
   alimit[0][0] = astart[0] - m_fitrecord->GetEntry(HHEventRecord::b1)->dE() * 5.; // b-jets: 5 sigma
   if (alimit[0][0]<0) alimit[0][0]=0;
   alimit[0][1] = astart[0] + m_fitrecord->GetEntry(HHEventRecord::b1)->dE() * 5.;
-  alimit[1][0] = m_fitrecord->GetEntry(HHEventRecord::tauvis1)->E(); // tau: minimum is muon energy
-  alimit[1][1] = Etaumean * 4.;                  //      maximum is 4 times mean
+  alimit[1][0] = minEtau1;              // tau: minimum is visible tau1 energy
+  alimit[1][1] = maxEtau1;              //      maximum as computed above
 
   // tau: check initial values against fit range
   if (astart[1] - h[1] < alimit[1][0]) {
@@ -386,14 +430,89 @@ HHKinFit::Fit()
       break;
     }
     m_convergence = PSMath::PSfit(iloop, iter, method, mode, m_printlevel,
-                                  m_graphicslevel, np, a, astart, alimit, aprec,
+                                  np, a, astart, alimit, aprec,
                                   daN, h, aMemory, m_chi2, chi2iter, g, H,
                                   Hinv);
   }
   // ------ end of FIT loop
   m_fittedmH = m_fitrecord->GetEntry(HHEventRecord::H)->M();
 
+
+  //check cov matrix
+  TMatrixD Cov_MET     = m_recrecord->GetEntry(HHEventRecord::MET)->GetCov();
+  TMatrixD Cov_b1      = m_recrecord->GetEntry(HHEventRecord::b1)->GetCov();
+  TMatrixD Cov_b2      = m_recrecord->GetEntry(HHEventRecord::b2)->GetCov();
+  TMatrixD Cov_tauvis1 = m_recrecord->GetEntry(HHEventRecord::tauvis1)->GetCov();
+  TMatrixD Cov_tauvis2 = m_recrecord->GetEntry(HHEventRecord::tauvis2)->GetCov();
+  TMatrixD cov = Cov_MET - Cov_b1 - Cov_b2 - Cov_tauvis1 - Cov_tauvis2;
+  TMatrixDEigen eigenmatrixMET(Cov_MET);
+  TMatrixDEigen eigenmatrix(cov);
+
+  if (eigenmatrix.GetEigenValues()(0,0)<0 || eigenmatrix.GetEigenValues()(1,1)<0){
+    m_recrecord->Print("",1);
+    std::cout << "COV_MET:    " << std::endl;
+    PSTools::coutf(9, Cov_MET(0,0));
+    PSTools::coutf(9, Cov_MET(0,1)); std::cout << std::endl;
+    PSTools::coutf(9, Cov_MET(1,0));
+    PSTools::coutf(9, Cov_MET(1,1)); std::cout << std::endl;
+
+    std::cout << "COV_b1:     dE=" << m_recrecord->GetEntry(HHEventRecord::b1)->dE() << std::endl;
+    PSTools::coutf(9, Cov_b1(0,0));
+    PSTools::coutf(9, Cov_b1(0,1)); std::cout << std::endl;
+    PSTools::coutf(9, Cov_b1(1,0));
+    PSTools::coutf(9, Cov_b1(1,1)); std::cout << std::endl;
+
+    std::cout << "COV_b2:     dE=" << m_recrecord->GetEntry(HHEventRecord::b2)->dE() << std::endl;
+    PSTools::coutf(9, Cov_b2(0,0));
+    PSTools::coutf(9, Cov_b2(0,1)); std::cout << std::endl;
+    PSTools::coutf(9, Cov_b2(1,0));
+    PSTools::coutf(9, Cov_b2(1,1)); std::cout << std::endl;
+
+    std::cout << "COV_recoil: " << std::endl;
+    PSTools::coutf(9, cov(0,0));
+    PSTools::coutf(9, cov(0,1)); std::cout << std::endl;
+    PSTools::coutf(9, cov(1,0));
+    PSTools::coutf(9, cov(1,1)); std::cout << std::endl;
+
+    std::cout << "eigenvalues COV_MET:" << std::endl;
+    PSTools::coutf(9, eigenmatrixMET.GetEigenValues()(0,0));
+    PSTools::coutf(9, eigenmatrixMET.GetEigenValues()(1,1)); std::cout << std::endl;
+
+    std::cout << "eigenvalues COV_recoil:" << std::endl;
+    PSTools::coutf(9, eigenmatrix.GetEigenValues()(0,0));
+    PSTools::coutf(9, eigenmatrix.GetEigenValues()(1,1)); std::cout << std::endl;
+
+  }
+
   if (m_logLevel>0){
+
+  Double_t px_MET = m_recrecord->GetEntry(HHEventRecord::MET)->Px();
+  Double_t py_MET = m_recrecord->GetEntry(HHEventRecord::MET)->Py();
+
+  Double_t px_b1 = m_recrecord->GetEntry(HHEventRecord::b1)->Px();
+  Double_t py_b1 = m_recrecord->GetEntry(HHEventRecord::b1)->Py();
+
+  Double_t px_b2 = m_recrecord->GetEntry(HHEventRecord::b2)->Px();
+  Double_t py_b2 = m_recrecord->GetEntry(HHEventRecord::b2)->Py();
+
+  Double_t px_tauvis1 = m_recrecord->GetEntry(HHEventRecord::tauvis1)->Px();
+  Double_t py_tauvis1 = m_recrecord->GetEntry(HHEventRecord::tauvis1)->Py();
+
+  Double_t px_tauvis2 = m_recrecord->GetEntry(HHEventRecord::tauvis2)->Px();
+  Double_t py_tauvis2 = m_recrecord->GetEntry(HHEventRecord::tauvis2)->Py();
+
+  Double_t px_H_reco = px_MET + px_b1 + px_b2 + px_tauvis1 + px_tauvis2;
+  Double_t py_H_reco = py_MET + py_b1 + py_b2 + py_tauvis1 + py_tauvis2;
+
+  std::cout << "MET:" << std::endl;
+  PSTools::coutf(9, px_MET);
+  PSTools::coutf(9, py_MET); std::cout << std::endl;
+
+  std::cout << "recoil:" << std::endl;
+  PSTools::coutf(9, -px_H_reco);
+  PSTools::coutf(9, -py_H_reco); std::cout << std::endl;
+
+
     std::cout << "chi2 b1:      " << m_chi2_b1 << std::endl;
     std::cout << "chi2 b2:      " << m_chi2_b2 << std::endl;
     std::cout << "chi2 balance: " << m_chi2_balance << std::endl;
@@ -551,9 +670,11 @@ HHKinFit::Chi2Balance()
   TMatrixD Cov_tauvis1 = m_recrecord->GetEntry(HHEventRecord::tauvis1)->GetCov();
   TMatrixD Cov_tauvis2 = m_recrecord->GetEntry(HHEventRecord::tauvis2)->GetCov();
 
-  Double_t Vxx = (Cov_MET - Cov_b1 - Cov_b2 - Cov_tauvis1 - Cov_tauvis2)(0,0);
-  Double_t Vyy = (Cov_MET - Cov_b1 - Cov_b2 - Cov_tauvis1 - Cov_tauvis2)(1,1);
-  Double_t Vxy = (Cov_MET - Cov_b1 - Cov_b2 - Cov_tauvis1 - Cov_tauvis2)(0,1);
+
+  TMatrixD cov = Cov_MET - Cov_b1 - Cov_b2 - Cov_tauvis1 - Cov_tauvis2;
+  Double_t Vxx = cov(0,0);
+  Double_t Vyy = cov(1,1);
+  Double_t Vxy = cov(0,1);
 
   Double_t det, Vinvxx, Vinvyy, Vinvxy;
   det = Vxx * Vyy - Vxy * Vxy;

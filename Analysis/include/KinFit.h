@@ -27,11 +27,15 @@
 
 #pragma once
 
+#include "HHKinFit/src/HHDiJetKinFit.cpp"
+#include "HHKinFit/src/HHDiJetKinFitMaster.cpp"
 #include "HHKinFit/src/HHEventRecord.cpp"
 #include "HHKinFit/src/HHKinFit.cpp"
 #include "HHKinFit/src/HHKinFitMaster.cpp"
 #include "HHKinFit/src/HHParticle.cpp"
 #include "HHKinFit/src/HHParticleList.cpp"
+#include "HHKinFit/src/HHTauInputKinFit.cpp"
+#include "HHKinFit/src/HHTauInputKinFitMaster.cpp"
 #include "HHKinFit/src/HHV4Vector.cpp"
 #include "HHKinFit/src/PSMath.cpp"
 #include "HHKinFit/src/PSTools.cpp"

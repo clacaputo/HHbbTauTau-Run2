@@ -6,8 +6,9 @@
 #include "../include/PSTools.h"
 
 HHV4Vector::HHV4Vector(Double_t e, Double_t eta, Double_t phi, Double_t m)
-    : m_cov_manually_set(false), m_cov_transversal(TMatrixD(2,2)), m_e(e), m_eta(eta), m_phi(phi), m_m(m), m_dE(0),
-      m_dEta(0), m_dPhi(0), m_name("init"), m_id(HHPID::undef), m_id2(HHPID::undef), m_mother(-1), m_nDaughter(0)
+    : m_e(e), m_eta(eta), m_phi(phi), m_m(m), m_dE(0),
+      m_dEta(0), m_dPhi(0), m_id(HHPID::undef), m_id2(HHPID::undef), m_mother(-1), m_nDaughter(0), m_name("init"),
+      m_cov_manually_set(false), m_cov_transversal(TMatrixD(2,2))
 {
   m_cov_transversal(0,0)=0;
   m_cov_transversal(0,1)=0;
@@ -33,7 +34,7 @@ HHV4Vector::HHV4Vector(const HHV4Vector & v, TString suffix)
   for (int i = 0; i < m_nDaughter; i++)
     m_daughter[i] = v.Daughter(i);
 }
-
+  
 void
 HHV4Vector::SetPxPyPzE(Double_t px, Double_t py, Double_t pz, Double_t e)
 {
@@ -305,6 +306,7 @@ HHV4Vector::CalcCov()
     m_cov_transversal(0,0) = pow(cos(Phi())*dpt,2);
     m_cov_transversal(1,1) = pow(sin(Phi())*dpt,2);
     m_cov_transversal(0,1) = sin(Phi())*cos(Phi())*dpt*dpt;
+    m_cov_transversal(1,0) = sin(Phi())*cos(Phi())*dpt*dpt;
   }
 
 }
