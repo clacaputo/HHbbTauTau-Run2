@@ -425,12 +425,12 @@ inline FitResultsWithUncertainties FitWithUncertainties(const four_body::FitInpu
         result.fit_bb_up_tt_up = four_body::Fit(four_body::FitInput(input, 1 + bjet_energy_uncertainty,
                                                                     1 + tau_energy_uncertainty));
     }
-//    if(fit_two_bjets) {
-//        const two_body::FitInput two_body_input(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
-//        result.fit_bb = two_body::Fit(two_body_input);
-//        result.fit_bb_down = two_body::Fit(two_body::FitInput(two_body_input, 1 - bjet_energy_uncertainty));
-//        result.fit_bb_up = two_body::Fit(two_body::FitInput(two_body_input, 1 + bjet_energy_uncertainty));
-//    }
+    if(fit_two_bjets) {
+        const two_body::FitInput two_body_input(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
+        result.fit_bb = two_body::Fit(two_body_input);
+        result.fit_bb_down = two_body::Fit(two_body::FitInput(two_body_input, 1 - bjet_energy_uncertainty));
+        result.fit_bb_up = two_body::Fit(two_body::FitInput(two_body_input, 1 + bjet_energy_uncertainty));
+    }
     return result;
 }
 
