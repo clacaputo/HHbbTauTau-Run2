@@ -359,23 +359,17 @@ protected:
     bool MatchTausFromHiggsWithGenTaus(const analysis::Candidate& higgs, const finalState::bbTauTau& final_state)
     {
         using namespace cuts::Htautau_Summer13::DYEmbedded;
-        const analysis::Candidate& firstDaughter = higgs.daughters.at(0);
-        const analysis::Candidate& secondDaughter = higgs.daughters.at(1);
-        const VisibleGenObjectVector matchedParticles_first =
-                FindMatchedObjects(firstDaughter.momentum,final_state.taus,deltaR_betweenTaus);
-        const VisibleGenObjectVector matchedParticles_second =
-                FindMatchedObjects(secondDaughter.momentum,final_state.taus,deltaR_betweenTaus);
-        VisibleGenObjectVector v_union(matchedParticles_first.size() + matchedParticles_second.size());
-        VisibleGenObjectVector::iterator it;
-        it=std::set_union (matchedParticles_first.begin(), matchedParticles_first.end(),
-                           matchedParticles_second.begin(), matchedParticles_second.end(), v_union.begin());
-        v_union.resize(it-v_union.begin());
-
-        if (v_union.size() > 1)
-            return true;
-        return false;
+        std::set<const GenParticle *> all_matched_particles;
+        for(const auto& daughter : higgs.daughters) {
+            const VisibleGenObjectVector matched_particles =
+                    FindMatchedObjects(daughter.momentum, final_state.taus, deltaR_betweenTaus);
+            if(!matched_particles.size())
+                return false;
+            for(const auto& gen_object : matched_particles)
+                all_matched_particles.insert(gen_object.origin);
+        }
+        return all_matched_particles.size() >= higgs.daughters.size();
     }
-
 
     analysis::kinematic_fit::FitResultsMap RunKinematicFit(const CandidateVector& bjets, const Candidate& higgs_to_taus,
                                                            const ntuple::MET& met, bool fit_two_bjets,

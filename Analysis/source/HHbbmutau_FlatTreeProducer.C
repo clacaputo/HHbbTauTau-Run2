@@ -52,7 +52,7 @@ public:
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
-        cut(config.isDYEmbeddedSample() && GenFilterForZevents(muTau_MC), "genFilter");
+        cut(!config.isDYEmbeddedSample() || GenFilterForZevents(muTau_MC), "genFilter");
 
         const auto& selectedTriggerPath = config.isDYEmbeddedSample() ? DYEmbedded::trigger::hltPaths : trigger::hltPaths;
         cut(HaveTriggerFired(selectedTriggerPath), "trigger");
@@ -131,7 +131,7 @@ public:
 //        std::cout << "Event ID: " << event->eventInfo().EventId << std::endl;
         const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
-        cut(config.isDYEmbeddedSample() && MatchTausFromHiggsWithGenTaus(higgs,muTau_MC), "tau match with MC truth");
+        cut(!config.isDYEmbeddedSample() || MatchTausFromHiggsWithGenTaus(higgs,muTau_MC), "tau match with MC truth");
 
         CalculateFullEventWeight(higgs);
 

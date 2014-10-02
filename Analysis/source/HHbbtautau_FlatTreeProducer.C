@@ -57,7 +57,7 @@ public:
         cuts::Cutter cut(&anaData.Selection("event"));
         cut(true, "total");
 
-        cut(config.isDYEmbeddedSample() && GenFilterForZevents(tauTau_MC), "genFilter");
+        cut(!config.isDYEmbeddedSample() || GenFilterForZevents(tauTau_MC), "genFilter");
 
         const auto& selectedTriggerPath = config.isDYEmbeddedSample() ? DYEmbedded::trigger::hltPaths : trigger::hltPaths;
         cut(HaveTriggerFired(selectedTriggerPath), "trigger");
@@ -115,7 +115,7 @@ public:
 
         const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
 
-        cut(config.isDYEmbeddedSample() && MatchTausFromHiggsWithGenTaus(higgs,tauTau_MC), "tau match with MC truth");
+        cut(!config.isDYEmbeddedSample() || MatchTausFromHiggsWithGenTaus(higgs,tauTau_MC), "tau match with MC truth");
 
         CalculateFullEventWeight(higgs);
 
@@ -191,13 +191,12 @@ protected:
     Higgs_TriggerPathMap ApplyTriggerMatchForEmbedded(const Higgs_JetsMap& higgs_JetsMap)
     {
         using namespace cuts::Htautau_Summer13;
-        std::vector<std::string> firedPaths = CollectPathsForTriggerFired(DYEmbedded::trigger::hltPaths);
+        const auto firedPaths = CollectPathsForTriggerFired(DYEmbedded::trigger::hltPaths);
         Higgs_TriggerPathMap triggeredHiggses;
         for (const auto& firedPath : firedPaths){
             for (const auto& higgs_iter : higgs_JetsMap){
-                const analysis::Candidate& higgs = higgs_iter.first;
                 const TriggerPathVector::value_type path(firedPath, false);
-                triggeredHiggses[higgs].push_back(path);
+                triggeredHiggses[higgs_iter.first].push_back(path);
             }
         }
         return triggeredHiggses;
