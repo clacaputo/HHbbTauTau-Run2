@@ -266,13 +266,6 @@ inline std::vector<double> CalculateWeights(const TLorentzVector& lead_tau_momen
                                     &MC::tauEfficiency, &MC::tauEfficiency);
 }
 
-inline std::vector<double> CalculateTurnOnCurveData(const TLorentzVector& lead_tau_momentum,
-                                            const TLorentzVector& sublead_tau_momentum)
-{
-    return detail::CalculateTurnOnCurveData(lead_tau_momentum, sublead_tau_momentum,
-                                    &Data::tauEfficiency, &Data::tauEfficiency);
-}
-
 }
 
 } // namespace TauTau

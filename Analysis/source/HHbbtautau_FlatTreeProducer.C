@@ -297,13 +297,12 @@ protected:
             }
         }
 
-        if(useDiTauJetWeight)
-            triggerWeights = config.isDYEmbeddedSample() ? DiTauJet::CalculateTurnOnCurveData(leadTau.momentum, subLeadTau.momentum) :
-                                                     DiTauJet::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+        if(config.isDYEmbeddedSample())
+            triggerWeights = DiTau::CalculateTurnOnCurveData(leadTau.momentum, subLeadTau.momentum);
+        else if(useDiTauJetWeight)
+            triggerWeights = DiTauJet::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
         else
-            triggerWeights = config.isDYEmbeddedSample() ? DiTau::CalculateTurnOnCurveData(leadTau.momentum, subLeadTau.momentum) :
-                                                         DiTau::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
-
+            triggerWeights = DiTau::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
     }
 
     virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
