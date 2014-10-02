@@ -37,7 +37,7 @@ public:
                    const std::string& outputTauTauFile, const std::string& configFileName,
                    const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()), maxNumberOfEvents(_maxNumberOfEvents),
-          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth()),
+          treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth(), config.MaxTreeVersion()),
           HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents),
           HetauAnalyzer(inputFileName, outputETauFile, configFileName, "external", _maxNumberOfEvents),
           HtautauAnalyzer(inputFileName, outputTauTauFile, configFileName, "external", _maxNumberOfEvents)
