@@ -347,25 +347,31 @@ protected:
 
     bool GenFilterForZevents(const finalState::bbTauTau& final_state)
     {
+        using namespace cuts::Htautau_Summer13::DYEmbedded;
         if (final_state.taus.size() != 2)
             throw exception("not 2 taus in the event at Gen Level");
         const GenParticle* firstTau = final_state.taus.at(0).GetOriginGenParticle();
         const GenParticle* secondTau = final_state.taus.at(1).GetOriginGenParticle();
-        if ((firstTau->momentum + secondTau->momentum).M() > 50) return true;
+        if ((firstTau->momentum + secondTau->momentum).M() > invariantMassCut) return true;
         return false;
     }
 
     bool MatchTausFromHiggsWithGenTaus(const analysis::Candidate& higgs, const finalState::bbTauTau& final_state)
     {
-        using namespace cuts::Htautau_Summer13::Embedded;
+        using namespace cuts::Htautau_Summer13::DYEmbedded;
         const analysis::Candidate& firstDaughter = higgs.daughters.at(0);
         const analysis::Candidate& secondDaughter = higgs.daughters.at(1);
         const VisibleGenObjectVector matchedParticles_first =
                 FindMatchedObjects(firstDaughter.momentum,final_state.taus,deltaR_betweenTaus);
         const VisibleGenObjectVector matchedParticles_second =
                 FindMatchedObjects(secondDaughter.momentum,final_state.taus,deltaR_betweenTaus);
+        VisibleGenObjectVector v_union(matchedParticles_first.size() + matchedParticles_second.size());
+        VisibleGenObjectVector::iterator it;
+        it=std::set_union (matchedParticles_first.begin(), matchedParticles_first.end(),
+                           matchedParticles_second.begin(), matchedParticles_second.end(), v_union.begin());
+        v_union.resize(it-v_union.begin());
 
-        if (matchedParticles_first.size() == 1 && matchedParticles_second.size() == 1)
+        if (v_union.size() > 1)
             return true;
         return false;
     }
@@ -432,7 +438,7 @@ protected:
         // flatTree->fakeweight()      = fakeWeights.at(1); // what's this?
         flatTree->weight()          = eventWeight;
         flatTree->embeddedWeight()  =
-                config.isEmbeddedSample() ? event->genEvent().embeddedWeight : 1.; // embedded weight
+                config.isDYEmbeddedSample() ? event->genEvent().embeddedWeight : 1.; // embedded weight
 
         // HTT candidate
         flatTree->mvis() = higgs.momentum.M();

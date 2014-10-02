@@ -311,3 +311,4 @@ HHKinFit/include/PSMath.h
 HHKinFit/include/HHKinFitMaster.h
 HHKinFit/include/HHParticle.h
 HHKinFit/include/PSTools.h
+Analysis/config/embedded.cfg

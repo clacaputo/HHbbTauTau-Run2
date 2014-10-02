@@ -102,6 +102,9 @@ public:
     TLorentzVector visibleMomentum;
 
 public:
+
+    VisibleGenObject() : origin(nullptr) {}
+
     VisibleGenObject(const GenParticle *_origin) : origin(_origin)
     {
         CollectInfo(origin);
@@ -111,6 +114,12 @@ public:
     {
         return origin;
     }
+
+    bool operator < (const VisibleGenObject& other) const
+    {
+        return origin < other.origin;
+    }
+
 
 private:
     void CollectInfo(const GenParticle* particle)

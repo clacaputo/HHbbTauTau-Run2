@@ -186,7 +186,7 @@
     /* All b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
     VECTOR_VAR(Float_t, pt_Bjets) /* pt of b-jets */ \
     VECTOR_VAR(Float_t, eta_Bjets) /* eta of b-jets */ \
-    VECTOR_VAR(Float_t, phi_Bjets) /* phi of b-jets */ \  
+    VECTOR_VAR(Float_t, phi_Bjets) /* phi of b-jets */ \
     VECTOR_VAR(Float_t, energy_Bjets) /* energy of b-jets */ \
     VECTOR_VAR(Float_t, chargedHadronEF_Bjets) /* Charged hadron energy fraction of b-jets */ \
     VECTOR_VAR(Float_t, neutralHadronEF_Bjets) /* Neutral hadron energy fraction of b-jets */ \
