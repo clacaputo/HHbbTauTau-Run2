@@ -370,13 +370,14 @@ namespace DrellYannCategorization {
            // < https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L757
 }
 
-namespace Embedded {
+namespace DYEmbedded {
     namespace trigger {
         // Riccardo repository: https://github.com/rmanzoni/HTT/tree/
         //a03b227073b2d4d8a2abe95367c014694588bf98/CMGTools/H2TauTau/python/proto/samples/run2012/trigger*.py
         const std::vector<std::string> hltPaths = { "HLT_Mu17_Mu8"};
     }
 
+    const double invariantMassCut = 50.;
     const double deltaR_betweenTaus = 0.3;
         //https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L757
 }

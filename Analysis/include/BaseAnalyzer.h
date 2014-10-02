@@ -155,7 +155,7 @@ public:
             SetPUWeight(eventInfo.trueNInt.at(bxIndex));
         }
         eventWeight *= PUweight;
-        if (config.isEmbeddedSample()) eventWeight *= event->genEvent().embeddedWeight;
+        if (config.isDYEmbeddedSample()) eventWeight *= event->genEvent().embeddedWeight;
     }
 
     double GetEventWeight() const
@@ -216,19 +216,18 @@ protected:
         return false;
     }
 
-    bool HavePathForTriggerFired(const std::vector<std::string>& interestinghltPaths,
-                                 std::string& firedPath)
+    std::vector<std::string> CollectPathsForTriggerFired(const std::vector<std::string>& interestinghltPaths)
     {
+        std::vector<std::string> firedPaths;
         for (const ntuple::Trigger& trigger : event->triggers()){
             for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPaths, n); ++n){
                 if (trigger.hltresults.at(n) == 1 && trigger.hltprescales.at(n) == 1){
-                    firedPath = trigger.hltpaths.at(n);
-                    //std::cout << "firedPath = " << firedPath << std::endl;
-                    return true;
+                    std::string firedPath = trigger.hltpaths.at(n);
+                    firedPaths.push_back(firedPath);
                 }
             }
         }
-        return false;
+        return firedPaths;
     }
 
     template<typename ObjectType, typename BaseSelectorType>
