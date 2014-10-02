@@ -31,6 +31,7 @@ class RecoilCorrector
 public:
   RecoilCorrector(std::string iNameZDat, int iSeed=0xDEADBEEF);
   RecoilCorrector(std::string iNameZDat1, std::string iPrefix, int iSeed=0xDEADBEEF);
+  ~RecoilCorrector();
   void CorrectAll(double &met, double &metphi, double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
   void Correct(double &pfmet, double &pfmetphi, double &trkmet, double &trkmetphi, 
 	       double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double iFluc    ,double iScale=0,int njet=0);
@@ -173,6 +174,8 @@ RecoilCorrector::RecoilCorrector(std::string iNameZ, int iSeed) {
   readCorr  (iNameZ  ,fF1U1U2Corr,fF2U1U2Corr,fF1F2U1Corr,fF1F2U2Corr,fF1F2U1U2Corr,fF1F2U2U1Corr);
   fId = 0; fJet = 0;
 }
+
+RecoilCorrector::~RecoilCorrector() { delete fRandom; }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------
 void RecoilCorrector::addDataFile(std::string iNameData) { 

@@ -313,3 +313,4 @@ HHKinFit/include/HHParticle.h
 HHKinFit/include/PSTools.h
 Analysis/config/embedded.cfg
 debug.sh
+RunTools/config/known_memory_leaks.supp

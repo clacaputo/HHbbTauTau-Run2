@@ -72,6 +72,7 @@ printf \
 #include <iostream>
 int main()
 {
+        int result = 0;
         try {
                 gROOT->ProcessLine(\"#include <vector>\");
                 $NAME a( $arg_list );
@@ -79,13 +80,12 @@ int main()
         }
         catch(std::exception& e) {
                 std::cerr << \"ERROR: \" << e.what() << std::endl;
-                return 1;
+                result = 1;
         }
-        return 0;
+        return result;
 }
 " > $CODE_OUT
 
-#g++ -std=c++0x -Wall -O3 \
 g++ -std=c++0x -Wall $COMPILE_FLAGS \
         -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
         $( root-config --libs ) -lMathMore -lGenVector -lTMVA -L$BOOST_BASE/lib -lboost_thread \
