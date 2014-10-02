@@ -107,7 +107,6 @@ public:
 
         }
         TH1::SetDefaultSumw2();
-        std::cout << "extracted Tree" << std::endl;
         if(config.ApplyPUreweight()){
             //std::cout << "I'm here" << std::endl;
             pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);

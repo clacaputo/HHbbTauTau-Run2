@@ -44,7 +44,8 @@ $SCRIPT_PATH/RunTools/make.sh $SCRIPT_RUN_PATH $JOB_NAME -g $*
 RESULT=$?
 if [[ $RESULT -eq 0 ]] ; then
         valgrind -v --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=debug.log \
-                 --suppressions=RunTools/config/known_memory_leaks.supp --gen-suppressions=all $EXE_NAME
+                 --suppressions=RunTools/config/known_memory_leaks.supp \
+                 --suppressions=RunTools/config/known_issues.supp --gen-suppressions=all $EXE_NAME
 	rm -f "$EXE_NAME"
 fi
 
