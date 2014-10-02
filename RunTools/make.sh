@@ -35,7 +35,8 @@ function get_arg_value {
 
 SCRIPT_RUN_PATH=$1
 JOB_NAME=$2
-NAME=$3
+COMPILE_FLAGS=$3
+NAME=$4
 ARGS=($*)
 
 if [ "$CMSSW_BASE/" = "/" ] ; then
@@ -52,10 +53,10 @@ fi
 SOURCE=$( find $SCRIPT_PATH -name "${NAME}.C" )
 n=${#ARGS[@]}
 arg_list=""
-if (( n > 3 )) ; then
-        get_arg_value 3
+if (( n > 4 )) ; then
+        get_arg_value 4
         arg_list="$arg_value"
-        for (( i = 4; i < n; i++ )) ; do
+        for (( i = 5; i < n; i++ )) ; do
                 get_arg_value i
                 arg_list="$arg_list, $arg_value"
         done
@@ -84,7 +85,8 @@ int main()
 }
 " > $CODE_OUT
 
-g++ -std=c++0x -Wall -O3 \
+#g++ -std=c++0x -Wall -O3 \
+g++ -std=c++0x -Wall $COMPILE_FLAGS \
         -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
         $( root-config --libs ) -lMathMore -lGenVector -lTMVA -L$BOOST_BASE/lib -lboost_thread \
         -o $EXE_NAME $CODE_OUT

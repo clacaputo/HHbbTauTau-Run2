@@ -39,11 +39,11 @@ LC_CTYPE=C SUFFIX=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 
 JOB_NAME=${NAME}_${SUFFIX}
 EXE_NAME="$SCRIPT_RUN_PATH/$JOB_NAME"
 
-$SCRIPT_PATH/RunTools/make.sh $SCRIPT_RUN_PATH $JOB_NAME -O3 $*
+$SCRIPT_PATH/RunTools/make.sh $SCRIPT_RUN_PATH $JOB_NAME -g $*
 
 RESULT=$?
 if [[ $RESULT -eq 0 ]] ; then
-        $EXE_NAME
+        valgrind --leak-check=full --track-origins=yes -v $EXE_NAME
 	rm -f "$EXE_NAME"
 fi
 

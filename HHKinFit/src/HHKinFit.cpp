@@ -323,7 +323,7 @@ HHKinFit::Fit()
   m_fitrecord->UpdateMothers(HHEventRecord::tau1);
 
   if (minEtau1>m_recrecord->GetEntry(HHEventRecord::tauvis1)->E() || maxEtau1<m_recrecord->GetEntry(HHEventRecord::tauvis1)->E()){
-    std::cout << "tautau mass constraint cannot be fulfilled -> reconstructed visible tau energy greater/smaller than maximal/minimal allowed total tau energy." << std::endl;
+    std::cerr << "tautau mass constraint cannot be fulfilled -> reconstructed visible tau energy greater/smaller than maximal/minimal allowed total tau energy." << std::endl;
     m_convergence=0;
     m_chi2=-1;
     m_chi2_b1=-1;

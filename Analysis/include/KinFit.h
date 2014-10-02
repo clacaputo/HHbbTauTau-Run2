@@ -241,7 +241,7 @@ struct FitResults {
 
 FitResults Fit(const FitInput& input)
 {
-    static const bool debug = true;
+    static const bool debug = false;
     static const Int_t higgs_mass_hypotesis = 125;
 
     const std::vector<Int_t> hypo_mh = { higgs_mass_hypotesis };
