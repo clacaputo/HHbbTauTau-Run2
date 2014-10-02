@@ -34,49 +34,47 @@
 #include "HHKinFit/src/HHKinFitMaster.cpp"
 #include "HHKinFit/src/HHParticle.cpp"
 #include "HHKinFit/src/HHParticleList.cpp"
-#include "HHKinFit/src/HHTauInputKinFit.cpp"
-#include "HHKinFit/src/HHTauInputKinFitMaster.cpp"
+//#include "HHKinFit/src/HHTauInputKinFit.cpp"
+//#include "HHKinFit/src/HHTauInputKinFitMaster.cpp"
 #include "HHKinFit/src/HHV4Vector.cpp"
 #include "HHKinFit/src/PSMath.cpp"
 #include "HHKinFit/src/PSTools.cpp"
 
 
+//#include "FWCore/Utilities/src/EDMException.cc"
+//#include "FWCore/Utilities/src/Exception.cc"
 
+//#include "FWCore/MessageLogger/src/MessageLogger.cc"
+//#include "FWCore/MessageLogger/src/MessageLoggerQ.cc"
+//#include "FWCore/MessageLogger/src/MessageDrop.cc"
+//#include "FWCore/MessageLogger/src/ELseverityLevel.cc"
+//#include "FWCore/MessageLogger/src/MessageSender.cc"
+//#include "FWCore/MessageLogger/src/AbstractMLscribe.cc"
+//#include "FWCore/MessageLogger/src/ErrorObj.cc"
+//#include "FWCore/MessageLogger/src/ELextendedID.cc"
+//#include "FWCore/MessageLogger/src/ELstring.cc"
 
-#include "FWCore/Utilities/src/EDMException.cc"
-#include "FWCore/Utilities/src/Exception.cc"
-
-#include "FWCore/MessageLogger/src/MessageLogger.cc"
-#include "FWCore/MessageLogger/src/MessageLoggerQ.cc"
-#include "FWCore/MessageLogger/src/MessageDrop.cc"
-#include "FWCore/MessageLogger/src/ELseverityLevel.cc"
-#include "FWCore/MessageLogger/src/MessageSender.cc"
-#include "FWCore/MessageLogger/src/AbstractMLscribe.cc"
-#include "FWCore/MessageLogger/src/ErrorObj.cc"
-#include "FWCore/MessageLogger/src/ELextendedID.cc"
-#include "FWCore/MessageLogger/src/ELstring.cc"
-
-using namespace std;
-#include "PhysicsTools/KinFitter/src/TAbsFitConstraint.cc"
-#include "PhysicsTools/KinFitter/src/TAbsFitParticle.cc"
-#include "PhysicsTools/KinFitter/src/TFitConstraintEp.cc"
-#include "PhysicsTools/KinFitter/src/TFitConstraintM.cc"
-#include "PhysicsTools/KinFitter/src/TFitConstraintMGaus.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleCart.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleECart.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleEMomDev.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleEScaledMomDev.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleESpher.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleEtEtaPhi.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleEtThetaPhi.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleMCCart.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleMCMomDev.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleMCPInvSpher.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleMCSpher.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleMomDev.cc"
-#include "PhysicsTools/KinFitter/src/TFitParticleSpher.cc"
-#include "PhysicsTools/KinFitter/src/TKinFitter.cc"
-#include "PhysicsTools/KinFitter/src/TSLToyGen.cc"
+//using namespace std;
+//#include "PhysicsTools/KinFitter/src/TAbsFitConstraint.cc"
+//#include "PhysicsTools/KinFitter/src/TAbsFitParticle.cc"
+//#include "PhysicsTools/KinFitter/src/TFitConstraintEp.cc"
+//#include "PhysicsTools/KinFitter/src/TFitConstraintM.cc"
+//#include "PhysicsTools/KinFitter/src/TFitConstraintMGaus.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleCart.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleECart.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleEMomDev.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleEScaledMomDev.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleESpher.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleEtEtaPhi.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleEtThetaPhi.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleMCCart.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleMCMomDev.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleMCPInvSpher.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleMCSpher.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleMomDev.cc"
+//#include "PhysicsTools/KinFitter/src/TFitParticleSpher.cc"
+//#include "PhysicsTools/KinFitter/src/TKinFitter.cc"
+//#include "PhysicsTools/KinFitter/src/TSLToyGen.cc"
 
 #include "TreeProduction/interface/MET.h"
 
@@ -426,8 +424,8 @@ inline FitResultsWithUncertainties FitWithUncertainties(const four_body::FitInpu
 //                                                                    1 + tau_energy_uncertainty));
     }
     if(fit_two_bjets) {
-        const two_body::FitInput two_body_input(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
-        result.fit_bb = two_body::Fit(two_body_input);
+//        const two_body::FitInput two_body_input(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
+//        result.fit_bb = two_body::Fit(two_body_input);
 //        result.fit_bb_down = two_body::Fit(two_body::FitInput(two_body_input, 1 - bjet_energy_uncertainty));
 //        result.fit_bb_up = two_body::Fit(two_body::FitInput(two_body_input, 1 + bjet_energy_uncertainty));
     }

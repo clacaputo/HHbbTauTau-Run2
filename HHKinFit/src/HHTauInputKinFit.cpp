@@ -89,11 +89,11 @@ HHTauInputKinFit::Fit()
     a[ip] = astart[ip];
   }
 
-  static const Int_t nloopmax = 100;
-  Double_t Xa[nloopmax],   Ya[nloopmax];
-  Double_t Xa1[nloopmax],  Ya1[nloopmax];
-  Double_t HPx[nloopmax],  HPy[nloopmax];
-  Double_t HPx1[nloopmax], HPy1[nloopmax];
+//  static const Int_t nloopmax = 100;
+//  Double_t Xa[nloopmax],   Ya[nloopmax];
+//  Double_t Xa1[nloopmax],  Ya1[nloopmax];
+//  Double_t HPx[nloopmax],  HPy[nloopmax];
+//  Double_t HPx1[nloopmax], HPy1[nloopmax];
 
   for (Int_t iloop = 0; iloop < m_maxloops * 10 && iter < m_maxloops; iloop++) { // FIT loop
     //    chi2        = testfunction(a,np) ;
@@ -124,22 +124,22 @@ HHTauInputKinFit::Fit()
       std::cout << "------------------" << std::endl;
     }
 
-    if (iloop >= 0 && iloop < nloopmax) {
-      Xa1[iloop] = m_fitrecord->GetEntry(HHEventRecord::b1)->E();
-      Ya1[iloop] = m_fitrecord->GetEntry(HHEventRecord::tau1)->E();
-    }
-    if (iter >= 0 && iter < nloopmax) {
-      Xa[iter] = m_fitrecord->GetEntry(HHEventRecord::b1)->E();
-      Ya[iter] = m_fitrecord->GetEntry(HHEventRecord::tau1)->E();
-    }
-    if (iloop >= 0 && iloop < nloopmax) {
-      HPx1[iloop] = m_fitrecord->GetEntry(HHEventRecord::H)->Px();
-      HPy1[iloop] = m_fitrecord->GetEntry(HHEventRecord::H)->Py();
-    }
-    if (iter >= 0 && iter < nloopmax) {
-      HPx[iter] = m_fitrecord->GetEntry(HHEventRecord::H)->Px();
-      HPy[iter] = m_fitrecord->GetEntry(HHEventRecord::H)->Py();
-    }
+//    if (iloop >= 0 && iloop < nloopmax) {
+//      Xa1[iloop] = m_fitrecord->GetEntry(HHEventRecord::b1)->E();
+//      Ya1[iloop] = m_fitrecord->GetEntry(HHEventRecord::tau1)->E();
+//    }
+//    if (iter >= 0 && iter < nloopmax) {
+//      Xa[iter] = m_fitrecord->GetEntry(HHEventRecord::b1)->E();
+//      Ya[iter] = m_fitrecord->GetEntry(HHEventRecord::tau1)->E();
+//    }
+//    if (iloop >= 0 && iloop < nloopmax) {
+//      HPx1[iloop] = m_fitrecord->GetEntry(HHEventRecord::H)->Px();
+//      HPy1[iloop] = m_fitrecord->GetEntry(HHEventRecord::H)->Py();
+//    }
+//    if (iter >= 0 && iter < nloopmax) {
+//      HPx[iter] = m_fitrecord->GetEntry(HHEventRecord::H)->Px();
+//      HPy[iter] = m_fitrecord->GetEntry(HHEventRecord::H)->Py();
+//    }
 
     PSMath::PSfitShow(iloop, m_convergence, iter, method, mode, m_printlevel,
                       m_graphicslevel, np, a, astart, alimit, aprec, daN, h,

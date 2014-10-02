@@ -325,7 +325,7 @@ protected:
                       const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
                       const analysis::kinematic_fit::FitResultsMap& kinfitResults,
                       const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets_all,  const analysis::CandidateVector& retagged_bjets,
+                      const analysis::CandidateVector& bjets_all, const analysis::CandidateVector& retagged_bjets,
                       const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();

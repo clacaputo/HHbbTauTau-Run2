@@ -456,15 +456,15 @@ protected:
             flatTree->kinfit_bb_tt_chi2().push_back(result_4body.chi2);
             flatTree->kinfit_bb_tt_pull_balance().push_back(result_4body.pull_balance);
 
-            const analysis::kinematic_fit::two_body::FitResults& result_2body = fit_result_entry.second.fit_bb;
-            TLorentzVector ditau_momentum;
-            ditau_momentum.SetPtEtaPhiM(svfitResults.fit_mc.pt, higgs.momentum.Eta(), higgs.momentum.Phi(),
-                                        svfitResults.fit_mc.mass);
-            const TLorentzVector combined_momentum = ditau_momentum + result_2body.bjet_momentums.at(0)
-                                                                    + result_2body.bjet_momentums.at(1);
-            flatTree->kinfit_bb_sv_mass().push_back(combined_momentum.M());
-            flatTree->kinfit_bb_convergence().push_back(result_2body.convergence);
-            flatTree->kinfit_bb_chi2().push_back(result_2body.chi2);
+//            const analysis::kinematic_fit::two_body::FitResults& result_2body = fit_result_entry.second.fit_bb;
+//            TLorentzVector ditau_momentum;
+//            ditau_momentum.SetPtEtaPhiM(svfitResults.fit_mc.pt, higgs.momentum.Eta(), higgs.momentum.Phi(),
+//                                        svfitResults.fit_mc.mass);
+//            const TLorentzVector combined_momentum = ditau_momentum + result_2body.bjet_momentums.at(0)
+//                                                                    + result_2body.bjet_momentums.at(1);
+//            flatTree->kinfit_bb_sv_mass().push_back(combined_momentum.M());
+//            flatTree->kinfit_bb_convergence().push_back(result_2body.convergence);
+//            flatTree->kinfit_bb_chi2().push_back(result_2body.chi2);
         }
 
         // Hhh generator info candidate
