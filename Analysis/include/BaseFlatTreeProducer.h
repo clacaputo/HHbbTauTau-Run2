@@ -307,26 +307,39 @@ protected:
             return ntuple::EventType::Unknown;
 
         static const particles::ParticleCodes Zcode = { particles::Z };
-        static const particles::ParticleCodes ZDecay_1 = { particles::tau, particles::tau };
-        static const particles::ParticleCodes ZDecay_2 = { particles::e, particles::e };
-        static const particles::ParticleCodes ZDecay_3 = { particles::mu, particles::mu };
+        static const particles::ParticleCodes ZDecay_electrons = { particles::e, particles::e };
+        static const particles::ParticleCodes ZDecay_muons = { particles::mu, particles::mu };
+        static const particles::ParticleCodes ZDecay_taus = { particles::tau, particles::tau };
 
         static const particles::ParticleCodes particlesCodes = { particles::e, particles::mu };
 
-        const GenParticleSet Zparticles = genEvent.GetParticles(Zcode);
+        const GenParticleSet Zparticles_all = genEvent.GetParticles(Zcode);
+
+        GenParticleSet Zparticles;
+        for(const GenParticle* z : Zparticles_all) {
+            if(z->mothers.size() == 1) {
+                const GenParticle* mother = z->mothers.front();
+                if(mother->pdg.Code == particles::Z && mother->status == particles::HardInteractionProduct)
+                    Zparticles.insert(z);
+            }
+         }
 
         if (Zparticles.size() > 1 || Zparticles.size() == 0)
             throw exception("not 1 Z per event");
 
         const GenParticle* Z_mc = *Zparticles.begin();
+        while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
+            Z_mc = Z_mc->daughters.front();
+
         GenParticlePtrVector ZProducts;
-        if(FindDecayProducts(*Z_mc, ZDecay_1,ZProducts))
+        if(FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true))
             return ntuple::EventType::ZTT;
 
-        if (!FindDecayProducts(*Z_mc, ZDecay_2,ZProducts) &&
-                !FindDecayProducts(*Z_mc, ZDecay_3,ZProducts))
-            throw exception("not leptonic decay");
-
+        if (!FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+                && !FindDecayProducts(*Z_mc, ZDecay_muons,ZProducts, true)) {
+            genEvent.Print();
+            throw exception("not leptonic Z decay");
+        }
 
         const GenParticleSet selectedParticles = genEvent.GetParticles(particlesCodes,minimal_genParticle_pt);
 

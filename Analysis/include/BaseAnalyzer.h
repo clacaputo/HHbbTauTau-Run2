@@ -506,59 +506,37 @@ protected:
 
     const GenParticle* FindWboson()
     {
-        static const particles::ParticleCodes resonanceCodes = { particles::W_plus };
-        static const particles::ParticleCodes resonanceDecay = { particles::tau, particles::nu_tau };
+        static const particles::ParticleCodes Wcode = { particles::W_plus };
+        static const particles::ParticleCodes WDecay_tau = { particles::tau, particles::nu_tau };
+        static const particles::ParticleCodes WDecay_electron = { particles::e, particles::nu_e };
+        static const particles::ParticleCodes WDecay_muon = { particles::mu, particles::nu_mu };
 
-        //genEvent.Print();
-        const analysis::GenParticleSet all_resonances = genEvent.GetParticles(resonanceCodes);
+        const analysis::GenParticleSet Wparticles_all = genEvent.GetParticles(Wcode);
 
-        analysis::GenParticleSet resonances;
-        for(const GenParticle* w : all_resonances) {
+        analysis::GenParticleSet Wparticles;
+        for(const GenParticle* w : Wparticles_all) {
             if(w->mothers.size() == 1) {
                 const GenParticle* mother = w->mothers.at(0);
                 if(mother->pdg.Code == particles::W_plus && mother->status == particles::HardInteractionProduct)
-                    resonances.insert(w);
+                    Wparticles.insert(w);
             }
          }
 
-        if (resonances.size() == 0) return nullptr;
+        if (Wparticles.size() == 0) return nullptr;
 
-        if (resonances.size() > 2)
-            throw exception("more than 2 W in the event");
+        if (Wparticles.size() > 1)
+            throw exception("more than 1 W in the event");
 
-        if (resonances.size() == 1){
-            const GenParticle* Wboson = *resonances.begin();
+        const GenParticle* Wboson = *Wparticles.begin();
+        while(Wboson->daughters.size() == 1 && Wboson->daughters.front()->pdg.Code == particles::W_plus)
+            Wboson = Wboson->daughters.front();
 
-            analysis::GenParticlePtrVector resonanceDecayProducts;
-            if(analysis::FindDecayProducts(*Wboson, resonanceDecay,resonanceDecayProducts)){
-                return Wboson;
-            }
-            return nullptr;
-        }
-
-
-        const GenParticle* first_resonance = *resonances.begin();
-        const GenParticle* second_resonance = *std::next(resonances.begin());
-        const GenParticle* W_mother;
-        const GenParticle* W_daughter;
-
-
-        if (first_resonance->daughters.size() == 1 && first_resonance->daughters.at(0) == second_resonance){
-            W_mother = first_resonance;
-            W_daughter = second_resonance;
-        }
-        else if (second_resonance->daughters.size() == 1 && second_resonance->daughters.at(0) == first_resonance){
-            W_mother = second_resonance;
-            W_daughter = first_resonance;
-        }
-        else
-            throw exception("two resonances are not in relationship");
-
-
-        analysis::GenParticlePtrVector resonanceDecayProducts;
-        if(analysis::FindDecayProducts(*W_mother, resonanceDecay,resonanceDecayProducts)){
-            return W_daughter;
-        }
+        analysis::GenParticlePtrVector WProducts;
+        if(analysis::FindDecayProducts(*Wboson, WDecay_tau, WProducts))
+            return Wboson;
+        if (!FindDecayProducts(*Wboson, WDecay_electron, WProducts)
+                && !FindDecayProducts(*Wboson, WDecay_muon, WProducts))
+            throw exception("not leptonic W decay");
 
         return nullptr;
     }

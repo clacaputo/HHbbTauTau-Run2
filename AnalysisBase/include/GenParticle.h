@@ -217,7 +217,7 @@ public:
 };
 
 inline bool FindDecayProducts(const GenParticle& genParticle, const particles::ParticleCodes& particleCodes,
-                              GenParticlePtrVector& decayProducts)
+                              GenParticlePtrVector& decayProducts, bool ignoreFinalStateRadiation = false)
 {
     if (genParticle.status != particles::Decayed_or_fragmented){
         throw std::runtime_error("particle type not supported");
@@ -235,7 +235,14 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
         daughters = &mother.daughters;
         ++expected_nDaughters;
     }
-    if (daughters->size() != expected_nDaughters)
+    size_t effective_nDaughters = daughters->size();
+    if(ignoreFinalStateRadiation) {
+        for(const GenParticle* daughter : *daughters) {
+            if(daughter->pdg.Code == particles::gamma)
+                --effective_nDaughters;
+        }
+    }
+    if (effective_nDaughters != expected_nDaughters)
         return false;
     std::set<size_t> taken_daughters;
     for (const particles::ParticleCode& code : particleCodes){
@@ -273,7 +280,7 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
 
 inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles,
                                 const particles::ParticleCodes2D& particleCodes2D, GenParticleVector2D& decayProducts2D,
-                                GenParticleIndexVector& indexes)
+                                GenParticleIndexVector& indexes, bool ignoreFinalStateRadiation = false)
 {
     std::set<size_t> taken_genParticles;
     if (genParticles.size() != particleCodes2D.size())
@@ -285,7 +292,7 @@ inline bool FindDecayProducts2D(const GenParticlePtrVector& genParticles,
             if (taken_genParticles.count(n)) continue;
             const GenParticle& genParticle = *genParticles.at(n);
             GenParticlePtrVector decayProducts;
-            if (!FindDecayProducts(genParticle,codes,decayProducts)) continue;
+            if (!FindDecayProducts(genParticle,codes,decayProducts, ignoreFinalStateRadiation)) continue;
             particleFound = true;
             decayProducts2D.push_back(decayProducts);
             taken_genParticles.insert(n);
