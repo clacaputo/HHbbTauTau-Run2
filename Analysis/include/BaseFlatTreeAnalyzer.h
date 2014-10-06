@@ -46,7 +46,7 @@
 #include "AnalysisBase/include/exception.h"
 #include "AnalysisBase/include/Particles.h"
 #include "PrintTools/include/RootPrintToPdf.h"
-#include "KinFit.h"
+//#include "KinFit.h"
 
 #include "MVASelections/include/MvaReader.h"
 
@@ -113,8 +113,7 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
-                         bool _isBlind=false)
+                         const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), outputFileName(_outputFileName),
           WjetsData(_WjetsData), isBlind(_isBlind)
     {
@@ -159,6 +158,7 @@ public:
         PrintTables("comma", L",");
         PrintTables("semicolon", L";");
         ProduceFileForLimitsCalculation();
+        std::cout << "plots for limits done" << std::endl;
         PrintStackedPlots();
     }
 
@@ -175,8 +175,10 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
+            if (eventTypeQCD == EventType_QCD::Unknown) continue;
             for(auto eventCategory : eventCategories) {
-                if(!PassMvaCut(event, eventCategory)) continue;
+                if( eventCategory == EventCategory::Inclusive) continue;
+                //if(!PassMvaCut(event, eventCategory)) continue;
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
                 FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                 if(dataCategory.name == DYJets.name && std::abs(event.pdgId_2_MC) == particles::tau.RawCode())
@@ -228,9 +230,9 @@ protected:
     virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight,
                                 EventCategory eventCategory)
     {
-        anaData.m_sv().Fill(event.m_sv, weight);
-        anaData.m_sv_up().Fill(event.m_sv_Up, weight);
-        anaData.m_sv_down().Fill(event.m_sv_Down, weight);
+        anaData.m_sv().Fill(event.m_sv_vegas, weight);
+        anaData.m_sv_up().Fill(event.m_sv_up_vegas, weight);
+        anaData.m_sv_down().Fill(event.m_sv_down_vegas, weight);
         anaData.pt_1().Fill(event.pt_1, weight);
         anaData.eta_1().Fill(event.eta_1, weight);
         anaData.pt_2().Fill(event.pt_2, weight);
@@ -255,11 +257,11 @@ protected:
         anaData.DeltaPhi_tt_MET().Fill(Htt.DeltaPhi(MET), weight);
         anaData.mt_1().Fill(event.mt_1, weight);
         anaData.mt_2().Fill(event.mt_2, weight);
-        if(event.mass_Bjets.size() >= 2) {
+        if(event.pt_Bjets.size() >= 2) {
             std::vector<TLorentzVector> b_momentums(2);
             for(size_t n = 0; n < b_momentums.size(); ++n)
-                b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
-                                               event.mass_Bjets.at(n));
+                b_momentums.at(n).SetPtEtaPhiE(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
+                                               event.energy_Bjets.at(n));
             anaData.pt_b1().Fill(b_momentums.at(0).Pt(), weight);
             anaData.eta_b1().Fill(b_momentums.at(0).Eta(), weight);
             anaData.pt_b2().Fill(b_momentums.at(1).Pt(), weight);
@@ -278,17 +280,18 @@ protected:
             const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
             anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
             anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
-            //const double m_ttbb_kinFit = 10;
+            //const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
+            const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(0);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
 
-            const std::string category_name = eventCategoryMapName.at(eventCategory);
-            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
-            const double mva_BDT = mvaReader_BDT
-                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-                    : std::numeric_limits<double>::lowest();
+//            const std::string category_name = eventCategoryMapName.at(eventCategory);
+//            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
+//            const double mva_BDT = mvaReader_BDT
+//                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
+//                    : std::numeric_limits<double>::lowest();
+            const double mva_BDT = -1;
             anaData.MVA_BDT().Fill(mva_BDT, weight);
 
 //            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
@@ -310,9 +313,11 @@ protected:
     void PrintStackedPlots()
     {
         root_ext::PdfPrinter printer(outputFileName + ".pdf");
+
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
@@ -320,11 +325,14 @@ protected:
 
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
-                    if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
+                    if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name)))
+                        continue;
+
                     if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) ||*/
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
+
                     else if(category.IsSignal()){
                         if (eventCategory == EventCategory::TwoJets_TwoBtag){
                             if (category.name == "SIGNAL ggHhh300")
@@ -339,10 +347,10 @@ protected:
                             stackDescriptor.AddSignalHistogram(histogram, "1x Graviton#rightarrowhh#rightarrow#tau#taubb(m_{H}=1000)", category.color, 1);
                         }
                         else
-                            stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);
+                            stackDescriptor.AddSignalHistogram(histogram, category.title, category.color, 10);                        
                     }
                     else
-                        stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);
+                        stackDescriptor.AddBackgroundHistogram(histogram, category.title, category.color);                        
                 }
                 printer.PrintStack(stackDescriptor);
             }

@@ -167,14 +167,19 @@ public:
         main_pad->Draw();
         main_pad->cd();
 
-        stack->Draw("HIST");
-        const Double_t maxY = std::max(stack->GetMaximum(), data_histogram->GetMaximum());
-        stack->SetMaximum(maxY*1.1);
-        const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
-        stack->SetMinimum(minY);
+        if (background_histograms.size()){
+            stack->Draw("HIST");
+            if (data_histogram){
+                const Double_t maxY = std::max(stack->GetMaximum(), data_histogram->GetMaximum());
+                stack->SetMaximum(maxY*1.1);
+            }
 
-        stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
-        stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
+            const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
+            stack->SetMinimum(minY);
+
+            stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+            stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
+        }
 
         for(const hist_ptr& signal : signal_histograms)
             signal->Draw("SAME HIST");
@@ -188,35 +193,39 @@ public:
 
         legend->Draw("same");
 
-        ratio_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.ratio_pad));
-        ratio_pad->Draw();
+        if (data_histogram){
+            ratio_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.ratio_pad));
+            ratio_pad->Draw();
 
-        ratio_pad->cd();
+            ratio_pad->cd();
 
-        ratio_histogram = hist_ptr(static_cast<TH1D*>(data_histogram->Clone()));
-        ratio_histogram->Divide(sum_backgound_histogram.get());
 
-        ratio_histogram->GetYaxis()->SetRangeUser(0.8,1.2);
-        ratio_histogram->GetYaxis()->SetNdivisions(3);
-        ratio_histogram->GetYaxis()->SetLabelSize(0.2);
-        ratio_histogram->GetYaxis()->SetTitleSize(0.25);
-        ratio_histogram->GetYaxis()->SetTitleOffset(0.15);
-        ratio_histogram->GetYaxis()->SetTitle("Obs/Est");
-        ratio_histogram->GetXaxis()->SetNdivisions(-1);
-        ratio_histogram->GetXaxis()->SetTitle("");
-        ratio_histogram->GetXaxis()->SetLabelSize(0.0001);
-        ratio_histogram->SetMarkerStyle(7);
-        ratio_histogram->SetMarkerColor(2);
+            ratio_histogram = hist_ptr(static_cast<TH1D*>(data_histogram->Clone()));
+            ratio_histogram->Divide(sum_backgound_histogram.get());
 
-        ratio_histogram->Draw("histp");
+            ratio_histogram->GetYaxis()->SetRangeUser(0.8,1.2);
+            ratio_histogram->GetYaxis()->SetNdivisions(3);
+            ratio_histogram->GetYaxis()->SetLabelSize(0.2);
+            ratio_histogram->GetYaxis()->SetTitleSize(0.25);
+            ratio_histogram->GetYaxis()->SetTitleOffset(0.15);
+            ratio_histogram->GetYaxis()->SetTitle("Obs/Est");
+            ratio_histogram->GetXaxis()->SetNdivisions(-1);
+            ratio_histogram->GetXaxis()->SetTitle("");
+            ratio_histogram->GetXaxis()->SetLabelSize(0.0001);
+            ratio_histogram->SetMarkerStyle(7);
+            ratio_histogram->SetMarkerColor(2);
 
-        TLine* line = new TLine();
-        line->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 1, ratio_histogram->GetXaxis()->GetXmax(), 1);
+            ratio_histogram->Draw("histp");
+
+            TLine* line = new TLine();
+            line->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 1, ratio_histogram->GetXaxis()->GetXmax(), 1);
+        }
 
         canvas.cd();
         main_pad->Draw();
         canvas.cd();
-        ratio_pad->Draw();
+        if (data_histogram)
+            ratio_pad->Draw();
     }
 
 private:

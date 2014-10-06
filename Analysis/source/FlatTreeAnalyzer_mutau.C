@@ -34,10 +34,9 @@ class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& _signalName,
-                           const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
-                           bool _isBlind=false)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _mvaXMLpath,
-                                _WjetsData, _isBlind)
+                           const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
+         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _WjetsData,
+                                _isBlind)
     {
     }
 
@@ -80,7 +79,7 @@ protected:
             { analysis::EventCategory::TwoJets_OneBtag, -0.05 },
             { analysis::EventCategory::TwoJets_TwoBtag, -0.05 }
         };
-        if(event.mass_Bjets.size() < 2 || !mva_BDT_cuts.count(eventCategory))
+        if(event.energy_Bjets.size() < 2 || !mva_BDT_cuts.count(eventCategory))
             return true;
 
         TLorentzVector first_cand, second_cand;
@@ -90,8 +89,8 @@ protected:
         MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
         std::vector<TLorentzVector> b_momentums(2);
         for(size_t n = 0; n < b_momentums.size(); ++n)
-            b_momentums.at(n).SetPtEtaPhiM(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
-                                           event.mass_Bjets.at(n));
+            b_momentums.at(n).SetPtEtaPhiE(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
+                                           event.energy_Bjets.at(n));
 
         const std::string category_name = analysis::eventCategoryMapName.at(eventCategory);
         auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
