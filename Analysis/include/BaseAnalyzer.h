@@ -532,11 +532,12 @@ protected:
             Wboson = Wboson->daughters.front();
 
         analysis::GenParticlePtrVector WProducts;
-        if(analysis::FindDecayProducts(*Wboson, WDecay_tau, WProducts))
+        if(analysis::FindDecayProducts(*Wboson, WDecay_tau, WProducts,true))
             return Wboson;
-        if (!FindDecayProducts(*Wboson, WDecay_electron, WProducts)
-                && !FindDecayProducts(*Wboson, WDecay_muon, WProducts))
+        if (!FindDecayProducts(*Wboson, WDecay_electron, WProducts,true)
+                && !FindDecayProducts(*Wboson, WDecay_muon, WProducts,true))
             throw exception("not leptonic W decay");
+
 
         return nullptr;
     }
