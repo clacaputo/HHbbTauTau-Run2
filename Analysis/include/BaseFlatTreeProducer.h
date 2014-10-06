@@ -336,10 +336,9 @@ protected:
             return ntuple::EventType::ZTT;
 
         if (!FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
-                && !FindDecayProducts(*Z_mc, ZDecay_muons,ZProducts, true)) {
-            genEvent.Print();
+                && !FindDecayProducts(*Z_mc, ZDecay_muons,ZProducts, true))
             throw exception("not leptonic Z decay");
-        }
+
 
         const GenParticleSet selectedParticles = genEvent.GetParticles(particlesCodes,minimal_genParticle_pt);
 
