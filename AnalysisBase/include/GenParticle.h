@@ -227,12 +227,18 @@ inline bool FindDecayProducts(const GenParticle& genParticle, const particles::P
     const GenParticlePtrVector* daughters = &genParticle.daughters;
     size_t expected_nDaughters = particleCodes.size();
     if (daughters->size() == 0){
-        if(genParticle.mothers.size() != 1)
-            throw std::runtime_error("more than one mother per a gen particle is not supported");
-        const GenParticle& mother = *genParticle.mothers.front();
-        if(mother.status != particles::HardInteractionProduct || mother.pdg != genParticle.pdg)
-            throw std::runtime_error("direct mother for a gen particle is not a hard interation product");
-        daughters = &mother.daughters;
+        const GenParticle* originalParticle = &genParticle;
+        while(originalParticle->status != particles::HardInteractionProduct) {
+            if(originalParticle->mothers.size() != 1)
+                throw std::runtime_error("more than one mother per a gen particle is not supported");
+            const GenParticle* mother = originalParticle->mothers.front();
+            if(mother->pdg != originalParticle->pdg
+                    || (mother->status != particles::HardInteractionProduct && mother->daughters.size() != 1))
+                throw std::runtime_error("particle is not part of the hard interaction final state radiation"
+                                         " corrections chain");
+            originalParticle = mother;
+        }
+        daughters = &originalParticle->daughters;
         ++expected_nDaughters;
     }
     size_t effective_nDaughters = daughters->size();
