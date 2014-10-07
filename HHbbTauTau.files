@@ -316,3 +316,4 @@ debug.sh
 RunTools/config/known_memory_leaks.supp
 RunTools/config/known_memory_leaks.supp
 RunTools/config/known_issues.supp
+AnalysisBase/include/FlatEventInfo.h
