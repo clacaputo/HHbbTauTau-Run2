@@ -289,7 +289,7 @@ VBF_HToTauTau.root 0.001967
 GluGluToHToTauTau.root 0.0251
 WH_ZH_TTH_HToTauTau.root 0.0075974
 WH_WToLNu_HToBB.root 0.0008668
-ZH_ZToLL_HToBB.root 0.0004528
+#ZH_ZToLL_HToBB.root 0.0004528
 
 
 [VIRTUAL QCD]
@@ -353,6 +353,24 @@ DYJetsToLL.root 2.2662
 #DY3Jets.root 0.0914
 #DY4Jets.root 0.0708
 
+[ZL]
+ZL
+yellow_custom
+#DYJetsToLL.root 2.2662
+DY1Jets.root 0.4596
+DY2Jets.root 0.1632
+DY3Jets.root 0.0914
+DY4Jets.root 0.0708
+
+[ZJ]
+ZJ
+yellow_custom
+#DYJetsToLL.root 2.2662
+DY1Jets.root 0.4596
+DY2Jets.root 0.1632
+DY3Jets.root 0.0914
+DY4Jets.root 0.0708
+
 [LIMITS Ztautau]
 Z #rightarrow tautau
 yellow_custom
@@ -384,3 +402,28 @@ Tau_A.root 1
 Tau_B.root 1
 Tau_C.root 1
 Tau_D.root 1
+
+[EMBEDDED MuTau]
+Z #rightarrow #tau #tau
+yellow_custom
+DY_Embedded_MuTau_A.root 1
+DY_Embedded_MuTau_B.root 1
+DY_Embedded_MuTau_C.root 1
+DY_Embedded_MuTau_D.root 1
+
+[EMBEDDED ETau]
+Z #rightarrow #tau #tau
+yellow_custom
+DY_Embedded_ETau_A.root 1
+DY_Embedded_ETau_B.root 1
+DY_Embedded_ETau_C.root 1
+DY_Embedded_ETau_D.root 1
+
+[EMBEDDED TauTau]
+Z #rightarrow #tau #tau
+yellow_custom
+DY_Embedded_TauTau_A.root 1
+DY_Embedded_TauTau_B.root 1
+DY_Embedded_TauTau_C.root 1
+DY_Embedded_TauTau_D.root 1
+

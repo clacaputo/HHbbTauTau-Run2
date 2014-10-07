@@ -34,9 +34,10 @@ class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& _signalName,
-                           const std::string& _dataName, bool _WjetsData = false, bool _isBlind=false)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _WjetsData,
-                                _isBlind)
+                           const std::string& _dataName, const std::string& _embeddedName, bool _WjetsData = false,
+                           bool _isBlind=false)
+         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _embeddedName,
+                                _WjetsData, _isBlind)
     {
     }
 
@@ -101,25 +102,41 @@ protected:
         return mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
 
-    virtual void EstimateQCD(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+    virtual void EstimateQCD(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
                              const analysis::HistogramDescriptor& hist) override
     {
-        static const double scale_factor = 1.06;
-
+        //static const double scale_factor = 1.06;
         using analysis::EventType_QCD;
-        const analysis::DataCategory& qcd = FindCategory("QCD");
 
+        const analysis::DataCategory& qcd = FindCategory("QCD");
         const analysis::DataCategory& data = FindCategory("DATA");
-        root_ext::SmartHistogram<TH1D>* hist_data;
-        if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
-        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
-        for (const analysis::DataCategory& category : categories){
-            if (category.IsData() || category.IsSignal() || category.name == qcd.name || category.IsSumBkg()
+
+        auto hist_OSIso_data = anaData[data.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name);
+        auto hist_OSnotIso_data = anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name);
+        auto hist_SSIso_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name);
+        auto hist_SSnotIso_data = anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name);
+        if(!hist_OSIso_data || !hist_OSnotIso_data || !hist_SSIso_data || !hist_SSnotIso_data) return;
+
+        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_SSIso_data);
+        TH1D& hist_OSnotIso = anaData[qcd.name].QCD[EventType_QCD::OS_NotIsolated].Clone(*hist_OSnotIso_data);
+        TH1D& hist_SSnotIso = anaData[qcd.name].QCD[EventType_QCD::SS_NotIsolated].Clone(*hist_SSnotIso_data);
+
+        for (const analysis::DataCategory& category : categories) {
+            if(category.IsData() || category.IsSignal() || category.name == qcd.name || category.IsSumBkg()
                     || category.IsForLimitsOnly()) continue;
-            TH1D* nonQCD_hist;
-            if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-            histogram.Add(nonQCD_hist, -1);
+
+            if( TH1D* nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name) )
+                histogram.Add(nonQCD_hist, -1);
+
+            if( TH1D* nonQCD_histIso = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name) )
+                hist_OSnotIso.Add(nonQCD_histIso, -1);
+
+            if( TH1D* nonQCD_histNotIso = anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name) )
+                hist_SSnotIso.Add(nonQCD_histNotIso, -1);
         }
+
+        const double scale_factor = hist_OSnotIso.Integral()/hist_SSnotIso.Integral();
+        std::cout << eventCategory << " OS_notIso/SS_NotIso = " << scale_factor << std::endl;
         histogram.Scale(scale_factor);
     }
 
@@ -153,7 +170,7 @@ protected:
         if(!(histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) return;
 
         //MC wjets
-        const analysis::DataCategory& wjets = FindCategory("REFERENCE Wjets");
+        const analysis::DataCategory& wjets = FindCategory("LIMITS Wjets");
         TH1D* histWjetsHighMt;
         if(!(histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name)))
             throw analysis::exception("histogram for Wjets High Mt category doesn't exist");

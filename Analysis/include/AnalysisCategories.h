@@ -61,13 +61,15 @@ public:
     bool IsVirtual() const { return NameStartsWith("VIRTUAL "); }
     bool IsForLimitsOnly() const { return NameStartsWith("LIMITS "); }
     bool IsSumBkg() const { return NameStartsWith("SUM "); }
+    bool IsEmbedded() const { return NameStartsWith("EMBEDDED "); }
 
     bool NameContains(const std::string& substring) const { return name.find(substring) != std::string::npos; }
     bool NameStartsWith(const std::string& prefix) const { return name.find(prefix) == 0; }
 
 public:
 
-    static DataCategoryCollection ReadFromFile(const std::string& cfg_name, const std::string& dataName)
+    static DataCategoryCollection ReadFromFile(const std::string& cfg_name, const std::string& dataName,
+                                               const std::string& embeddedName)
     {
         DataCategoryCollection categories;
         std::ifstream cfg(cfg_name);
@@ -112,6 +114,12 @@ public:
                 const size_t sub_name_pos = category.name.find(' ');
                 const std::string sub_name = category.name.substr(sub_name_pos + 1);
                 if(sub_name != dataName)
+                    continue;
+            }
+            if(category.IsEmbedded()) {
+                const size_t sub_name_pos = category.name.find(' ');
+                const std::string sub_name = category.name.substr(sub_name_pos + 1);
+                if(sub_name != embeddedName)
                     continue;
             }
             filteredCategories.push_back(category);
