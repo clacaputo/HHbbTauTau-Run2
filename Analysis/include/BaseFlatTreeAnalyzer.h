@@ -113,10 +113,9 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, const std::string& _signalName,
-                         const std::string& _dataName, const std::string& _embeddedName, bool _WjetsData = false,
-                         bool _isBlind=false)
+                         const std::string& _dataName, const std::string& _embeddedName, bool _WjetsData = false)
         : inputPath(_inputPath), signalName(_signalName), dataName(_dataName), embeddedName(_embeddedName),
-          outputFileName(_outputFileName), WjetsData(_WjetsData), isBlind(_isBlind)
+          outputFileName(_outputFileName), WjetsData(_WjetsData)
     {
         TH1::SetDefaultSumw2();
 
@@ -150,11 +149,11 @@ public:
 
             for (const auto& hist : histograms) {
                 //embeddedSF
-                double embeddedSF;
-                if( eventCategory == EventCategory::Inclusive && hist.name == "m_sv")
-                    embeddedSF = CalculateEmbeddedScaleFactor(anaData,hist);
-                if (embeddedSF =! 1)
-                    RescaleHistFromEmbedded(anaData,hist,embeddedSF);
+//                double embeddedSF;
+//                if( eventCategory == EventCategory::Inclusive && hist.name == "m_sv")
+//                    embeddedSF = CalculateEmbeddedScaleFactor(anaData,hist);
+//                if (embeddedSF =! 1)
+//                    RescaleHistFromEmbedded(anaData,hist,embeddedSF);
                 //end embSF
                 if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
                 EstimateQCD(eventCategory, anaData, hist);
@@ -165,9 +164,11 @@ public:
         std::cout << "Saving tables and printing stacked plots... " << std::endl;
         PrintTables("comma", L",");
         PrintTables("semicolon", L";");
-        ProduceFileForLimitsCalculation();
+        ProduceFileForLimitsCalculation("m_sv","m_sv_up","m_sv_down");
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit","m_ttbb_kinfit_up","m_ttbb_kinfit_down");
         std::cout << "plots for limits done" << std::endl;
-        PrintStackedPlots();
+        PrintStackedPlots("_noBlind",false);
+        PrintStackedPlots("_blind",true);
     }
 
 
@@ -191,17 +192,17 @@ protected:
                 //if( eventCategory == EventCategory::Inclusive) continue;
                 //if(!PassMvaCut(event, eventCategory)) continue;
                 if (eventTypeQCD != EventType_QCD::Unknown){
-                    if (dataCategory.name == ZL.name && event.eventType == ntuple::EventType::ZL)
-                        dataCategory.name = ZL.name;
-                    if (dataCategory.name == ZJ.name && event.eventType == ntuple::EventType::ZJ)
-                        dataCategory.name = ZJ.name;
+                    if (dataCategory.name == ZL.name && event.eventType == static_cast<int>(ntuple::EventType::ZL))
+                        FillHistograms(fullAnaData[eventCategory][ZL.name].QCD[eventTypeQCD], event, weight, eventCategory);
+                    if (dataCategory.name == ZJ.name && event.eventType == static_cast<int>(ntuple::EventType::ZJ))
+                        FillHistograms(fullAnaData[eventCategory][ZJ.name].QCD[eventTypeQCD], event, weight, eventCategory);
                     FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
                 }
                 if (eventTypeWjets != EventType_Wjets::Unknown){
-                    if (dataCategory.name == ZL.name && event.eventType == ntuple::EventType::ZL)
-                        dataCategory.name = ZL.name;
-                    if (dataCategory.name == ZJ.name && event.eventType == ntuple::EventType::ZJ)
-                        dataCategory.name = ZJ.name;
+                    if (dataCategory.name == ZL.name && event.eventType == static_cast<int>(ntuple::EventType::ZL))
+                        FillHistograms(fullAnaData[eventCategory][ZL.name].Wjets[eventTypeWjets], event, weight, eventCategory);
+                    if (dataCategory.name == ZJ.name && event.eventType == static_cast<int>(ntuple::EventType::ZJ))
+                        FillHistograms(fullAnaData[eventCategory][ZJ.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                     FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
                 }
                 if(eventTypeQCD != EventType_QCD::Unknown && dataCategory.name == DYJets.name &&
@@ -273,8 +274,8 @@ protected:
             hist_Wjets = anaData[category.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name);
 
         }
-        hist_QCD.Scale(scale_factor);
-        hist_Wjets.Scale(scale_factor);
+        hist_QCD->Scale(scale_factor);
+        hist_Wjets->Scale(scale_factor);
     }
 
     virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
@@ -365,9 +366,9 @@ protected:
         }
     }
 
-    void PrintStackedPlots()
+    void PrintStackedPlots(const std::string& blindCondition, bool IsBlind)
     {
-        root_ext::PdfPrinter printer(outputFileName + ".pdf");
+        root_ext::PdfPrinter printer(outputFileName + blindCondition + ".pdf");
 
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
@@ -386,7 +387,7 @@ protected:
                     if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) ||*/
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
-                        stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
+                        stackDescriptor.AddDataHistogram(histogram, category.title, IsBlind, GetBlindRegion(hist.name));
 
                     else if(category.IsSignal()){
                         if (eventCategory == EventCategory::TwoJets_TwoBtag){
@@ -421,7 +422,8 @@ protected:
         throw analysis::exception("category not found : ") << prefix ;
     }
 
-    void ProduceFileForLimitsCalculation()
+    void ProduceFileForLimitsCalculation(const std::string& hist_name, const std::string& hist_name_up,
+                                         const std::string& hist_name_down)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0tag" },
@@ -468,7 +470,7 @@ protected:
         std::string channel_name = ChannelName();
         std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
 
-        std::shared_ptr<TFile> outputFile(new TFile((outputFileName + ".root").c_str(), "RECREATE"));
+        std::shared_ptr<TFile> outputFile(new TFile((outputFileName + hist_name + ".root").c_str(), "RECREATE"));
         outputFile->cd();
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
@@ -485,17 +487,24 @@ protected:
                     continue;
                 }
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
-                anaData.m_sv().Write(limitDataCategory.second.c_str());
+//                anaData.m_sv().Write(limitDataCategory.second.c_str());
 //                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
+                TH1D* hist = anaData.GetPtr<TH1D>(hist_name);
+                hist->Write(limitDataCategory.second.c_str());
                 const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-//		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
-//		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
+                TH1D* hist_up = anaData.GetPtr<TH1D>(hist_name_up);
+                hist_up->Write(nameUp.c_str());
+                TH1D* hist_down = anaData.GetPtr<TH1D>(hist_name_down);
+                hist_down->Write(nameDown.c_str());
 
-                anaData.m_sv_down().Write(nameDown.c_str());
-                anaData.m_sv_up().Write(nameUp.c_str());
+//                anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
+//                anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
+
+//                anaData.m_sv_down().Write(nameDown.c_str());
+//                anaData.m_sv_up().Write(nameUp.c_str());
             }
         }
         outputFile->Close();
@@ -604,7 +613,7 @@ protected:
     std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
     bool WjetsData;
-    bool isBlind;
+
 };
 
 } // namespace analysis
