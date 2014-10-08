@@ -63,6 +63,7 @@ struct FlatEventInfo {
     }
 
     const ntuple::Flat* event;
+    ntuple::EventType eventType;
     std::vector<TLorentzVector> lepton_momentums;
     std::vector<TLorentzVector> bjet_momentums;
     BjetPair selected_bjets;
@@ -73,7 +74,8 @@ struct FlatEventInfo {
     double mva_BDT, mva_BDTD, mva_BDTMitFisher;
 
     FlatEventInfo(const ntuple::Flat& _event, const BjetPair& _selected_bjets)
-        : event(&_event), lepton_momentums(2), bjet_momentums(_event.pt_Bjets.size()), selected_bjets(_selected_bjets),
+        : event(&_event), eventType(static_cast<ntuple::EventType>(_event.eventType)),
+          lepton_momentums(2), bjet_momentums(_event.pt_Bjets.size()), selected_bjets(_selected_bjets),
           has_bjet_pair(false), MET_covariance(2, 2), kinfit_data_index(std::numeric_limits<size_t>::max()),
           mva_BDT(-1), mva_BDTD(-1), mva_BDTMitFisher(-1)
     {

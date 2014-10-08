@@ -80,8 +80,6 @@ public:
     TH1D_ENTRY(m_ttbb_kinfit, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
-    TH1D_ENTRY(pt_ttbb_nomet, 35, 0, 350)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb_MET, 80, -4, 4)
@@ -150,10 +148,10 @@ public:
 
             for (const auto& hist : histograms) {
                 //embeddedSF
-                double embeddedSF;
+                double embeddedSF = 1;
                 if( eventCategory == EventCategory::Inclusive && hist.name == "m_sv")
                     embeddedSF = CalculateEmbeddedScaleFactor(anaData,hist);
-                if (embeddedSF =! 1)
+                if (embeddedSF != 1)
                     RescaleHistFromEmbedded(anaData,hist,embeddedSF);
                 //end embSF
                 if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
@@ -177,8 +175,8 @@ protected:
     {
         const analysis::DataCategory& Ztautau = FindCategory("LIMITS Ztautau");
         const analysis::DataCategory& DYJets = FindCategory("DYJets");
-        const analysis::DataCategory& ZL = FindCategory("ZL");
-        const analysis::DataCategory& ZJ = FindCategory("ZJ");
+//        const analysis::DataCategory& ZL = FindCategory("ZL");
+//        const analysis::DataCategory& ZJ = FindCategory("ZJ");
 
         for(size_t current_entry = 0; current_entry < dataSource.tree->GetEntries(); ++current_entry) {
             dataSource.tree->GetEntry(current_entry);
@@ -187,27 +185,29 @@ protected:
             const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
+            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
             for(auto eventCategory : eventCategories) {
                 //if( eventCategory == EventCategory::Inclusive) continue;
                 //if(!PassMvaCut(event, eventCategory)) continue;
+                UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if (eventTypeQCD != EventType_QCD::Unknown){
-                    if (dataCategory.name == ZL.name && event.eventType == ntuple::EventType::ZL)
-                        dataCategory.name = ZL.name;
-                    if (dataCategory.name == ZJ.name && event.eventType == ntuple::EventType::ZJ)
-                        dataCategory.name = ZJ.name;
-                    FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], event, weight, eventCategory);
+//                    if (dataCategory.name == ZL.name && eventInfo.eventType == ntuple::EventType::ZL)
+//                        dataCategory.name = ZL.name;
+//                    if (dataCategory.name == ZJ.name && eventInfo.eventType == ntuple::EventType::ZJ)
+//                        dataCategory.name = ZJ.name;
+                    FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], eventInfo, weight);
                 }
                 if (eventTypeWjets != EventType_Wjets::Unknown){
-                    if (dataCategory.name == ZL.name && event.eventType == ntuple::EventType::ZL)
-                        dataCategory.name = ZL.name;
-                    if (dataCategory.name == ZJ.name && event.eventType == ntuple::EventType::ZJ)
-                        dataCategory.name = ZJ.name;
-                    FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], event, weight, eventCategory);
+//                    if (dataCategory.name == ZL.name && eventInfo.eventType == ntuple::EventType::ZL)
+//                        dataCategory.name = ZL.name;
+//                    if (dataCategory.name == ZJ.name && eventInfo.eventType == ntuple::EventType::ZJ)
+//                        dataCategory.name = ZJ.name;
+                    FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], eventInfo, weight);
                 }
                 if(eventTypeQCD != EventType_QCD::Unknown && dataCategory.name == DYJets.name &&
                         std::abs(event.pdgId_1_MC) != particles::NONEXISTENT.RawCode() &&
                         std::abs(event.pdgId_2_MC) != particles::NONEXISTENT.RawCode())
-                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], event, weight, eventCategory);
+                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], eventInfo, weight);
             }
         }
     }
@@ -273,8 +273,8 @@ protected:
             hist_Wjets = anaData[category.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name);
 
         }
-        hist_QCD.Scale(scale_factor);
-        hist_Wjets.Scale(scale_factor);
+        hist_QCD->Scale(scale_factor);
+        hist_Wjets->Scale(scale_factor);
     }
 
     virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
@@ -282,9 +282,9 @@ protected:
     virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
                                const HistogramDescriptor& hist) = 0;
 
-    virtual void FillHistograms(FlatAnalyzerData& anaData, const ntuple::Flat& event, double weight,
-                                EventCategory eventCategory)
+    void FillHistograms(FlatAnalyzerData& anaData, const FlatEventInfo& eventInfo, double weight)
     {
+        const ntuple::Flat& event = *eventInfo.event;
         anaData.m_sv().Fill(event.m_sv_vegas, weight);
         anaData.m_sv_up().Fill(event.m_sv_up_vegas, weight);
         anaData.m_sv_down().Fill(event.m_sv_down_vegas, weight);
@@ -292,78 +292,63 @@ protected:
         anaData.eta_1().Fill(event.eta_1, weight);
         anaData.pt_2().Fill(event.pt_2, weight);
         anaData.eta_2().Fill(event.eta_2, weight);
-        TLorentzVector first_cand, second_cand;
-        first_cand.SetPtEtaPhiE(event.pt_1,event.eta_1,event.phi_1,event.energy_1);
-        second_cand.SetPtEtaPhiE(event.pt_2,event.eta_2,event.phi_2,event.energy_2);
-        anaData.DeltaPhi_tt().Fill(first_cand.DeltaPhi(second_cand), weight);
-        anaData.DeltaR_tt().Fill(first_cand.DeltaR(second_cand), weight);
-        TLorentzVector Htt = first_cand + second_cand;
-        anaData.pt_H_tt().Fill(Htt.Pt(),weight);
-        anaData.m_vis().Fill(Htt.M(),weight);
-        TLorentzVector MET;
-        MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
-        TMatrixD metcov(2,2);
-        metcov(0,0)=event.mvacov00;
-        metcov(1,0)=event.mvacov10;
-        metcov(0,1)=event.mvacov01;
-        metcov(1,1)=event.mvacov11;
-        TLorentzVector Htt_MET = Htt + MET;
-        anaData.pt_H_tt_MET().Fill(Htt_MET.Pt(), weight);
-        anaData.DeltaPhi_tt_MET().Fill(Htt.DeltaPhi(MET), weight);
+        anaData.DeltaPhi_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1)), weight);
+        anaData.DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
+        anaData.pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
+        anaData.m_vis().Fill(eventInfo.Htt.M(),weight);
+        anaData.pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
+        anaData.DeltaPhi_tt_MET().Fill(eventInfo.Htt.DeltaPhi(eventInfo.MET), weight);
         anaData.mt_1().Fill(event.mt_1, weight);
         anaData.mt_2().Fill(event.mt_2, weight);
-        if(event.pt_Bjets.size() >= 2) {
-            std::vector<TLorentzVector> b_momentums(2);
-            for(size_t n = 0; n < b_momentums.size(); ++n)
-                b_momentums.at(n).SetPtEtaPhiE(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
-                                               event.energy_Bjets.at(n));
-            anaData.pt_b1().Fill(b_momentums.at(0).Pt(), weight);
-            anaData.eta_b1().Fill(b_momentums.at(0).Eta(), weight);
-            anaData.pt_b2().Fill(b_momentums.at(1).Pt(), weight);
-            anaData.eta_b2().Fill(b_momentums.at(1).Eta(), weight);
-            anaData.DeltaPhi_bb().Fill(b_momentums.at(0).DeltaPhi(b_momentums.at(1)), weight);
-            anaData.DeltaR_bb().Fill(b_momentums.at(0).DeltaR(b_momentums.at(1)), weight);
-            const TLorentzVector Hbb = b_momentums.at(0) + b_momentums.at(1);
-            anaData.pt_H_bb().Fill(Hbb.Pt(),weight);
-            anaData.m_bb().Fill(Hbb.M(), weight);
-            anaData.DeltaPhi_bb_MET().Fill(Hbb.DeltaPhi(MET), weight);
-            anaData.DeltaPhi_hh().Fill(Htt.DeltaPhi(Hbb), weight);
-            anaData.DeltaR_hh().Fill(Htt.DeltaR(Hbb), weight);
-            const TLorentzVector Candidate_ttbb = Hbb + Htt + MET;
-            anaData.m_ttbb().Fill(Candidate_ttbb.M(), weight);
-            anaData.pt_H_hh().Fill(Candidate_ttbb.Pt(), weight);
-            const TLorentzVector Candidate_ttbb_noMET = Hbb + Htt;
-            anaData.pt_ttbb_nomet().Fill(Candidate_ttbb_noMET.Pt(), weight);
-            anaData.m_ttbb_nomet().Fill(Candidate_ttbb_noMET.M(), weight);
-            //const double m_ttbb_kinFit = analysis::CorrectMassByKinfit(b_momentums.at(0),b_momentums.at(1),first_cand,second_cand,MET,metcov);
-            const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(0);
+        if(eventInfo.has_bjet_pair) {
+            anaData.pt_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
+            anaData.eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
+            anaData.pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
+            anaData.eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
+            anaData.DeltaPhi_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
+                                           eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
+            anaData.DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
+                                         eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
+            anaData.pt_H_bb().Fill(eventInfo.Hbb.Pt(),weight);
+            anaData.m_bb().Fill(eventInfo.Hbb.M(), weight);
+            anaData.DeltaPhi_bb_MET().Fill(eventInfo.Hbb.DeltaPhi(eventInfo.MET), weight);
+            anaData.DeltaPhi_hh().Fill(eventInfo.Htt.DeltaPhi(eventInfo.Hbb), weight);
+            anaData.DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
+            anaData.m_ttbb().Fill(eventInfo.resonance.M(), weight);
+            anaData.pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
+            const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
             anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
 
-//            const std::string category_name = eventCategoryMapName.at(eventCategory);
-//            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
-//            const double mva_BDT = mvaReader_BDT
-//                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-//                    : std::numeric_limits<double>::lowest();
-            const double mva_BDT = -1;
-            anaData.MVA_BDT().Fill(mva_BDT, weight);
-
-//            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
-//            const double mva_BDTD = mvaReader_BDTD
-//                    ? mvaReader_BDTD->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-//                    : std::numeric_limits<double>::lowest();
-            const double mva_BDTD = -1;
-            anaData.MVA_BDTD().Fill(mva_BDTD, weight);
-
-//            auto mvaReader_BDTMitFisher = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTMitFisher);
-//            const double mva_BDTMitFisher = mvaReader_BDTMitFisher
-//                    ? mvaReader_BDTMitFisher->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-//                    : std::numeric_limits<double>::lowest();
-            const double mva_BDTMitFisher = -1;
-            anaData.MVA_BDTMitFisher().Fill(mva_BDTMitFisher, weight);
+            anaData.MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+            anaData.MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
+            anaData.MVA_BDTMitFisher().Fill(eventInfo.mva_BDTMitFisher, weight);
         }
     }
+
+    void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,
+                       bool calc_BDTMitFisher)
+    {
+        static double const default_value = std::numeric_limits<double>::lowest();
+        const std::string category_name = eventCategoryMapName.at(eventCategory);
+
+        auto getMVA = [&](bool calc_MVA, MVA_Selections::MvaMethod method) -> double {
+            if(calc_MVA) {
+                auto mvaReader = MVA_Selections::MvaReader::Get(ChannelName(), category_name, method);
+                if(mvaReader)
+                    return mvaReader->GetMva(eventInfo.lepton_momentums.at(0), eventInfo.lepton_momentums.at(1),
+                                             eventInfo.bjet_momentums.at(0), eventInfo.bjet_momentums.at(1),
+                                             eventInfo.MET);
+            }
+            return default_value;
+        };
+
+        eventInfo.mva_BDT = getMVA(calc_BDT, MVA_Selections::BDT);
+        eventInfo.mva_BDTD = getMVA(calc_BDTD, MVA_Selections::BDTD);
+        eventInfo.mva_BDTMitFisher = getMVA(calc_BDTMitFisher, MVA_Selections::BDTMitFisher);
+    }
+
 
     void PrintStackedPlots()
     {
@@ -510,8 +495,7 @@ private:
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
-	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
+            { "m_ttbb", 2 }, { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);

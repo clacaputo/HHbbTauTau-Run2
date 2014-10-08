@@ -5,7 +5,6 @@ m_sv_down m_sv_down M_{#tau#tau}[GeV] dN/dm_{#tau#tau}[1/10GeV] false
 m_vis m_vis M_{vis}[GeV] dN/dm_{vis}[1/10GeV] false
 m_bb m_bb M_{bb}[GeV] dN/dm_{bb}[1/20GeV] false
 m_ttbb m_ttbb M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
-m_ttbb_nomet m_ttbb_nomet M_{#tau#taubb}[GeV] dN/dm_{bb}[1/10GeV] false
 m_ttbb_kinfit m_ttbb_kinfit M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
 m_ttbb_kinfit_up m_ttbb_kinfit_up M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
 m_ttbb_kinfit_down m_ttbb_kinfit_down M_{#tau#taubb}[GeV] dN/dm_{bb}[1/20GeV] false
@@ -29,7 +28,6 @@ DeltaR_hh DeltaR_hh #DeltaR_{#tau#taubb}[rad] dN/d#DeltaR[1/0.1] false
 MVA_BDT MVA_BDT BDT_{output} Entries false
 MVA_BDTD MVA_BDTD BDTD_{output} Entries false
 MVA_BDTMitFisher MVA_BDTMitFisher BDTMitFisher_{output} Entries false
-pt_ttbb_nomet pt_ttbb_nomet P_{T}[GeV] dN/dP_{T}[1/10GeV] false
 DeltaPhi_bb_MET DeltaPhi_bb_MET #Delta#Phi_{bb,MET}[rad] dN/d#Delta#Phi[1/0.1rad] false
 DeltaPhi_tt_MET DeltaPhi_tt_MET #Delta#Phi_{#tau#tau,MET}[rad] dN/d#Delta#Phi[1/0.1rad] false
 mt_1 mt_1 M_{T}[GeV] dN/dM_{T}[1/1GeV] false
