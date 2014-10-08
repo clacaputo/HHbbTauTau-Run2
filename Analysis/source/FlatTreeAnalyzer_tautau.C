@@ -80,6 +80,11 @@ protected:
         return EventType_QCD::Unknown;
     }
 
+    virtual bool PassMvaCut(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory eventCategory) override
+    {
+        return true;
+    }
+
     virtual void EstimateQCD(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
                              const analysis::HistogramDescriptor& hist) override
     {
