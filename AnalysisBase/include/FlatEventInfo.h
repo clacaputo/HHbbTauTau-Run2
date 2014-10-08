@@ -55,11 +55,11 @@ struct FlatEventInfo {
             throw std::runtime_error("bad combination index");
 
         size_t min = 0, delta = index;
-        while(delta > n_bjets - min - 1) {
+        while(delta >= n_bjets - min - 2) {
             delta -= n_bjets - min - 1;
             ++min;
         }
-        return BjetPair(min, min + delta);
+        return BjetPair(min, min + delta + 1);
     }
 
     const ntuple::Flat* event;
