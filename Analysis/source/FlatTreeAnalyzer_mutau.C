@@ -73,33 +73,17 @@ protected:
         return EventType_QCD::Unknown;
     }
 
-    virtual bool PassMvaCut(const ntuple::Flat &event, analysis::EventCategory eventCategory) override
+    virtual bool PassMvaCut(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory eventCategory) override
     {
         static const std::map<analysis::EventCategory, double> mva_BDT_cuts = {
             { analysis::EventCategory::TwoJets_ZeroBtag, -0.05 },
             { analysis::EventCategory::TwoJets_OneBtag, -0.05 },
             { analysis::EventCategory::TwoJets_TwoBtag, -0.05 }
         };
-        if(event.energy_Bjets.size() < 2 || !mva_BDT_cuts.count(eventCategory))
+        if(!eventInfo.has_bjet_pair || !mva_BDT_cuts.count(eventCategory))
             return true;
 
-        TLorentzVector first_cand, second_cand;
-        first_cand.SetPtEtaPhiE(event.pt_1,event.eta_1,event.phi_1,event.energy_1);
-        second_cand.SetPtEtaPhiE(event.pt_2,event.eta_2,event.phi_2,event.energy_2);
-        TLorentzVector MET;
-        MET.SetPtEtaPhiM(event.mvamet,0,event.mvametphi,0);
-        std::vector<TLorentzVector> b_momentums(2);
-        for(size_t n = 0; n < b_momentums.size(); ++n)
-            b_momentums.at(n).SetPtEtaPhiE(event.pt_Bjets.at(n), event.eta_Bjets.at(n), event.phi_Bjets.at(n),
-                                           event.energy_Bjets.at(n));
-
-        const std::string category_name = analysis::eventCategoryMapName.at(eventCategory);
-        auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
-        if(!mvaReader_BDT)
-            throw analysis::exception("BDT reader not found for ") << category_name;
-
-        const double mva_BDT = mvaReader_BDT->GetMva(first_cand, second_cand, b_momentums.at(0), b_momentums.at(1), MET);
-        return mva_BDT > mva_BDT_cuts.at(eventCategory);
+        return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
 
     virtual void EstimateQCD(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,

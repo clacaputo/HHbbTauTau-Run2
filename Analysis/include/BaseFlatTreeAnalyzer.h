@@ -173,6 +173,7 @@ public:
 protected:
     void ProcessDataSource(const DataCategory& dataCategory, const DataSource& dataSource)
     {
+        static const bool applyMVAcut = false;
         const analysis::DataCategory& Ztautau = FindCategory("LIMITS Ztautau");
         const analysis::DataCategory& DYJets = FindCategory("DYJets");
 //        const analysis::DataCategory& ZL = FindCategory("ZL");
@@ -188,8 +189,8 @@ protected:
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
             for(auto eventCategory : eventCategories) {
                 //if( eventCategory == EventCategory::Inclusive) continue;
-                //if(!PassMvaCut(event, eventCategory)) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
+                if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
                 if (eventTypeQCD != EventType_QCD::Unknown){
 //                    if (dataCategory.name == ZL.name && eventInfo.eventType == ntuple::EventType::ZL)
 //                        dataCategory.name = ZL.name;
@@ -216,7 +217,7 @@ protected:
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
-    virtual bool PassMvaCut(const ntuple::Flat& event, EventCategory eventCategory) = 0;
+    virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
 
     virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
     {
