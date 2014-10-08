@@ -133,13 +133,17 @@ public:
             sum_backgound_histogram->Add(histogram.get());
     }
 
-    void AddSignalHistogram(TH1D* original_signal, const std::string& legend_title, Color_t color, double scale_factor)
+    void AddSignalHistogram(TH1D* original_signal, const std::string& legend_title, Color_t color, unsigned scale_factor)
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
         histogram->SetLineColor(color);
         histogram->Scale(scale_factor);
         signal_histograms.push_back(histogram);
-        legend->AddEntry(histogram.get(), legend_title.c_str(), "F");
+        std::ostringstream ss;
+        if(scale_factor != 1)
+            ss << scale_factor << "x ";
+        ss << legend_title;
+        legend->AddEntry(histogram.get(), ss.str().c_str(), "F");
     }
 
     void AddDataHistogram(TH1D* original_data, const std::string& legend_title,
@@ -153,6 +157,11 @@ public:
 
         if(blind)
             BlindHistogram(data_histogram, blind_region);
+    }
+
+    bool NeedDraw() const
+    {
+        return background_histograms.size() || data_histogram || signal_histograms.size();
     }
 
     void Draw(TCanvas& canvas)

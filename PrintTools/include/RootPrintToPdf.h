@@ -80,6 +80,8 @@ public:
 
     void PrintStack(analysis::StackedPlotDescriptor& stackDescriptor)
     {
+        if(!stackDescriptor.NeedDraw())
+            return;
         canvas->cd();
         canvas->SetTitle(stackDescriptor.GetTitle().c_str());
         canvas->Clear();

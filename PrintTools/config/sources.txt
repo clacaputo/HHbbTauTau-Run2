@@ -5,6 +5,16 @@
 # file_name_2 scale-factor_2
 # ...
 
+[Radion300]
+type: SIGNAL
+title: Radion 300 GeV
+datacard:
+color: blue
+file: Radion300.root 0.3704
+limits_sf: 0.1973236
+draw_sf: 50
+channel: etau
+
 #[SIGNAL Radion300]
 #Radion 300 GeV
 #blue
