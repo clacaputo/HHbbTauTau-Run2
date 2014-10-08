@@ -344,34 +344,28 @@ tt_semi.root 0.0862
 #W3Jets.root 0.6708
 #W4Jets.root 0.3150
 
-[DYJets]
+[REFERENCE DYJets]
 Z #rightarrow ll
 yellow_custom
-DYJetsToLL.root 2.2662
-#DY1JetsToLL.root 0.4596
-#DY2JetsToLL.root 0.1632
-#DY3JetsToLL.root 0.0914
-#DY4JetsToLL.root 0.0708
+#DYJetsToLL.root 2.2662
+DY1JetsToLL.root 0.4596
+DY2JetsToLL.root 0.1632
+DY3JetsToLL.root 0.0914
+DY4JetsToLL.root 0.0708
 
 [ZL]
 ZL
 yellow_custom
-#DYJetsToLL.root 2.2662
-DY1JetsToLL.root 0.4596
-DY2JetsToLL.root 0.1632
-DY3JetsToLL.root 0.0914
-DY4JetsToLL.root 0.0708
 
 [ZJ]
 ZJ
 yellow_custom
-#DYJetsToLL.root 2.2662
-DY1JetsToLL.root 0.4596
-DY2JetsToLL.root 0.1632
-DY3JetsToLL.root 0.0914
-DY4JetsToLL.root 0.0708
 
-[LIMITS Ztautau]
+[ZTT_MC]
+Z #rightarrow tautau
+yellow_custom
+
+[ZTT]
 Z #rightarrow tautau
 yellow_custom
 

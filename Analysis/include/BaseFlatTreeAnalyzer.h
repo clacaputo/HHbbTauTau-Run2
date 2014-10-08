@@ -140,19 +140,15 @@ public:
             }
         }
 
+        std::cout << "Calculating embedded scale factor... " << std::endl;
+        const double embeddedSF = CalculateEmbeddedScaleFactor();
+
         std::cout << "Estimating QCD, Wjets and bkg sum... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-
             for (const auto& hist : histograms) {
-                //embeddedSF
-                double embeddedSF = 1;
-                if( eventCategory == EventCategory::Inclusive && hist.name == "m_sv")
-                    embeddedSF = CalculateEmbeddedScaleFactor(anaData,hist);
-                if (embeddedSF != 1)
-                    RescaleHistFromEmbedded(anaData,hist,embeddedSF);
-                //end embSF
+                CreateHistForZTT(anaData,hist,embeddedSF);
                 if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
                 EstimateQCD(eventCategory, anaData, hist);
                 EstimateSumBkg(eventCategory, anaData, hist);
@@ -175,10 +171,11 @@ protected:
     void ProcessDataSource(const DataCategory& dataCategory, const DataSource& dataSource)
     {
         static const bool applyMVAcut = false;
-        const analysis::DataCategory& Ztautau = FindCategory("LIMITS Ztautau");
-        const analysis::DataCategory& DYJets = FindCategory("DYJets");
-//        const analysis::DataCategory& ZL = FindCategory("ZL");
-//        const analysis::DataCategory& ZJ = FindCategory("ZJ");
+
+        const analysis::DataCategory& DYJets = FindCategory("REFERENCE DYJets");
+        const analysis::DataCategory& ZL = FindCategory("ZL");
+        const analysis::DataCategory& ZJ = FindCategory("ZJ");
+        const analysis::DataCategory& ZTT_MC = FindCategory("ZTT_MC");
 
         for(size_t current_entry = 0; current_entry < dataSource.tree->GetEntries(); ++current_entry) {
             dataSource.tree->GetEntry(current_entry);
@@ -189,27 +186,31 @@ protected:
             const double weight = dataCategory.IsData() ? 1 : event.weight * dataSource.scale_factor;
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
             for(auto eventCategory : eventCategories) {
-                //if( eventCategory == EventCategory::Inclusive) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
                 if (eventTypeQCD != EventType_QCD::Unknown){
-//                    if (dataCategory.name == ZL.name && eventInfo.eventType == ntuple::EventType::ZL)
-//                        dataCategory.name = ZL.name;
-//                    if (dataCategory.name == ZJ.name && eventInfo.eventType == ntuple::EventType::ZJ)
-//                        dataCategory.name = ZJ.name;
+                    if (dataCategory.name == DYJets.name && eventInfo.eventType == ntuple::EventType::ZL)
+                        FillHistograms(fullAnaData[eventCategory][ZL.name].QCD[eventTypeQCD], eventInfo, weight);
+                    if (dataCategory.name == DYJets.name && eventInfo.eventType == ntuple::EventType::ZJ)
+                        FillHistograms(fullAnaData[eventCategory][ZJ.name].QCD[eventTypeQCD], eventInfo, weight);
+                    if (dataCategory.name == DYJets.name && eventInfo.eventType == ntuple::EventType::ZTT &&
+                            std::abs(event.pdgId_1_MC) != particles::NONEXISTENT.RawCode() &&
+                            std::abs(event.pdgId_2_MC) != particles::NONEXISTENT.RawCode())
+                        FillHistograms(fullAnaData[eventCategory][ZTT_MC.name].QCD[eventTypeQCD], eventInfo, weight);
                     FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], eventInfo, weight);
                 }
                 if (eventTypeWjets != EventType_Wjets::Unknown){
-//                    if (dataCategory.name == ZL.name && eventInfo.eventType == ntuple::EventType::ZL)
-//                        dataCategory.name = ZL.name;
-//                    if (dataCategory.name == ZJ.name && eventInfo.eventType == ntuple::EventType::ZJ)
-//                        dataCategory.name = ZJ.name;
+                    if (dataCategory.name == DYJets.name && eventInfo.eventType == ntuple::EventType::ZL)
+                        FillHistograms(fullAnaData[eventCategory][ZL.name].Wjets[eventTypeWjets], eventInfo, weight);
+                    if (dataCategory.name == DYJets.name && eventInfo.eventType == ntuple::EventType::ZJ)
+                        FillHistograms(fullAnaData[eventCategory][ZJ.name].Wjets[eventTypeWjets], eventInfo, weight);
+                    if (dataCategory.name == DYJets.name && eventInfo.eventType == ntuple::EventType::ZTT &&
+                            std::abs(event.pdgId_1_MC) != particles::NONEXISTENT.RawCode() &&
+                            std::abs(event.pdgId_2_MC) != particles::NONEXISTENT.RawCode())
+                        FillHistograms(fullAnaData[eventCategory][ZTT_MC.name].Wjets[eventTypeWjets], eventInfo, weight);
                     FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], eventInfo, weight);
                 }
-                if(eventTypeQCD != EventType_QCD::Unknown && dataCategory.name == DYJets.name &&
-                        std::abs(event.pdgId_1_MC) != particles::NONEXISTENT.RawCode() &&
-                        std::abs(event.pdgId_2_MC) != particles::NONEXISTENT.RawCode())
-                    FillHistograms(fullAnaData[eventCategory][Ztautau.name].QCD[eventTypeQCD], eventInfo, weight);
+
             }
         }
     }
@@ -249,34 +250,54 @@ protected:
         return categories;
     }
 
-    double CalculateEmbeddedScaleFactor(AnaDataForDataCategory& anaData, const analysis::HistogramDescriptor& hist)
+    double CalculateEmbeddedScaleFactor()
     {
         const analysis::DataCategory& embedded = FindCategory("EMBEDDED");
-        const analysis::DataCategory& ztautau = FindCategory("LIMITS Ztautau");
+        const analysis::DataCategory& ZTT_MC = FindCategory("ZTT_MC");
 
-        TH1D* hist_embedded = anaData[embedded.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name);
-        TH1D* hist_ztautau = anaData[ztautau.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name);
+        static const std::string hist_name = "m_sv";
+        TH1D* hist_embedded =
+                fullAnaData[EventCategory::Inclusive][embedded.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist_name);
+        TH1D* hist_ztautau =
+                fullAnaData[EventCategory::Inclusive][ZTT_MC.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist_name);
 
-        if(!hist_embedded || !hist_ztautau ) return 1.;
-        return hist_ztautau->Integral()/hist_embedded->Integral();
+        if(!hist_embedded || !hist_ztautau )
+            throw std::runtime_error("embedded or ztt hist not found");
+        const double nBinsX_Ztt = hist_ztautau->GetNbinsX();
+        const double nBinsX_emb = hist_embedded->GetNbinsX();
+        return hist_ztautau->Integral(0,nBinsX_Ztt+1)/hist_embedded->Integral(0,nBinsX_emb+1);
     }
 
-    void RescaleHistFromEmbedded(AnaDataForDataCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
+    void CreateHistForZTT(AnaDataForDataCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
     {
-        TH1D* hist_QCD;
-        TH1D* hist_Wjets;
-        for (const analysis::DataCategory& category : categories) {
-            if(!category.IsEmbedded()) continue;
+        const analysis::DataCategory& embedded = FindCategory("EMBEDDED");
+        const analysis::DataCategory& ZTT = FindCategory("ZTT");
 
-            if(!anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name) ) return;
-            hist_QCD = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name);
+        //QCD
+        auto hist_OSIso_emb = anaData[embedded.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name);
+        auto hist_OSnotIso_emb = anaData[embedded.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name);
+        auto hist_SSIso_emb = anaData[embedded.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name);
+        auto hist_SSnotIso_emb = anaData[embedded.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name);
 
-            if(!anaData[category.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name) ) return;
-            hist_Wjets = anaData[category.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name);
+        TH1D& hist_OSIso = anaData[ZTT.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_OSIso_emb);
+        hist_OSIso.Scale(scale_factor);
+        TH1D& hist_OSnotIso = anaData[ZTT.name].QCD[EventType_QCD::OS_NotIsolated].Clone(*hist_OSnotIso_emb);
+        hist_OSnotIso.Scale(scale_factor);
+        TH1D& hist_SSIso = anaData[ZTT.name].QCD[EventType_QCD::SS_Isolated].Clone(*hist_SSIso_emb);
+        hist_SSIso.Scale(scale_factor);
+        TH1D& hist_SSnotIso = anaData[ZTT.name].QCD[EventType_QCD::SS_NotIsolated].Clone(*hist_SSnotIso_emb);
+        hist_SSnotIso.Scale(scale_factor);
 
-        }
-        hist_QCD->Scale(scale_factor);
-        hist_Wjets->Scale(scale_factor);
+        //WJets
+        auto hist_signal_emb = anaData[embedded.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name);
+        auto hist_highMt_emb = anaData[embedded.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name);
+
+        TH1D& hist_Signal = anaData[ZTT.name].Wjets[EventType_Wjets::Signal].Clone(*hist_signal_emb);
+        hist_Signal.Scale(scale_factor);
+        TH1D& hist_highMt = anaData[ZTT.name].Wjets[EventType_Wjets::HighMt].Clone(*hist_highMt_emb);
+        hist_highMt.Scale(scale_factor);
+
+
     }
 
     virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
