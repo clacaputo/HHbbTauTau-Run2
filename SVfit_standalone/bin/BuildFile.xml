@@ -1,5 +1,0 @@
-<bin   file="testSVfitStandalone.cc" name="testSVfitStandalone">
-  <use name="HHbbTauTau/SVfit_standalone"/>
-  <use name="rootcintex"/>
-  <use name="root"/>
-</bin>

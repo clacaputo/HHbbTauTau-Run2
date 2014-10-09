@@ -1,6 +1,6 @@
 /*!
  * \file SVfit.h
- * \brief Definition of wrappers for SVfit_standalone code.
+ * \brief Definition of wrappers for HHKinFit code.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \author Francesco Brivio (Milano Bicocca University, INFN Milano)

@@ -1,6 +1,6 @@
 /*!
  * \file SVfit.h
- * \brief Definition of wrappers for SVfit_standalone code.
+ * \brief Definition of wrappers for SVfit code.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \date 2014-05-02 created
