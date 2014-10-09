@@ -185,16 +185,14 @@ protected:
     unsigned MatchedBjetsByChi2(const FlatEventInfo& eventInfo, const std::vector<size_t>& indexes)
     {
         unsigned matchedBjets = 0;
-        for (unsigned i = 0; i < indexes.size(); ++i){
-//            FlatEventInfo::BjetPair bjetPair =
-//                    FlatEventInfo::CombinationIndexToPair(indexes.at(i),eventInfo.event->energy_Bjets.size());
-//            std::cout << "bjet pair(" << bjetPair.first << "," << bjetPair.second << ") - match bjet size = " <<
-//                      eventInfo.event->isBjet_MC_Bjet.size() << std::endl;
-        }
-//        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.first))
-//            ++matchedBjets;
-//        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.second))
-//            ++matchedBjets;
+
+        FlatEventInfo::BjetPair bjetPair =
+                FlatEventInfo::CombinationIndexToPair(indexes.at(0),eventInfo.event->energy_Bjets.size());
+
+        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.first))
+            ++matchedBjets;
+        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.second))
+            ++matchedBjets;
 
         return matchedBjets;
     }

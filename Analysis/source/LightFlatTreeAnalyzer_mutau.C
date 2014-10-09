@@ -36,6 +36,7 @@ public:
 
 
     TH1D_ENTRY(MET, 35, 0, 350)
+    TH1D_ENTRY(matchedBjets, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByCSV, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByPt, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByChi2, 3, -0.5, 2.5)
@@ -72,6 +73,14 @@ protected:
         anaData.MET(category).Fill(eventInfo.MET.Pt());
         if (eventCategory == analysis::EventCategory::Inclusive || eventCategory == analysis::EventCategory::OneJet_OneBtag ||
                 eventCategory == analysis::EventCategory::OneJet_ZeroBtag) return;
+
+        unsigned matchedBjets = 0;
+        for (unsigned k = 0; k < eventInfo.event->energy_Bjets.size(); ++k){
+            if (eventInfo.event->isBjet_MC_Bjet.at(k))
+                ++matchedBjets;
+        }
+        anaData.matchedBjets(category).Fill(matchedBjets);
+
         unsigned matchedBjets_byCSV = MatchedBjetsByCSV(eventInfo);
         anaData.matchedBjetsByCSV(category).Fill(matchedBjets_byCSV);
 
@@ -79,20 +88,12 @@ protected:
         unsigned matchedBjets_byPt = MatchedBjetsByPt(eventInfo,bjetsIndexes_byPt);
         anaData.matchedBjetsByPt(category).Fill(matchedBjets_byPt);
 
-//        std::cout << "energy size = " << eventInfo.event->energy_Bjets.size() << ",match bjet size = " <<
-//                eventInfo.event->isBjet_MC_Bjet.size() << std::endl;
-//        for (unsigned i = 0; i < eventInfo.event->energy_Bjets.size() * (eventInfo.event->energy_Bjets.size() - 1) / 2; ++i){
-//            analysis::FlatEventInfo::BjetPair bjetPair =
-//                    analysis::FlatEventInfo::CombinationIndexToPair(i,eventInfo.event->energy_Bjets.size());
-//            std::cout << "i= " << i << ", bjet pair(" << bjetPair.first << "," << bjetPair.second << ")" << std::endl;
-//        }
-        if(eventInfo.event->kinfit_bb_tt_chi2.size() > 1){
-            std::vector<size_t> bjetsCoupleIndexes_byChi2 = SortBjetsByChiSquare(eventInfo);
-            if (bjetsCoupleIndexes_byChi2.size()){
-            unsigned matchedBjets_byChi2 = MatchedBjetsByChi2(eventInfo,bjetsCoupleIndexes_byChi2);
-            anaData.matchedBjetsByChi2(category).Fill(matchedBjets_byChi2);
-            }
-        }
+
+        std::vector<size_t> bjetsCoupleIndexes_byChi2 = SortBjetsByChiSquare(eventInfo);
+        unsigned matchedBjets_byChi2 = MatchedBjetsByChi2(eventInfo,bjetsCoupleIndexes_byChi2);
+        anaData.matchedBjetsByChi2(category).Fill(matchedBjets_byChi2);
+
+
 
 
 
