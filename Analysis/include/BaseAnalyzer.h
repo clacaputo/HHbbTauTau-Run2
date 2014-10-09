@@ -84,6 +84,10 @@ public:
 
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
+    TH1D_ENTRY(DeltaRmin1_visible, 600, 0, 6)
+    TH1D_ENTRY(DeltaRmin2_visible, 600, 0, 6)
+    TH1D_ENTRY(DeltaRmin1_original, 600, 0, 6)
+    TH1D_ENTRY(DeltaRmin2_original, 600, 0, 6)
 };
 
 class BaseAnalyzer {

@@ -413,7 +413,7 @@ inline FitResultsWithUncertainties FitWithUncertainties(const four_body::FitInpu
 {
     FitResultsWithUncertainties result;
     if(fit_four_body) {
-        result.fit_bb_tt = four_body::Fit(input);
+//        result.fit_bb_tt = four_body::Fit(input);
 //        result.fit_bb_down_tt_down = four_body::Fit(four_body::FitInput(input, 1 - bjet_energy_uncertainty,
 //                                                                        1 - tau_energy_uncertainty));
 //        result.fit_bb_down_tt_up = four_body::Fit(four_body::FitInput(input, 1 - bjet_energy_uncertainty,

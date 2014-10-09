@@ -121,6 +121,27 @@ public:
         const auto bjets_all = CollectBJets(filteredLooseJets, false, false);
         const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC(), true);
 
+        double deltaRmin1_visible = std::numeric_limits<double>::max();
+        double deltaRmin2_visible = std::numeric_limits<double>::max();
+        double deltaRmin1_original = std::numeric_limits<double>::max();
+        double deltaRmin2_original = std::numeric_limits<double>::max();
+        for (const Candidate& bjet : bjets_all){
+            const VisibleGenObject& bjet1_visible = muTau_MC.b_jets.at(0);
+            const GenParticle* bjet1_MC = bjet1_visible.origin;
+            deltaRmin1_visible = std::min(deltaRmin1_visible,bjet.momentum.DeltaR(bjet1_visible.visibleMomentum));
+            deltaRmin1_original = std::min(deltaRmin1_original,bjet.momentum.DeltaR(bjet1_MC->momentum));
+
+            const VisibleGenObject& bjet2_visible = muTau_MC.b_jets.at(1);
+            const GenParticle* bjet2_MC = bjet2_visible.origin;
+            deltaRmin2_visible = std::min(deltaRmin2_visible,bjet.momentum.DeltaR(bjet2_visible.visibleMomentum));
+            deltaRmin2_original = std::min(deltaRmin2_original,bjet.momentum.DeltaR(bjet2_MC->momentum));
+        }
+
+        anaData.DeltaRmin1_visible().Fill(deltaRmin1_visible);
+        anaData.DeltaRmin1_original().Fill(deltaRmin1_original);
+        anaData.DeltaRmin2_visible().Fill(deltaRmin2_visible);
+        anaData.DeltaRmin2_original().Fill(deltaRmin2_original);
+
 
         postRecoilMET = ApplyRecoilCorrections(higgs, muTau_MC.resonance, jets.size(), correctedMET);
 
