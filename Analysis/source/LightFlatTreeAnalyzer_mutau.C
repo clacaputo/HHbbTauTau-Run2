@@ -79,13 +79,13 @@ protected:
         unsigned matchedBjets_byPt = MatchedBjetsByPt(eventInfo,bjetsIndexes_byPt);
         anaData.matchedBjetsByPt(category).Fill(matchedBjets_byPt);
 
-        std::cout << "energy size = " << eventInfo.event->energy_Bjets.size() << ",match bjet size = " <<
-                eventInfo.event->isBjet_MC_Bjet.size() << std::endl;
-        for (unsigned i = 0; i < eventInfo.event->energy_Bjets.size() * (eventInfo.event->energy_Bjets.size() - 1); ++i){
-            analysis::FlatEventInfo::BjetPair bjetPair =
-                    analysis::FlatEventInfo::CombinationIndexToPair(i,eventInfo.event->energy_Bjets.size());
-            std::cout << "i= " << i << ", bjet pair(" << bjetPair.first << "," << bjetPair.second << ")" << std::endl;
-        }
+//        std::cout << "energy size = " << eventInfo.event->energy_Bjets.size() << ",match bjet size = " <<
+//                eventInfo.event->isBjet_MC_Bjet.size() << std::endl;
+//        for (unsigned i = 0; i < eventInfo.event->energy_Bjets.size() * (eventInfo.event->energy_Bjets.size() - 1) / 2; ++i){
+//            analysis::FlatEventInfo::BjetPair bjetPair =
+//                    analysis::FlatEventInfo::CombinationIndexToPair(i,eventInfo.event->energy_Bjets.size());
+//            std::cout << "i= " << i << ", bjet pair(" << bjetPair.first << "," << bjetPair.second << ")" << std::endl;
+//        }
         if(eventInfo.event->kinfit_bb_tt_chi2.size() > 1){
             std::vector<size_t> bjetsCoupleIndexes_byChi2 = SortBjetsByChiSquare(eventInfo);
             if (bjetsCoupleIndexes_byChi2.size()){

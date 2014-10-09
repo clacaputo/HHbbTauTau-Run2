@@ -86,7 +86,7 @@ public:
         for(size_t current_entry = 0; current_entry < flatTree->GetEntries(); ++current_entry) {
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
-            std::cout << "event = " << event.evt << std::endl;
+//            std::cout << "event = " << event.evt << std::endl;
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
             //std::cout << "MET: " << eventInfo.MET.Pt() << std::endl;
@@ -186,8 +186,8 @@ protected:
     {
         unsigned matchedBjets = 0;
         for (unsigned i = 0; i < indexes.size(); ++i){
-            FlatEventInfo::BjetPair bjetPair =
-                    FlatEventInfo::CombinationIndexToPair(indexes.at(i),eventInfo.event->energy_Bjets.size());
+//            FlatEventInfo::BjetPair bjetPair =
+//                    FlatEventInfo::CombinationIndexToPair(indexes.at(i),eventInfo.event->energy_Bjets.size());
 //            std::cout << "bjet pair(" << bjetPair.first << "," << bjetPair.second << ") - match bjet size = " <<
 //                      eventInfo.event->isBjet_MC_Bjet.size() << std::endl;
         }

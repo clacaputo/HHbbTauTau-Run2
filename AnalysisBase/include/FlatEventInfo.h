@@ -30,6 +30,7 @@
 #include <TMatrixD.h>
 
 #include "FlatTree.h"
+#include "exception.h"
 
 namespace analysis {
 
@@ -40,26 +41,24 @@ struct FlatEventInfo {
     {
         const size_t min = std::min(pair.first, pair.second);
         const size_t max = std::max(pair.first, pair.second);
-        if(min == max || min >= n_bjets || max >= n_bjets)
-            throw std::runtime_error("bad combination pair");
-        size_t index = 0;
-        for(size_t k = 0; k < min; ++k)
-            index += n_bjets - 1 - k;
-        index += max - min - 1;
-        return index;
+        if(n_bjets < 2 || min == max || min >= n_bjets || max >= n_bjets)
+            throw exception("bad combination pair (") << pair.first << ", " << pair.second
+                                                      << ") for n b-jets = " << n_bjets << ".";
+        return max - 1 + min * (2 * n_bjets - 3 - min) / 2;
     }
 
     static BjetPair CombinationIndexToPair(size_t index, size_t n_bjets)
     {
-        if(n_bjets < 2 || index >= n_bjets * (n_bjets - 1))
-            throw std::runtime_error("bad combination index");
+        if(n_bjets < 2 || index >= n_bjets * (n_bjets - 1) / 2)
+            throw exception("bad combination index = ") << index << " for n b-jets = " << n_bjets << ".";
 
-        size_t min = 0, delta = index;
-        while(delta >= n_bjets - min - 2) {
-            delta -= n_bjets - min - 1;
-            ++min;
+        for(size_t min = 0;; ++min) {
+            const size_t l = CombinationPairToIndex(BjetPair(min, n_bjets - 1), n_bjets);
+            if(l >= index) {
+                const size_t max = index + n_bjets - 1 - l;
+                return BjetPair(min, max);
+            }
         }
-        return BjetPair(min, min + delta + 1);
     }
 
     const ntuple::Flat* event;
