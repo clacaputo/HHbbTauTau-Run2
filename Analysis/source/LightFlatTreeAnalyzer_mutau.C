@@ -40,6 +40,9 @@ public:
     TH1D_ENTRY(matchedBjetsByCSV, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByPt, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByChi2, 3, -0.5, 2.5)
+    TH1D_ENTRY(matchedBjets_byMassPair, 3, -0.5, 2.5)
+    TH1D_ENTRY(Hbb_trueM, 30, 0, 300)
+    TH1D_ENTRY(Hbb_CSV, 30, 0, 300)
 
 };
 
@@ -75,14 +78,28 @@ protected:
                 eventCategory == analysis::EventCategory::OneJet_ZeroBtag) return;
 
         unsigned matchedBjets = 0;
+        std::vector<unsigned> indexes;
+        TLorentzVector Hbb_true;
+
         for (unsigned k = 0; k < eventInfo.event->energy_Bjets.size(); ++k){
-            if (eventInfo.event->isBjet_MC_Bjet.at(k))
+
+            if (eventInfo.event->isBjet_MC_Bjet.at(k)){
+                Hbb_true += eventInfo.bjet_momentums.at(k);
                 ++matchedBjets;
+                indexes.push_back(k);
+            }
         }
         anaData.matchedBjets(category).Fill(matchedBjets);
 
+        if (matchedBjets < 2) return;
+        anaData.Hbb_trueM(category).Fill(Hbb_true.M());
         unsigned matchedBjets_byCSV = MatchedBjetsByCSV(eventInfo);
         anaData.matchedBjetsByCSV(category).Fill(matchedBjets_byCSV);
+        TLorentzVector Hbb_CSV = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(1);
+        if (matchedBjets_byCSV < 2){
+            std::cout << "csv fail (" << indexes.at(0) << "," << indexes.at(1) << ")" << std::endl;
+            anaData.Hbb_CSV(category).Fill(Hbb_CSV.M());
+        }
 
         std::vector<size_t> bjetsIndexes_byPt = SortBjetsByPt(eventInfo);
         unsigned matchedBjets_byPt = MatchedBjetsByPt(eventInfo,bjetsIndexes_byPt);
@@ -92,6 +109,10 @@ protected:
         std::vector<size_t> bjetsCoupleIndexes_byChi2 = SortBjetsByChiSquare(eventInfo);
         unsigned matchedBjets_byChi2 = MatchedBjetsByChi2(eventInfo,bjetsCoupleIndexes_byChi2);
         anaData.matchedBjetsByChi2(category).Fill(matchedBjets_byChi2);
+
+        std::vector<size_t> bjetsCoupleIndexes_byMassPair = SortBjetsByMassPair(eventInfo);
+        unsigned matchedBjets_byMassPair = MatchedBjetsByMassPair(eventInfo,bjetsCoupleIndexes_byMassPair);
+        anaData.matchedBjets_byMassPair(category).Fill(matchedBjets_byMassPair);
 
 
 
