@@ -298,3 +298,4 @@ RunTools/config/known_issues.supp
 AnalysisBase/include/FlatEventInfo.h
 Analysis/include/LightBaseFlatTreeAnalyzer.h
 Analysis/source/LightFlatTreeAnalyzer_mutau.C
+AnalysisBase/include/AnalysisTypes.h

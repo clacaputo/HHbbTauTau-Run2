@@ -338,7 +338,7 @@ protected:
         BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, kinfitResults, jets, jetsPt20,
                                            bjets_all, retagged_bjets, vertices, leadTau, subLeadTau, pfMET, tauTau_MC);
 
-        flatTree->channel() = static_cast<int>(ntuple::Channel::TauTau);
+        flatTree->channel() = static_cast<int>(analysis::Channel::TauTau);
         flatTree->pfRelIso_1() = default_value;
         flatTree->mva_1() = default_int_value;
         flatTree->passid_1() = false;

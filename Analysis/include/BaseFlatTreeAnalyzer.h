@@ -43,6 +43,7 @@
 #include "AnalysisBase/include/AnalyzerData.h"
 #include "AnalysisBase/include/FlatEventInfo.h"
 #include "AnalysisBase/include/AnalysisMath.h"
+#include "AnalysisBase/include/AnalysisTypes.h"
 #include "AnalysisBase/include/exception.h"
 #include "AnalysisBase/include/Particles.h"
 #include "PrintTools/include/RootPrintToPdf.h"
@@ -112,10 +113,10 @@ public:
     typedef std::map<EventCategory, AnaDataForDataCategory> FullAnaData;
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                         const std::string& _outputFileName, const std::string& channel_name,
+                         const std::string& _outputFileName, Channel channel_id,
                          const std::string& signal_list, bool _WjetsData = false)
         : inputPath(_inputPath), outputFileName(_outputFileName),
-          dataCategoryCollection(source_cfg, signal_list, channel_name), WjetsData(_WjetsData)
+          dataCategoryCollection(source_cfg, signal_list, channel_id), WjetsData(_WjetsData)
     {
         TH1::SetDefaultSumw2();
 
@@ -216,11 +217,13 @@ protected:
         }
     }
 
-    virtual const std::string& ChannelName() = 0;
+    virtual Channel ChannelId() = 0;
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
+
+    const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
 
     virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
     {
@@ -419,10 +422,11 @@ protected:
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
-                FlatAnalyzerData& anaData = anaDataForCategory[dataCategory->name].QCD[EventType_QCD::OS_Isolated];
+                FlatAnalyzerData& anaData = anaDataForCategory[dataCategory->name].Signal();
                 TH1D* hist_orig = anaData.GetPtr<TH1D>(hist_name);
                 if(!hist_orig)
-                    throw exception("Datacard histogram '") << hist_name << "' not found.";
+                    throw exception("Datacard histogram '") << hist_name << "' not found for data category '"
+                                                            << dataCategory->name << "'.";
                 std::shared_ptr<TH1D> hist(static_cast<TH1D*>(hist_orig->Clone()));
                 hist->Scale(dataCategory->limits_sf);
                 hist->Write(dataCategory->datacard.c_str());
@@ -432,13 +436,15 @@ protected:
 
                 TH1D* hist_up_orig = anaData.GetPtr<TH1D>(hist_name_up);
                 if(!hist_up_orig)
-                    throw exception("Datacard histogram '") << hist_name_up << "' not found.";
+                    throw exception("Datacard histogram '") << hist_name_up << "' not found for data category '"
+                                                            << dataCategory->name << "'.";
                 std::shared_ptr<TH1D> hist_up(static_cast<TH1D*>(hist_up_orig->Clone()));
                 hist_up->Scale(dataCategory->limits_sf);
                 hist_up->Write(nameUp.c_str());
                 TH1D* hist_down_orig = anaData.GetPtr<TH1D>(hist_name_down);
                 if(!hist_down_orig)
-                    throw exception("Datacard histogram '") << hist_name_down << "' not found.";
+                    throw exception("Datacard histogram '") << hist_name_down << "' not found for data category '"
+                                                            << dataCategory->name << "'.";
                 std::shared_ptr<TH1D> hist_down(static_cast<TH1D*>(hist_down_orig->Clone()));
                 hist_down->Scale(dataCategory->limits_sf);
                 hist_down->Write(nameDown.c_str());

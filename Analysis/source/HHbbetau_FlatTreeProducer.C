@@ -392,7 +392,7 @@ protected:
         BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, kinfitResults, jets, jetsPt20, bjets_all, retagged_bjets,
                                            vertices, electron, tau, pfMET, eTau_MC);
 
-        flatTree->channel() = static_cast<int>(ntuple::Channel::ETau);
+        flatTree->channel() = static_cast<int>(analysis::Channel::ETau);
         flatTree->pfRelIso_1() = ntuple_electron.pfRelIso;
         flatTree->mva_1() = ntuple_electron.mvaPOGNonTrig;
         flatTree->passid_1() = true;

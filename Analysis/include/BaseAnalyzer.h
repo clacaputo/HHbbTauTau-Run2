@@ -44,6 +44,7 @@
 #include "AnalysisBase/include/RunReport.h"
 #include "AnalysisBase/include/Tools.h"
 #include "AnalysisBase/include/AnalysisTools.h"
+#include "AnalysisBase/include/AnalysisTypes.h"
 
 #include "Htautau_Summer13.h"
 #include "Htautau_TriggerEfficiency.h"
