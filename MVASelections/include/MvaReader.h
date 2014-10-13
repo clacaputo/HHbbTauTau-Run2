@@ -3,6 +3,7 @@
 #include "AnalysisBase/include/AnalyzerData.h"
 #include "AnalysisBase/include/FlatTree.h"
 #include "AnalysisBase/include/AnalysisMath.h"
+#include "AnalysisBase/include/AnalysisTypes.h"
 #include "AnalysisBase/include/exception.h"
 #include "AnalysisBase/include/Particles.h"
 

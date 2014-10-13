@@ -35,14 +35,14 @@
 #include <TFile.h>
 #include <Rtypes.h>
 
-#include "AnalysisBase/include/exception.h"
+#include "AnalysisBase/include/AnalysisTypes.h"
 
 namespace analysis {
 
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
 enum class DataCategoryType { Signal, Background, Data, DYJets, ZL, ZJ, ZTT, ZTT_MC, Embedded, Limits, Sum, QCD, WJets,
-                            EWK};
+                              EWK };
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
     { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" }, { DataCategoryType::ZL, "ZL" },
@@ -78,11 +78,11 @@ struct DataCategory {
     unsigned draw_sf;
 
     std::set<DataCategoryType> types;
-    std::set<std::string> channels;
+    std::set<Channel> channels;
     DataSourceScaleFactorMap sources_sf;
 
     DataCategory()
-        : color(kBlack), limits_sf(std::nan("")), draw(false), draw_sf(1) {}
+        : color(kBlack), limits_sf(1.0), draw(false), draw_sf(1) {}
 
     bool IsSignal() const { return types.count(DataCategoryType::Signal); }
     bool IsBackground() const { return types.count(DataCategoryType::Background); }
@@ -108,8 +108,7 @@ typedef std::map<std::string, DataSource> DataSourceMap;
 
 class DataCategoryCollection {
 public:
-    DataCategoryCollection(const std::string& sources_cfg_name, const std::string& signal_list,
-                           const std::string& channel_name)
+    DataCategoryCollection(const std::string& sources_cfg_name, const std::string& signal_list, Channel channel_id)
     {
         DataCategory category;
         std::ifstream cfg(sources_cfg_name);
@@ -117,7 +116,7 @@ public:
         while(ReadNextCategory(cfg, line_number, category)) {
             if(categories.count(category.name))
                 throw exception("Category with name '") << category.name << "' is already defined.";
-            if(category.channels.size() && !category.channels.count(channel_name)) continue;
+            if(category.channels.size() && !category.channels.count(channel_id)) continue;
             categories[category.name] = category;
             all_categories.insert(&categories[category.name]);
             for(DataCategoryType type : category.types)
@@ -160,7 +159,7 @@ public:
     }
 
 private:
-    static bool ReadNextCategory(std::istream& cfg, size_t line_number, DataCategory& category)
+    static bool ReadNextCategory(std::istream& cfg, size_t& line_number, DataCategory& category)
     {
         category = DataCategory();
         bool category_started = false;
@@ -168,7 +167,7 @@ private:
             std::string cfgLine;
             std::getline(cfg,cfgLine);
             ++line_number;
-            if (cfgLine.at(0) == '#' || (!cfgLine.size() && !category_started)) continue;
+            if ((cfgLine.size() && cfgLine.at(0) == '#') || (!cfgLine.size() && !category_started)) continue;
             if(!cfgLine.size())
                 return true;
             if(!category_started && cfgLine.at(0) == '[') {
@@ -187,10 +186,14 @@ private:
 
     static void ReadParameterLine(const std::string& cfgLine, size_t line_number, DataCategory& category)
     {
-        static const char separator = ',';
+        static const char separator = ':';
 
         const size_t pos = cfgLine.find(separator);
-        const std::string param_name = cfgLine.substr(0, pos - 1);
+        if(pos == std::string::npos)
+            throw exception("bad source config syntax for a parameter in line ") << line_number;
+        const std::string param_name = cfgLine.substr(0, pos);
+        if(pos + 2 >= cfgLine.size())
+            throw exception("empty parameter value in source config in line ") << line_number;
         const std::string param_value = cfgLine.substr(pos + 2);
         std::istringstream ss(param_value);
         if(param_name == "type") {
@@ -213,9 +216,9 @@ private:
         } else if(param_name == "draw_sf") {
             ss >> category.draw_sf;
         } else if(param_name == "channel") {
-            std::string channel_name;
-            ss >> channel_name;
-            category.channels.insert(channel_name);
+            Channel channel_id;
+            ss >> channel_id;
+            category.channels.insert(channel_id);
         } else if(param_name == "datacard") {
             ss >> category.datacard;
         } else

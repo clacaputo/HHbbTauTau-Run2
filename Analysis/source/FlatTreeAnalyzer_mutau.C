@@ -34,16 +34,12 @@ class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& signal_list, bool _WjetsData = false)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelName(), signal_list, _WjetsData)
+         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list, _WjetsData)
     {
     }
 
 protected:
-    virtual const std::string& ChannelName() override
-    {
-        static const std::string channelName = "muTau";
-        return channelName;
-    }
+    virtual analysis::Channel ChannelId() override { return analysis::Channel::MuTau; }
 
     virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
     {

@@ -497,7 +497,7 @@ protected:
                                            retagged_bjets, vertices, muon, tau, pfMET, muTau_MC);
 
 
-        flatTree->channel() = static_cast<int>(ntuple::Channel::MuTau);
+        flatTree->channel() = static_cast<int>(analysis::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
         flatTree->mva_1() = 0;
         flatTree->passid_1() = true;
