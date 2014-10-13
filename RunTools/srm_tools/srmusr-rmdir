@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]] ; then
+	echo "Description: remove entiry non empty directory from SRM."
+	echo "Usage: srm_dir_name"
+	exit
+fi
+
+REMOTE_DIR="$1"
+
+LOCAL_SRM_PATH=/gpfs/ddn/srm/cms
+
+LOCAL_DIR=$LOCAL_SRM_PATH/$REMOTE_DIR
+
+cd $LOCAL_DIR
+
+find . -type f -printf "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$REMOTE_DIR/%p\\0" \
+	| xargs -0 -r srmrm -2
+
+srmrmdir -2 -recursive=true "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$REMOTE_DIR"

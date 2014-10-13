@@ -85,10 +85,19 @@ public:
 
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
-    TH1D_ENTRY(DeltaRmin1_visible, 600, 0, 6)
-    TH1D_ENTRY(DeltaRmin2_visible, 600, 0, 6)
-    TH1D_ENTRY(DeltaRmin1_original, 600, 0, 6)
-    TH1D_ENTRY(DeltaRmin2_original, 600, 0, 6)
+    TH1D_ENTRY(DeltaRmin1_visible, 600, 0, 3)
+    TH1D_ENTRY(DeltaRmin2_visible, 600, 0, 3)
+    TH1D_ENTRY(DeltaRmin1_original, 600, 0, 3)
+    TH1D_ENTRY(DeltaRmin2_original, 600, 0, 3)
+    TH1D_ENTRY(DeltaRbjets_MC, 600, 0, 6)
+    TH1D_ENTRY(deltaRmin_MC, 600, 0, 6)
+    TH1D_ENTRY(deltaRmax_visible, 600, 0, 6)
+    TH1D_ENTRY(deltaRmax_original, 600, 0, 6)
+    TH1D_ENTRY(deltaPtMax, 250, 0, 5)
+    TH1D_ENTRY(deltaPtMax_vis, 250, 0, 5)
+    TH1D_ENTRY(MinPtBjetsMC, 20, 0, 200)
+    TH1D_ENTRY(MassBB_MC, 30, 0, 300)
+    TH1D_ENTRY(MassBB_MCvis, 30, 0, 300)
 };
 
 class BaseAnalyzer {

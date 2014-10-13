@@ -316,7 +316,8 @@ inline bool HasMatchWithMCParticle(const TLorentzVector& candidateMomentum, cons
 
 inline bool HasMatchWithMCObject(const TLorentzVector& candidateMomentum, const VisibleGenObject* genObject, double deltaR)
 {
-    return genObject && candidateMomentum.DeltaR(genObject->visibleMomentum) < deltaR;
+    //return genObject && candidateMomentum.DeltaR(genObject->visibleMomentum) < deltaR;
+    return genObject && candidateMomentum.DeltaR(genObject->origin->momentum) < deltaR;
 }
 
 template<typename Container>

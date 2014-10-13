@@ -160,6 +160,30 @@ protected:
         return bjetsPair_indexes;
     }
 
+    std::vector<size_t> SortBjetsByMassPair(const FlatEventInfo& eventInfo)
+    {
+        std::vector<size_t> bjetsPair_indexes(eventInfo.event->kinfit_bb_tt_chi2.size());
+        std::iota(bjetsPair_indexes.begin(), bjetsPair_indexes.end(), 0);
+
+        const auto bjetsSelector = [&] (const size_t& first, const size_t& second) -> bool
+        {
+            const FlatEventInfo::BjetPair first_bjetPair =
+                    FlatEventInfo::CombinationIndexToPair(first, eventInfo.event->energy_Bjets.size());
+            const FlatEventInfo::BjetPair second_bjetPair =
+                    FlatEventInfo::CombinationIndexToPair(second, eventInfo.event->energy_Bjets.size());
+            const TLorentzVector b1_firstPair = eventInfo.bjet_momentums.at(first_bjetPair.first);
+            const TLorentzVector b2_firstPair = eventInfo.bjet_momentums.at(first_bjetPair.second);
+            const TLorentzVector firstMbb = b1_firstPair + b2_firstPair;
+            const TLorentzVector b1_secondPair = eventInfo.bjet_momentums.at(second_bjetPair.first);
+            const TLorentzVector b2_secondPair = eventInfo.bjet_momentums.at(second_bjetPair.second);
+            const TLorentzVector secondMbb = b1_secondPair + b2_secondPair;
+            return std::abs(firstMbb.M() - 125) < std::abs(secondMbb.M() - 125);
+        };
+
+        std::sort(bjetsPair_indexes.begin(), bjetsPair_indexes.end(), bjetsSelector);
+        return bjetsPair_indexes;
+    }
+
     unsigned MatchedBjetsByCSV(const FlatEventInfo& eventInfo)
     {
         unsigned matchedBjets = 0;
@@ -175,6 +199,7 @@ protected:
         unsigned matchedBjets = 0;
         const size_t first_index = indexes.at(0);
         const size_t second_index = indexes.at(1);
+        //std::cout << "pt pair (" << first_index << "," << second_index << ")" << std::endl;
         if (eventInfo.event->isBjet_MC_Bjet.at(first_index))
             ++matchedBjets;
         if (eventInfo.event->isBjet_MC_Bjet.at(second_index))
@@ -188,7 +213,22 @@ protected:
 
         FlatEventInfo::BjetPair bjetPair =
                 FlatEventInfo::CombinationIndexToPair(indexes.at(0),eventInfo.event->energy_Bjets.size());
+        //std::cout << "bjets chi2 pair (" << bjetPair.first << "," << bjetPair.second << ")" << std::endl;
+        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.first))
+            ++matchedBjets;
+        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.second))
+            ++matchedBjets;
 
+        return matchedBjets;
+    }
+
+    unsigned MatchedBjetsByMassPair(const FlatEventInfo& eventInfo, const std::vector<size_t>& indexes)
+    {
+        unsigned matchedBjets = 0;
+
+        FlatEventInfo::BjetPair bjetPair =
+                FlatEventInfo::CombinationIndexToPair(indexes.at(0),eventInfo.event->energy_Bjets.size());
+        //std::cout << "bjets mass pair (" << bjetPair.first << "," << bjetPair.second << ")" << std::endl;
         if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.first))
             ++matchedBjets;
         if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.second))
