@@ -41,15 +41,15 @@ namespace analysis {
 
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
-enum class DataCategoryType { Signal, Background, Data, DYJets, ZL, ZJ, ZTT, ZTT_MC, Embedded, Limits, Sum, QCD, WJets,
-                              EWK };
+enum class DataCategoryType { Signal, Background, Data, DYJets, ZL, ZJ, ZTT, ZTT_MC, Embedded, Limits, Composit, QCD,
+                              WJets, WJets_MC };
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
     { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" }, { DataCategoryType::ZL, "ZL" },
     { DataCategoryType::ZJ, "ZJ" }, { DataCategoryType::ZTT, "ZTT" }, { DataCategoryType::ZTT_MC, "ZTT_MC" },
     { DataCategoryType::Embedded, "EMBEDDED" }, { DataCategoryType::Limits, "LIMITS" },
-    { DataCategoryType::Sum, "SUM" }, { DataCategoryType::QCD, "QCD" }, { DataCategoryType::WJets, "W_JETS" },
-    { DataCategoryType::EWK, "EWK" }
+    { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" }, { DataCategoryType::WJets, "W_JETS" },
+    { DataCategoryType::WJets_MC, "W_JETS_MC" }
 };
 
 std::ostream& operator<< (std::ostream& s, const DataCategoryType& dataCategoryType) {
@@ -79,6 +79,7 @@ struct DataCategory {
 
     std::set<DataCategoryType> types;
     std::set<Channel> channels;
+    std::set<std::string> sub_categories;
     DataSourceScaleFactorMap sources_sf;
 
     DataCategory()
@@ -114,8 +115,7 @@ public:
         std::ifstream cfg(sources_cfg_name);
         size_t line_number = 0;
         while(ReadNextCategory(cfg, line_number, category)) {
-            if(categories.count(category.name))
-                throw exception("Category with name '") << category.name << "' is already defined.";
+            CheckCategoryValidity(category);
             if(category.channels.size() && !category.channels.count(channel_id)) continue;
             categories[category.name] = category;
             all_categories.insert(&categories[category.name]);
@@ -159,6 +159,21 @@ public:
     }
 
 private:
+    void CheckCategoryValidity(const DataCategory& category) const
+    {
+        if(categories.count(category.name))
+            throw exception("Category with name '") << category.name << "' is already defined.";
+        if(category.sub_categories.size() && !category.types.count(DataCategoryType::Composit))
+            throw exception("Not composit category '") << category.name << "' may not contain sub-categories.";
+        if(category.types.count(DataCategoryType::Composit) && category.sources_sf.size())
+            throw exception("Composit category '") << category.name << "' may not contain direct file definitions.";
+        for(const auto& sub_category : category.sub_categories) {
+            if(!categories.count(sub_category))
+                throw exception("Sub-category '") << sub_category << "' for category '"
+                                                  << category.name << "' is not defined.";
+        }
+    }
+
     static bool ReadNextCategory(std::istream& cfg, size_t& line_number, DataCategory& category)
     {
         category = DataCategory();
@@ -196,11 +211,11 @@ private:
             throw exception("empty parameter value in source config in line ") << line_number;
         const std::string param_value = cfgLine.substr(pos + 2);
         std::istringstream ss(param_value);
+        ss >> std::boolalpha;
         if(param_name == "type") {
             DataCategoryType type;
             ss >> type;
             category.types.insert(type);
-            category.draw |= type == DataCategoryType::Background || type == DataCategoryType::Data;
         } else if(param_name == "title") {
             category.title = param_value;
         } else if(param_name == "color") {
@@ -215,12 +230,16 @@ private:
             ss >> category.limits_sf;
         } else if(param_name == "draw_sf") {
             ss >> category.draw_sf;
+        } else if(param_name == "draw") {
+            ss >> category.draw;
         } else if(param_name == "channel") {
             Channel channel_id;
             ss >> channel_id;
             category.channels.insert(channel_id);
         } else if(param_name == "datacard") {
             ss >> category.datacard;
+        } else if(param_name == "subcategory") {
+            category.sub_categories.insert(param_value);
         } else
             throw exception("Unsupported parameter '") << param_name << "' in configuration line " << line_number;
     }

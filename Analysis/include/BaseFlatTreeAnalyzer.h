@@ -112,6 +112,8 @@ public:
     typedef std::map<std::string, AnaDataEventTypes> AnaDataForDataCategory;
     typedef std::map<EventCategory, AnaDataForDataCategory> FullAnaData;
 
+    static const std::string ReferenceHistogramName() { return "m_sv"; }
+
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, Channel channel_id,
                          const std::string& signal_list, bool _WjetsData = false)
@@ -137,17 +139,21 @@ public:
         }
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
-        const double embeddedSF = CalculateEmbeddedScaleFactor();
+        const double embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
 
-        std::cout << "Estimating QCD, Wjets and bkg sum... " << std::endl;
+        std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
+            const double wjets_scale_factor = CalculateWjetsScaleFactor(eventCategory, anaData, ReferenceHistogramName());
+            std::cout << eventCategory << " Wjets_signal/Wjets_HighMt = " << wjets_scale_factor << std::endl;
+            const double qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, anaData, ReferenceHistogramName());
+            std::cout << eventCategory << " OS_notIso/SS_NotIso = " << qcd_scale_factor << std::endl;
             for (const auto& hist : histograms) {
-                CreateHistogramForZTT(anaData,hist,embeddedSF);
-                if (WjetsData) EstimateWjets(eventCategory, anaData, hist);
-                EstimateQCD(eventCategory, anaData, hist);
-                EstimateSumBkg(eventCategory, anaData, hist);
+                CreateHistogramForZTT(anaData, hist, embeddedSF);
+                if (WjetsData) EstimateWjets(eventCategory, anaData, hist.name, wjets_scale_factor);
+                EstimateQCD(eventCategory, anaData, hist.name, qcd_scale_factor);
+                ProcessCompositDataCategories(anaData, hist.name);
             }
         }
 
@@ -217,11 +223,21 @@ protected:
         }
     }
 
-    virtual Channel ChannelId() = 0;
+    virtual Channel ChannelId() const = 0;
 
     virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
     virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
+
+    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                                             const std::string& hist_name) = 0;
+    virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                             const std::string& hist_name, double scale_factor) = 0;
+    virtual double CalculateWjetsScaleFactor(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                                             const std::string& hist_name) = 0;
+    virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
+                               const std::string& hist_name, double scale_factor) = 0;
+
 
     const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
 
@@ -248,10 +264,8 @@ protected:
         return categories;
     }
 
-    double CalculateEmbeddedScaleFactor()
+    double CalculateEmbeddedScaleFactor(const std::string& hist_name)
     {
-        static const std::string hist_name = "m_sv";
-
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
 
@@ -286,11 +300,6 @@ protected:
             }
         }
     }
-
-    virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                             const HistogramDescriptor& hist) = 0;
-    virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                               const HistogramDescriptor& hist) = 0;
 
     void FillHistograms(FlatAnalyzerData& anaData, const FlatEventInfo& eventInfo, double weight)
     {
@@ -527,18 +536,22 @@ private:
         of << std::endl << std::endl;
     }
 
-    void EstimateSumBkg(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
-                             const analysis::HistogramDescriptor& hist)
+    void ProcessCompositDataCategories(AnaDataForDataCategory& anaData, const std::string& hist_name)
     {
-        const analysis::DataCategory& sumBkg = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Sum);
-        for(const DataCategory* bkgCategory : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
-            root_ext::SmartHistogram<TH1D>* bkg_hist;
-            if(!(bkg_hist = anaData[bkgCategory->name].Signal().GetPtr<TH1D>(hist.name))) continue;
+        for(const DataCategory* composit : dataCategoryCollection.GetCategories(DataCategoryType::Composit)) {
+            for(const std::string& sub_name : composit->sub_categories) {
+                const DataCategory& sub_category = dataCategoryCollection.FindCategory(sub_name);
+                if(sub_category.types.count(DataCategoryType::Composit))
+                    throw exception("Invalid category '") << composit->name
+                                                          << "'. Composit category hierarchy is not supported.";
+                root_ext::SmartHistogram<TH1D>* sub_hist;
+                if(!(sub_hist = anaData[sub_category.name].Signal().GetPtr<TH1D>(hist_name))) continue;
 
-            if(TH1D* sum_hist = anaData[sumBkg.name].Signal().GetPtr<TH1D>(hist.name))
-                sum_hist->Add(bkg_hist);
-            else
-                anaData[sumBkg.name].Signal().Clone(*bkg_hist);
+                if(TH1D* composit_hist = anaData[composit->name].Signal().GetPtr<TH1D>(hist_name))
+                    composit_hist->Add(sub_hist);
+                else
+                    anaData[composit->name].Signal().Clone(*sub_hist);
+            }
         }
     }
 

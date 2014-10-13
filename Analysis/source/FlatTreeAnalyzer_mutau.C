@@ -39,7 +39,7 @@ public:
     }
 
 protected:
-    virtual analysis::Channel ChannelId() override { return analysis::Channel::MuTau; }
+    virtual analysis::Channel ChannelId() const override { return analysis::Channel::MuTau; }
 
     virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
     {
@@ -79,38 +79,60 @@ protected:
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
 
-    virtual void EstimateQCD(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                             const analysis::HistogramDescriptor& hist) override
+    virtual double CalculateQCDScaleFactor(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+                                             const std::string& hist_name) override
     {
-        //static const double scale_factor = 1.06;
         using analysis::EventType_QCD;
+        using analysis::DataCategoryType;
 
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_OSIso_data = anaData[data.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name);
-        auto hist_OSnotIso_data = anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name);
-        auto hist_SSIso_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name);
-        auto hist_SSnotIso_data = anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name);
-        if(!hist_OSIso_data || !hist_OSnotIso_data || !hist_SSIso_data || !hist_SSnotIso_data) return;
+        auto hist_OSnotIso_data = anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist_name);
+        auto hist_SSnotIso_data = anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist_name);
+        if(!hist_OSnotIso_data || !hist_SSnotIso_data)
+            throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
 
-        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_SSIso_data);
         TH1D& hist_OSnotIso = anaData[qcd.name].QCD[EventType_QCD::OS_NotIsolated].Clone(*hist_OSnotIso_data);
         TH1D& hist_SSnotIso = anaData[qcd.name].QCD[EventType_QCD::SS_NotIsolated].Clone(*hist_SSnotIso_data);
 
         for (auto category : dataCategoryCollection.GetCategories(analysis::DataCategoryType::Background)) {
-            if( TH1D* nonQCD_hist = anaData[category->name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name) )
-                histogram.Add(nonQCD_hist, -1);
+            if(category->types.count(DataCategoryType::Composit)) continue;
 
-            if( TH1D* nonQCD_histIso = anaData[category->name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name) )
+            if( TH1D* nonQCD_histIso = anaData[category->name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist_name) )
                 hist_OSnotIso.Add(nonQCD_histIso, -1);
 
-            if( TH1D* nonQCD_histNotIso = anaData[category->name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name) )
+            if( TH1D* nonQCD_histNotIso = anaData[category->name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist_name) )
                 hist_SSnotIso.Add(nonQCD_histNotIso, -1);
         }
 
-        const double scale_factor = hist_OSnotIso.Integral()/hist_SSnotIso.Integral();
-        std::cout << eventCategory << " OS_notIso/SS_NotIso = " << scale_factor << std::endl;
+        const double n_OSnotIso = hist_OSnotIso.Integral(0, hist_OSnotIso.GetNbinsX() + 1);
+        const double n_SSnotIso = hist_SSnotIso.Integral(0, hist_SSnotIso.GetNbinsX() + 1);
+        return n_OSnotIso / n_SSnotIso;
+    }
+
+
+    virtual void EstimateQCD(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+                             const std::string& hist_name, double scale_factor) override
+    {
+        using analysis::EventType_QCD;
+        using analysis::DataCategoryType;
+
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        auto hist_SSIso_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist_name);
+        if(!hist_SSIso_data) return;
+
+        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_SSIso_data);
+
+        for (auto category : dataCategoryCollection.GetCategories(analysis::DataCategoryType::Background)) {
+            if(category->types.count(DataCategoryType::Composit)) continue;
+
+            if( TH1D* nonQCD_hist = anaData[category->name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist_name) )
+                histogram.Add(nonQCD_hist, -1);
+        }
+
         histogram.Scale(scale_factor);
     }
 
@@ -132,40 +154,46 @@ protected:
         return EventType_Wjets::Unknown;
     }
 
-    virtual void EstimateWjets(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                               const analysis::HistogramDescriptor& hist) override
+    virtual double CalculateWjetsScaleFactor(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+                                             const std::string& hist_name) override
     {
         using analysis::EventType_Wjets;
-        using analysis::EventType_QCD;
+        using analysis::DataCategoryType;
 
-        //data
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
-        TH1D* histData_HighMt;
-        if(!(histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) return;
+        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
 
-        //MC wjets
-        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::WJets);
-        TH1D* histWjetsHighMt;
-        if(!(histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name)))
+        TH1D* histWjetsHighMt = anaData[wjets_mc.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist_name);
+        if(!histWjetsHighMt)
             throw analysis::exception("histogram for Wjets High Mt category doesn't exist");
 
-        TH1D* histWjetsSignal;
-        if(!(histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name)))
+        TH1D* histWjetsSignal = anaData[wjets_mc.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist_name);
+        if(!histWjetsSignal)
             throw analysis::exception("histogram for Wjets Signal category doesn't exist");
 
-        for (auto category : dataCategoryCollection.GetCategories(analysis::DataCategoryType::Background)) {
-            if(TH1D* nonWjets_hist = anaData[category->name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))
-                histData_HighMt->Add(nonWjets_hist,-1);
+        const double n_wjets_signal = histWjetsSignal->Integral(0, histWjetsSignal->GetNbinsX() + 1);
+        const double n_wjets_high_mt = histWjetsHighMt->Integral(0, histWjetsHighMt->GetNbinsX() + 1);
+        return n_wjets_signal / n_wjets_high_mt;
+    }
+
+    virtual void EstimateWjets(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
+                               const std::string& hist_name, double scale_factor) override
+    {
+        using analysis::EventType_Wjets;
+        using analysis::DataCategoryType;
+
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
+
+        auto histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist_name);
+        if(!histData_HighMt) return;
+        TH1D& histogram = anaData[wjets.name].Signal().Clone(*histData_HighMt);
+
+        for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
+            if(category->types.count(DataCategoryType::Composit)) continue;
+            if(TH1D* nonWjets_hist = anaData[category->name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist_name))
+                histogram.Add(nonWjets_hist,-1);
         }
 
-        const double ratio = histWjetsSignal->Integral()/histWjetsHighMt->Integral();
-        std::cout << eventCategory << " Wjets_signal/Wjets_HighMt = " << ratio << std::endl;
-        histData_HighMt->Scale(ratio);
-
-        const analysis::DataCategory& ewk = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::EWK);
-        if(TH1D* histEWK = anaData[ewk.name].Signal().GetPtr<TH1D>(hist.name))
-            histEWK->Add(histData_HighMt);
-        else
-            throw analysis::exception("histogram not found: ") << hist.name;
+        histogram.Scale(scale_factor);
     }
 };

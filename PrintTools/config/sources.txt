@@ -357,33 +357,43 @@ file: ggA_Zh_bbtautau_350.root 0.0658264
 limits_sf: 1
 
 [qqH125]
+type: BACKGROUND
 type: LIMITS
 title: VBF
 datacard: qqH125
 file: VBF_HToTauTau.root 0.001967
 
 [VH125]
+type: BACKGROUND
 type: LIMITS
 title: VH125
 datacard: VH125
 file: WH_ZH_TTH_HToTauTau.root 0.0075974
 
 [ggH125]
+type: BACKGROUND
 type: LIMITS
 title: ggH125
 datacard: ggH125
 file: GluGluToHToTauTau.root 0.0251
 
-[SMhiggs]
+[SMHiggs_other]
 type: BACKGROUND
-title: SMhiggs
-color: azure
+title: SM higgs (other)
 file: VBF_HToBB.root 0.01797
-file: VBF_HToTauTau.root 0.001967
-file: GluGluToHToTauTau.root 0.0251
-file: WH_ZH_TTH_HToTauTau.root 0.0075974
 file: WH_WToLNu_HToBB.root 0.0008668
 file: ZH_ZToLL_HToBB.root 0.0004528
+
+[SMhiggs ALL]
+type: BACKGROUND
+type: COMPOSIT
+title: SMhiggs
+draw: true
+color: azure
+subcategory: qqH125
+subcategory: VH125
+subcategory: ggH125
+subcategory: SMHiggs_other
 
 [QCD]
 type: BACKGROUND
@@ -391,79 +401,11 @@ type: LIMITS
 type: QCD
 title: QCD
 datacard: QCD
+draw: true
 color: pink_custom
 
-[EWK]
-type: BACKGROUND
-type: EWK
-title: Electroweak
-color: red_custom
-#file: WJetsToLNu_v1.root 9.3855
-#file: WJetsToLNu_v2.root 9.3855
-file: W1JetsToLNu_V19.root 3.5716
-file: W2JetsToLNu_V19.root 1.1232
-file: W3JetsToLNu_V19.root 0.6708
-file: W4jets.root 0.3150
-file: ZZJetsTo4L.root 0.0007
-file: ZZJetsTo2L2Nu.root 0.0148
-file: ZZJetsTo2L2Q.root 0.0254
-file: WWJetsTo2L2Nu.root 0.0593
-file: WZJetsTo2L2Q.root 0.0135
-file: WZJetsTo3LNu.root 0.0103
-file: T_tW.root 0.4394
-file: Tbar_tW.root 0.4431
-
-[Wjets]
-type: W_JETS
-title: Wjets
-file: W1JetsToLNu_V19.root 3.5716
-file: W2JetsToLNu_V19.root 1.1232
-file: W3JetsToLNu_V19.root 0.6708
-file: W4jets.root 0.3150
-
-[TTbar]
-type: BACKGROUND
-type: LIMITS
-title: t#bar{t}
-datacard: TT
-color: violet_custom
-file: tt_hadr.root 0.0719
-file: tt_lept.root 0.0430
-file: tt_semi.root 0.0862
-
-[DYJets]
-type: DY_JETS
-title: Z #rightarrow ll
-color: yellow_custom
-#file: DYJetsToLL.root 2.2662
-file: DY1JetsToLL.root 0.4596
-file: DY2JetsToLL.root 0.1632
-file: DY3JetsToLL.root 0.0914
-file: DY4JetsToLL.root 0.0708
-
-[ZL]
-type: ZL
-type: LIMITS
-title: ZL
-datacard: ZL
-
-[ZJ]
-type: ZJ
-type: LIMITS
-title: ZJ
-datacard: ZJ
-
-[ZTT_MC]
-type: ZTT_MC
-title: Z #rightarrow tautau
-
-[ZTT]
-type: ZTT
-type: LIMITS
-title: Z #rightarrow tautau
-datacard: ZTT
-
 [DiBoson]
+type: BACKGROUND
 type: LIMITS
 title: DiBoson
 datacard: VV
@@ -476,6 +418,86 @@ file: WZJetsTo3LNu.root 0.0103
 file: T_tW.root 0.4394
 file: Tbar_tW.root 0.4431
 
+[Wjets_MC]
+type: W_JETS_MC
+title: Wjets MC
+#file: WJetsToLNu_v1.root 9.3855
+#file: WJetsToLNu_v2.root 9.3855
+file: W1JetsToLNu_V19.root 3.5716
+file: W2JetsToLNu_V19.root 1.1232
+file: W3JetsToLNu_V19.root 0.6708
+file: W4jets.root 0.3150
+
+[Wjets]
+type: BACKGROUND
+type: W_JETS
+title: Wjets
+
+[EWK]
+type: BACKGROUND
+type: COMPOSIT
+title: Electroweak
+draw: true
+color: red_custom
+subcategory: DiBoson
+subcategory: Wjets
+
+[TTbar]
+type: BACKGROUND
+type: LIMITS
+title: t#bar{t}
+datacard: TT
+draw: true
+color: violet_custom
+file: tt_hadr.root 0.0719
+file: tt_lept.root 0.0430
+file: tt_semi.root 0.0862
+
+[DYJets MC]
+type: DY_JETS
+title: Z #rightarrow ll
+color: yellow_custom
+#file: DYJetsToLL.root 2.2662
+file: DY1JetsToLL.root 0.4596
+file: DY2JetsToLL.root 0.1632
+file: DY3JetsToLL.root 0.0914
+file: DY4JetsToLL.root 0.0708
+
+[ZL]
+type: BACKGROUND
+type: ZL
+type: LIMITS
+title: ZL
+datacard: ZL
+
+[ZJ]
+type: BACKGROUND
+type: ZJ
+type: LIMITS
+title: ZJ
+datacard: ZJ
+
+[ZTT_MC]
+type: ZTT_MC
+title: Z #rightarrow tautau
+
+[ZTT]
+type: BACKGROUND
+type: ZTT
+type: LIMITS
+title: Z #rightarrow tautau
+datacard: ZTT
+
+[DYJets]
+type: BACKGROUND
+type: COMPOSIT
+title: Z #rightarrow ll
+draw: true
+color: yellow_custom
+subcategory: ZL
+subcategory: ZJ
+subcategory: ZTT
+
 [DATA TauPlusX]
 type: DATA
 type: LIMITS
@@ -483,6 +505,7 @@ channel: eTau
 channel: muTau
 title: Observed
 datacard: data_obs
+draw: true
 color: black
 file: TauPlusX_A.root 1
 file: TauPlusX_B.root 1
@@ -495,6 +518,7 @@ type: LIMITS
 channel: tauTau
 title: Observed
 datacard: data_obs
+draw: true
 color: black
 file: Tau_A.root 1
 file: Tau_B.root 1
@@ -528,6 +552,17 @@ file: DY_Embedded_TauTau_B.root 1
 file: DY_Embedded_TauTau_C.root 1
 file: DY_Embedded_TauTau_D.root 1
 
-[SUM]
-type: SUM
-title: SumBkg
+[AllBkg]
+type: COMPOSIT
+title: All background
+subcategory: qqH125
+subcategory: VH125
+subcategory: ggH125
+subcategory: SMHiggs_other
+subcategory: DiBoson
+subcategory: Wjets
+subcategory: QCD
+subcategory: ZL
+subcategory: ZJ
+subcategory: ZTT
+subcategory: TTbar
