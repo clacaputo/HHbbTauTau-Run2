@@ -149,11 +149,29 @@ protected:
         std::vector<size_t> bjetsPair_indexes(eventInfo.event->kinfit_bb_tt_chi2.size());
         std::iota(bjetsPair_indexes.begin(), bjetsPair_indexes.end(), 0);
 
+        if (eventInfo.event->kinfit_bb_tt_chi2.size() != eventInfo.event->kinfit_bb_tt_convergence.size())
+            std::cout << "aaa - size chi2 = " << eventInfo.event->kinfit_bb_tt_chi2.size() <<
+                         "- size convergence = " << eventInfo.event->kinfit_bb_tt_convergence.size() << std::endl;
+
+
         const auto bjetsSelector = [&] (const size_t& first, const size_t& second) -> bool
         {
-            const Float_t first_chi2 = eventInfo.event->kinfit_bb_tt_chi2.at(first);
-            const Float_t second_chi2 = eventInfo.event->kinfit_bb_tt_chi2.at(second);
-            return first_chi2 > second_chi2;
+            if (eventInfo.event->kinfit_bb_tt_convergence.at(first) > 0
+                    && eventInfo.event->kinfit_bb_tt_convergence.at(second) <= 0)
+                return true;
+            if (eventInfo.event->kinfit_bb_tt_convergence.at(first) <= 0
+                    && eventInfo.event->kinfit_bb_tt_convergence.at(second) > 0)
+                return false;
+            Float_t first_chi2 = 0;
+            Float_t second_chi2 = 0;
+            if ((eventInfo.event->kinfit_bb_tt_convergence.at(first) > 0
+                    && eventInfo.event->kinfit_bb_tt_convergence.at(second) > 0) ||
+                    (eventInfo.event->kinfit_bb_tt_convergence.at(first) <= 0
+                     && eventInfo.event->kinfit_bb_tt_convergence.at(second) <= 0)){
+                first_chi2 = eventInfo.event->kinfit_bb_tt_chi2.at(first);
+                second_chi2 = eventInfo.event->kinfit_bb_tt_chi2.at(second);
+            }
+            return first_chi2 < second_chi2;
         };
 
         std::sort(bjetsPair_indexes.begin(), bjetsPair_indexes.end(), bjetsSelector);
@@ -182,6 +200,55 @@ protected:
 
         std::sort(bjetsPair_indexes.begin(), bjetsPair_indexes.end(), bjetsSelector);
         return bjetsPair_indexes;
+    }
+
+    analysis::FlatEventInfo::BjetPair GetBjetPairByMass(const TLorentzVector& Hbb_CSV, const FlatEventInfo& eventInfo)
+    {
+        analysis::FlatEventInfo::BjetPair pairCombined;
+        if ((Hbb_CSV.M() < 60 || Hbb_CSV.M() > 160) && eventInfo.event->energy_Bjets.size() > 2){
+            pairCombined.first = 0;
+            pairCombined.second = 2;
+            TLorentzVector mBB = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(2);
+            if ((mBB.M() < 60 || mBB.M() > 160) && eventInfo.event->energy_Bjets.size() > 3){
+                pairCombined.first = 0;
+                pairCombined.second = 3;
+            }
+            else {
+                pairCombined.first = 0;
+                pairCombined.second = 2;
+            }
+        }
+        else {
+            pairCombined.first = 0;
+            pairCombined.second = 1;
+        }
+        return pairCombined;
+    }
+
+    analysis::FlatEventInfo::BjetPair GetBjetPairByBestMass(const FlatEventInfo& eventInfo)
+    {
+        analysis::FlatEventInfo::BjetPair candidatePair(0,1);
+        if (eventInfo.event->energy_Bjets.size() > 3){
+            const TLorentzVector bbPair01 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(1);
+            const TLorentzVector bbPair02 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(2);
+            const TLorentzVector bbPair03 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(3);
+            if (std::abs(bbPair01.M() - 110) < std::abs(bbPair02.M() - 110) &&
+                    std::abs(bbPair01.M() - 110) < std::abs(bbPair03.M() - 110)){
+                candidatePair.first = 0;
+                candidatePair.second = 1;
+            }
+            else if (std::abs(bbPair02.M() - 110) < std::abs(bbPair01.M() - 110) &&
+                     std::abs(bbPair02.M() - 110) < std::abs(bbPair03.M() - 110)){
+                candidatePair.first = 0;
+                candidatePair.second = 2;
+            }
+            else if (std::abs(bbPair03.M() - 110) < std::abs(bbPair01.M() - 110) &&
+                     std::abs(bbPair03.M() - 110) < std::abs(bbPair02.M() - 110)){
+                candidatePair.first = 0;
+                candidatePair.second = 3;
+            }
+        }
+        return candidatePair;
     }
 
     unsigned MatchedBjetsByCSV(const FlatEventInfo& eventInfo)
@@ -234,6 +301,16 @@ protected:
         if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.second))
             ++matchedBjets;
 
+        return matchedBjets;
+    }
+
+    unsigned MatchedCombinedCSVandMASS(const FlatEventInfo& eventInfo, const FlatEventInfo::BjetPair& bjetPair)
+    {
+        unsigned matchedBjets = 0;
+        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.first))
+            ++matchedBjets;
+        if (eventInfo.event->isBjet_MC_Bjet.at(bjetPair.second))
+            ++matchedBjets;
         return matchedBjets;
     }
 

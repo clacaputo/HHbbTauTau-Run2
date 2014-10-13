@@ -153,24 +153,25 @@ public:
         const GenParticle* tau_MC_1 = tau_1.origin;
         const GenParticle* tau_MC_2 = tau_2.origin;
 
-        double deltaRmin_firstCouple =
-                std::min(bjet1_MC->momentum.DeltaR(tau_MC_1->momentum),bjet1_MC->momentum.DeltaR(tau_MC_2->momentum));
-        double deltaRmin_secondCouple =
-                std::min(bjet2_MC->momentum.DeltaR(tau_MC_1->momentum),bjet2_MC->momentum.DeltaR(tau_MC_2->momentum));
-        double deltaRmin_MC = std::min(deltaRmin_firstCouple,deltaRmin_secondCouple);
-
-        //std::cout << "deltaRmin_MC=" << deltaRmin_MC << std::endl;
-        anaData.deltaRmin_MC().Fill(deltaRmin_MC);
-        anaData.DeltaRbjets_MC().Fill(bjet1_MC->momentum.DeltaR(bjet2_MC->momentum));
-        anaData.MinPtBjetsMC().Fill(std::min(bjet1_MC->momentum.Pt(),bjet2_MC->momentum.Pt()));
-        TLorentzVector bb_MC = bjet1_MC->momentum + bjet2_MC->momentum;
-        TLorentzVector bb_MC_visible = bjet1_visible.visibleMomentum + bjet2_visible.visibleMomentum;
-
-        anaData.MassBB_MC().Fill(bb_MC.M());
-        anaData.MassBB_MCvis().Fill(bb_MC_visible.M());
-
         if (bjets_all.size() > 1 && bjet1_MC->momentum.Pt() > 20 && bjet2_MC->momentum.Pt() > 20 &&
                 std::abs(bjet1_MC->momentum.Eta()) < 2.4 && std::abs(bjet2_MC->momentum.Eta()) < 2.4 ){
+
+            double deltaRmin_firstCouple =
+                    std::min(bjet1_MC->momentum.DeltaR(tau_MC_1->momentum),bjet1_MC->momentum.DeltaR(tau_MC_2->momentum));
+            double deltaRmin_secondCouple =
+                    std::min(bjet2_MC->momentum.DeltaR(tau_MC_1->momentum),bjet2_MC->momentum.DeltaR(tau_MC_2->momentum));
+            double deltaRmin_MC = std::min(deltaRmin_firstCouple,deltaRmin_secondCouple);
+
+            //std::cout << "deltaRmin_MC=" << deltaRmin_MC << std::endl;
+            anaData.deltaRmin_MC().Fill(deltaRmin_MC);
+            anaData.DeltaRbjets_MC().Fill(bjet1_MC->momentum.DeltaR(bjet2_MC->momentum));
+            anaData.MinPtBjetsMC().Fill(std::min(bjet1_MC->momentum.Pt(),bjet2_MC->momentum.Pt()));
+            TLorentzVector bb_MC = bjet1_MC->momentum + bjet2_MC->momentum;
+            TLorentzVector bb_MC_visible = bjet1_visible.visibleMomentum + bjet2_visible.visibleMomentum;
+
+            anaData.MassBB_MC().Fill(bb_MC.M());
+            anaData.MassBB_MCvis().Fill(bb_MC_visible.M());
+
             double deltaRmin1_original = std::numeric_limits<double>::max();
             double deltaRmin2_original = std::numeric_limits<double>::max();
             double deltaRmin1_visible = std::numeric_limits<double>::max();
