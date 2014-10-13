@@ -95,6 +95,7 @@ public:
     GenParticlePtrVector finalStateChargedLeptons;
     GenParticlePtrVector finalStateChargedHadrons;
     GenParticlePtrVector finalStateNeutralHadrons;
+    GenParticleSet particlesProcessed;
 
     TLorentzVector chargedLeptonsMomentum;
     TLorentzVector chargedHadronsMomentum;
@@ -127,8 +128,11 @@ private:
         if(particle->status == particles::Status::FinalStateParticle && particle->daughters.size() != 0)
             throw exception("Invalid gen particle");
 
+        if(particlesProcessed.count(particle)) return;
+        particlesProcessed.insert(particle);
         if(particle->status == particles::Status::FinalStateParticle && particle->pdg.Code != particles::nu_e
                 && particle->pdg.Code != particles::nu_mu && particle->pdg.Code != particles::nu_tau) {
+
             visibleMomentum += particle->momentum;
             if(particle->pdg.Code == particles::e || particle->pdg.Code == particles::mu) {
                 finalStateChargedLeptons.push_back(particle);
@@ -140,10 +144,12 @@ private:
                 finalStateNeutralHadrons.push_back(particle);
                 neutralHadronsMomentum += particle->momentum;
             }
+
         }
 
-        for(const GenParticle* daughter : particle->daughters)
+        for(const GenParticle* daughter : particle->daughters){
             CollectInfo(daughter);
+        }
     }
 };
 
