@@ -99,18 +99,10 @@ public:
 
 class BaseFlatTreeAnalyzer {
 public:
-    typedef std::map<EventType_QCD, FlatAnalyzerData> AnaDataQCD;
-    typedef std::map<EventType_Wjets, FlatAnalyzerData> AnaDataWjets;
+    typedef std::map<EventRegion, FlatAnalyzerData> RegionAnaData;
 
-    struct AnaDataEventTypes {
-        AnaDataQCD QCD;
-        AnaDataWjets Wjets;
-
-        FlatAnalyzerData& Signal() { return QCD[EventType_QCD::OS_Isolated]; }
-    };
-
-    typedef std::map<std::string, AnaDataEventTypes> AnaDataForDataCategory;
-    typedef std::map<EventCategory, AnaDataForDataCategory> FullAnaData;
+    typedef std::map<std::string, RegionAnaData> AnaDataForEventCategory;
+    typedef std::map<EventCategory, AnaDataForEventCategory> FullAnaData;
 
     static const std::string ReferenceHistogramName() { return "m_sv"; }
 
@@ -147,16 +139,19 @@ public:
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-            const double wjets_scale_factor = CalculateWjetsScaleFactor(eventCategory, anaData, ReferenceHistogramName());
-            std::cout << eventCategory << " Wjets_signal/Wjets_HighMt = " << wjets_scale_factor << std::endl;
-            const double qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, anaData, ReferenceHistogramName());
-            std::cout << eventCategory << " OS_notIso/SS_NotIso = " << qcd_scale_factor << std::endl;
+            AnaDataForEventCategory& anaData = fullAnaDataEntry.second;
+            const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
+            std::cout << eventCategory << " OS_HighMt_data / OS_HighMt_mc = "
+                      << wjets_scale_factors.first << std::endl;
+            std::cout << eventCategory << " SS_HighMt_data / SS_HighMt_mc = "
+                      << wjets_scale_factors.second << std::endl;
+            const double qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
+            std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
             for (const auto& hist : histograms) {
                 CreateHistogramForZTT(anaData, hist, embeddedSF);
-                if (WjetsData) EstimateWjets(eventCategory, anaData, hist.name, wjets_scale_factor);
-                EstimateQCD(eventCategory, anaData, hist.name, qcd_scale_factor);
-                ProcessCompositDataCategories(anaData, hist.name);
+                if (WjetsData) EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+                EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
+                ProcessCompositDataCategories(eventCategory, hist.name);
             }
         }
 
@@ -171,20 +166,57 @@ public:
     }
 
 protected:
+    virtual Channel ChannelId() const = 0;
+    virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
+    virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
+
+    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name) = 0;
+    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name, double scale_factor) = 0;
+    virtual std::pair<double, double> CalculateWjetsScaleFactors(EventCategory eventCategory,
+                                                                 const std::string& hist_name) = 0;
+    virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
+                               std::pair<double, double> scale_factors) = 0;
+
+
+    const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
+
+    root_ext::SmartHistogram<TH1D>* GetHistogram(EventCategory eventCategory, const std::string& dataCategoryName,
+                                                 EventRegion eventRegion, const std::string& histogramName)
+    {
+        return fullAnaData[eventCategory][dataCategoryName][eventRegion].GetPtr<TH1D>(histogramName);
+    }
+
+    root_ext::SmartHistogram<TH1D>* GetSignalHistogram(EventCategory eventCategory, const std::string& dataCategoryName,
+                                                       const std::string& histogramName)
+    {
+        return GetHistogram(eventCategory, dataCategoryName, EventRegion::OS_Isolated, histogramName);
+    }
+
+    TH1D& CloneHistogram(EventCategory eventCategory, const std::string& dataCategoryName, EventRegion eventRegion,
+                         const root_ext::SmartHistogram<TH1D>& originalHistogram)
+    {
+        return fullAnaData[eventCategory][dataCategoryName][eventRegion].Clone(originalHistogram);
+    }
+
+    TH1D& CloneSignalHistogram(EventCategory eventCategory, const std::string& dataCategoryName,
+                         const root_ext::SmartHistogram<TH1D>& originalHistogram)
+    {
+        return CloneHistogram(eventCategory, dataCategoryName, EventRegion::OS_Isolated, originalHistogram);
+    }
+
+
     void ProcessDataSource(const DataCategory& dataCategory, std::shared_ptr<ntuple::FlatTree> tree, double scale_factor)
     {
         static const bool applyMVAcut = false;
 
         const analysis::DataCategory& DYJets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets);
 
-        for(size_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
+        for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
             const ntuple::Flat& event = tree->data;
 
-            const EventType_QCD eventTypeQCD = DetermineEventTypeForQCD(event);
-            const EventType_Wjets eventTypeWjets = DetermineEventTypeForWjets(event);
-            if(eventTypeQCD == EventType_QCD::Unknown && eventTypeWjets == EventType_Wjets::Unknown)
-                continue;
+            const EventRegion eventRegion = DetermineEventRegion(event);
+            if(eventRegion == EventRegion::Unknown) continue;
 
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
@@ -195,52 +227,30 @@ protected:
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
                 if (dataCategory.name == DYJets.name)
-                    FillDYjetHistograms(eventInfo, eventCategory, eventTypeQCD, eventTypeWjets, weight);
+                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
 
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], eventInfo, weight);
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], eventInfo, weight);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name][eventRegion], eventInfo, weight);
             }
         }
     }
 
-    void FillDYjetHistograms(const FlatEventInfo& eventInfo, EventCategory eventCategory, EventType_QCD eventTypeQCD,
-                             EventType_Wjets eventTypeWjets, double weight)
+    void FillDYjetHistograms(const FlatEventInfo& eventInfo, EventCategory eventCategory, EventRegion eventRegion,
+                             double weight)
     {
         const analysis::DataCategory& ZL = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZL);
         const analysis::DataCategory& ZJ = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZJ);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
 
-        if (eventInfo.eventType == ntuple::EventType::ZL) {
-            FillHistograms(fullAnaData[eventCategory][ZL.name].QCD[eventTypeQCD], eventInfo, weight);
-            FillHistograms(fullAnaData[eventCategory][ZL.name].Wjets[eventTypeWjets], eventInfo, weight);
-        } else if (eventInfo.eventType == ntuple::EventType::ZJ) {
-            FillHistograms(fullAnaData[eventCategory][ZJ.name].QCD[eventTypeQCD], eventInfo, weight);
-            FillHistograms(fullAnaData[eventCategory][ZJ.name].Wjets[eventTypeWjets], eventInfo, weight);
-        } else if (eventInfo.eventType == ntuple::EventType::ZTT
-                   && std::abs(eventInfo.event->pdgId_1_MC) != particles::NONEXISTENT.RawCode()
-                   && std::abs(eventInfo.event->pdgId_2_MC) != particles::NONEXISTENT.RawCode()) {
-            FillHistograms(fullAnaData[eventCategory][ZTT_MC.name].QCD[eventTypeQCD], eventInfo, weight);
-            FillHistograms(fullAnaData[eventCategory][ZTT_MC.name].Wjets[eventTypeWjets], eventInfo, weight);
+        const std::map<ntuple::EventType, std::string> type_category_map = {
+            { ntuple::EventType::ZL, ZL.name }, { ntuple::EventType::ZJ, ZJ.name },
+            { ntuple::EventType::ZTT, ZTT_MC.name }
+        };
+
+        if(type_category_map.count(eventInfo.eventType)) {
+            const std::string& name = type_category_map.at(eventInfo.eventType);
+            FillHistograms(fullAnaData[eventCategory][name][eventRegion], eventInfo, weight);
         }
     }
-
-    virtual Channel ChannelId() const = 0;
-
-    virtual EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) = 0;
-    virtual EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) = 0;
-    virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
-
-    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                                             const std::string& hist_name) = 0;
-    virtual void EstimateQCD(EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                             const std::string& hist_name, double scale_factor) = 0;
-    virtual double CalculateWjetsScaleFactor(EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                                             const std::string& hist_name) = 0;
-    virtual void EstimateWjets(EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                               const std::string& hist_name, double scale_factor) = 0;
-
-
-    const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
 
     virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
     {
@@ -270,33 +280,24 @@ protected:
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
 
-        TH1D* hist_embedded =
-                fullAnaData[EventCategory::Inclusive][embedded.name].Signal().GetPtr<TH1D>(hist_name);
-        TH1D* hist_ztautau =
-                fullAnaData[EventCategory::Inclusive][ZTT_MC.name].Signal().GetPtr<TH1D>(hist_name);
-
+        TH1D* hist_embedded = GetSignalHistogram(EventCategory::Inclusive, embedded.name, hist_name);
+        TH1D* hist_ztautau = GetSignalHistogram(EventCategory::Inclusive, ZTT_MC.name, hist_name);
         if(!hist_embedded || !hist_ztautau )
             throw std::runtime_error("embedded or ztt hist not found");
+
         const double n_ztautau = hist_ztautau->Integral(0, hist_ztautau->GetNbinsX() + 1);
         const double n_embedded = hist_embedded->Integral(0, hist_embedded->GetNbinsX() + 1);
         return n_ztautau / n_embedded;
     }
 
-    void CreateHistogramForZTT(AnaDataForDataCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
+    void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
-        for(auto& map_entry : anaData[embedded.name].QCD) {
+        for(auto& map_entry : anaData[embedded.name]) {
             if(auto embedded_hist = map_entry.second.GetPtr<TH1D>(hist.name)) {
-                TH1D& ztt_hist = anaData[ZTT.name].QCD[map_entry.first].Clone(*embedded_hist);
-                ztt_hist.Scale(scale_factor);
-            }
-        }
-
-        for(auto& map_entry : anaData[embedded.name].Wjets) {
-            if(auto embedded_hist = map_entry.second.GetPtr<TH1D>(hist.name)) {
-                TH1D& ztt_hist = anaData[ZTT.name].Wjets[map_entry.first].Clone(*embedded_hist);
+                TH1D& ztt_hist = anaData[ZTT.name][map_entry.first].Clone(*embedded_hist);
                 ztt_hist.Scale(scale_factor);
             }
         }
@@ -351,11 +352,12 @@ protected:
                        bool calc_BDTMitFisher)
     {
         static double const default_value = std::numeric_limits<double>::lowest();
-        const std::string category_name = eventCategoryMapName.at(eventCategory);
+        std::ostringstream category_name;
+        category_name << eventCategory;
 
         auto getMVA = [&](bool calc_MVA, MVA_Selections::MvaMethod method) -> double {
             if(calc_MVA) {
-                auto mvaReader = MVA_Selections::MvaReader::Get(ChannelName(), category_name, method);
+                auto mvaReader = MVA_Selections::MvaReader::Get(ChannelName(), category_name.str(), method);
                 if(mvaReader)
                     return mvaReader->GetMva(eventInfo.lepton_momentums.at(0), eventInfo.lepton_momentums.at(1),
                                              eventInfo.bjet_momentums.at(0), eventInfo.bjet_momentums.at(1),
@@ -376,7 +378,6 @@ protected:
 
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory eventCategory = fullAnaDataEntry.first;
-            AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
 
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
@@ -386,9 +387,8 @@ protected:
                 for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                     if(!category->draw) continue;
 
-                    TH1D* histogram;
-                    if(!(histogram = anaData[category->name].Signal().GetPtr<TH1D>(hist.name)))
-                        continue;
+                    TH1D* histogram = GetSignalHistogram(eventCategory, category->name, hist.name);
+                    if(!histogram) continue;
 
                     if(category->IsSignal())
                         stackDescriptor.AddSignalHistogram(histogram, category->title, category->color, category->draw_sf);
@@ -423,7 +423,6 @@ protected:
         outputFile->cd();
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
-            AnaDataForDataCategory& anaDataForCategory = fullAnaDataEntry.second;
             if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
             const std::string directoryName = channelNameForFolder.at(ChannelName()) + "_"
                     + categoryToDirectoryNameSuffix.at(eventCategory);
@@ -432,8 +431,7 @@ protected:
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
-                FlatAnalyzerData& anaData = anaDataForCategory[dataCategory->name].Signal();
-                TH1D* hist_orig = anaData.GetPtr<TH1D>(hist_name);
+                TH1D* hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name);
                 if(!hist_orig)
                     throw exception("Datacard histogram '") << hist_name << "' not found for data category '"
                                                             << dataCategory->name << "'.";
@@ -444,14 +442,14 @@ protected:
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-                TH1D* hist_up_orig = anaData.GetPtr<TH1D>(hist_name_up);
+                TH1D* hist_up_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_up);
                 if(!hist_up_orig)
                     throw exception("Datacard histogram '") << hist_name_up << "' not found for data category '"
                                                             << dataCategory->name << "'.";
                 std::shared_ptr<TH1D> hist_up(static_cast<TH1D*>(hist_up_orig->Clone()));
                 hist_up->Scale(dataCategory->limits_sf);
                 hist_up->Write(nameUp.c_str());
-                TH1D* hist_down_orig = anaData.GetPtr<TH1D>(hist_name_down);
+                TH1D* hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down);
                 if(!hist_down_orig)
                     throw exception("Datacard histogram '") << hist_name_down << "' not found for data category '"
                                                             << dataCategory->name << "'.";
@@ -461,6 +459,17 @@ protected:
             }
         }
         outputFile->Close();
+    }
+
+    void SubtractBackgroundHistograms(TH1D& histogram, EventCategory eventCategory, EventRegion eventRegion,
+                                      const std::string& current_category)
+    {
+        for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
+            if(category->IsComposit() || category->name == current_category) continue;
+
+            if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName()))
+                histogram.Add(other_histogram, -1);
+        }
     }
 
 private:
@@ -520,8 +529,8 @@ private:
         for (const DataCategory* dataCategory : dataCategoryCollection.GetAllCategories()) {
             of << std::wstring(dataCategory->title.begin(), dataCategory->title.end()) << sep;
             for (auto& fullAnaDataEntry : fullAnaData) {
-                AnaDataForDataCategory& anaData = fullAnaDataEntry.second;
-                if( TH1D* histogram = anaData[dataCategory->name].Signal().GetPtr<TH1D>(hist.name) ) {
+                const EventCategory& eventCategory = fullAnaDataEntry.first;
+                if( TH1D* histogram = GetSignalHistogram(eventCategory, dataCategory->name, hist.name) ) {
                     typedef std::pair<Int_t, Int_t> limit_pair;
                     const limit_pair limits = includeOverflow ? limit_pair(0, histogram->GetNbinsX() + 1)
                                                               : limit_pair(1, histogram->GetNbinsX());
@@ -537,21 +546,18 @@ private:
         of << std::endl << std::endl;
     }
 
-    void ProcessCompositDataCategories(AnaDataForDataCategory& anaData, const std::string& hist_name)
+    void ProcessCompositDataCategories(EventCategory eventCategory, const std::string& hist_name)
     {
         for(const DataCategory* composit : dataCategoryCollection.GetCategories(DataCategoryType::Composit)) {
             for(const std::string& sub_name : composit->sub_categories) {
                 const DataCategory& sub_category = dataCategoryCollection.FindCategory(sub_name);
-                if(sub_category.types.count(DataCategoryType::Composit))
-                    throw exception("Invalid category '") << composit->name
-                                                          << "'. Composit category hierarchy is not supported.";
-                root_ext::SmartHistogram<TH1D>* sub_hist;
-                if(!(sub_hist = anaData[sub_category.name].Signal().GetPtr<TH1D>(hist_name))) continue;
+                auto sub_hist = GetSignalHistogram(eventCategory, sub_category.name, hist_name);
+                if(!sub_hist) continue;
 
-                if(TH1D* composit_hist = anaData[composit->name].Signal().GetPtr<TH1D>(hist_name))
+                if(auto composit_hist = GetSignalHistogram(eventCategory, composit->name, hist_name))
                     composit_hist->Add(sub_hist);
                 else
-                    anaData[composit->name].Signal().Clone(*sub_hist);
+                    CloneSignalHistogram(eventCategory, composit->name, *sub_hist);
             }
         }
     }

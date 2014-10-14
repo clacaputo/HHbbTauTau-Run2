@@ -88,6 +88,7 @@ struct DataCategory {
     bool IsSignal() const { return types.count(DataCategoryType::Signal); }
     bool IsBackground() const { return types.count(DataCategoryType::Background); }
     bool IsData() const { return types.count(DataCategoryType::Data); }
+    bool IsComposit() const { return types.count(DataCategoryType::Composit); }
 };
 
 typedef std::map<std::string, DataCategory> DataCategoryMap;
@@ -155,6 +156,9 @@ private:
             if(!categories.count(sub_category))
                 throw exception("Sub-category '") << sub_category << "' for category '"
                                                   << category.name << "' is not defined.";
+            if(categories.at(sub_category).types.count(DataCategoryType::Composit))
+                throw exception("Invalid sub-category '") << sub_category << "' for category '" << category.name
+                                                      << "'. Composit category hierarchy is not supported.";
         }
         for(const auto& source_entry : category.sources_sf) {
             if(all_sources.count(source_entry.first))
@@ -262,24 +266,24 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     return s;
 }
 
-
-enum class EventType_QCD { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated };
-enum class EventType_Wjets { Unknown, Signal, HighMt };
+enum class EventRegion { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated, OS_HighMt, SS_HighMt };
 enum class EventCategory { Inclusive, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
+namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryMapName =
           { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0btag" },
             { EventCategory::OneJet_OneBtag, "1jet1btag" }, { EventCategory::TwoJets_ZeroBtag, "2jets0btag" },
           { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" } };
+} // namespace detail
 typedef std::vector<EventCategory> EventCategoryVector;
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
-    s << eventCategoryMapName.at(eventCategory);
+    s << detail::eventCategoryMapName.at(eventCategory);
     return s;
 }
 
 std::wostream& operator<<(std::wostream& s, const EventCategory& eventCategory) {
-    const std::string str = eventCategoryMapName.at(eventCategory);
+    const std::string str = detail::eventCategoryMapName.at(eventCategory);
     s << std::wstring(str.begin(), str.end());
     return s;
 }
