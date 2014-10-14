@@ -27,9 +27,10 @@
 eval `scramv1 runtime -sh`
 export CMSSW_ROOT_PATH=$( cd $CMSSW_DATA_PATH/.. ; pwd )
 
-export GCC_PATH=$( find $CMSSW_ROOT_PATH/external/gcc/ -maxdepth 1 -type d | tail -n 1 )
+export GCC_PATH=$( scram tool info gcc-ccompiler | grep GCC_CCOMPILER_BASE | sed s/GCC_CCOMPILER_BASE=// )
 export GCC_INCLUDE_PATH=$( find $GCC_PATH/include/c++/ -maxdepth 1 -type d | tail -n 1 )
 
-export BOOST_INCLUDE_PATH=$( find $CMSSW_ROOT_PATH/external/boost/ -maxdepth 1 -type d | tail -n 1 )/include
-export ROOT_INCLUDE_PATH=$( find $CMSSW_ROOT_PATH/lcg/root/ -maxdepth 1 -type d | tail -n 1 )/include
-export HEPMC_INCLUDE_PATH=$( find $CMSSW_ROOT_PATH/external/hepmc/ -maxdepth 1 -type d | tail -n 1 )/include
+export BOOST_BASE=$( scram tool info boost | grep BOOST_BASE | sed s/BOOST_BASE=// )
+export BOOST_INCLUDE_PATH=$BOOST_BASE/include
+export ROOT_INCLUDE_PATH=$ROOTSYS/include
+export HEPMC_INCLUDE_PATH=$( scram tool info hepmc | grep HEPMC_BASE | sed s/HEPMC_BASE=// )/include
