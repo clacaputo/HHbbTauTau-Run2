@@ -225,6 +225,20 @@ protected:
         return pairCombined;
     }
 
+    analysis::FlatEventInfo::BjetPair GetBjetPairByMass(const TLorentzVector& Hbb_CSV, const FlatEventInfo& eventInfo)
+    {
+        analysis::FlatEventInfo::BjetPair pairCombined;
+        if ((Hbb_CSV.M() < 60 || Hbb_CSV.M() > 160) && eventInfo.event->energy_Bjets.size() > 2){
+            pairCombined.first = 0;
+            pairCombined.second = 2;
+        }
+        else {
+            pairCombined.first = 0;
+            pairCombined.second = 1;
+        }
+        return pairCombined;
+    }
+
     analysis::FlatEventInfo::BjetPair GetBjetPairByBestMass(const FlatEventInfo& eventInfo)
     {
         analysis::FlatEventInfo::BjetPair candidatePair(0,1);
@@ -247,6 +261,26 @@ protected:
                 candidatePair.first = 0;
                 candidatePair.second = 3;
             }
+        }
+        return candidatePair;
+    }
+
+    analysis::FlatEventInfo::BjetPair GetBjetPairByBestMass(const FlatEventInfo& eventInfo)
+    {
+        analysis::FlatEventInfo::BjetPair candidatePair(0,1);
+        if (eventInfo.event->energy_Bjets.size() > 2){
+            const TLorentzVector bbPair01 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(1);
+            const TLorentzVector bbPair02 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(2);
+
+            if (std::abs(bbPair01.M() - 110) < std::abs(bbPair02.M() - 110)){
+                candidatePair.first = 0;
+                candidatePair.second = 1;
+            }
+            else {
+                candidatePair.first = 0;
+                candidatePair.second = 2;
+            }
+
         }
         return candidatePair;
     }
