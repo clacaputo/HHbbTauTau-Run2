@@ -95,7 +95,6 @@ public:
     GenParticlePtrVector finalStateChargedLeptons;
     GenParticlePtrVector finalStateChargedHadrons;
     GenParticlePtrVector finalStateNeutralHadrons;
-    GenParticleSet particlesProcessed;
 
     TLorentzVector chargedLeptonsMomentum;
     TLorentzVector chargedHadronsMomentum;
@@ -108,7 +107,8 @@ public:
 
     VisibleGenObject(const GenParticle *_origin) : origin(_origin)
     {
-        CollectInfo(origin);
+        GenParticleSet particlesProcessed;
+        CollectInfo(origin, particlesProcessed);
     }
 
     const GenParticle* GetOriginGenParticle() const
@@ -123,7 +123,7 @@ public:
 
 
 private:
-    void CollectInfo(const GenParticle* particle)
+    void CollectInfo(const GenParticle* particle, const GenParticleSet& particlesProcessed)
     {
         if(particle->status == particles::Status::FinalStateParticle && particle->daughters.size() != 0)
             throw exception("Invalid gen particle");
