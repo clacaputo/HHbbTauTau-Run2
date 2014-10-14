@@ -123,7 +123,7 @@ public:
 
 
 private:
-    void CollectInfo(const GenParticle* particle, const GenParticleSet& particlesProcessed)
+    void CollectInfo(const GenParticle* particle, GenParticleSet& particlesProcessed)
     {
         if(particle->status == particles::Status::FinalStateParticle && particle->daughters.size() != 0)
             throw exception("Invalid gen particle");
@@ -148,7 +148,7 @@ private:
         }
 
         for(const GenParticle* daughter : particle->daughters){
-            CollectInfo(daughter);
+            CollectInfo(daughter, particlesProcessed);
         }
     }
 };
