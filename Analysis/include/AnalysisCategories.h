@@ -92,20 +92,8 @@ struct DataCategory {
 
 typedef std::map<std::string, DataCategory> DataCategoryMap;
 typedef std::set<const DataCategory*> DataCategoryPtrSet;
+typedef std::vector<const DataCategory*> DataCategoryPtrVector;
 typedef std::map<DataCategoryType, DataCategoryPtrSet> DataCategoryTypeMap;
-
-struct DataSource {
-    std::string file_name;
-    DataCategoryPtrSet data_categories;
-
-    double scale_factor(const DataCategory* category) const
-    {
-        return category->sources_sf.at(file_name);
-    }
-};
-
-typedef std::set<const DataSource*> DataSourcePtrSet;
-typedef std::map<std::string, DataSource> DataSourceMap;
 
 class DataCategoryCollection {
 public:
@@ -118,24 +106,18 @@ public:
             CheckCategoryValidity(category);
             if(category.channels.size() && !category.channels.count(channel_id)) continue;
             categories[category.name] = category;
-            all_categories.insert(&categories[category.name]);
+            all_categories.push_back(&categories[category.name]);
             for(DataCategoryType type : category.types)
                 categories_by_type[type].insert(&categories[category.name]);
-        }
-        for(const auto& category_entry : categories) {
-            for(const auto& sources_sf_entry : category_entry.second.sources_sf) {
-                sources[sources_sf_entry.first].file_name = sources_sf_entry.first;
-                sources[sources_sf_entry.first].data_categories.insert(&category_entry.second);
-                all_sources.insert(&sources[sources_sf_entry.first]);
-            }
+            for(const auto& source_entry : category.sources_sf)
+                all_sources.insert(source_entry.first);
         }
         const auto& signal_names = ParseSignalList(signal_list);
         for(const auto& signal_name : signal_names)
             categories[signal_name].draw = true;
     }
 
-    const DataSourcePtrSet& GetSources() const { return all_sources; }
-    const DataCategoryPtrSet& GetAllCategories() const { return all_categories; }
+    const DataCategoryPtrVector& GetAllCategories() const { return all_categories; }
     const DataCategoryPtrSet& GetCategories(DataCategoryType dataCategoryType) const
     {
         if(!categories_by_type.count(dataCategoryType))
@@ -173,6 +155,10 @@ private:
             if(!categories.count(sub_category))
                 throw exception("Sub-category '") << sub_category << "' for category '"
                                                   << category.name << "' is not defined.";
+        }
+        for(const auto& source_entry : category.sources_sf) {
+            if(all_sources.count(source_entry.first))
+                throw exception("Source '") << source_entry.first << "' is already part of the other data category.";
         }
     }
 
@@ -262,21 +248,12 @@ private:
     }
 
 private:
-    DataSourceMap sources;
-    DataSourcePtrSet all_sources;
+    std::set<std::string> all_sources;
     DataCategoryMap categories;
-    DataCategoryPtrSet all_categories;
+    DataCategoryPtrVector all_categories;
     DataCategoryTypeMap categories_by_type;
     DataCategoryPtrSet empty_category_set;
 };
-
-
-std::ostream& operator<<(std::ostream& s, const DataSource& source){
-    s << "File: " << source.file_name; //<< " for data categories:\n";
-//    for(const DataCategory* category : source.data_categories)
-//        s << category->name << ", SF: " << source.scale_factor(category) << "\n";
-    return s;
-}
 
 std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     s << "Name: " << category.name << ", Title: '" << category.title << "', Color: " << category.color << std::endl;

@@ -114,7 +114,6 @@ PatProduction/src/classes_def.xml
 PrintTools/config/hist.txt
 PrintTools/config/signal.txt
 PrintTools/config/sources.txt
-PrintTools/config/sources_mutau.txt
 PrintTools/include/RootPrintSource.h
 PrintTools/include/RootPrintToPdf.h
 PrintTools/include/RootPrintTools.h

@@ -127,15 +127,18 @@ public:
 
     void Run()
     {
-        std::cout << "Processing input source files... " << std::endl;
-        for(const DataSource* source : dataCategoryCollection.GetSources()) {
-            std::cout << *source << std::endl;
-            const std::string fullFileName = inputPath + "/" + source->file_name;
-            std::shared_ptr<TFile> file(new TFile(fullFileName.c_str(), "READ"));
-            if(file->IsZombie())
-                throw exception("Input file '") << source->file_name << "' not found.";
-            std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree(*file, "flatTree"));
-            ProcessDataSource(*source, tree);
+        std::cout << "Processing data categories... " << std::endl;
+        for(const DataCategory* dataCategory : dataCategoryCollection.GetAllCategories()) {
+            if(!dataCategory->sources_sf.size()) continue;
+            std::cout << *dataCategory << std::endl;
+            for(const auto& source_entry : dataCategory->sources_sf) {
+                const std::string fullFileName = inputPath + "/" + source_entry.first;
+                std::shared_ptr<TFile> file(new TFile(fullFileName.c_str(), "READ"));
+                if(file->IsZombie())
+                    throw exception("Input file '") << source_entry.first << "' not found.";
+                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree(*file, "flatTree"));
+                ProcessDataSource(*dataCategory, tree, source_entry.second);
+            }
         }
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
@@ -168,7 +171,7 @@ public:
     }
 
 protected:
-    void ProcessDataSource(const DataSource& dataSource, std::shared_ptr<ntuple::FlatTree> tree)
+    void ProcessDataSource(const DataCategory& dataCategory, std::shared_ptr<ntuple::FlatTree> tree, double scale_factor)
     {
         static const bool applyMVAcut = false;
 
@@ -186,18 +189,16 @@ protected:
             const EventCategoryVector eventCategories = DetermineEventCategories(event);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
 
-            for(const DataCategory* dataCategory : dataSource.data_categories) {
-                const double weight = dataCategory->IsData() ? 1 : event.weight * dataSource.scale_factor(dataCategory);
+            const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
 
-                for(auto eventCategory : eventCategories) {
-                    UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
-                    if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
-                    if (dataCategory->name == DYJets.name)
-                        FillDYjetHistograms(eventInfo, eventCategory, eventTypeQCD, eventTypeWjets, weight);
+            for(auto eventCategory : eventCategories) {
+                UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
+                if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
+                if (dataCategory.name == DYJets.name)
+                    FillDYjetHistograms(eventInfo, eventCategory, eventTypeQCD, eventTypeWjets, weight);
 
-                    FillHistograms(fullAnaData[eventCategory][dataCategory->name].QCD[eventTypeQCD], eventInfo, weight);
-                    FillHistograms(fullAnaData[eventCategory][dataCategory->name].Wjets[eventTypeWjets], eventInfo, weight);
-                }
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].QCD[eventTypeQCD], eventInfo, weight);
+                FillHistograms(fullAnaData[eventCategory][dataCategory.name].Wjets[eventTypeWjets], eventInfo, weight);
             }
         }
     }
