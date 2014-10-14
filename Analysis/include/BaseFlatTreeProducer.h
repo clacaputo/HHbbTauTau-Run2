@@ -311,8 +311,6 @@ protected:
         static const particles::ParticleCodes ZDecay_muons = { particles::mu, particles::mu };
         static const particles::ParticleCodes ZDecay_taus = { particles::tau, particles::tau };
 
-        static const particles::ParticleCodes particlesCodes = { particles::e, particles::mu };
-
         const GenParticleSet Zparticles_all = genEvent.GetParticles(Zcode);
 
         GenParticleSet Zparticles;
@@ -332,29 +330,19 @@ protected:
             Z_mc = Z_mc->daughters.front();
 
         GenParticlePtrVector ZProducts;
-        if(FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true))
-            return ntuple::EventType::ZTT;
-
-        if (!FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
-                && !FindDecayProducts(*Z_mc, ZDecay_muons,ZProducts, true))
+        const bool z_tt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
+        if (!z_tt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
+        const auto matchedParticles_first =
+                FindMatchedParticles(higgs.daughters.at(0).momentum, ZProducts, deltaR_matchGenParticle);
+        const auto matchedParticles_second =
+                FindMatchedParticles(higgs.daughters.at(1).momentum, ZProducts, deltaR_matchGenParticle);
 
-        const GenParticleSet selectedParticles = genEvent.GetParticles(particlesCodes,minimal_genParticle_pt);
-
-        const analysis::Candidate& firstDaughter = higgs.daughters.at(0);
-        const analysis::Candidate& secondDaughter = higgs.daughters.at(1);
-        const GenParticleSet matchedParticles_first =
-                FindMatchedParticles(firstDaughter.momentum,selectedParticles,deltaR_matchGenParticle);
-        const GenParticleSet matchedParticles_second =
-                FindMatchedParticles(secondDaughter.momentum,selectedParticles,deltaR_matchGenParticle);
-
-        if (matchedParticles_first.size() == 1 && matchedParticles_second.size() == 1)
-            return ntuple::EventType::ZL;
-        else if (matchedParticles_first.size() == 0 && matchedParticles_second.size() == 0)
-            return ntuple::EventType::ZJ;
-        else
-            return ntuple::EventType::OtherZ;
+        if (matchedParticles_first.size() >= 1 && matchedParticles_second.size() >= 1)
+            return z_tt ? ntuple::EventType::ZTT : ntuple::EventType::ZL;
+        return z_tt ? ntuple::EventType::ZTT_no_match : ntuple::EventType::ZJ;
     }
 
     bool GenFilterForZevents(const finalState::bbTauTau& final_state)

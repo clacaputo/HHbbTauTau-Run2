@@ -138,6 +138,8 @@ public:
     const DataCategoryPtrSet& GetAllCategories() const { return all_categories; }
     const DataCategoryPtrSet& GetCategories(DataCategoryType dataCategoryType) const
     {
+        if(!categories_by_type.count(dataCategoryType))
+            return empty_category_set;
         return categories_by_type.at(dataCategoryType);
     }
 
@@ -265,13 +267,14 @@ private:
     DataCategoryMap categories;
     DataCategoryPtrSet all_categories;
     DataCategoryTypeMap categories_by_type;
+    DataCategoryPtrSet empty_category_set;
 };
 
 
 std::ostream& operator<<(std::ostream& s, const DataSource& source){
-    s << "File: " << source.file_name << " for data categories:\n";
-    for(const DataCategory* category : source.data_categories)
-        s << category->name << ", SF: " << source.scale_factor(category) << "\n";
+    s << "File: " << source.file_name; //<< " for data categories:\n";
+//    for(const DataCategory* category : source.data_categories)
+//        s << category->name << ", SF: " << source.scale_factor(category) << "\n";
     return s;
 }
 

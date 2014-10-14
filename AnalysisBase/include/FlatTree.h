@@ -240,5 +240,20 @@ TREE_CLASS_INITIALIZE(ntuple, FlatTree, FLAT_DATA)
 namespace ntuple {
 inline float DefaultFloatFillValueForFlatTree() { return std::numeric_limits<float>::lowest(); }
 inline int DefaultIntegerFillValueForFlatTree() { return std::numeric_limits<int>::lowest(); }
-enum class EventType { Unknown = 0, ZL = 1, ZJ = 2, ZTT = 3, OtherZ = 4 };
+
+enum class EventType { Unknown = 0, ZL = 1, ZJ = 2, ZTT = 3, ZTT_no_match = 4 };
+
+namespace detail {
+std::map<EventType, std::string> EventTypeNameMap = {
+    { EventType::Unknown, "Unknown" }, { EventType::ZL, "ZL" }, { EventType::ZJ, "ZJ" }, { EventType::ZTT, "ZTT" },
+    { EventType::ZTT_no_match, "ZTT_no_match" }
+};
+} // namespace detail
+
+std::ostream& operator<< (std::ostream& s, const EventType& t)
+{
+    s << detail::EventTypeNameMap.at(t);
+    return s;
 }
+
+} // namespace ntuple
