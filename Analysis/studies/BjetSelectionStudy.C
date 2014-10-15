@@ -212,7 +212,7 @@ private:
             const TLorentzVector b1_secondPair = eventInfo.bjet_momentums.at(second_bjetPair.first);
             const TLorentzVector b2_secondPair = eventInfo.bjet_momentums.at(second_bjetPair.second);
             const TLorentzVector secondMbb = b1_secondPair + b2_secondPair;
-            return std::abs(firstMbb.M() - 125) < std::abs(secondMbb.M() - 125);
+            return std::abs(firstMbb.M() - 110) < std::abs(secondMbb.M() - 110);
         };
 
         std::sort(bjetsPair_indexes.begin(), bjetsPair_indexes.end(), bjetsSelector);
