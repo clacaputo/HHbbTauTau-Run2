@@ -3,7 +3,6 @@
  * \brief Definition of wrappers for CMSSW KinFitter code.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
- * \author Francesco Brivio (Milano Bicocca University, INFN Milano)
  * \date 2014-10-15 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

@@ -108,9 +108,9 @@ public:
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, Channel channel_id,
-                         const std::string& signal_list, bool _WjetsData = false)
+                         const std::string& signal_list)
         : inputPath(_inputPath), outputFileName(_outputFileName),
-          dataCategoryCollection(source_cfg, signal_list, channel_id), WjetsData(_WjetsData)
+          dataCategoryCollection(source_cfg, signal_list, channel_id)
     {
         TH1::SetDefaultSumw2();
 
@@ -149,7 +149,7 @@ public:
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
             for (const auto& hist : histograms) {
                 CreateHistogramForZTT(anaData, hist, embeddedSF);
-                if (WjetsData) EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+                EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
@@ -168,15 +168,100 @@ public:
 protected:
     virtual Channel ChannelId() const = 0;
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
-    virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
+    virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name) = 0;
-    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name, double scale_factor) = 0;
+    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name)
+    {
+        using analysis::EventRegion;
+        using analysis::DataCategoryType;
+
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+
+        auto hist_OSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::OS_NotIsolated, hist_name);
+        auto hist_SSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_NotIsolated, hist_name);
+        if(!hist_OSnotIso_data || !hist_SSnotIso_data)
+            throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
+
+        TH1D& hist_OSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_NotIsolated, *hist_OSnotIso_data);
+        TH1D& hist_SSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::SS_NotIsolated, *hist_SSnotIso_data);
+
+        SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name);
+        SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name);
+
+        const double n_OSnotIso = hist_OSnotIso.Integral(0, hist_OSnotIso.GetNbinsX() + 1);
+        const double n_SSnotIso = hist_SSnotIso.Integral(0, hist_SSnotIso.GetNbinsX() + 1);
+        return n_OSnotIso / n_SSnotIso;
+    }
+
+    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name, double scale_factor)
+    {
+        using analysis::EventRegion;
+        using analysis::DataCategoryType;
+
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+
+        auto hist_SSIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Isolated, hist_name);
+        if(!hist_SSIso_data) return;
+
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_SSIso_data);
+        SubtractBackgroundHistograms(histogram, eventCategory, EventRegion::SS_Isolated, qcd.name);
+        histogram.Scale(scale_factor);
+    }
+
     virtual std::pair<double, double> CalculateWjetsScaleFactors(EventCategory eventCategory,
-                                                                 const std::string& hist_name) = 0;
-    virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
-                               std::pair<double, double> scale_factors) = 0;
+                                                                 const std::string& hist_name)
+    {
+        using analysis::EventRegion;
+        using analysis::DataCategoryType;
 
+        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
+        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+
+        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_HighMt, hist_name);
+        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_HighMt, hist_name);
+        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_HighMt, hist_name);
+        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_HighMt, hist_name);
+        if(!hist_OS_HighMt_mc || !hist_SS_HighMt_mc || !hist_OS_HighMt_data || !hist_SS_HighMt_data)
+            throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
+
+        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_HighMt, *hist_OS_HighMt_data);
+        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_HighMt, *hist_SS_HighMt_data);
+
+        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name);
+        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name);
+
+        const double n_OS_HighMt = hist_OS_HighMt.Integral(0, hist_OS_HighMt.GetNbinsX() + 1);
+        const double n_OS_HighMt_mc = hist_OS_HighMt_mc->Integral(0, hist_OS_HighMt_mc->GetNbinsX() + 1);
+        const double n_SS_HighMt = hist_SS_HighMt.Integral(0, hist_SS_HighMt.GetNbinsX() + 1);
+        const double n_SS_HighMt_mc = hist_SS_HighMt_mc->Integral(0, hist_SS_HighMt_mc->GetNbinsX() + 1);
+
+        const double OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
+        const double SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
+        return std::pair<double, double>(OS_ratio, SS_ratio);
+    }
+
+    virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
+                               const std::pair<double, double>& scale_factors)
+    {
+        using analysis::EventRegion;
+        using analysis::DataCategoryType;
+
+        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
+        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
+
+        if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Isolated, hist_name)) {
+            TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Isolated, *hist_OS_mc);
+            hist_OS.Scale(scale_factors.first);
+        }
+
+        if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Isolated, hist_name)) {
+            TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Isolated, *hist_SS_mc);
+            hist_SS.Scale(scale_factors.second);
+        }
+    }
 
     const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
 
@@ -218,7 +303,9 @@ protected:
             const EventRegion eventRegion = DetermineEventRegion(event);
             if(eventRegion == EventRegion::Unknown) continue;
 
-            const EventCategoryVector eventCategories = DetermineEventCategories(event);
+            const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
+                                                                                 cuts::Htautau_Summer13::btag::CSVM,
+                                                                                 cuts::Htautau_Summer13::btag::CSVT);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
@@ -250,29 +337,6 @@ protected:
             const std::string& name = type_category_map.at(eventInfo.eventType);
             FillHistograms(fullAnaData[eventCategory][name][eventRegion], eventInfo, weight);
         }
-    }
-
-    virtual EventCategoryVector DetermineEventCategories(const ntuple::Flat& event)
-    {
-        EventCategoryVector categories;
-        categories.push_back(EventCategory::Inclusive);
-
-        if(event.csv_Bjets.size() == 1) {
-            const EventCategory category = event.csv_Bjets.at(0) > cuts::Htautau_Summer13::btag::CSVT
-                    ? EventCategory::OneJet_OneBtag : EventCategory::OneJet_ZeroBtag;
-            categories.push_back(category);
-        } else if(event.csv_Bjets.size() >= 2) {
-            EventCategory category;
-            if (event.csv_Bjets.at(0) <= cuts::Htautau_Summer13::btag::CSVM )
-                category = EventCategory::TwoJets_ZeroBtag;
-            else if ( event.csv_Bjets.at(1) <= cuts::Htautau_Summer13::btag::CSVM )
-                category = EventCategory::TwoJets_OneBtag;
-            else
-                category = EventCategory::TwoJets_TwoBtag;
-            categories.push_back(category);
-        }
-
-        return categories;
     }
 
     double CalculateEmbeddedScaleFactor(const std::string& hist_name)
@@ -568,7 +632,6 @@ protected:
     DataCategoryCollection dataCategoryCollection;
     std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
-    bool WjetsData;
 };
 
 } // namespace analysis

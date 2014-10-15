@@ -33,127 +33,29 @@
 class FlatTreeAnalyzer_etau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_etau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                          const std::string& outputFileName, const std::string& _signalName,
-                          const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
-                          bool _isBlind=false)
-        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _mvaXMLpath,
-                               _WjetsData, _isBlind)
+                          const std::string& outputFileName, const std::string& signal_list)
+        : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
     {
     }
 
 protected:
-    virtual const std::string& ChannelName() override
-    {
-        static const std::string channelName = "eTau";
-        return channelName;
-    }
+    virtual analysis::Channel ChannelId() const override { return analysis::Channel::ETau; }
 
-    virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
+    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
     {
-        using analysis::EventType_QCD;
+        using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::ETau;
 
         if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || event.mt_1 >= electronID::mt)
-            return EventType_QCD::Unknown;
+                || (event.mt_1 >= electronID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+            return EventRegion::Unknown;
 
-        if(event.pfRelIso_1 < electronID::pFRelIso && (event.q_1 * event.q_2) == -1 )
-            return EventType_QCD::OS_Isolated;
+        const bool os = event.q_1 * event.q_2 == -1;
+        const bool iso = event.pfRelIso_1 < electronID::pFRelIso;
+        const bool low_mt = event.mt_1 < electronID::mt;
 
-        if(event.pfRelIso_1 < electronID::pFRelIso && (event.q_1 * event.q_2) == +1 )
-            return EventType_QCD::SS_Isolated;
-
-        if(event.pfRelIso_1 >= electronID::pFRelIso && (event.q_1 * event.q_2) == -1 )
-            return EventType_QCD::OS_NotIsolated;
-
-        if(event.pfRelIso_1 >= electronID::pFRelIso && (event.q_1 * event.q_2) == +1 )
-            return EventType_QCD::SS_NotIsolated;
-
-        return EventType_QCD::Unknown;
+        if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_HighMt;
+        if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_HighMt;
+        return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
     }
-
-    virtual bool PassMvaCut(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory eventCategory) override
-    {
-        return true;
-    }
-
-    virtual void EstimateQCD(analysis::EventCategory /*eventCategory*/, AnaDataForDataCategory& anaData,
-                             const analysis::HistogramDescriptor& hist) override
-    {
-        static const double scale_factor = 1.06;
-
-        using analysis::EventType_QCD;
-        const analysis::DataCategory& qcd = FindCategory("QCD");
-
-        const analysis::DataCategory& data = FindCategory("DATA");
-        root_ext::SmartHistogram<TH1D>* hist_data;
-        if(!(hist_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) return;
-        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*hist_data);
-        for (const analysis::DataCategory& category : categories){
-            if (category.IsData() || category.IsSignal() || category.name == qcd.name || category.IsSumBkg()
-                    || category.IsForLimitsOnly()) continue;
-            TH1D* nonQCD_hist;
-            if(!(nonQCD_hist = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-            histogram.Add(nonQCD_hist, -1);
-        }
-        histogram.Scale(scale_factor);
-    }
-
-
-    virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
-    {
-        using analysis::EventType_Wjets;
-        using namespace cuts::Htautau_Summer13::ETau;
-
-        if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || event.pfRelIso_1 >= electronID::pFRelIso)
-            return EventType_Wjets::Unknown;
-
-        if(event.mt_1 < electronID::mt)
-            return EventType_Wjets::Signal;
-        if(event.mt_1 > BackgroundEstimation::HighMtRegion)
-            return EventType_Wjets::HighMt;
-        return EventType_Wjets::Unknown;
-    }
-
-    virtual void EstimateWjets(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                               const analysis::HistogramDescriptor& hist) override
-    {
-        using analysis::EventType_Wjets;
-        using analysis::EventType_QCD;
-
-        //data
-        const analysis::DataCategory& data = FindCategory("DATA");
-        TH1D* histData_HighMt;
-        if(!(histData_HighMt = anaData[data.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) return;
-
-        //MC wjets
-        const analysis::DataCategory& wjets = FindCategory("REFERENCE Wjets");
-        TH1D* histWjetsHighMt;
-        if(!(histWjetsHighMt = anaData[wjets.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name)))
-            throw analysis::exception("histogram for Wjets High Mt category doesn't exist");
-
-        TH1D* histWjetsSignal;
-        if(!(histWjetsSignal = anaData[wjets.name].Wjets[EventType_Wjets::Signal].GetPtr<TH1D>(hist.name)))
-            throw analysis::exception("histogram for Wjets Signal category doesn't exist");
-
-        for (const analysis::DataCategory& category : categories){
-            if (category.IsData() || category.IsSignal() || category.IsReference() || category.IsVirtual()
-                    || category.IsForLimitsOnly()) continue;
-            TH1D* nonWjets_hist;
-            if(!(nonWjets_hist = anaData[category.name].Wjets[EventType_Wjets::HighMt].GetPtr<TH1D>(hist.name))) continue;
-            histData_HighMt->Add(nonWjets_hist,-1);
-        }
-
-        const double ratio = histWjetsSignal->Integral()/histWjetsHighMt->Integral();
-        std::cout << eventCategory << " Wjets_signal/Wjets_HighMt = " << ratio << std::endl;
-        histData_HighMt->Scale(ratio);
-
-        const analysis::DataCategory& ewk = FindCategory("EWK");
-        TH1D* histEWK;
-        if(!(histEWK = anaData[ewk.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name)))
-            throw analysis::exception("histogram not found: ") << hist.name;
-        histEWK->Add(histData_HighMt);
-    }
-
 };

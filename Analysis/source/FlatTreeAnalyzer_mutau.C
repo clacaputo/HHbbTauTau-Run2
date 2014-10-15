@@ -33,8 +33,8 @@
 class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                           const std::string& outputFileName, const std::string& signal_list, bool _WjetsData = false)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list, _WjetsData)
+                           const std::string& outputFileName, const std::string& signal_list)
+         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
     {
     }
 
@@ -71,99 +71,5 @@ protected:
             return true;
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
-    }
-
-    virtual double CalculateQCDScaleFactor(analysis::EventCategory eventCategory, const std::string& hist_name) override
-    {
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        auto hist_OSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::OS_NotIsolated, hist_name);
-        auto hist_SSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_NotIsolated, hist_name);
-        if(!hist_OSnotIso_data || !hist_SSnotIso_data)
-            throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
-
-        TH1D& hist_OSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_NotIsolated, *hist_OSnotIso_data);
-        TH1D& hist_SSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::SS_NotIsolated, *hist_SSnotIso_data);
-
-        SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name);
-        SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name);
-
-        const double n_OSnotIso = hist_OSnotIso.Integral(0, hist_OSnotIso.GetNbinsX() + 1);
-        const double n_SSnotIso = hist_SSnotIso.Integral(0, hist_SSnotIso.GetNbinsX() + 1);
-        return n_OSnotIso / n_SSnotIso;
-    }
-
-    virtual void EstimateQCD(analysis::EventCategory eventCategory, const std::string& hist_name,
-                             double scale_factor) override
-    {
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        auto hist_SSIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Isolated, hist_name);
-        if(!hist_SSIso_data) return;
-
-        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_SSIso_data);
-        SubtractBackgroundHistograms(histogram, eventCategory, EventRegion::SS_Isolated, qcd.name);
-        histogram.Scale(scale_factor);
-    }
-
-    virtual std::pair<double, double> CalculateWjetsScaleFactors(analysis::EventCategory eventCategory,
-                                                                 const std::string& hist_name) override
-    {
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-
-        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_HighMt, hist_name);
-        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_HighMt, hist_name);
-        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_HighMt, hist_name);
-        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_HighMt, hist_name);
-        if(!hist_OS_HighMt_mc || !hist_SS_HighMt_mc || !hist_OS_HighMt_data || !hist_SS_HighMt_data)
-            throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
-
-        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_HighMt, *hist_OS_HighMt_data);
-        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_HighMt, *hist_SS_HighMt_data);
-
-        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name);
-        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name);
-
-        const double n_OS_HighMt = hist_OS_HighMt.Integral(0, hist_OS_HighMt.GetNbinsX() + 1);
-        const double n_OS_HighMt_mc = hist_OS_HighMt_mc->Integral(0, hist_OS_HighMt_mc->GetNbinsX() + 1);
-        const double n_SS_HighMt = hist_SS_HighMt.Integral(0, hist_SS_HighMt.GetNbinsX() + 1);
-        const double n_SS_HighMt_mc = hist_SS_HighMt_mc->Integral(0, hist_SS_HighMt_mc->GetNbinsX() + 1);
-
-        const double OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
-        const double SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
-        return std::pair<double, double>(OS_ratio, SS_ratio);
-    }
-
-    virtual void EstimateWjets(analysis::EventCategory eventCategory, const std::string& hist_name,
-                               std::pair<double, double> scale_factors) override
-    {
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-
-        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
-
-        if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Isolated, hist_name)) {
-            TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Isolated, *hist_OS_mc);
-            hist_OS.Scale(scale_factors.first);
-        }
-
-        if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Isolated, hist_name)) {
-            TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Isolated, *hist_SS_mc);
-            hist_SS.Scale(scale_factors.second);
-        }
     }
 };
