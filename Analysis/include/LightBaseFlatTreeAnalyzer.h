@@ -108,6 +108,12 @@ protected:
                     && event.pfRelIso_1 < MuTau::muonID::pFRelIso
                     && event.q_1 * event.q_2 == -1;
 
+        if(eventInfo.channel == Channel::TauTau)
+            return event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    && event.againstElectronLooseMVA_2
+                    && event.q_1 * event.q_2 == -1;
+
         throw exception("Channel '") << eventInfo.channel << "' is not supported.";
     }
 

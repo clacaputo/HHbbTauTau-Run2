@@ -43,6 +43,8 @@ public:
     TH1D_ENTRY(Chi2_CSVgood, 10, 0, 50)
     TH1D_ENTRY(matchedBjets_combinedCSVandMASS, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjets_CSVandBestMassPair, 3, -0.5, 2.5)
+    TH1D_ENTRY(matchedBjets_combinedCSVandMASS_2, 3, -0.5, 2.5)
+    TH1D_ENTRY(matchedBjets_CSVandBestMassPair_2, 3, -0.5, 2.5)
 };
 
 class BjetSelectionStudy : public analysis::LightBaseFlatTreeAnalyzer {
@@ -125,12 +127,21 @@ protected:
 //            std::cout << "combined fail (" << indexes.at(0) << "," << indexes.at(1) << ")" << std::endl;
 //        }
 
-        std::cout << "bjets: " <<eventInfo.event->energy_Bjets.size() << std::endl;
+//        std::cout << "bjets: " <<eventInfo.event->energy_Bjets.size() << std::endl;
         analysis::FlatEventInfo::BjetPair candidatePair = GetBjetPairByBestMass(eventInfo);
-        std::cout << "event: " << eventInfo.event->evt << ", bestPair(" << candidatePair.first << "," <<
-                     candidatePair.second << ")" << std::endl;
+//        std::cout << "event: " << eventInfo.event->evt << ", bestPair(" << candidatePair.first << "," <<
+//                     candidatePair.second << ")" << std::endl;
         unsigned matchedBjets_CSVandBestMassPair = MatchedCombinedCSVandMASS(eventInfo,candidatePair);
         anaData.matchedBjets_CSVandBestMassPair(category).Fill(matchedBjets_CSVandBestMassPair);
+
+        //only first 2 couples
+        analysis::FlatEventInfo::BjetPair pairCombined_2 = GetBjetPairByMass_2(Hbb_CSV,eventInfo);
+        unsigned matchedBjets_combinedCSVandMASS_2 = MatchedCombinedCSVandMASS(eventInfo,pairCombined_2);
+        anaData.matchedBjets_combinedCSVandMASS_2(category).Fill(matchedBjets_combinedCSVandMASS_2);
+
+        analysis::FlatEventInfo::BjetPair candidatePair_2 = GetBjetPairByBestMass_2(eventInfo);
+        unsigned matchedBjets_CSVandBestMassPair_2 = MatchedCombinedCSVandMASS(eventInfo,candidatePair_2);
+        anaData.matchedBjets_CSVandBestMassPair_2(category).Fill(matchedBjets_CSVandBestMassPair_2);
     }
 
 private:
@@ -232,6 +243,21 @@ private:
         return pairCombined;
     }
 
+    analysis::FlatEventInfo::BjetPair GetBjetPairByMass_2(const TLorentzVector& Hbb_CSV,
+                                                        const analysis::FlatEventInfo& eventInfo)
+    {
+        analysis::FlatEventInfo::BjetPair pairCombined;
+        if ((Hbb_CSV.M() < 60 || Hbb_CSV.M() > 160) && eventInfo.event->energy_Bjets.size() > 2){
+            pairCombined.first = 0;
+            pairCombined.second = 2;
+        }
+        else {
+            pairCombined.first = 0;
+            pairCombined.second = 1;
+        }
+        return pairCombined;
+    }
+
     analysis::FlatEventInfo::BjetPair GetBjetPairByBestMass(const analysis::FlatEventInfo& eventInfo)
     {
         analysis::FlatEventInfo::BjetPair candidatePair(0,1);
@@ -253,6 +279,25 @@ private:
                      std::abs(bbPair03.M() - 110) < std::abs(bbPair02.M() - 110)){
                 candidatePair.first = 0;
                 candidatePair.second = 3;
+            }
+        }
+        return candidatePair;
+    }
+
+    analysis::FlatEventInfo::BjetPair GetBjetPairByBestMass_2(const analysis::FlatEventInfo& eventInfo)
+    {
+        analysis::FlatEventInfo::BjetPair candidatePair(0,1);
+        if (eventInfo.event->energy_Bjets.size() > 2){
+            const TLorentzVector bbPair01 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(1);
+            const TLorentzVector bbPair02 = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(2);
+
+            if (std::abs(bbPair01.M() - 110) < std::abs(bbPair02.M() - 110)){
+                candidatePair.first = 0;
+                candidatePair.second = 1;
+            }
+            else {
+                candidatePair.first = 0;
+                candidatePair.second = 2;
             }
         }
         return candidatePair;

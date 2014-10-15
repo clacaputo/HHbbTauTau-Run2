@@ -146,14 +146,14 @@ inline FitResultsWithUncertainties FitWithUncertainties(const Candidate& higgsCa
 {
     FitResultsWithUncertainties result;
     if(fitWithVegas) {
-        result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1.);
-        result.fit_vegas_up = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 + tau_energy_uncertainty);
-        result.fit_vegas_down = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 - tau_energy_uncertainty);
+//        result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1.);
+//        result.fit_vegas_up = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 + tau_energy_uncertainty);
+//        result.fit_vegas_down = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 - tau_energy_uncertainty);
     }
     if(fitWithMarkovChain) {
-        result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1.);
-        result.fit_mc_up = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 + tau_energy_uncertainty);
-        result.fit_mc_down = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 - tau_energy_uncertainty);
+//        result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1.);
+//        result.fit_mc_up = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 + tau_energy_uncertainty);
+//        result.fit_mc_down = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 - tau_energy_uncertainty);
     }
     return result;
 }
