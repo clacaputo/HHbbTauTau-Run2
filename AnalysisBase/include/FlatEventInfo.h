@@ -30,6 +30,7 @@
 #include <TMatrixD.h>
 
 #include "FlatTree.h"
+#include "AnalysisTypes.h"
 #include "exception.h"
 
 namespace analysis {
@@ -63,6 +64,7 @@ struct FlatEventInfo {
 
     const ntuple::Flat* event;
     ntuple::EventType eventType;
+    analysis::Channel channel;
     std::vector<TLorentzVector> lepton_momentums;
     std::vector<TLorentzVector> bjet_momentums;
     BjetPair selected_bjets;
@@ -74,6 +76,7 @@ struct FlatEventInfo {
 
     FlatEventInfo(const ntuple::Flat& _event, const BjetPair& _selected_bjets)
         : event(&_event), eventType(static_cast<ntuple::EventType>(_event.eventType)),
+          channel(static_cast<analysis::Channel>(_event.channel)),
           lepton_momentums(2), bjet_momentums(_event.pt_Bjets.size()), selected_bjets(_selected_bjets),
           has_bjet_pair(false), MET_covariance(2, 2), kinfit_data_index(std::numeric_limits<size_t>::max()),
           mva_BDT(-1), mva_BDTD(-1), mva_BDTMitFisher(-1)

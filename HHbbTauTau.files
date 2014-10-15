@@ -298,3 +298,4 @@ AnalysisBase/include/FlatEventInfo.h
 Analysis/include/LightBaseFlatTreeAnalyzer.h
 Analysis/source/LightFlatTreeAnalyzer_mutau.C
 AnalysisBase/include/AnalysisTypes.h
+Analysis/studies/BjetSelectionStudy.C

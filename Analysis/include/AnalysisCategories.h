@@ -288,4 +288,30 @@ std::wostream& operator<<(std::wostream& s, const EventCategory& eventCategory) 
     return s;
 }
 
+EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, double CSVM, double CSVT)
+{
+    EventCategoryVector categories;
+    categories.push_back(EventCategory::Inclusive);
+
+    typedef std::pair<size_t, size_t> Key;
+
+    static const std::map< Key, EventCategory> categories_map {
+        { { 1, 0 }, EventCategory::OneJet_ZeroBtag }, { { 1, 1 }, EventCategory::OneJet_OneBtag },
+        { { 2, 0 }, EventCategory::TwoJets_ZeroBtag }, { { 2, 1 }, EventCategory::TwoJets_OneBtag },
+        { { 2, 2 }, EventCategory::TwoJets_TwoBtag }
+    };
+
+    const size_t n_jets = std::min<size_t>(csv_Bjets.size(), 2);
+    size_t n_btag = 0;
+    if(n_jets == 1 && csv_Bjets.at(0) > CSVT) ++n_btag;
+    if(n_jets == 2 && csv_Bjets.at(0) > CSVM) ++n_btag;
+    if(n_jets == 2 && csv_Bjets.at(1) > CSVM) ++n_btag;
+
+    const Key key(n_jets, n_btag);
+    if(categories_map.count(key))
+        categories.push_back(categories_map.at(key));
+
+    return categories;
+}
+
 } // namespace analysis
