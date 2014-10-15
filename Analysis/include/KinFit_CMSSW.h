@@ -1,0 +1,183 @@
+/*!
+ * \file KinFit_CMSSW.h
+ * \brief Definition of wrappers for CMSSW KinFitter code.
+ * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Francesco Brivio (Milano Bicocca University, INFN Milano)
+ * \date 2014-10-15 created
+ *
+ * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
+ *                Maria Teresa Grippo <grippomariateresa@gmail.com>
+ *
+ * This file is part of X->HH->bbTauTau.
+ *
+ * X->HH->bbTauTau is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * X->HH->bbTauTau is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "KinFit.h"
+
+#include "FWCore/Utilities/src/EDMException.cc"
+#include "FWCore/Utilities/src/Exception.cc"
+
+#include "FWCore/MessageLogger/src/MessageLogger.cc"
+#include "FWCore/MessageLogger/src/MessageLoggerQ.cc"
+#include "FWCore/MessageLogger/src/MessageDrop.cc"
+#include "FWCore/MessageLogger/src/ELseverityLevel.cc"
+#include "FWCore/MessageLogger/src/MessageSender.cc"
+#include "FWCore/MessageLogger/src/AbstractMLscribe.cc"
+#include "FWCore/MessageLogger/src/ErrorObj.cc"
+#include "FWCore/MessageLogger/src/ELextendedID.cc"
+#include "FWCore/MessageLogger/src/ELstring.cc"
+
+using std::setiosflags;
+#include "PhysicsTools/KinFitter/src/TAbsFitConstraint.cc"
+#include "PhysicsTools/KinFitter/src/TAbsFitParticle.cc"
+#include "PhysicsTools/KinFitter/src/TFitConstraintEp.cc"
+#include "PhysicsTools/KinFitter/src/TFitConstraintM.cc"
+#include "PhysicsTools/KinFitter/src/TFitConstraintMGaus.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleCart.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleECart.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleEMomDev.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleEScaledMomDev.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleESpher.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleEtEtaPhi.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleEtThetaPhi.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleMCCart.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleMCMomDev.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleMCPInvSpher.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleMCSpher.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleMomDev.cc"
+#include "PhysicsTools/KinFitter/src/TFitParticleSpher.cc"
+#include "PhysicsTools/KinFitter/src/TKinFitter.cc"
+#include "PhysicsTools/KinFitter/src/TSLToyGen.cc"
+
+namespace analysis {
+namespace kinematic_fit {
+namespace two_body {
+
+namespace detail {
+inline Double_t ErrEta(Float_t Et, Float_t Eta)
+{
+    Double_t InvPerr2, a, b, c;
+    if(fabs(Eta) < 1.4){
+        a = 1.215;
+        b = 0.037;
+        c = 7.941 * 0.0001;
+    } else {
+        a = 1.773;
+        b = 0.034;
+        c = 3.56 * 0.0001;
+    }
+    InvPerr2 = a/(Et * Et) + b/Et + c;
+    return InvPerr2;
+}
+
+inline Double_t ErrEt(Float_t Et, Float_t Eta)
+{
+    Double_t InvPerr2, a, b, c;
+      if(fabs(Eta) < 1.4){
+        a = 5.6;
+    b = 1.25;
+        c = 0.033;
+      }else{
+        a = 4.8;
+        b = 0.89;
+        c = 0.043;
+    }
+    InvPerr2 = (a * a) + (b * b) * Et + (c * c) * Et * Et;
+    return InvPerr2;
+}
+
+inline Double_t ErrPhi(Float_t Et, Float_t Eta)
+{
+    Double_t InvPerr2, a, b, c;
+      if(fabs(Eta) < 1.4){
+        a = 6.65;
+        b = 0.04;
+        c = 8.49 * 0.00001;
+      }else{
+          a = 2.908;
+          b = 0.021;
+          c = 2.59 * 0.0001;
+      }
+    InvPerr2 = a/(Et * Et) + b/Et + c;
+      return InvPerr2;
+}
+
+} // namespace detail
+
+inline FitResults Fit_KinFitter(const FitInput& input)
+{
+    FitResults result;
+    TMatrixD m1(3, 3);
+    TMatrixD m2(3, 3);
+    m1.Zero();
+    m2.Zero();
+
+    TLorentzVector mom1(input.bjet_momentums.at(0)), mom2(input.bjet_momentums.at(1));
+
+    m1(0, 0) = detail::ErrEt(mom1.Et(), mom1.Eta());
+    m1(1, 1) = detail::ErrEta(mom1.Et(), mom1.Eta());
+    m1(2, 2) = detail::ErrPhi(mom1.Et(), mom1.Eta());
+
+    m2(0, 0) = detail::ErrEt(mom2.Et(), mom2.Eta());
+    m2(1, 1) = detail::ErrEta(mom2.Et(), mom2.Eta());
+    m2(2, 2) = detail::ErrPhi(mom2.Et(), mom2.Eta());
+
+
+    TFitParticleEtEtaPhi _jet1(&mom1, &m1);
+    TFitParticleEtEtaPhi _jet2(&mom2, &m2);
+
+    TFitConstraintM m_bb;
+    m_bb.addParticle1(&_jet1);
+    m_bb.addParticle1(&_jet2);
+    m_bb.setMassConstraint(125.0);
+
+    TKinFitter _fitter;
+    _fitter.addMeasParticle(&_jet1);
+    _fitter.addMeasParticle(&_jet2);
+    _fitter.addConstraint(&m_bb);
+
+    _fitter.setMaxNbIter(30);
+    _fitter.setMaxDeltaS(1e-2);
+    _fitter.setMaxF(1e-1);
+    _fitter.setVerbosity(0);
+    const Int_t fit_result = _fitter.fit();
+
+    std::cout << "fit result: " << fit_result << std::endl;
+    if(fit_result == 0) {
+        std::cout << "Old 1: " << input.bjet_momentums.at(0) << std::endl;
+        std::cout << "Old 2: " << input.bjet_momentums.at(1) << std::endl;
+        std::cout << "Old mass 1: " << input.bjet_momentums.at(0).M() << std::endl;
+        std::cout << "Old mass 2: " << input.bjet_momentums.at(1).M() << std::endl;
+        std::cout << "New 1: " << *_jet1.getCurr4Vec() << std::endl;
+        std::cout << "New 2: " << *_jet2.getCurr4Vec() << std::endl;
+        std::cout << "New mass 1: " << _jet1.getCurr4Vec()->M() << std::endl;
+        std::cout << "New mass 2: " << _jet2.getCurr4Vec()->M() << std::endl;
+        const double m_old = (input.bjet_momentums.at(0) + input.bjet_momentums.at(1)).M();
+        const double m_new = ((*_jet1.getCurr4Vec()) + (*_jet2.getCurr4Vec())).M();
+        std::cout << "M old: " << m_old << std::endl;
+        std::cout << "M new: " << m_new << std::endl;
+    }
+    result.convergence = fit_result;
+    result.bjet_momentums.push_back(*_jet1.getCurr4Vec());
+    result.bjet_momentums.push_back(*_jet2.getCurr4Vec());
+    return result;
+}
+
+} // namespace two_body
+} // namespace kinematic_fit
+} // namespace analysis

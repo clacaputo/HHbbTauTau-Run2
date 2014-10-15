@@ -299,3 +299,5 @@ Analysis/include/LightBaseFlatTreeAnalyzer.h
 Analysis/source/LightFlatTreeAnalyzer_mutau.C
 AnalysisBase/include/AnalysisTypes.h
 Analysis/studies/BjetSelectionStudy.C
+Analysis/include/KinFit_CMSSW.h
+Analysis/studies/KinFitStudy.C

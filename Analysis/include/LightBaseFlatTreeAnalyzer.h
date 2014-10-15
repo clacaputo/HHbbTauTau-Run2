@@ -89,8 +89,6 @@ public:
         }
     }
 
-
-
 protected:
     virtual LightFlatAnalyzerData& GetAnaData() = 0;
     virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
