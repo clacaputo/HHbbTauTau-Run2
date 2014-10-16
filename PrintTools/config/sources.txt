@@ -208,6 +208,57 @@ hh#rightarrowbbH#rightarrowbb#tau#tau(m_{H}=400  tan#beta=2.5)) for limits
 blue
 gg_bbH_bbtautau_400.root 0.0197256
 
+[LIMITS ggAToZhToLLTauTau260]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=260  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_260.root 0.0399589
+
+[LIMITS ggAToZhToLLTauTau270]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=270  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_270.root 0.040722
+
+[LIMITS ggAToZhToLLTauTau280]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=280  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_280.root 0.0409862
+
+[LIMITS ggAToZhToLLTauTau290]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=290  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_290.root 0.0262824
+
+[LIMITS ggAToZhToLLTauTau300]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=300  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_300.root 0.0394639
+
+[LIMITS ggAToZhToLLTauTau310]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=310  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_310.root 0.0403454
+
+[LIMITS ggAToZhToLLTauTau320]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=320  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_320.root 0.0397466
+
+[LIMITS ggAToZhToLLTauTau330]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=330  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_330.root 0.0400897
+
+[LIMITS ggAToZhToLLTauTau340]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=340  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_340.root 0.0400517
+
+[LIMITS ggAToZhToLLTauTau350]
+gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{H}=350  tan#beta=2.5)) for limits
+blue
+ggA_Zh_lltautau_350.root 0.0403194
+
+
 [LIMITS ggAToZhToLLBB250]
 gg#rightarrowA#rightarrowZh#rightarrowbb#tau#tau(m_{H}=250  tan#beta=2.5)) for limits
 blue

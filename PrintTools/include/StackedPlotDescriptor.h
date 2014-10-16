@@ -239,13 +239,42 @@ private:
         }
     }
 
-    static void BlindHistogram(hist_ptr histogram, const std::pair<double, double>& blind_region)
+/*    static void BlindHistogram(hist_ptr histogram, const std::pair<double, double>& blind_region)
     {
         for(Int_t n = 1; n <= histogram->GetNbinsX(); ++n) {
             const double x = histogram->GetBinCenter(n);
             const bool need_blind = x > blind_region.first && x < blind_region.second;
             histogram->SetBinContent(n, need_blind ? 0. : histogram->GetBinContent(n));
             histogram->SetBinError(n, need_blind ? 0. : histogram->GetBinError(n));
+        }
+    }*/
+
+ // New blinding for the 5 slices
+ static void BlindHistogram(hist_ptr histogram, const std::pair<double, double>& blind_region)
+    {
+        for(Int_t n = 1; n <= histogram->GetNbinsX(); ++n) {
+            const double x = histogram->GetBinCenter(n);
+
+            if ( x > 100 && x < 140){
+            histogram->SetBinContent(n, 0);
+            histogram->SetBinError(n, 0);}
+
+            else if ( x > 450 && x < 490){
+            histogram->SetBinContent(n, 0);
+            histogram->SetBinError(n, 0);}
+
+            else if ( x > 800 && x < 840){
+            histogram->SetBinContent(n, 0);
+            histogram->SetBinError(n, 0);}
+
+            else if ( x > 1150 && x < 1190){
+            histogram->SetBinContent(n, 0);
+            histogram->SetBinError(n, 0);}
+
+            else if ( x > 1500 && x < 1540){
+            histogram->SetBinContent(n, 0);
+            histogram->SetBinError(n, 0);}
+	  
         }
     }
 

@@ -58,6 +58,29 @@ namespace analysis {
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
 
+static const std::vector<double> mass_bins_slice_2fette = { 
+0,	10,	20,	30,	40,	50,	60,	70,	80,	90,	100,	110,	120,	130,
+	140,	150,	160,	170,	180,	190,	200,	225,	250,	275,	300,	325,	350,
+	360,	370,	380,	390,	400,	410,	420,	430,	440,	450,	460,	470,	480,
+	490,	500,	510,	520,	530,	540,	550,	575,	600,	625,	650,	675,	700
+};
+
+static const std::vector<double> mass_bins_slice_5fette_lb = { 
+0,	20,	40,	60,	80,	100,	120,	140,	160,	180,	200,	250,	300,	350,
+	370,	390,	410,	430,	450,	470,	490,	510,	530,	550,	600,	650,	700,
+	720,	740,	760,	780,	800,	820,	840,	860,	880,	900,	950,	1000,	1050,
+	1070,	1090,	1110,	1130,	1150,	1170,	1190,	1210,	1230,	1250,	1300,	1350,	1400,
+	1420,	1440,	1460,	1480,	1500,	1520,	1540,	1560,	1580,	1600,	1650,	1700,	1750
+};
+
+static const std::vector<double> mass_bins_slice_5fette_fb = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
+                                               160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350,
+360,	370,	380,	390,	400,	410,	420,	430,	440,	450,	460,	470,	480,	490,	500,	510,	520,	530,	540,	550,	575,	600,	625,	650,	675,	700,
+710,	720,	730,	740,	750,	760,	770,	780,	790,	800,	810,	820,	830,	840,	850,	860,	870,	880,	890,	900,	925,	950,	975,	1000,	1025,	1050,
+1060,	1070,	1080,	1090,	1100,	1110,	1120,	1130,	1140,	1150,	1160,	1170,	1180,	1190,	1200,	1210,	1220,	1230,	1240,	1250,	1275,	1300,	1325,	1350,	1375,	1400,
+1410,	1420,	1430,	1440,	1450,	1460,	1470,	1480,	1490,	1500,	1510,	1520,	1530,	1540,	1550,	1560,	1570,	1580,	1590,	1600,	1625,	1650,	1675,	1700,	1725,	1750,
+ };
+
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
     TH1D_ENTRY(pt_1, 50, 0, 200)
@@ -80,6 +103,9 @@ public:
     TH1D_ENTRY(m_ttbb_kinfit, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
     TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
+    TH1D_ENTRY_CUSTOM(m_bb_slice, mass_bins_slice_5fette_fb)
+    TH1D_ENTRY_CUSTOM(m_bb_slice_up, mass_bins_slice_5fette_fb)
+    TH1D_ENTRY_CUSTOM(m_bb_slice_down, mass_bins_slice_5fette_fb)
     TH1D_ENTRY(m_ttbb_nomet, 100, 0, 1000)
     TH1D_ENTRY(pt_ttbb_nomet, 35, 0, 350)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
@@ -285,27 +311,37 @@ protected:
             anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
             anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
 
-//            const std::string category_name = eventCategoryMapName.at(eventCategory);
-//            auto mvaReader_BDT = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDT);
-//            const double mva_BDT = mvaReader_BDT
-//                    ? mvaReader_BDT->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-//                    : std::numeric_limits<double>::lowest();
-            const double mva_BDT = -1;
-            anaData.MVA_BDT().Fill(mva_BDT, weight);
+		if(Hbb.M() < 60)
+		{
+			anaData.m_bb_slice().Fill(event.m_sv,weight);
+			anaData.m_bb_slice_up().Fill(event.m_sv_Up,weight);
+			anaData.m_bb_slice_down().Fill(event.m_sv_Down,weight);
+		}
+		else if (60 <= Hbb.M() && Hbb.M() < 100)
+		{
+			anaData.m_bb_slice().Fill(event.m_sv,weight);
+			anaData.m_bb_slice_up().Fill(event.m_sv_Up,weight);
+			anaData.m_bb_slice_down().Fill(event.m_sv_Down,weight);
+		}
+		else if (100 <= Hbb.M() && Hbb.M() < 140)
+		{
+			anaData.m_bb_slice().Fill(event.m_sv+350,weight);
+			anaData.m_bb_slice_up().Fill(event.m_sv_Up+350,weight);
+			anaData.m_bb_slice_down().Fill(event.m_sv_Down+350,weight);
+		}
+		else if (140 <= Hbb.M() && Hbb.M() < 200)
+		{
+			anaData.m_bb_slice().Fill(event.m_sv+1050,weight);
+			anaData.m_bb_slice_up().Fill(event.m_sv_Up+1050,weight);
+			anaData.m_bb_slice_down().Fill(event.m_sv_Down+1050,weight);
+		}
+		else if (200 <= Hbb.M() && Hbb.M() <= 600)
+		{
+			anaData.m_bb_slice().Fill(event.m_sv+1400,weight);
+			anaData.m_bb_slice_up().Fill(event.m_sv_Up+1400,weight);
+			anaData.m_bb_slice_down().Fill(event.m_sv_Down+1400,weight);
+		}
 
-//            auto mvaReader_BDTD = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTD);
-//            const double mva_BDTD = mvaReader_BDTD
-//                    ? mvaReader_BDTD->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-//                    : std::numeric_limits<double>::lowest();
-            const double mva_BDTD = -1;
-            anaData.MVA_BDTD().Fill(mva_BDTD, weight);
-
-//            auto mvaReader_BDTMitFisher = MVA_Selections::MvaReader::Get(ChannelName(), category_name, MVA_Selections::BDTMitFisher);
-//            const double mva_BDTMitFisher = mvaReader_BDTMitFisher
-//                    ? mvaReader_BDTMitFisher->GetMva(first_cand,second_cand, b_momentums.at(0), b_momentums.at(1), MET)
-//                    : std::numeric_limits<double>::lowest();
-            const double mva_BDTMitFisher = -1;
-            anaData.MVA_BDTMitFisher().Fill(mva_BDTMitFisher, weight);
         }
     }
 
@@ -323,7 +359,7 @@ protected:
                 for(const DataCategory& category : categories) {
                     TH1D* histogram;
                     if(!(histogram = anaData[category.name].QCD[EventType_QCD::OS_Isolated].GetPtr<TH1D>(hist.name))) continue;
-                    if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) ||*/
+                    if(category.IsReference() || /*(category.IsSignal() && !category.NameContains(signalName)) || */
                             category.IsSumBkg() || category.IsForLimitsOnly()) continue;
                     if(category.IsData())
                         stackDescriptor.AddDataHistogram(histogram, category.title, isBlind, GetBlindRegion(hist.name));
@@ -382,11 +418,11 @@ protected:
             { "LIMITS ggAToZhToLLBB300", "ggAToZhToLLBB300" }, { "LIMITS ggAToZhToLLBB310", "ggAToZhToLLBB310" },
             { "LIMITS ggAToZhToLLBB320", "ggAToZhToLLBB320" }, { "LIMITS ggAToZhToLLBB330", "ggAToZhToLLBB330" },
             { "LIMITS ggAToZhToLLBB340", "ggAToZhToLLBB340" }, { "LIMITS ggAToZhToLLBB350", "ggAToZhToLLBB350" },
-            { "ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
-            { "ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
-            { "ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
-            { "ggAToZhToLLTauTau320", "ggAToZhToLLTauTau320" }, { "ggAToZhToLLTauTau330", "ggAToZhToLLTauTau330" },
-            { "ggAToZhToLLTauTau340", "ggAToZhToLLTauTau340" }, { "ggAToZhToLLTauTau350", "ggAToZhToLLTauTau350" },
+            { "LIMITS ggAToZhToLLTauTau260", "ggAToZhToLLTauTau260" }, { "LIMITS ggAToZhToLLTauTau270", "ggAToZhToLLTauTau270" },
+            { "LIMITS ggAToZhToLLTauTau280", "ggAToZhToLLTauTau280" }, { "LIMITS ggAToZhToLLTauTau290", "ggAToZhToLLTauTau290" },
+            { "LIMITS ggAToZhToLLTauTau300", "ggAToZhToLLTauTau300" }, { "LIMITS ggAToZhToLLTauTau310", "ggAToZhToLLTauTau310" },
+            { "LIMITS ggAToZhToLLTauTau320", "ggAToZhToLLTauTau320" }, { "LIMITS ggAToZhToLLTauTau330", "ggAToZhToLLTauTau330" },
+            { "LIMITS ggAToZhToLLTauTau340", "ggAToZhToLLTauTau340" }, { "LIMITS ggAToZhToLLTauTau350", "ggAToZhToLLTauTau350" },
             { "LIMITS ggH125", "ggH125" }, { "LIMITS qqH125", "qqH125" },
             { "LIMITS ggHhh260", "ggHTohhTo2Tau2B260" }, { "LIMITS ggHhh270", "ggHTohhTo2Tau2B270" },
             { "LIMITS ggHhh280", "ggHTohhTo2Tau2B280" }, { "LIMITS ggHhh290", "ggHTohhTo2Tau2B290" },
@@ -426,17 +462,19 @@ protected:
                     continue;
                 }
                 FlatAnalyzerData& anaData = anaDataForCategory[limitDataCategory.first].QCD[EventType_QCD::OS_Isolated];
-                anaData.m_sv().Write(limitDataCategory.second.c_str());
-//                anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
+//		anaData.m_sv().Write(limitDataCategory.second.c_str());
+//		anaData.m_ttbb_kinfit().Write(limitDataCategory.second.c_str());
+		anaData.m_bb_slice().Write(limitDataCategory.second.c_str());
                 const std::string namePrefix = limitDataCategory.second + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-//		  anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
-//		  anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
-
-                anaData.m_sv_down().Write(nameDown.c_str());
-                anaData.m_sv_up().Write(nameUp.c_str());
+//		anaData.m_ttbb_kinfit_up().Write(nameUp.c_str());
+//		anaData.m_ttbb_kinfit_down().Write(nameDown.c_str());
+//		anaData.m_sv_down().Write(nameDown.c_str());
+//		anaData.m_sv_up().Write(nameUp.c_str());
+		anaData.m_bb_slice_up().Write(nameUp.c_str());
+		anaData.m_bb_slice_down().Write(nameDown.c_str());
             }
         }
         outputFile->Close();
@@ -452,7 +490,8 @@ private:
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
             { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
-	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
+	    { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 },
+	    { "m_bb_slice", 2}, { "m_bb_slice_up", 2}, { "m_bb_slice_down", 2}
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
