@@ -25,7 +25,7 @@
  */
 
 #pragma once
-
+#include <limits>
 #include "TreeProduction/interface/SmartTree.h"
 
 #define FLAT_DATA() \
