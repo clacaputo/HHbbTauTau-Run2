@@ -326,7 +326,7 @@ protected:
 		else if (100 <= Hbb.M() && Hbb.M() < 140)
 		{
 			anaData.m_bb_slice().Fill(event.m_sv+700,weight);
-			anaData.m_bb_slice_up().Fill(event.m_sv_Up++700,weight);
+			anaData.m_bb_slice_up().Fill(event.m_sv_Up+700,weight);
 			anaData.m_bb_slice_down().Fill(event.m_sv_Down+700,weight);
 		}
 		else if (140 <= Hbb.M() && Hbb.M() < 200)
