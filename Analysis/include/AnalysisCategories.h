@@ -276,6 +276,11 @@ static const std::map<EventCategory, std::string> eventCategoryMapName =
           { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" } };
 } // namespace detail
 typedef std::vector<EventCategory> EventCategoryVector;
+typedef std::set<EventCategory> EventCategorySet;
+
+static const EventCategorySet OneJetEventCategories = { EventCategory::OneJet_ZeroBtag, EventCategory::OneJet_OneBtag };
+static const EventCategorySet TwoJetsEventCategories =
+        { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     s << detail::eventCategoryMapName.at(eventCategory);

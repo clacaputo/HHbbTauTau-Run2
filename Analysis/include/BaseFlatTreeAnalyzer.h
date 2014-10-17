@@ -155,12 +155,15 @@ public:
             }
         }
 
-        std::cout << "Saving tables and printing stacked plots... " << std::endl;
+        std::cout << "Saving tables... " << std::endl;
         PrintTables("comma", L",");
         PrintTables("semicolon", L";");
-        ProduceFileForLimitsCalculation("m_sv","m_sv_up","m_sv_down");
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit","m_ttbb_kinfit_up","m_ttbb_kinfit_down");
-        std::cout << "plots for limits done" << std::endl;
+
+        std::cout << "Saving datacards... " << std::endl;
+        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", true);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false);
+
+        std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(false);
         PrintStackedPlots(true);
     }
@@ -468,7 +471,7 @@ protected:
     }
 
     void ProduceFileForLimitsCalculation(const std::string& hist_name, const std::string& hist_name_up,
-                                         const std::string& hist_name_down)
+                                         const std::string& hist_name_down, bool include_one_jet_categories)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0tag" },
@@ -487,7 +490,8 @@ protected:
         outputFile->cd();
         for(auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
-            if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
+            if(!categoryToDirectoryNameSuffix.count(eventCategory)
+                    || (!include_one_jet_categories && OneJetEventCategories.count(eventCategory))) continue;
             const std::string directoryName = channelNameForFolder.at(ChannelName()) + "_"
                     + categoryToDirectoryNameSuffix.at(eventCategory);
             outputFile->mkdir(directoryName.c_str());
