@@ -329,35 +329,10 @@ protected:
         while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
             Z_mc = Z_mc->daughters.front();
 
-        static const particles::ParticleCodes electronCode = { particles::e };
-        static const particles::ParticleCodes muonCode = { particles::mu };
+
         GenParticlePtrVector ZProducts;
         const bool z_tt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
-        if (!z_tt && FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)){
-            GenParticlePtrVector goodElectronsZ;
-            for (const GenParticle* electron : ZProducts){
-                if (electron->momentum.Pt() <= 8) continue;
-                goodElectronsZ.push_back(electron);
-            }
-            const GenParticleSet& hardElectrons = genEvent.GetHardParticles(electronCode,8);
-            const GenParticleSet& hardMuons = genEvent.GetHardParticles(muonCode,8);
-            GetAnaData().goodElectronsFromZee().Fill(goodElectronsZ.size());
-            GetAnaData().hardElectronsZee().Fill(hardElectrons.size());
-            GetAnaData().hardMuonsZee().Fill(hardMuons.size());
-        }
-        else if (!z_tt && FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true)){
-            GenParticlePtrVector goodMuonsZ;
-            for (const GenParticle* muon : ZProducts){
-                if (muon->momentum.Pt() <= 8) continue;
-                goodMuonsZ.push_back(muon);
-            }
-            const GenParticleSet& hardElectrons = genEvent.GetHardParticles(electronCode,8);
-            const GenParticleSet& hardMuons = genEvent.GetHardParticles(muonCode,8);
-            GetAnaData().goodMuonsFromZmm().Fill(goodMuonsZ.size());
-            GetAnaData().hardElectronsZmm().Fill(hardElectrons.size());
-            GetAnaData().hardMuonsZmm().Fill(hardMuons.size());
-        }
-        else if (!z_tt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+        if (!z_tt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
