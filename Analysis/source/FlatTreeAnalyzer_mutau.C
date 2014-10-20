@@ -72,4 +72,10 @@ protected:
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
+
+    virtual std::pair<double, double> CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
+                                                                 const std::string& /*hist_name*/) override
+    {
+        return std::pair<double, double>(1, 1);
+    }
 };
