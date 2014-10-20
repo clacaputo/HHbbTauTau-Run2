@@ -383,6 +383,9 @@ protected:
     void FillHistograms(FlatAnalyzerData& anaData, const FlatEventInfo& eventInfo, double weight)
     {
         const ntuple::Flat& event = *eventInfo.event;
+        if (!std::isfinite(event.m_sv_vegas) || event.m_sv_vegas == std::numeric_limits<float>::max() ||
+                event.m_sv_vegas == std::numeric_limits<float>::lowest())
+            std::cout << "AAAAAAAA" << std::endl;
         anaData.m_sv().Fill(event.m_sv_vegas, weight);
         anaData.m_sv_up().Fill(event.m_sv_up_vegas, weight);
         anaData.m_sv_down().Fill(event.m_sv_down_vegas, weight);
@@ -542,10 +545,14 @@ protected:
     void SubtractBackgroundHistograms(TH1D& histogram, EventCategory eventCategory, EventRegion eventRegion,
                                       const std::string& current_category, bool verbose = false)
     {
+        //0, histogram.GetNbinsX() + 1
         if(verbose)
             std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
                       << " for data category '" << current_category << "'.\n"
-                      << "Initial integral: " << histogram.Integral(0, histogram.GetNbinsX() + 1) << ".\n";
+                      << "Initial integral OF: " << histogram.Integral(0, histogram.GetNbinsX() + 1) <<
+                       ", Initial integral: " << histogram.Integral() << ", NbinsX= " << histogram.GetNbinsX() <<
+                         ", underFlow bin= " << histogram.GetBinContent(0) << ", overFlow bin= " <<
+                         histogram.GetBinContent(histogram.GetNbinsX() + 1) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category) continue;
 
@@ -553,14 +560,22 @@ protected:
                 std::cout << "Sample '" << category->name << "': ";
             if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName())) {
                 histogram.Add(other_histogram, -1);
-                if(verbose)
-                    std::cout << other_histogram->Integral(0, other_histogram->GetNbinsX() + 1) << ".\n";
+                if(verbose){
+                    double error = 0.;
+                    std::cout << histogram.IntegralAndError(0, histogram.GetNbinsX() + 1,error) <<
+                                 ", Initial integral: " << histogram.IntegralAndError(0, histogram.GetNbinsX(),error)
+                              << ", NbinsX= " << histogram.GetNbinsX() <<
+                                   ", underFlow bin= " << histogram.GetBinContent(0) << ", overFlow bin= " <<
+                                   histogram.GetBinContent(histogram.GetNbinsX() + 1) << ".\n";
+                }
             } else if(verbose)
                 std::cout << "not found.\n";
         }
         if(verbose)
-            std::cout << "Integral after bkg subtraction: " << histogram.Integral(0, histogram.GetNbinsX() + 1) << "."
-                      << std::endl;
+            std::cout << "Integral after bkg subtraction: " << histogram.Integral(0, histogram.GetNbinsX() + 1) <<
+                         ", Initial integral: " << histogram.Integral() << ", NbinsX= " << histogram.GetNbinsX() <<
+                           ", underFlow bin= " << histogram.GetBinContent(0) << ", overFlow bin= " <<
+                           histogram.GetBinContent(histogram.GetNbinsX() + 1) << ".\n";
     }
 
 private:
