@@ -73,10 +73,10 @@ protected:
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
 
-    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
-                                                                   const std::string& /*hist_name*/) override
-    {
-        static const analysis::PhysicalValue v(1, 0.001);
-        return analysis::PhysicalValuePair(v, v);
-    }
+//    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
+//                                                                   const std::string& /*hist_name*/) override
+//    {
+//        static const analysis::PhysicalValue v(1, 0.001);
+//        return analysis::PhysicalValuePair(v, v);
+//    }
 };

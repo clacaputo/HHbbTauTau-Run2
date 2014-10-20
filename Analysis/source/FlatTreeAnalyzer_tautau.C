@@ -57,10 +57,11 @@ protected:
         return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
     }
 
-    virtual std::pair<double, double> CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
-                                                                 const std::string& /*hist_name*/) override
+    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
+                                                                   const std::string& /*hist_name*/) override
     {
-        return std::pair<double, double>(1, 1);
+        static const analysis::PhysicalValue v(1, 0.001);
+        return analysis::PhysicalValuePair(v, v);
     }
 
 };
