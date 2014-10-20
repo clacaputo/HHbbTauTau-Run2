@@ -134,7 +134,8 @@ public:
         }
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
-        const double embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
+        //const double embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
+        const double embeddedSF = 1;
 
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
@@ -333,7 +334,7 @@ protected:
 
         const std::map<ntuple::EventType, std::string> type_category_map = {
             { ntuple::EventType::ZL, ZL.name }, { ntuple::EventType::ZJ, ZJ.name },
-            { ntuple::EventType::ZTT, ZTT_MC.name }
+            { ntuple::EventType::ZTT, ZTT_MC.name }, { ntuple::EventType::ZTT_no_match, ZTT_MC.name }
         };
 
         if(type_category_map.count(eventInfo.eventType)) {
@@ -359,7 +360,8 @@ protected:
 
     void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
     {
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+        //const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
         for(auto& map_entry : anaData[embedded.name]) {
