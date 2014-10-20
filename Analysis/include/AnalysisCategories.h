@@ -270,10 +270,16 @@ enum class EventRegion { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_N
 enum class EventCategory { Inclusive, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
 
 namespace detail {
-static const std::map<EventCategory, std::string> eventCategoryMapName =
+static const std::map<EventCategory, std::string> eventCategoryNamesMap =
           { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0btag" },
             { EventCategory::OneJet_OneBtag, "1jet1btag" }, { EventCategory::TwoJets_ZeroBtag, "2jets0btag" },
           { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" } };
+
+static const std::map<EventRegion, std::string> eventRegionNamesMap =
+          { { EventRegion::Unknown, "Unknown"}, { EventRegion::OS_Isolated, "OS_Isolated"},
+            { EventRegion::OS_NotIsolated, "OS_NotIsolated"}, { EventRegion::SS_Isolated, "SS_Isolated"},
+            { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_HighMt, "OS_HighMt"},
+            { EventRegion::SS_HighMt, "SS_HighMt"} };
 } // namespace detail
 typedef std::vector<EventCategory> EventCategoryVector;
 typedef std::set<EventCategory> EventCategorySet;
@@ -283,15 +289,21 @@ static const EventCategorySet TwoJetsEventCategories =
         { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
-    s << detail::eventCategoryMapName.at(eventCategory);
+    s << detail::eventCategoryNamesMap.at(eventCategory);
     return s;
 }
 
 std::wostream& operator<<(std::wostream& s, const EventCategory& eventCategory) {
-    const std::string str = detail::eventCategoryMapName.at(eventCategory);
+    const std::string str = detail::eventCategoryNamesMap.at(eventCategory);
     s << std::wstring(str.begin(), str.end());
     return s;
 }
+
+std::ostream& operator<<(std::ostream& s, const EventRegion& eventRegion) {
+    s << detail::eventRegionNamesMap.at(eventRegion);
+    return s;
+}
+
 
 EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, double CSVM, double CSVT)
 {

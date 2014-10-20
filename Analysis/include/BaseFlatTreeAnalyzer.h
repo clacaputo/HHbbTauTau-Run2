@@ -141,16 +141,24 @@ public:
         for (auto& fullAnaDataEntry : fullAnaData) {
             const EventCategory& eventCategory = fullAnaDataEntry.first;
             AnaDataForEventCategory& anaData = fullAnaDataEntry.second;
+
+            CreateHistogramForZTT(anaData, ReferenceHistogramName(), embeddedSF);
+
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             std::cout << eventCategory << " OS_HighMt_data / OS_HighMt_mc = "
-                      << wjets_scale_factors.first << std::endl;
-            std::cout << eventCategory << " SS_HighMt_data / SS_HighMt_mc = "
+                      << wjets_scale_factors.first << "\n"
+                      << eventCategory << " SS_HighMt_data / SS_HighMt_mc = "
                       << wjets_scale_factors.second << std::endl;
+            EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
+
             const double qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
+
             for (const auto& hist : histograms) {
-                CreateHistogramForZTT(anaData, hist, embeddedSF);
-                EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+                if(hist.name != ReferenceHistogramName()) {
+                    CreateHistogramForZTT(anaData, hist.name, embeddedSF);
+                    EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+                }
                 EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
@@ -190,8 +198,8 @@ protected:
         TH1D& hist_OSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_NotIsolated, *hist_OSnotIso_data);
         TH1D& hist_SSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::SS_NotIsolated, *hist_SSnotIso_data);
 
-        SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name);
-        SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name);
+        SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name, true);
+        SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name, true);
 
         const double n_OSnotIso = hist_OSnotIso.Integral(0, hist_OSnotIso.GetNbinsX() + 1);
         const double n_SSnotIso = hist_SSnotIso.Integral(0, hist_SSnotIso.GetNbinsX() + 1);
@@ -358,14 +366,14 @@ protected:
         return n_ztautau / n_embedded;
     }
 
-    void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
+    void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const std::string& hist_name, double scale_factor)
     {
         //const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
         for(auto& map_entry : anaData[embedded.name]) {
-            if(auto embedded_hist = map_entry.second.GetPtr<TH1D>(hist.name)) {
+            if(auto embedded_hist = map_entry.second.GetPtr<TH1D>(hist_name)) {
                 TH1D& ztt_hist = anaData[ZTT.name][map_entry.first].Clone(*embedded_hist);
                 ztt_hist.Scale(scale_factor);
             }
@@ -532,14 +540,27 @@ protected:
     }
 
     void SubtractBackgroundHistograms(TH1D& histogram, EventCategory eventCategory, EventRegion eventRegion,
-                                      const std::string& current_category)
+                                      const std::string& current_category, bool verbose = false)
     {
+        if(verbose)
+            std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
+                      << " for data category '" << current_category << "'.\n"
+                      << "Initial integral: " << histogram.Integral(0, histogram.GetNbinsX() + 1) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category) continue;
 
-            if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName()))
+            if(verbose)
+                std::cout << "Sample '" << category->name << "': ";
+            if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName())) {
                 histogram.Add(other_histogram, -1);
+                if(verbose)
+                    std::cout << other_histogram->Integral(0, other_histogram->GetNbinsX() + 1) << ".\n";
+            } else if(verbose)
+                std::cout << "not found.\n";
         }
+        if(verbose)
+            std::cout << "Integral after bkg subtraction: " << histogram.Integral(0, histogram.GetNbinsX() + 1) << "."
+                      << std::endl;
     }
 
 private:
