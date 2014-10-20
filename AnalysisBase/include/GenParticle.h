@@ -159,6 +159,7 @@ class GenEvent {
 public:
     GenParticleVector genParticles;
     ParticleCodeMap particleCodeMap;
+    ParticleCodeMap hardParticleCodeMap;
     GenParticleSet primaryParticles;
 
 public:
@@ -166,6 +167,7 @@ public:
     {
         genParticles.clear();
         particleCodeMap.clear();
+        hardParticleCodeMap.clear();
         primaryParticles.clear();
         genParticles.reserve(ntupleGenParticles.size());
 
@@ -181,6 +183,8 @@ public:
             if (particle.status == particles::Decayed_or_fragmented ||
                     particle.status == particles::FinalStateParticle)
                 particleCodeMap[particle.pdg.Code].insert(&particle);
+            else if(particle.status == particles::HardInteractionProduct)
+                hardParticleCodeMap[particle.pdg.Code].insert(&particle);
         }
     }
 
@@ -190,6 +194,21 @@ public:
         for (const particles::ParticleCode& code : particleCodes){
             const ParticleCodeMap::const_iterator code_iter = particleCodeMap.find(code);
             if (code_iter == particleCodeMap.end())
+                continue;
+            for (const GenParticle* particle : code_iter->second){
+                if (particle->momentum.Pt() <= pt) continue;
+                results.insert(particle);
+            }
+        }
+        return results;
+    }
+
+    GenParticleSet GetHardParticles(const particles::ParticleCodes& particleCodes, double pt = 0) const
+    {
+        GenParticleSet results;
+        for (const particles::ParticleCode& code : particleCodes){
+            const ParticleCodeMap::const_iterator code_iter = hardParticleCodeMap.find(code);
+            if (code_iter == hardParticleCodeMap.end())
                 continue;
             for (const GenParticle* particle : code_iter->second){
                 if (particle->momentum.Pt() <= pt) continue;

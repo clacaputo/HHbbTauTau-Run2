@@ -329,10 +329,11 @@ protected:
         while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
             Z_mc = Z_mc->daughters.front();
 
+
         GenParticlePtrVector ZProducts;
         const bool z_tt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
         if (!z_tt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
-                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
+                 && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
         const auto matchedParticles_first =

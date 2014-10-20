@@ -160,7 +160,7 @@ public:
         PrintTables("semicolon", L";");
 
         std::cout << "Saving datacards... " << std::endl;
-        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", true);
+        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false);
         ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false);
 
         std::cout << "Printing stacked plots... " << std::endl;
