@@ -27,10 +27,12 @@
 #pragma once
 
 #include <iostream>
-#include <iomanip>
 #include <cmath>
 
 #include <TLorentzVector.h>
+#include <TH1.h>
+
+#include "AnalysisTypes.h"
 
 namespace analysis {
 
@@ -68,19 +70,15 @@ inline TLorentzVector MakeLorentzVectorPtEtaPhiE(Double_t pt, Double_t eta, Doub
     return v;
 }
 
-inline std::wstring MakeStringRepresentationForValueWithError(double value, double error, bool print_error)
+inline PhysicalValue Integral(const TH1D& histogram, bool include_overflows = true)
 {
-    static const int number_of_significant_digits_in_error = 2;
-    const int precision = std::floor(std::log10(error)) - number_of_significant_digits_in_error + 1;
-    const double ten_pow_p = std::pow(10.0, precision);
-    const double error_rounded = std::ceil(error / ten_pow_p) * ten_pow_p;
-    const double value_rounded = std::round(value / ten_pow_p) * ten_pow_p;
-    const int decimals_to_print = std::max(0, -precision);
-    std::wostringstream ss;
-    ss << std::setprecision(decimals_to_print) << std::fixed << value_rounded;
-    if(print_error)
-        ss << L" \u00B1 " << error_rounded;
-    return ss.str();
+    typedef std::pair<Int_t, Int_t> limit_pair;
+    const limit_pair limits = include_overflows ? limit_pair(0, histogram.GetNbinsX() + 1)
+                                                : limit_pair(1, histogram.GetNbinsX());
+
+    double error = 0;
+    const double integral = histogram.IntegralAndError(limits.first, limits.second, error);
+    return PhysicalValue(integral, error);
 }
 
-}
+} // namespace analysis

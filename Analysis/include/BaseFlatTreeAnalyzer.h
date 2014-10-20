@@ -151,7 +151,7 @@ public:
                       << wjets_scale_factors.second << std::endl;
             EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
 
-            const double qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
+            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
             for (const auto& hist : histograms) {
@@ -182,7 +182,7 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name)
+    virtual PhysicalValue CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -201,12 +201,13 @@ protected:
         SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name, true);
         SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name, true);
 
-        const double n_OSnotIso = hist_OSnotIso.Integral(0, hist_OSnotIso.GetNbinsX() + 1);
-        const double n_SSnotIso = hist_SSnotIso.Integral(0, hist_SSnotIso.GetNbinsX() + 1);
+        const PhysicalValue n_OSnotIso = Integral(hist_OSnotIso, false);
+        const PhysicalValue n_SSnotIso = Integral(hist_SSnotIso, false);
         return n_OSnotIso / n_SSnotIso;
     }
 
-    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name, double scale_factor)
+    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name,
+                             const PhysicalValue& scale_factor)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -219,11 +220,10 @@ protected:
 
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_SSIso_data);
         SubtractBackgroundHistograms(histogram, eventCategory, EventRegion::SS_Isolated, qcd.name);
-        histogram.Scale(scale_factor);
+        histogram.Scale(scale_factor.value);
     }
 
-    virtual std::pair<double, double> CalculateWjetsScaleFactors(EventCategory eventCategory,
-                                                                 const std::string& hist_name)
+    virtual PhysicalValuePair CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -242,21 +242,21 @@ protected:
         TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_HighMt, *hist_OS_HighMt_data);
         TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_HighMt, *hist_SS_HighMt_data);
 
-        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name);
-        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name);
+        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name, true);
+        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name, true);
 
-        const double n_OS_HighMt = hist_OS_HighMt.Integral(0, hist_OS_HighMt.GetNbinsX() + 1);
-        const double n_OS_HighMt_mc = hist_OS_HighMt_mc->Integral(0, hist_OS_HighMt_mc->GetNbinsX() + 1);
-        const double n_SS_HighMt = hist_SS_HighMt.Integral(0, hist_SS_HighMt.GetNbinsX() + 1);
-        const double n_SS_HighMt_mc = hist_SS_HighMt_mc->Integral(0, hist_SS_HighMt_mc->GetNbinsX() + 1);
+        const PhysicalValue n_OS_HighMt = Integral(hist_OS_HighMt, false);
+        const PhysicalValue n_OS_HighMt_mc = Integral(*hist_OS_HighMt_mc, false);
+        const PhysicalValue n_SS_HighMt = Integral(hist_SS_HighMt, false);
+        const PhysicalValue n_SS_HighMt_mc = Integral(*hist_SS_HighMt_mc, false);
 
-        const double OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
-        const double SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
-        return std::pair<double, double>(OS_ratio, SS_ratio);
+        const PhysicalValue OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
+        const PhysicalValue SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
+        return PhysicalValuePair(OS_ratio, SS_ratio);
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
-                               const std::pair<double, double>& scale_factors)
+                               const PhysicalValuePair& scale_factors)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -266,12 +266,22 @@ protected:
 
         if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Isolated, hist_name)) {
             TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Isolated, *hist_OS_mc);
-            hist_OS.Scale(scale_factors.first);
+            hist_OS.Scale(scale_factors.first.value);
         }
 
         if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Isolated, hist_name)) {
             TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Isolated, *hist_SS_mc);
-            hist_SS.Scale(scale_factors.second);
+            hist_SS.Scale(scale_factors.second.value);
+        }
+
+        if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_NotIsolated, hist_name)) {
+            TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_NotIsolated, *hist_OS_mc);
+            hist_OS.Scale(scale_factors.first.value);
+        }
+
+        if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_NotIsolated, hist_name)) {
+            TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_NotIsolated, *hist_SS_mc);
+            hist_SS.Scale(scale_factors.second.value);
         }
     }
 
@@ -545,7 +555,7 @@ protected:
         if(verbose)
             std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
                       << " for data category '" << current_category << "'.\n"
-                      << "Initial integral: " << histogram.Integral(0, histogram.GetNbinsX() + 1) << ".\n";
+                      << "Initial integral: " << Integral(histogram, false) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category) continue;
 
@@ -554,13 +564,12 @@ protected:
             if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName())) {
                 histogram.Add(other_histogram, -1);
                 if(verbose)
-                    std::cout << other_histogram->Integral(0, other_histogram->GetNbinsX() + 1) << ".\n";
+                    std::cout << Integral(*other_histogram, false) << ".\n";
             } else if(verbose)
                 std::cout << "not found.\n";
         }
         if(verbose)
-            std::cout << "Integral after bkg subtraction: " << histogram.Integral(0, histogram.GetNbinsX() + 1) << "."
-                      << std::endl;
+            std::cout << "Integral after bkg subtraction: " << Integral(histogram, false) << ".\n" << std::endl;
     }
 
 private:
@@ -622,15 +631,13 @@ private:
             for (auto& fullAnaDataEntry : fullAnaData) {
                 const EventCategory& eventCategory = fullAnaDataEntry.first;
                 if( TH1D* histogram = GetSignalHistogram(eventCategory, dataCategory->name, hist.name) ) {
-                    typedef std::pair<Int_t, Int_t> limit_pair;
-                    const limit_pair limits = includeOverflow ? limit_pair(0, histogram->GetNbinsX() + 1)
-                                                              : limit_pair(1, histogram->GetNbinsX());
-                    double error = 0.;
-                    const double integral = histogram->IntegralAndError(limits.first, limits.second, error);
-                    of << MakeStringRepresentationForValueWithError(integral, error, includeError) << sep;
+                    const PhysicalValue integral = Integral(*histogram, includeOverflow);
+                    if(includeError) of << integral;
+                    else of << integral.value;
+                    of << sep;
                 }
                 else
-                    of << "NaN" << sep;
+                    of << "not found" << sep;
             }
             of << std::endl;
         }
