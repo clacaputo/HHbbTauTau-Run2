@@ -27,7 +27,7 @@ import FWCore.ParameterSet.Config as cms
 from PhysicsTools.PatAlgos.tools.jetTools import *
 from RecoJets.JetProducers.PileupJetIDParams_cfi import JetIdParams
 
-def applyJetParameters(process, isMC):
+def applyJetParameters(process, isMC, isEmbedded):
     # Jet corrections
     jec = [ 'L1FastJet', 'L2Relative', 'L3Absolute' ]
     if not isMC:
@@ -41,6 +41,9 @@ def applyJetParameters(process, isMC):
          doJetID      = True,
          jetIdLabel   = 'ak5'
     )
+
+    if isEmbedded:
+        process.jetTracksAssociatorAtVertex.tracks = cms.InputTag("tmfTracks")
 
     process.load("RecoJets.JetProducers.PileupJetID_cfi")
 
