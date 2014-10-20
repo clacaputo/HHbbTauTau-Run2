@@ -77,11 +77,9 @@ McProduction/python/crab_RECO.cfg
 McProduction/python/crab_cesar.cfg
 McProduction/python/multicrab_Graviton_GENSIM.cfg
 PatProduction/BuildFile.xml
-PatProduction/crab/crab_DATA.cfg
 PatProduction/crab/crab_cern.cfg
-PatProduction/crab/multicrab.cfg
 PatProduction/crab/multicrab_DY.cfg
-PatProduction/crab/multicrab_Embedded.cfg
+PatProduction/crab/multicrab_Embedded_DY.cfg
 PatProduction/crab/multicrab_SM_Higgs.cfg
 PatProduction/crab/multicrab_TT.cfg
 PatProduction/crab/multicrab_Tau.cfg
@@ -253,11 +251,6 @@ MVASelections/include/MVA_common.h
 MVASelections/include/MVA_variables.h
 PatProduction/crab/multicrab_ggHhh.cfg
 PatProduction/crab/multicrab_ggAZh.cfg
-PatProduction/crab/multicrab_Embedded_EMu.cfg
-PatProduction/crab/multicrab_Embedded_ETau.cfg
-PatProduction/crab/multicrab_Embedded_MuMu.cfg
-PatProduction/crab/multicrab_Embedded_MuTau.cfg
-PatProduction/crab/multicrab_Embedded_TauTau.cfg
 PatProduction/crab/multicrab_Embedded_TT.cfg
 PatProduction/crab/multicrab_ggAZhTT.cfg
 PatProduction/crab/multicrab_ggbbH.cfg
