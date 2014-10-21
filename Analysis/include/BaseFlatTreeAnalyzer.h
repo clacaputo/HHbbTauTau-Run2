@@ -137,8 +137,9 @@ public:
         }
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
-        //const double embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
-        const double embeddedSF = 1;
+        const auto embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
+//        const double embeddedSF = 1;
+        std::cout << "Embedded SF = " << embeddedSF << std::endl;
 
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (auto& fullAnaDataEntry : fullAnaData) {
@@ -370,7 +371,7 @@ protected:
         }
     }
 
-    double CalculateEmbeddedScaleFactor(const std::string& hist_name)
+    PhysicalValue CalculateEmbeddedScaleFactor(const std::string& hist_name)
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
@@ -380,21 +381,22 @@ protected:
         if(!hist_embedded || !hist_ztautau )
             throw std::runtime_error("embedded or ztt hist not found");
 
-        const double n_ztautau = hist_ztautau->Integral(0, hist_ztautau->GetNbinsX() + 1);
-        const double n_embedded = hist_embedded->Integral(0, hist_embedded->GetNbinsX() + 1);
+        const PhysicalValue n_ztautau = Integral(*hist_ztautau, false);
+        const PhysicalValue n_embedded = Integral(*hist_embedded, false);
         return n_ztautau / n_embedded;
     }
 
-    void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const std::string& hist_name, double scale_factor)
+    void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const std::string& hist_name,
+                               const PhysicalValue& scale_factor)
     {
-        //const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+//        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
         for(auto& map_entry : anaData[embedded.name]) {
             if(auto embedded_hist = map_entry.second.GetPtr<TH1D>(hist_name)) {
                 TH1D& ztt_hist = anaData[ZTT.name][map_entry.first].Clone(*embedded_hist);
-                ztt_hist.Scale(scale_factor);
+                ztt_hist.Scale(scale_factor.value);
             }
         }
     }

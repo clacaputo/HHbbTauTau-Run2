@@ -47,7 +47,7 @@
 #include <Rtypes.h>
 #include <TError.h>
 
-struct EventId{
+struct EventId {
     unsigned runId;
     unsigned lumiBlock;
     unsigned eventId;
