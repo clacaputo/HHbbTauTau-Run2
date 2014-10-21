@@ -98,6 +98,13 @@ public:
     TH1D_ENTRY(MinPtBjetsMC, 20, 0, 200)
     TH1D_ENTRY(MassBB_MC, 30, 0, 300)
     TH1D_ENTRY(MassBB_MCvis, 30, 0, 300)
+    TH1D_ENTRY(goodElectronsFromZee, 5, -0.5, 4.5)
+    TH1D_ENTRY(hardElectronsZee, 5, -0.5, 4.5)
+    TH1D_ENTRY(hardMuonsZee, 5, -0.5, 4.5)
+    TH1D_ENTRY(goodMuonsFromZmm, 5, -0.5, 4.5)
+    TH1D_ENTRY(hardElectronsZmm, 5, -0.5, 4.5)
+    TH1D_ENTRY(hardMuonsZmm, 5, -0.5, 4.5)
+
 };
 
 class BaseAnalyzer {

@@ -29,108 +29,39 @@
 class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_tautau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                            const std::string& outputFileName, const std::string& _signalName,
-                            const std::string& _dataName, const std::string& _mvaXMLpath, bool _WjetsData = false,
-                            bool _isBlind=false)
-          : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, _signalName, _dataName, _mvaXMLpath,
-                                 _WjetsData, _isBlind)
+                            const std::string& outputFileName, const std::string& signal_list)
+          : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
     {
     }
 
 protected:
-    virtual const std::string& ChannelName() override
-    {
-        static const std::string channelName = "tauTau";
-        return channelName;
-    }
+    virtual analysis::Channel ChannelId() const override { return analysis::Channel::TauTau; }
 
-    virtual analysis::EventType_QCD DetermineEventTypeForQCD(const ntuple::Flat& event) override
+    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
     {
-        using analysis::EventType_QCD;
+        using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
-        using namespace cuts::Htautau_Summer13::TauTau::tauID::BackgroundEstimation;
 
-        if (event.againstElectronLooseMVA_2 < againstElectronLooseMVA3)
-            return EventType_QCD::Unknown;
+        if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
+                || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits))
+            return EventRegion::Unknown;
 
-        if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                (event.q_1 * event.q_2 == -1))
-            return EventType_QCD::OS_Isolated;
+        const bool os = event.q_1 * event.q_2 == -1;
+        const bool iso = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+                         event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
 
-        if (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                (event.q_1 * event.q_2 == +1))
-            return EventType_QCD::SS_Isolated;
-
-        if (((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-              event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < Isolation_upperLimit) ||
-                 (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                  event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < Isolation_upperLimit)) &&
-                 (event.q_1 * event.q_2 == -1))
-            return EventType_QCD::OS_NotIsolated;
-
-        if (((event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-              event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < Isolation_upperLimit) ||
-                 (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                  event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < Isolation_upperLimit)) &&
-                 (event.q_1 * event.q_2 == +1))
-            return EventType_QCD::SS_NotIsolated;
-
-        return EventType_QCD::Unknown;
+        if(iso) return os ? EventRegion::OS_Isolated : EventRegion::SS_Isolated;
+        return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
     }
 
-    virtual bool PassMvaCut(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory eventCategory) override
+    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
+                                                                   const std::string& /*hist_name*/) override
     {
-        return true;
-    }
-
-    virtual void EstimateQCD(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                             const analysis::HistogramDescriptor& hist) override
-    {
-        using analysis::EventType_QCD;
-
-        const analysis::DataCategory& qcd = FindCategory("QCD");
-        const analysis::DataCategory& data = FindCategory("DATA");
-
-        auto histogram_data = anaData[data.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name);
-        auto hist_SSIso_data = anaData[data.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name);
-        auto hist_SSnotIso_data = anaData[data.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name);
-        if(!histogram_data || !hist_SSIso_data || !hist_SSnotIso_data) return;
-
-        TH1D& histogram = anaData[qcd.name].QCD[EventType_QCD::OS_Isolated].Clone(*histogram_data);
-        TH1D& hist_SSIso = anaData[qcd.name].QCD[EventType_QCD::SS_Isolated].Clone(*hist_SSIso_data);
-        TH1D& hist_SSnotIso = anaData[qcd.name].QCD[EventType_QCD::SS_NotIsolated].Clone(*hist_SSnotIso_data);
-
-        for (const analysis::DataCategory& category : categories) {
-            if(category.IsData() || category.IsSignal() || category.name == qcd.name || category.IsSumBkg()
-                    || category.IsForLimitsOnly()) continue;
-
-            if( TH1D* nonQCD_hist = anaData[category.name].QCD[EventType_QCD::OS_NotIsolated].GetPtr<TH1D>(hist.name) )
-                histogram.Add(nonQCD_hist, -1);
-
-            if( TH1D* nonQCD_histIso = anaData[category.name].QCD[EventType_QCD::SS_Isolated].GetPtr<TH1D>(hist.name) )
-                hist_SSIso.Add(nonQCD_histIso, -1);
-
-            if( TH1D* nonQCD_histNotIso = anaData[category.name].QCD[EventType_QCD::SS_NotIsolated].GetPtr<TH1D>(hist.name) )
-                hist_SSnotIso.Add(nonQCD_histNotIso, -1);
-        }
-
-        const double ratio = hist_SSIso.Integral()/hist_SSnotIso.Integral();
-        std::cout << eventCategory << " SS_Iso/SS_NotIso = " << ratio << std::endl;
-        histogram.Scale(ratio);
-    }
-
-    virtual analysis::EventType_Wjets DetermineEventTypeForWjets(const ntuple::Flat& event) override
-    {
-        using analysis::EventType_Wjets;
-        return EventType_Wjets::Unknown;
-    }
-
-    virtual void EstimateWjets(analysis::EventCategory eventCategory, AnaDataForDataCategory& anaData,
-                               const analysis::HistogramDescriptor& hist) override
-    {
-
+        static const analysis::PhysicalValue v(1, 0.001);
+        return analysis::PhysicalValuePair(v, v);
     }
 
 };

@@ -49,7 +49,7 @@ from HHbbTauTau.PatProduction.patElectrons import *
 applyElectronParameters(process, options.isMC)
 
 from HHbbTauTau.PatProduction.patJets import *
-applyJetParameters(process, options.isMC)
+applyJetParameters(process, options.isMC, options.isEmbedded)
 
 from HHbbTauTau.PatProduction.patMET import *
 applyMETParameters(process, options.isMC)

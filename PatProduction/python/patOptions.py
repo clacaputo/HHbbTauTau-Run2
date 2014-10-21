@@ -34,6 +34,8 @@ def parseAndApplyOptions(process) :
                       VarParsing.varType.string, "Global Tag to use.")
     options.register ('isMC', True, VarParsing.multiplicity.singleton,
                       VarParsing.varType.bool, "Sample Type: MC or data.")
+    options.register ('isEmbedded', False, VarParsing.multiplicity.singleton,
+                      VarParsing.varType.bool, "Indicates if sample is made using embedding technique.")
     options.register ('runOnCrab', False, VarParsing.multiplicity.singleton,
                       VarParsing.varType.bool, "Indicates if script will be executed on CRAB.")
     options.register ('fileList', 'fileList.txt', VarParsing.multiplicity.singleton,

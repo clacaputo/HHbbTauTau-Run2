@@ -126,6 +126,8 @@ public:
         else
             pfMET = event->metPF();
 
+        FillHistogramsForMCstudies(tauTau_MC, bjets_all);
+
         FillFlatTree(higgs, svfitResults, kinfitResults, higgs_JetsMap.at(higgs), higgs_looseJetsMap.at(higgs),
                      bjets_all, retagged_bjets, vertices, pfMET);
     }

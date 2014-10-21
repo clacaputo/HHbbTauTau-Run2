@@ -70,6 +70,7 @@
     B_TAG_DATA() \
     /**/
 
+// see https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/PhysicsTools/PatAlgos/python/tools/jetTools.py#L30
 #define B_TAG_DATA() \
     SIMPLE_VAR(Float_t, trackCountingHighEffBJetTags) \
     SIMPLE_VAR(Float_t, trackCountingHighPurBJetTags) \

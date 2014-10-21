@@ -329,10 +329,11 @@ protected:
         while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
             Z_mc = Z_mc->daughters.front();
 
+
         GenParticlePtrVector ZProducts;
         const bool z_tt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
         if (!z_tt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
-                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
+                 && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
         const auto matchedParticles_first =
@@ -396,6 +397,116 @@ protected:
             }
         }
         return result;
+    }
+
+    void FillHistogramsForMCstudies(const finalState::bbTauTau& final_state, const CandidateVector& bjets_all)
+    {
+        if(final_state.b_jets.size() >= 2 && final_state.taus.size() >= 2) {
+
+            const VisibleGenObject& bjet1_visible = final_state.b_jets.at(0);
+            const GenParticle* bjet1_MC = bjet1_visible.origin;
+
+            const VisibleGenObject& bjet2_visible = final_state.b_jets.at(1);
+            const GenParticle* bjet2_MC = bjet2_visible.origin;
+
+            const VisibleGenObject tau_1 = final_state.taus.at(0);
+            const VisibleGenObject tau_2 = final_state.taus.at(1);
+            const GenParticle* tau_MC_1 = tau_1.origin;
+            const GenParticle* tau_MC_2 = tau_2.origin;
+
+            if (bjets_all.size() > 1 && bjet1_MC->momentum.Pt() > 20 && bjet2_MC->momentum.Pt() > 20 &&
+                    std::abs(bjet1_MC->momentum.Eta()) < 2.4 && std::abs(bjet2_MC->momentum.Eta()) < 2.4 ){
+
+                double deltaRmin_firstCouple =
+                        std::min(bjet1_MC->momentum.DeltaR(tau_MC_1->momentum),bjet1_MC->momentum.DeltaR(tau_MC_2->momentum));
+                double deltaRmin_secondCouple =
+                        std::min(bjet2_MC->momentum.DeltaR(tau_MC_1->momentum),bjet2_MC->momentum.DeltaR(tau_MC_2->momentum));
+                double deltaRmin_MC = std::min(deltaRmin_firstCouple,deltaRmin_secondCouple);
+
+                //std::cout << "deltaRmin_MC=" << deltaRmin_MC << std::endl;
+                GetAnaData().deltaRmin_MC().Fill(deltaRmin_MC);
+                GetAnaData().DeltaRbjets_MC().Fill(bjet1_MC->momentum.DeltaR(bjet2_MC->momentum));
+                GetAnaData().MinPtBjetsMC().Fill(std::min(bjet1_MC->momentum.Pt(),bjet2_MC->momentum.Pt()));
+                TLorentzVector bb_MC = bjet1_MC->momentum + bjet2_MC->momentum;
+                TLorentzVector bb_MC_visible = bjet1_visible.visibleMomentum + bjet2_visible.visibleMomentum;
+
+                GetAnaData().MassBB_MC().Fill(bb_MC.M());
+                GetAnaData().MassBB_MCvis().Fill(bb_MC_visible.M());
+
+                double deltaRmin1_original = std::numeric_limits<double>::max();
+                double deltaRmin2_original = std::numeric_limits<double>::max();
+                double deltaRmin1_visible = std::numeric_limits<double>::max();
+                double deltaRmin2_visible = std::numeric_limits<double>::max();
+                unsigned index_bjet1 = 0;
+                unsigned index_bjet2 = 0;
+                unsigned index_bjet1_vis = 0;
+                unsigned index_bjet2_vis = 0;
+                for (unsigned i = 0; i < bjets_all.size(); ++i){
+                    const Candidate& bjet = bjets_all.at(i);
+    //                double deltaPt1 = std::abs(bjet.momentum.Pt() - bjet1_MC->momentum.Pt())/bjet1_MC->momentum.Pt();
+    //                double deltaPt2 = std::abs(bjet.momentum.Pt() - bjet2_MC->momentum.Pt())/bjet2_MC->momentum.Pt();
+                    if (bjet.momentum.DeltaR(bjet1_MC->momentum) < deltaRmin1_original /*&& deltaPt1 < 0.4*/){
+                        deltaRmin1_original = bjet.momentum.DeltaR(bjet1_MC->momentum);
+                        index_bjet1 = i;
+                    }
+
+                    if (bjet.momentum.DeltaR(bjet2_MC->momentum) < deltaRmin2_original /*&& deltaPt2 < 0.4*/){
+                        deltaRmin2_original = bjet.momentum.DeltaR(bjet2_MC->momentum);
+                        index_bjet2 = i;
+                    }
+
+                    if (bjet.momentum.DeltaR(bjet1_visible.visibleMomentum) < deltaRmin1_visible){
+                        deltaRmin1_visible = bjet.momentum.DeltaR(bjet1_visible.visibleMomentum);
+                        index_bjet1_vis = i;
+                    }
+
+                    if (bjet.momentum.DeltaR(bjet2_visible.visibleMomentum) < deltaRmin2_visible){
+                        deltaRmin2_visible = bjet.momentum.DeltaR(bjet2_visible.visibleMomentum);
+                        index_bjet2_vis = i;
+                    }
+
+                }
+
+                GetAnaData().DeltaRmin1_original().Fill(deltaRmin1_original);
+                GetAnaData().DeltaRmin2_original().Fill(deltaRmin2_original);
+
+                double deltaRmax_original = std::max(deltaRmin1_original,deltaRmin2_original);
+                GetAnaData().deltaRmax_original().Fill(deltaRmax_original);
+
+                GetAnaData().DeltaRmin1_visible().Fill(deltaRmin1_visible);
+                GetAnaData().DeltaRmin2_visible().Fill(deltaRmin2_visible);
+
+                double deltaRmax_visible = std::max(deltaRmin1_visible,deltaRmin2_visible);
+                GetAnaData().deltaRmax_visible().Fill(deltaRmax_visible);
+
+                double deltaPtMax;
+                if (deltaRmax_original == std::numeric_limits<double>::max()){
+                    deltaPtMax = std::numeric_limits<double>::max();
+                }
+                else {
+                    const Candidate& selectedBjets1 = bjets_all.at(index_bjet1);
+                    const Candidate& selectedBjets2 = bjets_all.at(index_bjet2);
+                    double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet1_MC->momentum.Pt());
+                    double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet2_MC->momentum.Pt());
+                    deltaPtMax = std::max(deltaPt1/bjet1_MC->momentum.Pt(),deltaPt2/bjet2_MC->momentum.Pt());
+                }
+                GetAnaData().deltaPtMax().Fill(deltaPtMax);
+
+                double deltaPtMax_vis;
+                if (deltaRmax_visible == std::numeric_limits<double>::max()){
+                    deltaPtMax_vis = std::numeric_limits<double>::max();
+                }
+                else {
+                    const Candidate& selectedBjets1 = bjets_all.at(index_bjet1_vis);
+                    const Candidate& selectedBjets2 = bjets_all.at(index_bjet2_vis);
+                    double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet1_visible.visibleMomentum.Pt());
+                    double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet2_visible.visibleMomentum.Pt());
+                    deltaPtMax_vis =
+                            std::max(deltaPt1/bjet1_visible.visibleMomentum.Pt(),deltaPt2/bjet2_visible.visibleMomentum.Pt());
+                }
+                GetAnaData().deltaPtMax_vis().Fill(deltaPtMax_vis);
+            }
+        }
     }
 
     void FillFlatTree(const Candidate& higgs, const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
