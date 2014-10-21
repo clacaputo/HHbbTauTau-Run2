@@ -58,29 +58,32 @@ namespace analysis {
 
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
+static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280.,
+                                                    300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
+                                                    650, 700, 750, 800, 850, 900, 950, 1000 };
 
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
-    TH1D_ENTRY(pt_1, 50, 0, 200)
+    TH1D_ENTRY(pt_1, 20, 0, 200)
     TH1D_ENTRY(eta_1, 60, -3, 3)
-    TH1D_ENTRY(pt_2, 50, 0, 200)
+    TH1D_ENTRY(pt_2, 20, 0, 200)
     TH1D_ENTRY(eta_2, 60, -3, 3)
-    TH1D_ENTRY(pt_b1, 50, 0, 200)
+    TH1D_ENTRY(pt_b1, 20, 0, 200)
     TH1D_ENTRY(eta_b1, 60, -3, 3)
-    TH1D_ENTRY(pt_b2, 50, 0, 200)
+    TH1D_ENTRY(pt_b2, 20, 0, 200)
     TH1D_ENTRY(eta_b2, 60, -3, 3)
-    TH1D_ENTRY(pt_H_tt, 35, 0, 350)
-    TH1D_ENTRY(pt_H_bb, 35, 0, 350)
-    TH1D_ENTRY(pt_H_hh, 35, 0, 350)
+    TH1D_ENTRY(pt_H_tt, 20, 0, 300)
+    TH1D_ENTRY(pt_H_bb, 20, 0, 300)
+    TH1D_ENTRY(pt_H_hh, 20, 0, 300)
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_up, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_down, mass_bins)
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
     TH1D_ENTRY(m_bb, 30, 0, 600)
-    TH1D_ENTRY(m_ttbb, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_kinfit, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
+    TH1D_ENTRY_CUSTOM(m_ttbb, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down, mass_ttbb_bins)
     TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
     TH1D_ENTRY(DeltaPhi_bb_MET, 80, -4, 4)
@@ -93,8 +96,8 @@ public:
     TH1D_ENTRY(MVA_BDTD, 40, -1, 1)
     TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
     TH1D_ENTRY(mt_1, 50, 0, 50)
-    TH1D_ENTRY(mt_2, 50, 0, 300)
-    TH1D_ENTRY(pt_H_tt_MET, 35, 0, 350)
+    TH1D_ENTRY(mt_2, 30, 0, 300)
+    TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
 };
 
 class BaseFlatTreeAnalyzer {
@@ -170,7 +173,7 @@ public:
 
         std::cout << "Saving datacards... " << std::endl;
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mSV("emptyDatacard_mSV",mass_bins);
-        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", 50, 0, 1000);
+        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", mass_ttbb_bins);
 
         ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false, emptyDatacard_mSV);
 
