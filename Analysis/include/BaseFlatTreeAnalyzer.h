@@ -170,15 +170,12 @@ public:
 
         std::cout << "Saving datacards... " << std::endl;
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mSV("emptyDatacard_mSV",mass_bins);
-        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mSV_up("emptyDatacard_mSV_up",mass_bins);
-        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mSV_down("emptyDatacard_mSV_down",mass_bins);
-        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false,emptyDatacard_mSV,emptyDatacard_mSV_up,
-                                        emptyDatacard_mSV_down);
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", 50, 0, 1000);
-        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb_up("emptyDatacard_mttbb_up", 50, 0, 1000);
-        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb_down("emptyDatacard_mttbb_down", 50, 0, 1000);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false,emptyDatacard_mttbb,
-                                        emptyDatacard_mttbb_up,emptyDatacard_mttbb_down);
+
+        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false, emptyDatacard_mSV);
+
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false,
+                                        emptyDatacard_mttbb);
 
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(false);
@@ -501,9 +498,7 @@ protected:
 
     void ProduceFileForLimitsCalculation(const std::string& hist_name, const std::string& hist_name_up,
                                          const std::string& hist_name_down, bool include_one_jet_categories,
-                                         const root_ext::SmartHistogram<TH1D>& emptyDatacard,
-                                         const root_ext::SmartHistogram<TH1D>& emptyDatacard_up,
-                                         const root_ext::SmartHistogram<TH1D>& emptyDatacard_down)
+                                         const root_ext::SmartHistogram<TH1D>& emptyDatacard)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0tag" },
@@ -531,48 +526,48 @@ protected:
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
-                TH1D* hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name);
                 std::shared_ptr<TH1D> hist;
-                if(!hist_orig){
+                if(auto hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name))
+                    hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+                else {
                     std::cerr << "Warning - Datacard histogram '" << hist_name << "' not found for data category '"
-                                                            << dataCategory->name << "' for eventCategory '" <<
-                                                               categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+                              << dataCategory->name << "' for eventCategory '"
+                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
 
                     hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
                 }
-                else
-                    hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+
                 hist->Scale(dataCategory->limits_sf);
                 hist->Write(dataCategory->datacard.c_str());
                 const std::string namePrefix = dataCategory->datacard + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-                TH1D* hist_up_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_up);
                 std::shared_ptr<TH1D> hist_up;
-                if(!hist_up_orig){
-                    std::cerr << "Warning - Datacard histogram '" << hist_name_up << "' not found for data category '"
-                                                            << dataCategory->name << "' for eventCategory '" <<
-                                                               categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
-
-                    hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard_up.Clone()));
-                }
-                else
+                if(auto hist_up_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_up))
                     hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_up_orig->Clone()));
+                else {
+                    std::cerr << "Warning - Datacard histogram '" << hist_name_up << "' not found for data category '"
+                              << dataCategory->name << "' for eventCategory '"
+                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+
+                    hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
+                }
+
                 hist_up->Scale(dataCategory->limits_sf);
                 hist_up->Write(nameUp.c_str());
-                TH1D* hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down);
 
                 std::shared_ptr<TH1D> hist_down;
-                if(!hist_up_orig){
-                    std::cerr << "Warning - Datacard histogram '" << hist_name_down << "' not found for data category '"
-                                                            << dataCategory->name << "' for eventCategory '" <<
-                                                               categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
-
-                    hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard_down.Clone()));
-                }
-                else
+                if(auto hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down))
                     hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_down_orig->Clone()));
+                else {
+                    std::cerr << "Warning - Datacard histogram '" << hist_name_down << "' not found for data category '"
+                              << dataCategory->name << "' for eventCategory '"
+                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+
+                    hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
+                }
+
                 hist_down->Scale(dataCategory->limits_sf);
                 hist_down->Write(nameDown.c_str());
             }
@@ -602,20 +597,14 @@ protected:
 
         if(verbose)
             std::cout << "Integral after bkg subtraction: " << Integral(histogram, false) << ".\n" << std::endl;
-        for (unsigned n = 1; n <= histogram.GetNbinsX(); ++n){
+        for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
             if (histogram.GetBinContent(n) >= 0) continue;
-            if (histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0){
-                std::cout << histogram.GetName() << " - Warning: Bin " << n << " content = " << histogram.GetBinContent(n)
-                          << ", error = " << histogram.GetBinError(n) << ", bin limits=[" << histogram.GetBinLowEdge(n)
-                          << "," << histogram.GetBinLowEdge(n+1)
-                          << "].\n" ;
-            }
-            else if (histogram.GetBinContent(n) + histogram.GetBinError(n) < 0){
-                std::cout << histogram.GetName() << " - ERROR: Bin " << n << " content = " << histogram.GetBinContent(n)
-                          << ", error = " << histogram.GetBinError(n) << ", bin limits=[" << histogram.GetBinLowEdge(n)
-                          << "," << histogram.GetBinLowEdge(n+1)
-                          << "].\n" ;
-            }
+            const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
+
+            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
+                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
+                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
+                      << "].\n";
             histogram.SetBinContent(n,0);
         }
     }
