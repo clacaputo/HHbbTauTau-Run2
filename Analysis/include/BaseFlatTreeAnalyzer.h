@@ -65,13 +65,13 @@ static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120,
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
     TH1D_ENTRY(pt_1, 20, 0, 200)
-    TH1D_ENTRY(eta_1, 60, -3, 3)
+    TH1D_ENTRY(eta_1, 25, -2.5, 2.5)
     TH1D_ENTRY(pt_2, 20, 0, 200)
-    TH1D_ENTRY(eta_2, 60, -3, 3)
+    TH1D_ENTRY(eta_2, 25, -2.5, 2.5)
     TH1D_ENTRY(pt_b1, 20, 0, 200)
-    TH1D_ENTRY(eta_b1, 60, -3, 3)
+    TH1D_ENTRY(eta_b1, 25, -2.5, 2.5)
     TH1D_ENTRY(pt_b2, 20, 0, 200)
-    TH1D_ENTRY(eta_b2, 60, -3, 3)
+    TH1D_ENTRY(eta_b2, 25, -2.5, 2.5)
     TH1D_ENTRY(pt_H_tt, 20, 0, 300)
     TH1D_ENTRY(pt_H_bb, 20, 0, 300)
     TH1D_ENTRY(pt_H_hh, 20, 0, 300)
@@ -84,18 +84,18 @@ public:
     TH1D_ENTRY_CUSTOM(m_ttbb_kinfit, mass_ttbb_bins)
     TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up, mass_ttbb_bins)
     TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down, mass_ttbb_bins)
-    TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_bb_MET, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_tt_MET, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
+    TH1D_ENTRY(DeltaPhi_tt, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_bb, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_bb_MET, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_tt_MET, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_hh, 22, 0., 3.3)
     TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
     TH1D_ENTRY(MVA_BDT, 40, -1, 1)
     TH1D_ENTRY(MVA_BDTD, 40, -1, 1)
     TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
-    TH1D_ENTRY(mt_2, 30, 0, 300)
+    TH1D_ENTRY(mt_2, 15, 0, 150)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fillAll)
@@ -110,12 +110,12 @@ public:
         eta_1().Fill(event.eta_1, weight);
         pt_2().Fill(event.pt_2, weight);
         eta_2().Fill(event.eta_2, weight);
-        DeltaPhi_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1)), weight);
+        DeltaPhi_tt().Fill(std::abs(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1))), weight);
         DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
         pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
         m_vis().Fill(eventInfo.Htt.M(),weight);
         pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
-        DeltaPhi_tt_MET().Fill(eventInfo.Htt.DeltaPhi(eventInfo.MET), weight);
+        DeltaPhi_tt_MET().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.MET)), weight);
         mt_2().Fill(event.mt_2, weight);
 
         if(!eventInfo.has_bjet_pair) return;
@@ -123,14 +123,14 @@ public:
         eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
         pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
         eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
-        DeltaPhi_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
-                                       eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
+        DeltaPhi_bb().Fill(std::abs(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
+                                       eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second))), weight);
         DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
                                      eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
         pt_H_bb().Fill(eventInfo.Hbb.Pt(),weight);
         m_bb().Fill(eventInfo.Hbb.M(), weight);
-        DeltaPhi_bb_MET().Fill(eventInfo.Hbb.DeltaPhi(eventInfo.MET), weight);
-        DeltaPhi_hh().Fill(eventInfo.Htt.DeltaPhi(eventInfo.Hbb), weight);
+        DeltaPhi_bb_MET().Fill(std::abs(eventInfo.Hbb.DeltaPhi(eventInfo.MET)), weight);
+        DeltaPhi_hh().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.Hbb)), weight);
         DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
         pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
@@ -139,9 +139,8 @@ public:
         m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
         m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
 
-        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
-        MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
-        MVA_BDTMitFisher().Fill(eventInfo.mva_BDTMitFisher, weight);
+//        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+//        MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
     }
 };
 
@@ -166,7 +165,8 @@ public:
 
     static const EventRegionSet& EssentialEventRegions()
     {
-        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
+//        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
+        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::OS_NotIsolated };
         return regions;
     }
 
@@ -214,15 +214,16 @@ public:
                       << wjets_scale_factors.second << std::endl;
             EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
 
-            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
-            std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
+            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName(),
+                                                                  EventRegion::SS_Isolated,EventRegion::SS_NotIsolated);
+            std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
                     CreateHistogramForZTT(eventCategory, hist.name, embeddedSF);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
-                EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
+                EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::OS_NotIsolated);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
         }
@@ -250,7 +251,8 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual PhysicalValue CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name)
+    virtual PhysicalValue CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name,
+                                                  EventRegion num_eventRegion, EventRegion den_eventRegion)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -258,24 +260,27 @@ protected:
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_OSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::OS_NotIsolated, hist_name);
-        auto hist_SSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_NotIsolated, hist_name);
-        if(!hist_OSnotIso_data || !hist_SSnotIso_data)
+        auto hist_num_data = GetHistogram(eventCategory, data.name, num_eventRegion, hist_name);
+        auto hist_den_data = GetHistogram(eventCategory, data.name, den_eventRegion, hist_name);
+
+        if(!hist_num_data || !hist_den_data)
             throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
 
-        TH1D& hist_OSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_NotIsolated, *hist_OSnotIso_data);
-        TH1D& hist_SSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::SS_NotIsolated, *hist_SSnotIso_data);
+        TH1D& hist_num = CloneHistogram(eventCategory, qcd.name, num_eventRegion, *hist_num_data);
+        TH1D& hist_den = CloneHistogram(eventCategory, qcd.name, den_eventRegion, *hist_den_data);
 
-        SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name, true);
-        SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name, true);
 
-        const PhysicalValue n_OSnotIso = Integral(hist_OSnotIso, false);
-        const PhysicalValue n_SSnotIso = Integral(hist_SSnotIso, false);
-        return n_OSnotIso / n_SSnotIso;
+        SubtractBackgroundHistograms(hist_num, eventCategory, num_eventRegion, qcd.name, true);
+        SubtractBackgroundHistograms(hist_den, eventCategory, den_eventRegion, qcd.name, true);
+
+
+        const PhysicalValue n_num = Integral(hist_num, false);
+        const PhysicalValue n_den = Integral(hist_den, false);
+        return n_num / n_den;
     }
 
     virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name,
-                             const PhysicalValue& scale_factor)
+                             const PhysicalValue& scale_factor, EventRegion shapeRegion)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -283,11 +288,11 @@ protected:
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_SSIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Isolated, hist_name);
-        if(!hist_SSIso_data) return;
+        auto hist_shape_data = GetHistogram(eventCategory, data.name, shapeRegion, hist_name);
+        if(!hist_shape_data) return;
 
-        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_SSIso_data);
-        SubtractBackgroundHistograms(histogram, eventCategory, EventRegion::SS_Isolated, qcd.name);
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
+        SubtractBackgroundHistograms(histogram, eventCategory, shapeRegion, qcd.name);
         histogram.Scale(scale_factor.value);
     }
 
