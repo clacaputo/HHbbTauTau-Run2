@@ -89,13 +89,11 @@ public:
     TH1D_ENTRY(DeltaPhi_bb_MET, 22, 0., 3.3)
     TH1D_ENTRY(DeltaPhi_tt_MET, 22, 0., 3.3)
     TH1D_ENTRY(DeltaPhi_hh, 22, 0., 3.3)
-    TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
-    TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
-    TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
+    TH1D_ENTRY(DeltaR_tt, 40, 0, 6)
+    TH1D_ENTRY(DeltaR_bb, 40, 0, 6)
+    TH1D_ENTRY(DeltaR_hh, 40, 0, 6)
     TH1D_ENTRY(MVA_BDT, 40, -1, 1)
-    TH1D_ENTRY(MVA_BDTD, 40, -1, 1)
-    TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
-    TH1D_ENTRY(mt_2, 15, 0, 150)
+    TH1D_ENTRY(mt_2, 20, 0, 200)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all)
@@ -140,7 +138,6 @@ public:
         m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
 
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
-//        MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
     }
 };
 
@@ -226,6 +223,8 @@ public:
                 EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::OS_NotIsolated);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
+
+            std::cout << std::endl;
         }
 
         std::cout << "Saving tables... " << std::endl;
