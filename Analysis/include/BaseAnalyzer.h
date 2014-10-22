@@ -225,7 +225,7 @@ protected:
     virtual void CalculateDMWeights(const Candidate& candidate) = 0;
     virtual void CalculateFakeWeights(const Candidate& candidate) = 0;
 
-    bool HaveTriggerFired(const std::vector<std::string>& interestinghltPaths) const
+    bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const
     {
         for (const ntuple::Trigger& trigger : event->triggers()){
             for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPaths, n); ++n){
@@ -236,7 +236,7 @@ protected:
         return false;
     }
 
-    std::vector<std::string> CollectPathsForTriggerFired(const std::vector<std::string>& interestinghltPaths)
+    std::vector<std::string> CollectPathsForTriggerFired(const std::set<std::string>& interestinghltPaths)
     {
         std::vector<std::string> firedPaths;
         for (const ntuple::Trigger& trigger : event->triggers()){
@@ -499,7 +499,7 @@ protected:
     }
 
     analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
-                                                        const std::vector<std::string>& hltPaths,
+                                                        const std::set<std::string>& hltPaths,
                                                         bool useStandardTriggerMatch)
     {
         analysis::CandidateVector triggeredHiggses;

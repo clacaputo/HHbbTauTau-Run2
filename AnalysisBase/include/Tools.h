@@ -27,6 +27,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <chrono>
 #include <iostream>
 #include <iomanip>
@@ -90,10 +91,10 @@ size_t find_index(const Container& container, const T& value)
 }
 
 template<typename Map>
-std::vector< typename Map::key_type > collect_map_keys(const Map& map)
+std::set< typename Map::key_type > collect_map_keys(const Map& map)
 {
-    std::vector< typename Map::key_type > result;
-    std::transform(map.begin(), map.end(), std::back_inserter(result),
+    std::set< typename Map::key_type > result;
+    std::transform(map.begin(), map.end(), std::inserter(result, result.end()),
                    [](const typename Map::value_type& pair) { return pair.first; } );
     return result;
 }

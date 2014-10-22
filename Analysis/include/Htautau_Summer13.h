@@ -49,7 +49,7 @@ const double DeltaR_triggerMatch = 0.5; // <
 namespace MuTau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const std::vector<std::string> hltPaths =
+        const std::set<std::string> hltPaths =
             { "HLT_IsoMu17_eta2p1_LooseIsoPFTau20", "HLT_IsoMu18_eta2p1_LooseIsoPFTau20" };
     }
 
@@ -125,7 +125,7 @@ namespace MuTau {
 namespace ETau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const std::vector<std::string> hltPaths =
+        const std::set<std::string> hltPaths =
             { "HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
               "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20" };
     }
@@ -218,7 +218,7 @@ namespace TauTau {
          {"HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1", false},
          {"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1",false} };
 
-        const std::vector<std::string> hltPaths = tools::collect_map_keys(hltPathsMap);
+        const std::set<std::string> hltPaths = tools::collect_map_keys(hltPathsMap);
     }
 
     namespace tauID {
@@ -374,7 +374,7 @@ namespace DYEmbedded {
     namespace trigger {
         // Riccardo repository: https://github.com/rmanzoni/HTT/tree/
         //a03b227073b2d4d8a2abe95367c014694588bf98/CMGTools/H2TauTau/python/proto/samples/run2012/trigger*.py
-        const std::vector<std::string> hltPaths = { "HLT_Mu17_Mu8"};
+        const std::set<std::string> hltPaths = { "HLT_Mu17_Mu8"};
     }
 
     const double invariantMassCut = 50.;

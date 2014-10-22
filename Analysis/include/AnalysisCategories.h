@@ -36,6 +36,7 @@
 #include <Rtypes.h>
 
 #include "AnalysisBase/include/AnalysisTypes.h"
+#include "AnalysisBase/include/Tools.h"
 
 namespace analysis {
 
@@ -281,12 +282,18 @@ static const std::map<EventRegion, std::string> eventRegionNamesMap =
             { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_HighMt, "OS_HighMt"},
             { EventRegion::SS_HighMt, "SS_HighMt"} };
 } // namespace detail
+
 typedef std::vector<EventCategory> EventCategoryVector;
 typedef std::set<EventCategory> EventCategorySet;
 
+static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
 static const EventCategorySet OneJetEventCategories = { EventCategory::OneJet_ZeroBtag, EventCategory::OneJet_OneBtag };
 static const EventCategorySet TwoJetsEventCategories =
         { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
+
+typedef std::set<EventRegion> EventRegionSet;
+
+static const EventRegionSet AllEventRegions = tools::collect_map_keys(detail::eventRegionNamesMap);
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     s << detail::eventCategoryNamesMap.at(eventCategory);

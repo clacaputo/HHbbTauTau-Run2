@@ -30,6 +30,11 @@
 
 #include "Analysis/include/BaseFlatTreeAnalyzer.h"
 
+class FlatAnalyzerData_etau : public analysis::FlatAnalyzerData {
+public:
+    TH1D_ENTRY(mt_1, 50, 0, 50)
+};
+
 class FlatTreeAnalyzer_etau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_etau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
@@ -40,6 +45,11 @@ public:
 
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::ETau; }
+
+    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData() override
+    {
+        return std::shared_ptr<FlatAnalyzerData_etau>(new FlatAnalyzerData_etau());
+    }
 
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
     {
@@ -59,9 +69,14 @@ protected:
         return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
     }
 
-//    virtual std::pair<double, double> CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
-//                                                                 const std::string& /*hist_name*/) override
-//    {
-//        return std::pair<double, double>(1, 1);
-//    }
+    virtual bool FillHistograms(analysis::FlatAnalyzerData& _anaData, const analysis::FlatEventInfo& eventInfo,
+                                double weight, bool fillAllHistograms) override
+    {
+        if(!BaseFlatTreeAnalyzer::FillHistograms(_anaData, eventInfo, weight, fillAllHistograms))
+            return false;
+        FlatAnalyzerData_etau& anaData = *dynamic_cast<FlatAnalyzerData_etau*>(&_anaData);
+        const ntuple::Flat& event = *eventInfo.event;
+        anaData.mt_1().Fill(event.mt_1, weight);
+        return true;
+    }
 };
