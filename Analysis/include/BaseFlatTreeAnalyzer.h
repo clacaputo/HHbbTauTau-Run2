@@ -704,9 +704,7 @@ private:
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
                 if( TH1D* histogram = GetSignalHistogram(eventCategory, dataCategory->name, hist.name) ) {
                     const PhysicalValue integral = Integral(*histogram, includeOverflow);
-                    if(includeError) of << integral;
-                    else of << integral.value;
-                    of << sep;
+                    of << integral.ToString<wchar_t>(includeError) << sep;
                 }
                 else
                     of << "not found" << sep;

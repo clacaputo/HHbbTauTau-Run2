@@ -115,8 +115,11 @@ public:
                 all_sources.insert(source_entry.first);
         }
         const auto& signal_names = ParseSignalList(signal_list);
-        for(const auto& signal_name : signal_names)
+        for(const auto& signal_name : signal_names) {
+            if(!categories.count(signal_name))
+                throw exception("Undefined signal '") << signal_name << "'.";
             categories[signal_name].draw = true;
+        }
     }
 
     const DataCategoryPtrVector& GetAllCategories() const { return all_categories; }
@@ -243,9 +246,11 @@ private:
 
         std::set<std::string> result;
         size_t prev_pos = 0;
-        for(size_t pos = signal_list.find(separator); pos != std::string::npos;
-                                                      pos = signal_list.find(separator, prev_pos)) {
-            const std::string signal_name = signal_list.substr(prev_pos, pos - 1);
+        for(bool next = true; next;) {
+            const size_t pos = signal_list.find(separator, prev_pos);
+            next = pos != std::string::npos;
+            const size_t last_pos = next ? pos - 1 : std::string::npos;
+            const std::string signal_name = signal_list.substr(prev_pos, last_pos);
             result.insert(signal_name);
             prev_pos = pos + 1;
         }
