@@ -28,7 +28,7 @@
 
 class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
 public:
-    TH1D_ENTRY(mt_1, 50, 0, 50)
+    TH1D_ENTRY(mt_1, 20, 0, 200)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all) override
     {
