@@ -33,6 +33,15 @@
 class FlatAnalyzerData_mutau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY(mt_1, 50, 0, 50)
+
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all) override
+    {
+        FlatAnalyzerData::Fill(eventInfo, weight, fill_all);
+        if(!fill_all) return;
+
+        const ntuple::Flat& event = *eventInfo.event;
+        mt_1().Fill(event.mt_1, weight);
+    }
 };
 
 class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
@@ -81,16 +90,5 @@ protected:
             return true;
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
-    }
-
-    virtual bool FillHistograms(analysis::FlatAnalyzerData& _anaData, const analysis::FlatEventInfo& eventInfo,
-                                double weight, bool fillAllHistograms) override
-    {
-        if(!BaseFlatTreeAnalyzer::FillHistograms(_anaData, eventInfo, weight, fillAllHistograms))
-            return false;
-        FlatAnalyzerData_mutau& anaData = *dynamic_cast<FlatAnalyzerData_mutau*>(&_anaData);
-        const ntuple::Flat& event = *eventInfo.event;
-        anaData.mt_1().Fill(event.mt_1, weight);
-        return true;
     }
 };

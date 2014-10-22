@@ -97,6 +97,52 @@ public:
     TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
     TH1D_ENTRY(mt_2, 30, 0, 300)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
+
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fillAll)
+    {
+        const ntuple::Flat& event = *eventInfo.event;
+        m_sv().Fill(event.m_sv_vegas, weight);
+        if(!fillAll) return;
+
+        m_sv_up().Fill(event.m_sv_up_vegas, weight);
+        m_sv_down().Fill(event.m_sv_down_vegas, weight);
+        pt_1().Fill(event.pt_1, weight);
+        eta_1().Fill(event.eta_1, weight);
+        pt_2().Fill(event.pt_2, weight);
+        eta_2().Fill(event.eta_2, weight);
+        DeltaPhi_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1)), weight);
+        DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
+        pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
+        m_vis().Fill(eventInfo.Htt.M(),weight);
+        pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
+        DeltaPhi_tt_MET().Fill(eventInfo.Htt.DeltaPhi(eventInfo.MET), weight);
+        mt_2().Fill(event.mt_2, weight);
+
+        if(!eventInfo.has_bjet_pair) return;
+        pt_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
+        eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
+        pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
+        eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
+        DeltaPhi_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
+                                       eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
+        DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
+                                     eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
+        pt_H_bb().Fill(eventInfo.Hbb.Pt(),weight);
+        m_bb().Fill(eventInfo.Hbb.M(), weight);
+        DeltaPhi_bb_MET().Fill(eventInfo.Hbb.DeltaPhi(eventInfo.MET), weight);
+        DeltaPhi_hh().Fill(eventInfo.Htt.DeltaPhi(eventInfo.Hbb), weight);
+        DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
+        m_ttbb().Fill(eventInfo.resonance.M(), weight);
+        pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
+        const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
+        m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
+        m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
+        m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+
+        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+        MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
+        MVA_BDTMitFisher().Fill(eventInfo.mva_BDTMitFisher, weight);
+    }
 };
 
 class BaseFlatTreeAnalyzer {
@@ -375,8 +421,8 @@ protected:
                 if (dataCategory.name == DYJets.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
 
-                FillHistograms(GetAnaData(eventCategory, dataCategory.name, eventRegion), eventInfo,
-                               weight, EssentialEventRegions().count(eventRegion));
+                const bool fill_all = EssentialEventRegions().count(eventRegion);
+                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, weight, fill_all);
             }
         }
     }
@@ -395,8 +441,8 @@ protected:
 
         if(type_category_map.count(eventInfo.eventType)) {
             const std::string& name = type_category_map.at(eventInfo.eventType);
-            FillHistograms(GetAnaData(eventCategory, name, eventRegion), eventInfo, weight,
-                           EssentialEventRegions().count(eventRegion));
+            const bool fill_all = EssentialEventRegions().count(eventRegion);
+            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all);
         }
     }
 
@@ -430,53 +476,6 @@ protected:
         }
     }
 
-    virtual bool FillHistograms(FlatAnalyzerData& anaData, const FlatEventInfo& eventInfo, double weight,
-                        bool fillAllHistograms)
-    {
-        const ntuple::Flat& event = *eventInfo.event;
-        anaData.m_sv().Fill(event.m_sv_vegas, weight);
-        if(!fillAllHistograms) return false;
-
-        anaData.m_sv_up().Fill(event.m_sv_up_vegas, weight);
-        anaData.m_sv_down().Fill(event.m_sv_down_vegas, weight);
-        anaData.pt_1().Fill(event.pt_1, weight);
-        anaData.eta_1().Fill(event.eta_1, weight);
-        anaData.pt_2().Fill(event.pt_2, weight);
-        anaData.eta_2().Fill(event.eta_2, weight);
-        anaData.DeltaPhi_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1)), weight);
-        anaData.DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
-        anaData.pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
-        anaData.m_vis().Fill(eventInfo.Htt.M(),weight);
-        anaData.pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
-        anaData.DeltaPhi_tt_MET().Fill(eventInfo.Htt.DeltaPhi(eventInfo.MET), weight);
-        anaData.mt_2().Fill(event.mt_2, weight);
-        if(eventInfo.has_bjet_pair) {
-            anaData.pt_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
-            anaData.eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
-            anaData.pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
-            anaData.eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
-            anaData.DeltaPhi_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
-                                           eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
-            anaData.DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
-                                         eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
-            anaData.pt_H_bb().Fill(eventInfo.Hbb.Pt(),weight);
-            anaData.m_bb().Fill(eventInfo.Hbb.M(), weight);
-            anaData.DeltaPhi_bb_MET().Fill(eventInfo.Hbb.DeltaPhi(eventInfo.MET), weight);
-            anaData.DeltaPhi_hh().Fill(eventInfo.Htt.DeltaPhi(eventInfo.Hbb), weight);
-            anaData.DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
-            anaData.m_ttbb().Fill(eventInfo.resonance.M(), weight);
-            anaData.pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
-            const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
-            anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
-            anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
-            anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
-
-            anaData.MVA_BDT().Fill(eventInfo.mva_BDT, weight);
-            anaData.MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
-            anaData.MVA_BDTMitFisher().Fill(eventInfo.mva_BDTMitFisher, weight);
-        }
-        return true;
-    }
 
     void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,
                        bool calc_BDTMitFisher)
