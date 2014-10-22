@@ -98,11 +98,11 @@ public:
     TH1D_ENTRY(mt_2, 30, 0, 300)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
 
-    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fillAll)
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all)
     {
         const ntuple::Flat& event = *eventInfo.event;
         m_sv().Fill(event.m_sv_vegas, weight);
-        if(!fillAll) return;
+        if(!fill_all) return;
 
         m_sv_up().Fill(event.m_sv_up_vegas, weight);
         m_sv_down().Fill(event.m_sv_down_vegas, weight);
@@ -547,7 +547,8 @@ protected:
         std::string channel_name = ChannelName();
         std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
 
-        std::shared_ptr<TFile> outputFile(new TFile((outputFileName + hist_name + ".root").c_str(), "RECREATE"));
+        const std::string file_name = outputFileName + "_" + hist_name + ".root";
+        std::shared_ptr<TFile> outputFile(new TFile(file_name.c_str(), "RECREATE"));
         outputFile->cd();
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             if(!categoryToDirectoryNameSuffix.count(eventCategory)
