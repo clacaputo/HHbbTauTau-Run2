@@ -492,7 +492,7 @@ title: Z #rightarrow tautau
 [ZTT]
 type: BACKGROUND
 type: ZTT
-#type: LIMITS
+type: LIMITS
 title: Z #rightarrow tautau
 datacard: ZTT
 
@@ -536,29 +536,20 @@ file: Tau_D.root 1
 [EMBEDDED MuTau]
 type: EMBEDDED
 channel: muTau
-title: Z #rightarrow #tau #tau
-file: DY_Embedded_MuTau_A.root 1
-file: DY_Embedded_MuTau_B.root 1
-file: DY_Embedded_MuTau_C.root 1
-file: DY_Embedded_MuTau_D.root 1
+title: Embedded Z #rightarrow #tau #tau
+file: DY_Embedded_MuTau.root 1
 
 [EMBEDDED ETau]
 type: EMBEDDED
 channel: eTau
-title: Z #rightarrow #tau #tau
-file: DY_Embedded_ETau_A.root 1
-file: DY_Embedded_ETau_B.root 1
-file: DY_Embedded_ETau_C.root 1
-file: DY_Embedded_ETau_D.root 1
+title: Embedded Z #rightarrow #tau #tau
+file: DY_Embedded_ETau.root 1
 
 [EMBEDDED TauTau]
 type: EMBEDDED
 channel: tauTau
-title: Z #rightarrow #tau #tau
-file: DY_Embedded_TauTau_A.root 1
-file: DY_Embedded_TauTau_B.root 1
-file: DY_Embedded_TauTau_C.root 1
-file: DY_Embedded_TauTau_D.root 1
+title: Embedded Z #rightarrow #tau #tau
+file: DY_Embedded_TauTau.root 1
 
 [AllBkg]
 type: COMPOSIT

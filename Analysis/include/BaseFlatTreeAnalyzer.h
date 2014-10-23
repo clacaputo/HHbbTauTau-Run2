@@ -58,53 +58,114 @@ namespace analysis {
 
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
+static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280.,
+                                                    300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
+                                                    650, 700, 750, 800, 850, 900, 950, 1000 };
 
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
-    TH1D_ENTRY(pt_1, 50, 0, 200)
-    TH1D_ENTRY(eta_1, 60, -3, 3)
-    TH1D_ENTRY(pt_2, 50, 0, 200)
-    TH1D_ENTRY(eta_2, 60, -3, 3)
-    TH1D_ENTRY(pt_b1, 50, 0, 200)
-    TH1D_ENTRY(eta_b1, 60, -3, 3)
-    TH1D_ENTRY(pt_b2, 50, 0, 200)
-    TH1D_ENTRY(eta_b2, 60, -3, 3)
-    TH1D_ENTRY(pt_H_tt, 35, 0, 350)
-    TH1D_ENTRY(pt_H_bb, 35, 0, 350)
-    TH1D_ENTRY(pt_H_hh, 35, 0, 350)
+    TH1D_ENTRY(pt_1, 20, 0, 200)
+    TH1D_ENTRY(eta_1, 25, -2.5, 2.5)
+    TH1D_ENTRY(pt_2, 20, 0, 200)
+    TH1D_ENTRY(eta_2, 25, -2.5, 2.5)
+    TH1D_ENTRY(pt_b1, 20, 0, 200)
+    TH1D_ENTRY(eta_b1, 25, -2.5, 2.5)
+    TH1D_ENTRY(pt_b2, 20, 0, 200)
+    TH1D_ENTRY(eta_b2, 25, -2.5, 2.5)
+    TH1D_ENTRY(pt_H_tt, 20, 0, 300)
+    TH1D_ENTRY(pt_H_bb, 20, 0, 300)
+    TH1D_ENTRY(pt_H_hh, 20, 0, 300)
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_up, mass_bins)
     TH1D_ENTRY_CUSTOM(m_sv_down, mass_bins)
     TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
     TH1D_ENTRY(m_bb, 30, 0, 600)
-    TH1D_ENTRY(m_ttbb, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_kinfit, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_kinfit_up, 50, 0, 1000)
-    TH1D_ENTRY(m_ttbb_kinfit_down, 50, 0, 1000)
-    TH1D_ENTRY(DeltaPhi_tt, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_bb, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_bb_MET, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_tt_MET, 80, -4, 4)
-    TH1D_ENTRY(DeltaPhi_hh, 80, -4, 4)
-    TH1D_ENTRY(DeltaR_tt, 60, 0, 6)
-    TH1D_ENTRY(DeltaR_bb, 60, 0, 6)
-    TH1D_ENTRY(DeltaR_hh, 60, 0, 6)
+    TH1D_ENTRY_CUSTOM(m_ttbb, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down, mass_ttbb_bins)
+    TH1D_ENTRY(DeltaPhi_tt, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_bb, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_bb_MET, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_tt_MET, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaPhi_hh, 22, 0., 3.3)
+    TH1D_ENTRY(DeltaR_tt, 40, 0, 6)
+    TH1D_ENTRY(DeltaR_bb, 40, 0, 6)
+    TH1D_ENTRY(DeltaR_hh, 40, 0, 6)
     TH1D_ENTRY(MVA_BDT, 40, -1, 1)
-    TH1D_ENTRY(MVA_BDTD, 40, -1, 1)
-    TH1D_ENTRY(MVA_BDTMitFisher, 40, -1, 1)
-    TH1D_ENTRY(mt_1, 50, 0, 50)
-    TH1D_ENTRY(mt_2, 50, 0, 300)
-    TH1D_ENTRY(pt_H_tt_MET, 35, 0, 350)
+    TH1D_ENTRY(mt_2, 20, 0, 200)
+    TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
+
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all)
+    {
+        const ntuple::Flat& event = *eventInfo.event;
+        m_sv().Fill(event.m_sv_vegas, weight);
+        if(!fill_all) return;
+
+        m_sv_up().Fill(event.m_sv_up_vegas, weight);
+        m_sv_down().Fill(event.m_sv_down_vegas, weight);
+        pt_1().Fill(event.pt_1, weight);
+        eta_1().Fill(event.eta_1, weight);
+        pt_2().Fill(event.pt_2, weight);
+        eta_2().Fill(event.eta_2, weight);
+        DeltaPhi_tt().Fill(std::abs(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1))), weight);
+        DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
+        pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
+        m_vis().Fill(eventInfo.Htt.M(),weight);
+        pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
+        DeltaPhi_tt_MET().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.MET)), weight);
+        mt_2().Fill(event.mt_2, weight);
+
+        if(!eventInfo.has_bjet_pair) return;
+        pt_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
+        eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
+        pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
+        eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
+        DeltaPhi_bb().Fill(std::abs(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
+                                       eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second))), weight);
+        DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
+                                     eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
+        pt_H_bb().Fill(eventInfo.Hbb.Pt(),weight);
+        m_bb().Fill(eventInfo.Hbb.M(), weight);
+        DeltaPhi_bb_MET().Fill(std::abs(eventInfo.Hbb.DeltaPhi(eventInfo.MET)), weight);
+        DeltaPhi_hh().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.Hbb)), weight);
+        DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
+        m_ttbb().Fill(eventInfo.resonance.M(), weight);
+        pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
+        const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
+        m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
+        m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
+        m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+
+//        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+    }
 };
 
 class BaseFlatTreeAnalyzer {
 public:
-    typedef std::map<EventRegion, FlatAnalyzerData> RegionAnaData;
+    typedef std::map<EventRegion, std::shared_ptr<FlatAnalyzerData> > RegionAnaData;
 
     typedef std::map<std::string, RegionAnaData> AnaDataForEventCategory;
     typedef std::map<EventCategory, AnaDataForEventCategory> FullAnaData;
 
     static const std::string ReferenceHistogramName() { return "m_sv"; }
+
+    static const EventCategorySet& EventCategoriesToProcess()
+    {
+        static EventCategorySet categories;
+        if(!categories.size()) {
+            categories.insert(EventCategory::Inclusive);
+            categories.insert(TwoJetsEventCategories.begin(), TwoJetsEventCategories.end());
+        }
+        return categories;
+    }
+
+    static const EventRegionSet& EssentialEventRegions()
+    {
+//        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
+        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::OS_NotIsolated };
+        return regions;
+    }
 
     BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                          const std::string& _outputFileName, Channel channel_id,
@@ -134,25 +195,36 @@ public:
         }
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
-        const double embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
+        const auto embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
+//        const double embeddedSF = 1;
+        std::cout << "Embedded SF = " << embeddedSF << std::endl;
 
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
-        for (auto& fullAnaDataEntry : fullAnaData) {
-            const EventCategory& eventCategory = fullAnaDataEntry.first;
-            AnaDataForEventCategory& anaData = fullAnaDataEntry.second;
+        for (EventCategory eventCategory : EventCategoriesToProcess()) {
+
+            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,false);
+
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             std::cout << eventCategory << " OS_HighMt_data / OS_HighMt_mc = "
-                      << wjets_scale_factors.first << std::endl;
-            std::cout << eventCategory << " SS_HighMt_data / SS_HighMt_mc = "
+                      << wjets_scale_factors.first << "\n"
+                      << eventCategory << " SS_HighMt_data / SS_HighMt_mc = "
                       << wjets_scale_factors.second << std::endl;
-            const double qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
-            std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
+            EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
+
+            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName(),
+                                                                  EventRegion::SS_Isolated,EventRegion::SS_NotIsolated);
+            std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
+
             for (const auto& hist : histograms) {
-                CreateHistogramForZTT(anaData, hist, embeddedSF);
-                EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
-                EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
+                if(hist.name != ReferenceHistogramName()) {
+                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
+                    EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+                }
+                EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::OS_NotIsolated);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
+
+            std::cout << std::endl;
         }
 
         std::cout << "Saving tables... " << std::endl;
@@ -160,8 +232,13 @@ public:
         PrintTables("semicolon", L";");
 
         std::cout << "Saving datacards... " << std::endl;
-        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false);
+        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mSV("emptyDatacard_mSV",mass_bins);
+        static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", mass_ttbb_bins);
+
+        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false, emptyDatacard_mSV);
+
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false,
+                                        emptyDatacard_mttbb);
 
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(false);
@@ -173,7 +250,8 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual double CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name)
+    virtual PhysicalValue CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name,
+                                                  EventRegion num_eventRegion, EventRegion den_eventRegion)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -181,23 +259,27 @@ protected:
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_OSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::OS_NotIsolated, hist_name);
-        auto hist_SSnotIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_NotIsolated, hist_name);
-        if(!hist_OSnotIso_data || !hist_SSnotIso_data)
+        auto hist_num_data = GetHistogram(eventCategory, data.name, num_eventRegion, hist_name);
+        auto hist_den_data = GetHistogram(eventCategory, data.name, den_eventRegion, hist_name);
+
+        if(!hist_num_data || !hist_den_data)
             throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
 
-        TH1D& hist_OSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_NotIsolated, *hist_OSnotIso_data);
-        TH1D& hist_SSnotIso = CloneHistogram(eventCategory, qcd.name, EventRegion::SS_NotIsolated, *hist_SSnotIso_data);
+        TH1D& hist_num = CloneHistogram(eventCategory, qcd.name, num_eventRegion, *hist_num_data);
+        TH1D& hist_den = CloneHistogram(eventCategory, qcd.name, den_eventRegion, *hist_den_data);
 
-        SubtractBackgroundHistograms(hist_OSnotIso, eventCategory, EventRegion::OS_NotIsolated, qcd.name);
-        SubtractBackgroundHistograms(hist_SSnotIso, eventCategory, EventRegion::SS_NotIsolated, qcd.name);
 
-        const double n_OSnotIso = hist_OSnotIso.Integral(0, hist_OSnotIso.GetNbinsX() + 1);
-        const double n_SSnotIso = hist_SSnotIso.Integral(0, hist_SSnotIso.GetNbinsX() + 1);
-        return n_OSnotIso / n_SSnotIso;
+        SubtractBackgroundHistograms(hist_num, eventCategory, num_eventRegion, qcd.name, true);
+        SubtractBackgroundHistograms(hist_den, eventCategory, den_eventRegion, qcd.name, true);
+
+
+        const PhysicalValue n_num = Integral(hist_num, false);
+        const PhysicalValue n_den = Integral(hist_den, false);
+        return n_num / n_den;
     }
 
-    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name, double scale_factor)
+    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name,
+                             const PhysicalValue& scale_factor, EventRegion shapeRegion)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -205,16 +287,15 @@ protected:
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_SSIso_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Isolated, hist_name);
-        if(!hist_SSIso_data) return;
+        auto hist_shape_data = GetHistogram(eventCategory, data.name, shapeRegion, hist_name);
+        if(!hist_shape_data) return;
 
-        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_SSIso_data);
-        SubtractBackgroundHistograms(histogram, eventCategory, EventRegion::SS_Isolated, qcd.name);
-        histogram.Scale(scale_factor);
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
+        SubtractBackgroundHistograms(histogram, eventCategory, shapeRegion, qcd.name);
+        histogram.Scale(scale_factor.value);
     }
 
-    virtual std::pair<double, double> CalculateWjetsScaleFactors(EventCategory eventCategory,
-                                                                 const std::string& hist_name)
+    virtual PhysicalValuePair CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -233,21 +314,21 @@ protected:
         TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_HighMt, *hist_OS_HighMt_data);
         TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_HighMt, *hist_SS_HighMt_data);
 
-        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name);
-        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name);
+        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name, true);
+        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name, true);
 
-        const double n_OS_HighMt = hist_OS_HighMt.Integral(0, hist_OS_HighMt.GetNbinsX() + 1);
-        const double n_OS_HighMt_mc = hist_OS_HighMt_mc->Integral(0, hist_OS_HighMt_mc->GetNbinsX() + 1);
-        const double n_SS_HighMt = hist_SS_HighMt.Integral(0, hist_SS_HighMt.GetNbinsX() + 1);
-        const double n_SS_HighMt_mc = hist_SS_HighMt_mc->Integral(0, hist_SS_HighMt_mc->GetNbinsX() + 1);
+        const PhysicalValue n_OS_HighMt = Integral(hist_OS_HighMt, false);
+        const PhysicalValue n_OS_HighMt_mc = Integral(*hist_OS_HighMt_mc, false);
+        const PhysicalValue n_SS_HighMt = Integral(hist_SS_HighMt, false);
+        const PhysicalValue n_SS_HighMt_mc = Integral(*hist_SS_HighMt_mc, false);
 
-        const double OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
-        const double SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
-        return std::pair<double, double>(OS_ratio, SS_ratio);
+        const PhysicalValue OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
+        const PhysicalValue SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
+        return PhysicalValuePair(OS_ratio, SS_ratio);
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
-                               const std::pair<double, double>& scale_factors)
+                               const PhysicalValuePair& scale_factors)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -257,21 +338,45 @@ protected:
 
         if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Isolated, hist_name)) {
             TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Isolated, *hist_OS_mc);
-            hist_OS.Scale(scale_factors.first);
+            hist_OS.Scale(scale_factors.first.value);
         }
 
         if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Isolated, hist_name)) {
             TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Isolated, *hist_SS_mc);
-            hist_SS.Scale(scale_factors.second);
+            hist_SS.Scale(scale_factors.second.value);
+        }
+
+        if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_NotIsolated, hist_name)) {
+            TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_NotIsolated, *hist_OS_mc);
+            hist_OS.Scale(scale_factors.first.value);
+        }
+
+        if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_NotIsolated, hist_name)) {
+            TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_NotIsolated, *hist_SS_mc);
+            hist_SS.Scale(scale_factors.second.value);
         }
     }
 
     const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
 
+    virtual std::shared_ptr<FlatAnalyzerData> MakeAnaData()
+    {
+        return std::shared_ptr<FlatAnalyzerData>(new FlatAnalyzerData());
+    }
+
+    FlatAnalyzerData& GetAnaData(EventCategory eventCategory, const std::string& dataCategoryName,
+                                 EventRegion eventRegion)
+    {
+        std::shared_ptr<FlatAnalyzerData>& anaData = fullAnaData[eventCategory][dataCategoryName][eventRegion];
+        if(!anaData)
+            anaData = MakeAnaData();
+        return *anaData;
+    }
+
     root_ext::SmartHistogram<TH1D>* GetHistogram(EventCategory eventCategory, const std::string& dataCategoryName,
                                                  EventRegion eventRegion, const std::string& histogramName)
     {
-        return fullAnaData[eventCategory][dataCategoryName][eventRegion].GetPtr<TH1D>(histogramName);
+        return GetAnaData(eventCategory, dataCategoryName, eventRegion).GetPtr<TH1D>(histogramName);
     }
 
     root_ext::SmartHistogram<TH1D>* GetSignalHistogram(EventCategory eventCategory, const std::string& dataCategoryName,
@@ -283,7 +388,7 @@ protected:
     TH1D& CloneHistogram(EventCategory eventCategory, const std::string& dataCategoryName, EventRegion eventRegion,
                          const root_ext::SmartHistogram<TH1D>& originalHistogram)
     {
-        return fullAnaData[eventCategory][dataCategoryName][eventRegion].Clone(originalHistogram);
+        return GetAnaData(eventCategory, dataCategoryName, eventRegion).Clone(originalHistogram);
     }
 
     TH1D& CloneSignalHistogram(EventCategory eventCategory, const std::string& dataCategoryName,
@@ -314,12 +419,14 @@ protected:
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
 
             for(auto eventCategory : eventCategories) {
+                if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
                 if (dataCategory.name == DYJets.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
 
-                FillHistograms(fullAnaData[eventCategory][dataCategory.name][eventRegion], eventInfo, weight);
+                const bool fill_all = EssentialEventRegions().count(eventRegion);
+                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, weight, fill_all);
             }
         }
     }
@@ -333,16 +440,17 @@ protected:
 
         const std::map<ntuple::EventType, std::string> type_category_map = {
             { ntuple::EventType::ZL, ZL.name }, { ntuple::EventType::ZJ, ZJ.name },
-            { ntuple::EventType::ZTT, ZTT_MC.name }
+            { ntuple::EventType::ZTT, ZTT_MC.name }, { ntuple::EventType::ZTT_no_match, ZTT_MC.name }
         };
 
         if(type_category_map.count(eventInfo.eventType)) {
             const std::string& name = type_category_map.at(eventInfo.eventType);
-            FillHistograms(fullAnaData[eventCategory][name][eventRegion], eventInfo, weight);
+            const bool fill_all = EssentialEventRegions().count(eventRegion);
+            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all);
         }
     }
 
-    double CalculateEmbeddedScaleFactor(const std::string& hist_name)
+    PhysicalValue CalculateEmbeddedScaleFactor(const std::string& hist_name)
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
@@ -352,68 +460,28 @@ protected:
         if(!hist_embedded || !hist_ztautau )
             throw std::runtime_error("embedded or ztt hist not found");
 
-        const double n_ztautau = hist_ztautau->Integral(0, hist_ztautau->GetNbinsX() + 1);
-        const double n_embedded = hist_embedded->Integral(0, hist_embedded->GetNbinsX() + 1);
+        const PhysicalValue n_ztautau = Integral(*hist_ztautau, false);
+        const PhysicalValue n_embedded = Integral(*hist_embedded, false);
         return n_ztautau / n_embedded;
     }
 
-    void CreateHistogramForZTT(AnaDataForEventCategory& anaData, const HistogramDescriptor& hist, double scale_factor)
+    void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
+                               const PhysicalValue& scale_factor, bool useEmbedded)
     {
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+        const analysis::DataCategory& embedded = useEmbedded
+                ? dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded)
+                : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const double embedded_scaleFactor = useEmbedded ? scale_factor.value : 1;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
-        for(auto& map_entry : anaData[embedded.name]) {
-            if(auto embedded_hist = map_entry.second.GetPtr<TH1D>(hist.name)) {
-                TH1D& ztt_hist = anaData[ZTT.name][map_entry.first].Clone(*embedded_hist);
-                ztt_hist.Scale(scale_factor);
+        for(EventRegion eventRegion : AllEventRegions) {
+            if(auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name)) {
+                TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
+                ztt_hist.Scale(embedded_scaleFactor);
             }
         }
     }
 
-    void FillHistograms(FlatAnalyzerData& anaData, const FlatEventInfo& eventInfo, double weight)
-    {
-        const ntuple::Flat& event = *eventInfo.event;
-        anaData.m_sv().Fill(event.m_sv_vegas, weight);
-        anaData.m_sv_up().Fill(event.m_sv_up_vegas, weight);
-        anaData.m_sv_down().Fill(event.m_sv_down_vegas, weight);
-        anaData.pt_1().Fill(event.pt_1, weight);
-        anaData.eta_1().Fill(event.eta_1, weight);
-        anaData.pt_2().Fill(event.pt_2, weight);
-        anaData.eta_2().Fill(event.eta_2, weight);
-        anaData.DeltaPhi_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1)), weight);
-        anaData.DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
-        anaData.pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
-        anaData.m_vis().Fill(eventInfo.Htt.M(),weight);
-        anaData.pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
-        anaData.DeltaPhi_tt_MET().Fill(eventInfo.Htt.DeltaPhi(eventInfo.MET), weight);
-        anaData.mt_1().Fill(event.mt_1, weight);
-        anaData.mt_2().Fill(event.mt_2, weight);
-        if(eventInfo.has_bjet_pair) {
-            anaData.pt_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
-            anaData.eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
-            anaData.pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
-            anaData.eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
-            anaData.DeltaPhi_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
-                                           eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
-            anaData.DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
-                                         eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second)), weight);
-            anaData.pt_H_bb().Fill(eventInfo.Hbb.Pt(),weight);
-            anaData.m_bb().Fill(eventInfo.Hbb.M(), weight);
-            anaData.DeltaPhi_bb_MET().Fill(eventInfo.Hbb.DeltaPhi(eventInfo.MET), weight);
-            anaData.DeltaPhi_hh().Fill(eventInfo.Htt.DeltaPhi(eventInfo.Hbb), weight);
-            anaData.DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
-            anaData.m_ttbb().Fill(eventInfo.resonance.M(), weight);
-            anaData.pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
-            const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
-            anaData.m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
-            anaData.m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
-            anaData.m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
-
-            anaData.MVA_BDT().Fill(eventInfo.mva_BDT, weight);
-            anaData.MVA_BDTD().Fill(eventInfo.mva_BDTD, weight);
-            anaData.MVA_BDTMitFisher().Fill(eventInfo.mva_BDTMitFisher, weight);
-        }
-    }
 
     void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,
                        bool calc_BDTMitFisher)
@@ -443,9 +511,7 @@ protected:
         const std::string blindCondition = isBlind ? "_blind" : "_noBlind";
         root_ext::PdfPrinter printer(outputFileName + blindCondition + ".pdf");
 
-        for(auto& fullAnaDataEntry : fullAnaData) {
-            const EventCategory eventCategory = fullAnaDataEntry.first;
-
+        for(EventCategory eventCategory : EventCategoriesToProcess()) {
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
@@ -471,7 +537,8 @@ protected:
     }
 
     void ProduceFileForLimitsCalculation(const std::string& hist_name, const std::string& hist_name_up,
-                                         const std::string& hist_name_down, bool include_one_jet_categories)
+                                         const std::string& hist_name_down, bool include_one_jet_categories,
+                                         const root_ext::SmartHistogram<TH1D>& emptyDatacard)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0tag" },
@@ -486,10 +553,10 @@ protected:
         std::string channel_name = ChannelName();
         std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
 
-        std::shared_ptr<TFile> outputFile(new TFile((outputFileName + hist_name + ".root").c_str(), "RECREATE"));
+        const std::string file_name = outputFileName + "_" + hist_name + ".root";
+        std::shared_ptr<TFile> outputFile(new TFile(file_name.c_str(), "RECREATE"));
         outputFile->cd();
-        for(auto& fullAnaDataEntry : fullAnaData) {
-            const EventCategory& eventCategory = fullAnaDataEntry.first;
+        for(EventCategory eventCategory : EventCategoriesToProcess()) {
             if(!categoryToDirectoryNameSuffix.count(eventCategory)
                     || (!include_one_jet_categories && OneJetEventCategories.count(eventCategory))) continue;
             const std::string directoryName = channelNameForFolder.at(ChannelName()) + "_"
@@ -499,29 +566,48 @@ protected:
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
-                TH1D* hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name);
-                if(!hist_orig)
-                    throw exception("Datacard histogram '") << hist_name << "' not found for data category '"
-                                                            << dataCategory->name << "'.";
-                std::shared_ptr<TH1D> hist(static_cast<TH1D*>(hist_orig->Clone()));
+                std::shared_ptr<TH1D> hist;
+                if(auto hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name))
+                    hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+                else {
+                    std::cerr << "Warning - Datacard histogram '" << hist_name << "' not found for data category '"
+                              << dataCategory->name << "' for eventCategory '"
+                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+
+                    hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
+                }
+
                 hist->Scale(dataCategory->limits_sf);
                 hist->Write(dataCategory->datacard.c_str());
                 const std::string namePrefix = dataCategory->datacard + "_CMS_scale_t_" + channel_name + "_8TeV";
                 const std::string nameDown = namePrefix + "Down";
                 const std::string nameUp = namePrefix + "Up";
 
-                TH1D* hist_up_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_up);
-                if(!hist_up_orig)
-                    throw exception("Datacard histogram '") << hist_name_up << "' not found for data category '"
-                                                            << dataCategory->name << "'.";
-                std::shared_ptr<TH1D> hist_up(static_cast<TH1D*>(hist_up_orig->Clone()));
+                std::shared_ptr<TH1D> hist_up;
+                if(auto hist_up_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_up))
+                    hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_up_orig->Clone()));
+                else {
+                    std::cerr << "Warning - Datacard histogram '" << hist_name_up << "' not found for data category '"
+                              << dataCategory->name << "' for eventCategory '"
+                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+
+                    hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
+                }
+
                 hist_up->Scale(dataCategory->limits_sf);
                 hist_up->Write(nameUp.c_str());
-                TH1D* hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down);
-                if(!hist_down_orig)
-                    throw exception("Datacard histogram '") << hist_name_down << "' not found for data category '"
-                                                            << dataCategory->name << "'.";
-                std::shared_ptr<TH1D> hist_down(static_cast<TH1D*>(hist_down_orig->Clone()));
+
+                std::shared_ptr<TH1D> hist_down;
+                if(auto hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down))
+                    hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_down_orig->Clone()));
+                else {
+                    std::cerr << "Warning - Datacard histogram '" << hist_name_down << "' not found for data category '"
+                              << dataCategory->name << "' for eventCategory '"
+                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+
+                    hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
+                }
+
                 hist_down->Scale(dataCategory->limits_sf);
                 hist_down->Write(nameDown.c_str());
             }
@@ -530,13 +616,36 @@ protected:
     }
 
     void SubtractBackgroundHistograms(TH1D& histogram, EventCategory eventCategory, EventRegion eventRegion,
-                                      const std::string& current_category)
+                                      const std::string& current_category, bool verbose = false)
     {
+        if(verbose)
+            std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
+                      << " for data category '" << current_category << "'.\n"
+                      << "Initial integral: " << Integral(histogram, false) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category) continue;
 
-            if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName()))
+            if(verbose)
+                std::cout << "Sample '" << category->name << "': ";
+            if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName())) {
                 histogram.Add(other_histogram, -1);
+                if(verbose)
+                    std::cout << Integral(*other_histogram, false) << ".\n";
+            } else if(verbose)
+                std::cout << "not found.\n";
+        }
+
+        if(verbose)
+            std::cout << "Integral after bkg subtraction: " << Integral(histogram, false) << ".\n" << std::endl;
+        for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
+            if (histogram.GetBinContent(n) >= 0) continue;
+            const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
+
+            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
+                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
+                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
+                      << "].\n";
+            histogram.SetBinContent(n,0);
         }
     }
 
@@ -588,26 +697,19 @@ private:
             table_name_suffix = L" with error";
         of << table_name_suffix << sep;
 
-        for (const auto& fullAnaDataEntry : fullAnaData) {
-            const EventCategory& eventCategory = fullAnaDataEntry.first;
+        for (EventCategory eventCategory : EventCategoriesToProcess())
             of << eventCategory << sep;
-        }
         of << std::endl;
 
         for (const DataCategory* dataCategory : dataCategoryCollection.GetAllCategories()) {
             of << std::wstring(dataCategory->title.begin(), dataCategory->title.end()) << sep;
-            for (auto& fullAnaDataEntry : fullAnaData) {
-                const EventCategory& eventCategory = fullAnaDataEntry.first;
+            for (EventCategory eventCategory : EventCategoriesToProcess()) {
                 if( TH1D* histogram = GetSignalHistogram(eventCategory, dataCategory->name, hist.name) ) {
-                    typedef std::pair<Int_t, Int_t> limit_pair;
-                    const limit_pair limits = includeOverflow ? limit_pair(0, histogram->GetNbinsX() + 1)
-                                                              : limit_pair(1, histogram->GetNbinsX());
-                    double error = 0.;
-                    const double integral = histogram->IntegralAndError(limits.first, limits.second, error);
-                    of << MakeStringRepresentationForValueWithError(integral, error, includeError) << sep;
+                    const PhysicalValue integral = Integral(*histogram, includeOverflow);
+                    of << integral.ToString<wchar_t>(includeError) << sep;
                 }
                 else
-                    of << "NaN" << sep;
+                    of << "not found" << sep;
             }
             of << std::endl;
         }

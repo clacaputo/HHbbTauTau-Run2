@@ -26,6 +26,20 @@
 
 #include "Analysis/include/BaseFlatTreeAnalyzer.h"
 
+class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
+public:
+    TH1D_ENTRY(mt_1, 20, 0, 200)
+
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all) override
+    {
+        FlatAnalyzerData::Fill(eventInfo, weight, fill_all);
+        if(!fill_all) return;
+
+        const ntuple::Flat& event = *eventInfo.event;
+        mt_1().Fill(event.mt_1, weight);
+    }
+};
+
 class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_tautau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
@@ -36,6 +50,11 @@ public:
 
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::TauTau; }
+
+    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData() override
+    {
+        return std::shared_ptr<FlatAnalyzerData_tautau>(new FlatAnalyzerData_tautau());
+    }
 
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
     {
@@ -57,10 +76,11 @@ protected:
         return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
     }
 
-    virtual std::pair<double, double> CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
-                                                                 const std::string& /*hist_name*/) override
+    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
+                                                                   const std::string& /*hist_name*/) override
     {
-        return std::pair<double, double>(1, 1);
+        static const analysis::PhysicalValue v(1, 0.001);
+        return analysis::PhysicalValuePair(v, v);
     }
 
 };
