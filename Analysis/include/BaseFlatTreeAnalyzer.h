@@ -202,7 +202,7 @@ public:
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (EventCategory eventCategory : EventCategoriesToProcess()) {
 
-            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF);
+            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,false);
 
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             std::cout << eventCategory << " OS_HighMt_data / OS_HighMt_mc = "
@@ -217,7 +217,7 @@ public:
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
-                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF);
+                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
                 EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::OS_NotIsolated);
@@ -466,16 +466,18 @@ protected:
     }
 
     void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValue& scale_factor)
+                               const PhysicalValue& scale_factor, bool useEmbedded)
     {
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
-//        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& embedded = useEmbedded
+                ? dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded)
+                : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const double embedded_scaleFactor = useEmbedded ? scale_factor.value : 1;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
         for(EventRegion eventRegion : AllEventRegions) {
             if(auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name)) {
                 TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
-                ztt_hist.Scale(scale_factor.value);
+                ztt_hist.Scale(embedded_scaleFactor);
             }
         }
     }
