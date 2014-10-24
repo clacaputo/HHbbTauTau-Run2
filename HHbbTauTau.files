@@ -294,3 +294,5 @@ AnalysisBase/include/AnalysisTypes.h
 Analysis/studies/BjetSelectionStudy.C
 Analysis/include/KinFit_CMSSW.h
 Analysis/studies/KinFitStudy.C
+AnalysisBase/include/KinFitTree.h
+Analysis/source/KinFitTreeProducer.C

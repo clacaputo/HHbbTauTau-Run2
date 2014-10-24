@@ -115,6 +115,63 @@ protected:
         throw exception("Channel '") << eventInfo.channel << "' is not supported.";
     }
 
+    analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo) const
+    {
+        using analysis::EventRegion;
+        const ntuple::Flat& event = *eventInfo.event;
+        if (eventInfo.channel == Channel::MuTau){
+            using namespace cuts::Htautau_Summer13::MuTau;
+
+            if(!event.againstMuonTight_2
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                return EventRegion::Unknown;
+
+            const bool os = event.q_1 * event.q_2 == -1;
+            const bool iso = event.pfRelIso_1 < muonID::pFRelIso;
+            const bool low_mt = event.mt_1 < muonID::mt;
+
+            if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
+            if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+            if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
+            if(!iso && !os) return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
+        }
+        if (eventInfo.channel == Channel::ETau){
+            using namespace cuts::Htautau_Summer13::ETau;
+
+            if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || (event.mt_1 >= electronID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                return EventRegion::Unknown;
+
+            const bool os = event.q_1 * event.q_2 == -1;
+            const bool iso = event.pfRelIso_1 < electronID::pFRelIso;
+            const bool low_mt = event.mt_1 < electronID::mt;
+
+            if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
+            if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+            if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
+            if(!iso && !os) return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
+        }
+        if (eventInfo.channel == Channel::TauTau){
+            using namespace cuts::Htautau_Summer13::TauTau::tauID;
+
+            if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
+                    || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+                        && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits))
+                return EventRegion::Unknown;
+
+            const bool os = event.q_1 * event.q_2 == -1;
+            const bool iso = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+                             event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
+
+            if(iso) return os ? EventRegion::OS_Isolated : EventRegion::SS_Isolated;
+            return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
+        }
+        throw analysis::exception("unsupported channel ") << eventInfo.channel;
+    }
+
 private:
     std::shared_ptr<TFile> inputFile, outputFile;
     std::shared_ptr<ntuple::FlatTree> flatTree;

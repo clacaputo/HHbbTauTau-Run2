@@ -304,18 +304,18 @@ protected:
         const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_HighMt, hist_name);
-        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_HighMt, hist_name);
-        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_HighMt, hist_name);
-        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_HighMt, hist_name);
+        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Iso_HighMt, hist_name);
+        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Iso_HighMt, hist_name);
+        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_Iso_HighMt, hist_name);
+        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Iso_HighMt, hist_name);
         if(!hist_OS_HighMt_mc || !hist_SS_HighMt_mc || !hist_OS_HighMt_data || !hist_SS_HighMt_data)
             throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
 
-        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_HighMt, *hist_OS_HighMt_data);
-        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_HighMt, *hist_SS_HighMt_data);
+        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Iso_HighMt, *hist_OS_HighMt_data);
+        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Iso_HighMt, *hist_SS_HighMt_data);
 
-        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name, true);
-        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name, true);
+        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_Iso_HighMt, wjets.name, true);
+        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_Iso_HighMt, wjets.name, true);
 
         const PhysicalValue n_OS_HighMt = Integral(hist_OS_HighMt, false);
         const PhysicalValue n_OS_HighMt_mc = Integral(*hist_OS_HighMt_mc, false);
