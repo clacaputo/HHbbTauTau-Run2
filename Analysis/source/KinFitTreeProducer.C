@@ -82,9 +82,9 @@ protected:
         kinFitTree->phi_1() = tau1.Phi();
         kinFitTree->energy_1() = tau1.E();
         kinFitTree->pt_2() = tau2.Pt();
-        kinFitTree->eta_b2() = tau2.Eta();
-        kinFitTree->phi_b2() = tau2.Phi();
-        kinFitTree->energy_b2() = tau2.E();
+        kinFitTree->eta_2() = tau2.Eta();
+        kinFitTree->phi_2() = tau2.Phi();
+        kinFitTree->energy_2() = tau2.E();
         //MET
         kinFitTree->mvamet() = eventInfo.MET.Pt();
         kinFitTree->mvametphi() = eventInfo.MET.Phi();
