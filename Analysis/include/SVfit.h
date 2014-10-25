@@ -56,10 +56,10 @@ struct FitResults {
     bool has_valid_mass;
     double mass;
 
-    bool has_valid_pt;
-    double pt;
+    bool has_valid_momentum;
+    TLorentzVector momentum;
 
-    FitResults() : has_valid_mass(false), mass(default_value), has_valid_pt(false), pt(default_value) {}
+    FitResults() : has_valid_mass(false), mass(default_value), has_valid_momentum(false) {}
 };
 
 struct FitResultsWithUncertainties {
@@ -118,8 +118,8 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
         result.mass = algo.mass();
         result.has_valid_mass = true;
         if(fitAlgorithm == FitAlgorithm::MarkovChain) {
-            result.pt = algo.pt();
-            result.has_valid_pt = true;
+            result.momentum.SetPtEtaPhiM(algo.pt(), algo.phi(), algo.eta(), algo.mass());
+            result.has_valid_momentum = true;
         }
     } else
         std::cerr << "Can't fit with " << fitAlgorithm << std::endl;
@@ -132,8 +132,8 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
                   << "\nSVfit algorithm = " << fitAlgorithm;
         if(result.has_valid_mass)
             std::cout << "\nSVfit mass = " << result.mass;
-        if(result.has_valid_pt)
-            std::cout << "\nSVfit pt = " << result.pt;
+        if(result.has_valid_momentum)
+            std::cout << "\nSVfit momentum = " << result.momentum;
         std::cout << std::endl;
     }
 

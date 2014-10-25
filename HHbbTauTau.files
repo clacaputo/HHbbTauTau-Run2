@@ -294,3 +294,6 @@ AnalysisBase/include/AnalysisTypes.h
 Analysis/studies/BjetSelectionStudy.C
 Analysis/include/KinFit_CMSSW.h
 Analysis/studies/KinFitStudy.C
+Analysis/studies/McTruthStudy.C
+Analysis/studies/McTruthStudy_flat.C
+Analysis/include/LightBaseBigTreeAnalyzer.h

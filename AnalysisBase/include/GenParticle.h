@@ -100,15 +100,23 @@ public:
     TLorentzVector chargedHadronsMomentum;
     TLorentzVector neutralHadronsMomentum;
     TLorentzVector visibleMomentum;
+    TLorentzVector invisibleMomentum;
+
+    GenParticleSet particlesProcessed;
 
 public:
 
-    VisibleGenObject() : origin(nullptr) {}
+    explicit VisibleGenObject() : origin(nullptr) {}
 
-    VisibleGenObject(const GenParticle *_origin) : origin(_origin)
+    explicit VisibleGenObject(const GenParticle *_origin) : origin(_origin)
     {
-        GenParticleSet particlesProcessed;
-        CollectInfo(origin, particlesProcessed);
+        const GenParticleSet particlesToIgnore;
+        CollectInfo(origin, particlesProcessed, particlesToIgnore);
+    }
+
+    VisibleGenObject(const GenParticle *_origin, const GenParticleSet& particlesToIgnore) : origin(_origin)
+    {
+        CollectInfo(origin, particlesProcessed, particlesToIgnore);
     }
 
     const GenParticle* GetOriginGenParticle() const
@@ -123,15 +131,19 @@ public:
 
 
 private:
-    void CollectInfo(const GenParticle* particle, GenParticleSet& particlesProcessed)
+    void CollectInfo(const GenParticle* particle, GenParticleSet& particlesProcessed,
+                     const GenParticleSet& particlesToIgnore)
     {
         if(particle->status == particles::Status::FinalStateParticle && particle->daughters.size() != 0)
             throw exception("Invalid gen particle");
 
-        if(particlesProcessed.count(particle)) return;
+        if(particlesProcessed.count(particle) || particlesToIgnore.count(particle)) return;
         particlesProcessed.insert(particle);
-        if(particle->status == particles::Status::FinalStateParticle && particle->pdg.Code != particles::nu_e
-                && particle->pdg.Code != particles::nu_mu && particle->pdg.Code != particles::nu_tau) {
+        if(particle->status == particles::Status::FinalStateParticle) {
+            if(particles::neutrinos.count(particle->pdg.Code)) {
+                invisibleMomentum += particle->momentum;
+                return;
+            }
 
             visibleMomentum += particle->momentum;
             if(particle->pdg.Code == particles::e || particle->pdg.Code == particles::mu) {
@@ -148,7 +160,7 @@ private:
         }
 
         for(const GenParticle* daughter : particle->daughters){
-            CollectInfo(daughter, particlesProcessed);
+            CollectInfo(daughter, particlesProcessed, particlesToIgnore);
         }
     }
 };

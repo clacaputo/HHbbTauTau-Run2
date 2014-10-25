@@ -32,6 +32,23 @@
 
 namespace analysis {
 
+struct SelectionResults {
+    virtual ~SelectionResults() {}
+    Candidate higgs;
+    sv_fit::FitResultsWithUncertainties svfitResults;
+    kinematic_fit::FitResultsMap kinfitResults;
+    CandidateVector jets;
+    CandidateVector jetsPt20;
+    CandidateVector bjets_all;
+    CandidateVector retagged_bjets;
+    VertexVector vertices;
+    ntuple::MET pfMET;
+    ntuple::MET MET_with_recoil_corrections;
+    virtual const Candidate& GetLeg1() const = 0;
+    virtual const Candidate& GetLeg2() const = 0;
+    virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
+};
+
 class BaseFlatTreeProducer : public BaseAnalyzer {
 public:
     BaseFlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
@@ -51,8 +68,26 @@ public:
             flatTree->Write();
     }
 
+    virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
+    {
+        using namespace analysis;
+        using namespace cuts::Htautau_Summer13;
+
+        BaseAnalyzer::ProcessEvent(_event);
+
+        SelectionResults& selection = ApplyBaselineSelection();
+
+        selection.svfitResults = sv_fit::FitWithUncertainties(selection.higgs, selection.MET_with_recoil_corrections,
+                                                              tauCorrections::energyUncertainty, true, true);
+
+        selection.kinfitResults = RunKinematicFit(selection.bjets_all, selection.higgs,
+                                                  selection.MET_with_recoil_corrections, true, true);
+        FillFlatTree(selection);
+    }
 
 protected:
+
+    virtual SelectionResults& ApplyBaselineSelection() = 0;
 
     virtual void CalculateTriggerWeights(const Candidate& candidate) override
     {
@@ -399,122 +434,7 @@ protected:
         return result;
     }
 
-    void FillHistogramsForMCstudies(const finalState::bbTauTau& final_state, const CandidateVector& bjets_all)
-    {
-        if(final_state.b_jets.size() >= 2 && final_state.taus.size() >= 2) {
-
-            const VisibleGenObject& bjet1_visible = final_state.b_jets.at(0);
-            const GenParticle* bjet1_MC = bjet1_visible.origin;
-
-            const VisibleGenObject& bjet2_visible = final_state.b_jets.at(1);
-            const GenParticle* bjet2_MC = bjet2_visible.origin;
-
-            const VisibleGenObject tau_1 = final_state.taus.at(0);
-            const VisibleGenObject tau_2 = final_state.taus.at(1);
-            const GenParticle* tau_MC_1 = tau_1.origin;
-            const GenParticle* tau_MC_2 = tau_2.origin;
-
-            if (bjets_all.size() > 1 && bjet1_MC->momentum.Pt() > 20 && bjet2_MC->momentum.Pt() > 20 &&
-                    std::abs(bjet1_MC->momentum.Eta()) < 2.4 && std::abs(bjet2_MC->momentum.Eta()) < 2.4 ){
-
-                double deltaRmin_firstCouple =
-                        std::min(bjet1_MC->momentum.DeltaR(tau_MC_1->momentum),bjet1_MC->momentum.DeltaR(tau_MC_2->momentum));
-                double deltaRmin_secondCouple =
-                        std::min(bjet2_MC->momentum.DeltaR(tau_MC_1->momentum),bjet2_MC->momentum.DeltaR(tau_MC_2->momentum));
-                double deltaRmin_MC = std::min(deltaRmin_firstCouple,deltaRmin_secondCouple);
-
-                //std::cout << "deltaRmin_MC=" << deltaRmin_MC << std::endl;
-                GetAnaData().deltaRmin_MC().Fill(deltaRmin_MC);
-                GetAnaData().DeltaRbjets_MC().Fill(bjet1_MC->momentum.DeltaR(bjet2_MC->momentum));
-                GetAnaData().MinPtBjetsMC().Fill(std::min(bjet1_MC->momentum.Pt(),bjet2_MC->momentum.Pt()));
-                TLorentzVector bb_MC = bjet1_MC->momentum + bjet2_MC->momentum;
-                TLorentzVector bb_MC_visible = bjet1_visible.visibleMomentum + bjet2_visible.visibleMomentum;
-
-                GetAnaData().MassBB_MC().Fill(bb_MC.M());
-                GetAnaData().MassBB_MCvis().Fill(bb_MC_visible.M());
-
-                double deltaRmin1_original = std::numeric_limits<double>::max();
-                double deltaRmin2_original = std::numeric_limits<double>::max();
-                double deltaRmin1_visible = std::numeric_limits<double>::max();
-                double deltaRmin2_visible = std::numeric_limits<double>::max();
-                unsigned index_bjet1 = 0;
-                unsigned index_bjet2 = 0;
-                unsigned index_bjet1_vis = 0;
-                unsigned index_bjet2_vis = 0;
-                for (unsigned i = 0; i < bjets_all.size(); ++i){
-                    const Candidate& bjet = bjets_all.at(i);
-    //                double deltaPt1 = std::abs(bjet.momentum.Pt() - bjet1_MC->momentum.Pt())/bjet1_MC->momentum.Pt();
-    //                double deltaPt2 = std::abs(bjet.momentum.Pt() - bjet2_MC->momentum.Pt())/bjet2_MC->momentum.Pt();
-                    if (bjet.momentum.DeltaR(bjet1_MC->momentum) < deltaRmin1_original /*&& deltaPt1 < 0.4*/){
-                        deltaRmin1_original = bjet.momentum.DeltaR(bjet1_MC->momentum);
-                        index_bjet1 = i;
-                    }
-
-                    if (bjet.momentum.DeltaR(bjet2_MC->momentum) < deltaRmin2_original /*&& deltaPt2 < 0.4*/){
-                        deltaRmin2_original = bjet.momentum.DeltaR(bjet2_MC->momentum);
-                        index_bjet2 = i;
-                    }
-
-                    if (bjet.momentum.DeltaR(bjet1_visible.visibleMomentum) < deltaRmin1_visible){
-                        deltaRmin1_visible = bjet.momentum.DeltaR(bjet1_visible.visibleMomentum);
-                        index_bjet1_vis = i;
-                    }
-
-                    if (bjet.momentum.DeltaR(bjet2_visible.visibleMomentum) < deltaRmin2_visible){
-                        deltaRmin2_visible = bjet.momentum.DeltaR(bjet2_visible.visibleMomentum);
-                        index_bjet2_vis = i;
-                    }
-
-                }
-
-                GetAnaData().DeltaRmin1_original().Fill(deltaRmin1_original);
-                GetAnaData().DeltaRmin2_original().Fill(deltaRmin2_original);
-
-                double deltaRmax_original = std::max(deltaRmin1_original,deltaRmin2_original);
-                GetAnaData().deltaRmax_original().Fill(deltaRmax_original);
-
-                GetAnaData().DeltaRmin1_visible().Fill(deltaRmin1_visible);
-                GetAnaData().DeltaRmin2_visible().Fill(deltaRmin2_visible);
-
-                double deltaRmax_visible = std::max(deltaRmin1_visible,deltaRmin2_visible);
-                GetAnaData().deltaRmax_visible().Fill(deltaRmax_visible);
-
-                double deltaPtMax;
-                if (deltaRmax_original == std::numeric_limits<double>::max()){
-                    deltaPtMax = std::numeric_limits<double>::max();
-                }
-                else {
-                    const Candidate& selectedBjets1 = bjets_all.at(index_bjet1);
-                    const Candidate& selectedBjets2 = bjets_all.at(index_bjet2);
-                    double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet1_MC->momentum.Pt());
-                    double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet2_MC->momentum.Pt());
-                    deltaPtMax = std::max(deltaPt1/bjet1_MC->momentum.Pt(),deltaPt2/bjet2_MC->momentum.Pt());
-                }
-                GetAnaData().deltaPtMax().Fill(deltaPtMax);
-
-                double deltaPtMax_vis;
-                if (deltaRmax_visible == std::numeric_limits<double>::max()){
-                    deltaPtMax_vis = std::numeric_limits<double>::max();
-                }
-                else {
-                    const Candidate& selectedBjets1 = bjets_all.at(index_bjet1_vis);
-                    const Candidate& selectedBjets2 = bjets_all.at(index_bjet2_vis);
-                    double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet1_visible.visibleMomentum.Pt());
-                    double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet2_visible.visibleMomentum.Pt());
-                    deltaPtMax_vis =
-                            std::max(deltaPt1/bjet1_visible.visibleMomentum.Pt(),deltaPt2/bjet2_visible.visibleMomentum.Pt());
-                }
-                GetAnaData().deltaPtMax_vis().Fill(deltaPtMax_vis);
-            }
-        }
-    }
-
-    void FillFlatTree(const Candidate& higgs, const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
-                      const analysis::kinematic_fit::FitResultsMap& kinfitResults,
-                      const CandidateVector& jets , const CandidateVector& jetsPt20,
-                      const CandidateVector& bjets_all, const CandidateVector& retagged_bjets,
-                      const VertexVector& vertices, const Candidate& leg1, const Candidate& leg2,
-                      const ntuple::MET& pfMET, const finalState::bbTauTau& final_state_MC)
+    virtual void FillFlatTree(const SelectionResults& selection)
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
 
@@ -522,9 +442,9 @@ protected:
         flatTree->run() = event->eventInfo().run;
         flatTree->lumi() = event->eventInfo().lumis;
         flatTree->evt() = event->eventInfo().EventId;
-        flatTree->eventType() = static_cast<int>(DoEventCategorization(higgs));
+        flatTree->eventType() = static_cast<int>(DoEventCategorization(selection.higgs));
 
-        flatTree->npv() = vertices.size();
+        flatTree->npv() = selection.vertices.size();
         if (config.ApplyPUreweight()){
             const size_t bxIndex = tools::find_index(event->eventInfo().bunchCrossing, 0);
             if(bxIndex >= event->eventInfo().bunchCrossing.size())
@@ -542,25 +462,33 @@ protected:
         flatTree->isoweight_2()     = IsoWeights.at(1);
         // flatTree->fakeweight()      = fakeWeights.at(1); // what's this?
         flatTree->weight()          = eventWeight;
-        flatTree->embeddedWeight()  =
-                config.isDYEmbeddedSample() ? event->genEvent().embeddedWeight : 1.; // embedded weight
+        flatTree->embeddedWeight()  = config.isDYEmbeddedSample() ? event->genEvent().embeddedWeight : 1.;
 
         // HTT candidate
-        flatTree->mvis() = higgs.momentum.M();
-        flatTree->m_sv_vegas() = svfitResults.fit_vegas.has_valid_mass ? svfitResults.fit_vegas.mass : default_value;
-        flatTree->m_sv_up_vegas() = svfitResults.fit_vegas_up.has_valid_mass ? svfitResults.fit_vegas_up.mass : default_value;
-        flatTree->m_sv_down_vegas() = svfitResults.fit_vegas_down.has_valid_mass ? svfitResults.fit_vegas_down.mass : default_value;
-        flatTree->m_sv_MC() = svfitResults.fit_mc.has_valid_mass ? svfitResults.fit_mc.mass : default_value;
-        flatTree->pt_sv_MC() = svfitResults.fit_mc.has_valid_pt ? svfitResults.fit_mc.pt : default_value;
-        flatTree->m_sv_up_MC() = svfitResults.fit_mc_up.has_valid_mass ? svfitResults.fit_mc_up.mass : default_value;
-        flatTree->pt_sv_up_MC() = svfitResults.fit_mc_up.has_valid_pt ? svfitResults.fit_mc_up.pt : default_value;
-        flatTree->m_sv_down_MC() = svfitResults.fit_mc_down.has_valid_mass ? svfitResults.fit_mc_down.mass : default_value;
-        flatTree->pt_sv_down_MC() = svfitResults.fit_mc_down.has_valid_pt ? svfitResults.fit_mc_down.pt : default_value;
-        flatTree->DeltaR_leptons() = leg1.momentum.DeltaR(leg2.momentum) ;
-        flatTree->pt_tt()          = (leg1.momentum + leg2.momentum).Pt();
+        flatTree->mvis() = selection.higgs.momentum.M();
+        flatTree->m_sv_vegas() = selection.svfitResults.fit_vegas.has_valid_mass
+                ? selection.svfitResults.fit_vegas.mass : default_value;
+        flatTree->m_sv_up_vegas() = selection.svfitResults.fit_vegas_up.has_valid_mass
+                ? selection.svfitResults.fit_vegas_up.mass : default_value;
+        flatTree->m_sv_down_vegas() = selection.svfitResults.fit_vegas_down.has_valid_mass
+                ? selection.svfitResults.fit_vegas_down.mass : default_value;
+        flatTree->m_sv_MC() = selection.svfitResults.fit_mc.has_valid_mass
+                ? selection.svfitResults.fit_mc.mass : default_value;
+        flatTree->pt_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
+                ? selection.svfitResults.fit_mc.momentum.Pt() : default_value;
+        flatTree->m_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_mass
+                ? selection.svfitResults.fit_mc_up.mass : default_value;
+        flatTree->pt_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_momentum
+                ? selection.svfitResults.fit_mc_up.momentum.Pt() : default_value;
+        flatTree->m_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_mass
+                ? selection.svfitResults.fit_mc_down.mass : default_value;
+        flatTree->pt_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
+                ? selection.svfitResults.fit_mc_down.momentum.Pt() : default_value;
+        flatTree->DeltaR_leptons() = selection.GetLeg1().momentum.DeltaR(selection.GetLeg2().momentum) ;
+        flatTree->pt_tt()          = (selection.GetLeg1().momentum + selection.GetLeg2().momentum).Pt();
 
         // Kinematic fit
-        for(const auto& fit_result_entry : kinfitResults) {
+        for(const auto& fit_result_entry : selection.kinfitResults) {
             const analysis::kinematic_fit::four_body::FitResults& result_4body = fit_result_entry.second.fit_bb_tt;
             flatTree->kinfit_bb_tt_mass().push_back(result_4body.mass);
             flatTree->kinfit_bb_tt_convergence().push_back(result_4body.convergence);
@@ -579,13 +507,13 @@ protected:
         }
 
         // Hhh generator info candidate
-        if(final_state_MC.resonance) {
-            const TLorentzVector& momentum = final_state_MC.resonance->momentum;
+        if(selection.GetFinalStateMC().resonance) {
+            const TLorentzVector& momentum = selection.GetFinalStateMC().resonance->momentum;
             flatTree->pt_resonance_MC()    = momentum.Pt()  ;
             flatTree->eta_resonance_MC()   = momentum.Eta() ;
             flatTree->phi_resonance_MC()   = momentum.Phi() ;
             flatTree->mass_resonance_MC()  = momentum.M()   ;
-            flatTree->pdgId_resonance_MC() = final_state_MC.resonance->pdg.ToInteger();
+            flatTree->pdgId_resonance_MC() = selection.GetFinalStateMC().resonance->pdg.ToInteger();
         } else {
             flatTree->pt_resonance_MC()    = default_value  ;
             flatTree->eta_resonance_MC()   = default_value  ;
@@ -594,13 +522,13 @@ protected:
             flatTree->pdgId_resonance_MC() = particles::NONEXISTENT.RawCode() ;
         }
 
-        if(final_state_MC.Higgs_TauTau) {
-            const TLorentzVector& momentum = final_state_MC.Higgs_TauTau->momentum;
+        if(selection.GetFinalStateMC().Higgs_TauTau) {
+            const TLorentzVector& momentum = selection.GetFinalStateMC().Higgs_TauTau->momentum;
             flatTree->pt_Htt_MC()    = momentum.Pt()  ;
             flatTree->eta_Htt_MC()   = momentum.Eta() ;
             flatTree->phi_Htt_MC()   = momentum.Phi() ;
             flatTree->mass_Htt_MC()  = momentum.M()   ;
-            flatTree->pdgId_Htt_MC() = final_state_MC.Higgs_TauTau->pdg.ToInteger();
+            flatTree->pdgId_Htt_MC() = selection.GetFinalStateMC().Higgs_TauTau->pdg.ToInteger();
         } else {
             flatTree->pt_Htt_MC()    = default_value  ;
             flatTree->eta_Htt_MC()   = default_value  ;
@@ -609,13 +537,13 @@ protected:
             flatTree->pdgId_Htt_MC() = particles::NONEXISTENT.RawCode() ;
         }
 
-        if(final_state_MC.Higgs_BB) {
-            const TLorentzVector& momentum = final_state_MC.Higgs_BB->momentum;
+        if(selection.GetFinalStateMC().Higgs_BB) {
+            const TLorentzVector& momentum = selection.GetFinalStateMC().Higgs_BB->momentum;
             flatTree->pt_Hbb_MC()    = momentum.Pt()  ;
             flatTree->eta_Hbb_MC()   = momentum.Eta() ;
             flatTree->phi_Hbb_MC()   = momentum.Phi() ;
             flatTree->mass_Hbb_MC()  = momentum.M()   ;
-            flatTree->pdgId_Hbb_MC() = final_state_MC.Higgs_BB->pdg.ToInteger();
+            flatTree->pdgId_Hbb_MC() = selection.GetFinalStateMC().Higgs_BB->pdg.ToInteger();
         } else {
             flatTree->pt_Hbb_MC()    = default_value  ;
             flatTree->eta_Hbb_MC()   = default_value  ;
@@ -624,32 +552,63 @@ protected:
             flatTree->pdgId_Hbb_MC() = particles::NONEXISTENT.RawCode()  ;
         }
 
-        flatTree->n_extraJets_MC()     = default_value ; // needs to be filles with NUP! https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
+        // needs to be filles with NUP!
+        // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
+        flatTree->n_extraJets_MC() = default_value ;
+
+        // MET
+        const TLorentzVector MET_momentum = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,
+                                                                       selection.MET_with_recoil_corrections.phi, 0);
+        flatTree->pt_tt_MET() = (selection.GetLeg1().momentum + selection.GetLeg2().momentum + MET_momentum).Pt();
+
+        flatTree->met() = selection.pfMET.pt;
+        flatTree->metphi() = selection.pfMET.phi;
+        flatTree->mvamet() = MET_momentum.Pt();
+        flatTree->mvametphi() = MET_momentum.Phi();
+        //flatTree->pzetavis();
+        //flatTree->pzetamiss();
+        if(selection.pfMET.significanceMatrix.size()) {
+            const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(selection.pfMET.significanceMatrix);
+            flatTree->metcov00() = metPFcov[0][0];
+            flatTree->metcov01() = metPFcov[0][1];
+            flatTree->metcov10() = metPFcov[1][0];
+            flatTree->metcov11() = metPFcov[1][1];
+        }
+        const TMatrixD metMVAcov =
+                ntuple::VectorToSignificanceMatrix(selection.MET_with_recoil_corrections.significanceMatrix);
+        flatTree->mvacov00() = metMVAcov[0][0];
+        flatTree->mvacov01() = metMVAcov[0][1];
+        flatTree->mvacov10() = metMVAcov[1][0];
+        flatTree->mvacov11() = metMVAcov[1][1];
 
         // Leg 1, lepton
-        flatTree->pt_1()     = leg1.momentum.Pt()  ;
-        flatTree->phi_1()    = leg1.momentum.Phi() ;
-        flatTree->eta_1()    = leg1.momentum.Eta() ;
-        flatTree->m_1()      = leg1.momentum.M()   ;
-        flatTree->energy_1() = leg1.momentum.E()   ;
-        flatTree->q_1()      = leg1.charge         ;
-        flatTree->mt_1()     = analysis::Calculate_MT(leg1.momentum, postRecoilMET.pt, postRecoilMET.phi);
-        flatTree->d0_1()     = analysis::Calculate_dxy(leg1.vertexPosition, primaryVertex.position,leg1.momentum);
-        flatTree->dZ_1()     = leg1.vertexPosition.Z() - primaryVertex.position.Z();
+        flatTree->pt_1()     = selection.GetLeg1().momentum.Pt()  ;
+        flatTree->phi_1()    = selection.GetLeg1().momentum.Phi() ;
+        flatTree->eta_1()    = selection.GetLeg1().momentum.Eta() ;
+        flatTree->m_1()      = selection.GetLeg1().momentum.M()   ;
+        flatTree->energy_1() = selection.GetLeg1().momentum.E()   ;
+        flatTree->q_1()      = selection.GetLeg1().charge         ;
+        flatTree->mt_1()     = analysis::Calculate_MT(selection.GetLeg1().momentum, MET_momentum.Pt(),
+                                                      MET_momentum.Phi());
+        flatTree->d0_1()     = analysis::Calculate_dxy(selection.GetLeg1().vertexPosition, primaryVertex.position,
+                                                       selection.GetLeg1().momentum);
+        flatTree->dZ_1()     = selection.GetLeg1().vertexPosition.Z() - primaryVertex.position.Z();
 
         // Leg 2, tau
-        flatTree->pt_2()     = leg2.momentum.Pt();
-        flatTree->phi_2()    = leg2.momentum.Phi();
-        flatTree->eta_2()    = leg2.momentum.Eta();
-        flatTree->m_2()      = leg2.momentum.M();
-        flatTree->energy_2() = leg2.momentum.E();
-        flatTree->q_2()      = leg2.charge;
-        flatTree->mt_2()     = analysis::Calculate_MT(leg2.momentum, postRecoilMET.pt, postRecoilMET.phi);
-        flatTree->d0_2()     = analysis::Calculate_dxy(leg2.vertexPosition, primaryVertex.position,leg2.momentum);
-        flatTree->dZ_2()     = leg2.vertexPosition.Z() - primaryVertex.position.Z();
+        flatTree->pt_2()     = selection.GetLeg2().momentum.Pt();
+        flatTree->phi_2()    = selection.GetLeg2().momentum.Phi();
+        flatTree->eta_2()    = selection.GetLeg2().momentum.Eta();
+        flatTree->m_2()      = selection.GetLeg2().momentum.M();
+        flatTree->energy_2() = selection.GetLeg2().momentum.E();
+        flatTree->q_2()      = selection.GetLeg2().charge;
+        flatTree->mt_2()     = analysis::Calculate_MT(selection.GetLeg2().momentum, MET_momentum.Pt(),
+                                                      MET_momentum.Phi());
+        flatTree->d0_2()     = analysis::Calculate_dxy(selection.GetLeg2().vertexPosition, primaryVertex.position,
+                                                       selection.GetLeg2().momentum);
+        flatTree->dZ_2()     = selection.GetLeg2().vertexPosition.Z() - primaryVertex.position.Z();
 
         // RM: for the three channels, mt, et, tt this leg is always a tau
-        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(leg2.index);
+        const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(selection.GetLeg2().index);
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
         flatTree->againstElectronLooseMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg2.againstElectronMVA3category, ntuple_tau_leg2.againstElectronMVA3raw, 0);
@@ -667,36 +626,12 @@ protected:
         flatTree->againstMuonTight_2()                         = ntuple_tau_leg2.againstMuonTight      ;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits ;
 
-        // MET
-        TLorentzVector postRecoilMetMomentum;
-        postRecoilMetMomentum.SetPtEtaPhiM(postRecoilMET.pt, 0, postRecoilMET.phi, 0.);
-        flatTree->pt_tt_MET() = (leg1.momentum + leg2.momentum + postRecoilMetMomentum).Pt();
-
-        flatTree->met()       = pfMET.pt          ;
-        flatTree->metphi()    = pfMET.phi         ;
-        flatTree->mvamet()    = postRecoilMET.pt  ;
-        flatTree->mvametphi() = postRecoilMET.phi ;
-        //flatTree->pzetavis();
-        //flatTree->pzetamiss();
-        if(pfMET.significanceMatrix.size()) {
-            const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(pfMET.significanceMatrix);
-            flatTree->metcov00() = metPFcov[0][0];
-            flatTree->metcov01() = metPFcov[0][1];
-            flatTree->metcov10() = metPFcov[1][0];
-            flatTree->metcov11() = metPFcov[1][1];
-        }
-        const TMatrixD metMVAcov = ntuple::VectorToSignificanceMatrix(postRecoilMET.significanceMatrix);
-        flatTree->mvacov00() = metMVAcov[0][0];
-        flatTree->mvacov01() = metMVAcov[0][1];
-        flatTree->mvacov10() = metMVAcov[1][0];
-        flatTree->mvacov11() = metMVAcov[1][1];
-
         // Jets
-        flatTree->njets()     = jets.size()           ;
-        flatTree->njetspt20() = jetsPt20.size()       ;
-        flatTree->nBjets()    = retagged_bjets.size() ;
+        flatTree->njets()     = selection.jets.size();
+        flatTree->njetspt20() = selection.jetsPt20.size();
+        flatTree->nBjets()    = selection.retagged_bjets.size();
 
-        for (const Candidate& jet : bjets_all) {
+        for (const Candidate& jet : selection.bjets_all) {
             const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
 
             flatTree->pt_Bjets()      .push_back( jet.momentum.Pt() );
@@ -710,7 +645,8 @@ protected:
             flatTree->electronEF_Bjets()  .push_back( ntuple_jet.electronEnergyFraction );
             flatTree->csv_Bjets()     .push_back( ntuple_jet.combinedSecondaryVertexBJetTags );
             // inspect the flavour of the gen jet
-            const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet.momentum, final_state_MC.b_jets,
+            const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet.momentum,
+                                                                               selection.GetFinalStateMC().b_jets,
                                                                                cuts::DeltaR_MC_Match);
             const bool isJet_MC_Bjet = matched_bjets_MC.size() != 0;
             const bool isJet_MC_Bjet_withLeptonicDecay = isJet_MC_Bjet
@@ -728,7 +664,5 @@ protected:
     std::shared_ptr<ntuple::FlatTree> flatTree;
     bool writeFlatTree;
     ntuple::TauVector correctedTaus;
-    ntuple::MET correctedMET;
-    ntuple::MET postRecoilMET;
 };
 } // analysis
