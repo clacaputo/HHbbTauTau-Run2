@@ -202,7 +202,7 @@ public:
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (EventCategory eventCategory : EventCategoriesToProcess()) {
 
-            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF);
+            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,false);
 
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             std::cout << eventCategory << " OS_HighMt_data / OS_HighMt_mc = "
@@ -217,7 +217,7 @@ public:
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
-                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF);
+                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
                 EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::OS_NotIsolated);
@@ -304,18 +304,18 @@ protected:
         const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_HighMt, hist_name);
-        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_HighMt, hist_name);
-        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_HighMt, hist_name);
-        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_HighMt, hist_name);
+        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Iso_HighMt, hist_name);
+        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Iso_HighMt, hist_name);
+        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_Iso_HighMt, hist_name);
+        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Iso_HighMt, hist_name);
         if(!hist_OS_HighMt_mc || !hist_SS_HighMt_mc || !hist_OS_HighMt_data || !hist_SS_HighMt_data)
             throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
 
-        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_HighMt, *hist_OS_HighMt_data);
-        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_HighMt, *hist_SS_HighMt_data);
+        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Iso_HighMt, *hist_OS_HighMt_data);
+        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Iso_HighMt, *hist_SS_HighMt_data);
 
-        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_HighMt, wjets.name, true);
-        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_HighMt, wjets.name, true);
+        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_Iso_HighMt, wjets.name, true);
+        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_Iso_HighMt, wjets.name, true);
 
         const PhysicalValue n_OS_HighMt = Integral(hist_OS_HighMt, false);
         const PhysicalValue n_OS_HighMt_mc = Integral(*hist_OS_HighMt_mc, false);
@@ -324,7 +324,13 @@ protected:
 
         const PhysicalValue OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
         const PhysicalValue SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
-        return PhysicalValuePair(OS_ratio, SS_ratio);
+
+//        if (OS_ratio.value < 0 || SS_ratio.value < 0) {
+//            static const analysis::PhysicalValue v(1, 0.001);
+//            return analysis::PhysicalValuePair(v, v);
+//        }
+//        else
+            return PhysicalValuePair(OS_ratio, SS_ratio);
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
@@ -466,16 +472,19 @@ protected:
     }
 
     void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValue& scale_factor)
+                               const PhysicalValue& scale_factor, bool useEmbedded)
     {
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
-//        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& embedded = useEmbedded
+                ? dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded)
+                : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const double embedded_scaleFactor = useEmbedded ? scale_factor.value : 1;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
 
         for(EventRegion eventRegion : AllEventRegions) {
             if(auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name)) {
                 TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
-                ztt_hist.Scale(scale_factor.value);
+                ztt_hist.Scale(embedded_scaleFactor);
+
             }
         }
     }
@@ -635,16 +644,16 @@ protected:
 
         if(verbose)
             std::cout << "Integral after bkg subtraction: " << Integral(histogram, false) << ".\n" << std::endl;
-        for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
-            if (histogram.GetBinContent(n) >= 0) continue;
-            const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
+//        for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
+//            if (histogram.GetBinContent(n) >= 0) continue;
+//            const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
 
-            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
-                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
-                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
-                      << "].\n";
-            histogram.SetBinContent(n,0);
-        }
+//            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
+//                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
+//                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
+//                      << "].\n";
+//            histogram.SetBinContent(n,0);
+//        }
     }
 
 private:

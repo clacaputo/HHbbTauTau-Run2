@@ -272,8 +272,10 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     return s;
 }
 
-enum class EventRegion { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated, OS_HighMt, SS_HighMt };
-enum class EventCategory { Inclusive, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
+enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_NotIsolated = 2, SS_Isolated = 3, SS_NotIsolated = 4,
+                         OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_NotIso_HighMt = 7, SS_NotIso_HighMt = 8 };
+enum class EventCategory { Inclusive = 0, OneJet_ZeroBtag = 1, OneJet_OneBtag = 2, TwoJets_ZeroBtag = 3,
+                           TwoJets_OneBtag = 4, TwoJets_TwoBtag = 5 };
 
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
@@ -284,8 +286,9 @@ static const std::map<EventCategory, std::string> eventCategoryNamesMap =
 static const std::map<EventRegion, std::string> eventRegionNamesMap =
           { { EventRegion::Unknown, "Unknown"}, { EventRegion::OS_Isolated, "OS_Isolated"},
             { EventRegion::OS_NotIsolated, "OS_NotIsolated"}, { EventRegion::SS_Isolated, "SS_Isolated"},
-            { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_HighMt, "OS_HighMt"},
-            { EventRegion::SS_HighMt, "SS_HighMt"} };
+            { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_Iso_HighMt, "OS_Iso_HighMt"},
+            { EventRegion::SS_Iso_HighMt, "SS_Iso_HighMt"} , { EventRegion::OS_NotIso_HighMt, "OS_NotIso_HighMt"},
+            { EventRegion::SS_NotIso_HighMt, "SS_NotIso_HighMt"} };
 } // namespace detail
 
 typedef std::vector<EventCategory> EventCategoryVector;
