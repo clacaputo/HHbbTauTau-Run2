@@ -56,11 +56,39 @@
 
 namespace analysis {
 
-static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140., 150,
+static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
-static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280.,
+static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
                                                     300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
                                                     650, 700, 750, 800, 850, 900, 950, 1000 };
+
+static const std::vector<double> mass_bins_slice_2fette = { 
+      0,	10,      20,	 30,	 40,	 50,	 60,	 70,	 80,	 90,	100,	110,	120,	130,
+	140,	150,	160,	170,	180,	190,	200,	225,	250,	275,	300,	325,	350,
+	360,	370,	380,	390,	400,	410,	420,	430,	440,	450,	460,	470,	480,
+	490,	500,	510,	520,	530,	540,	550,	575,	600,	625,	650,	675,	700
+};
+
+static const std::vector<double> mass_bins_slice_5fette_lb = { 
+       0,	  20,	  40,	  60,	  80,	 100,	 120,	 140,	 160,	 180,	 200,	 250,	 300,	350,
+     370,	 390,	 410,	 430,	 450,	 470,	 490,	 510,	 530,	 550,	 600,	 650,	 700,
+     720,	 740,	 760,	 780,	 800,	 820,	 840,	 860,	 880,	 900,	 950,	1000,	1050,
+	1070,	1090,	1110,	1130,	1150,	1170,	1190,	1210,	1230,	1250,	1300,	1350,	1400,
+    1420,	1440,	1460,	1480,	1500,	1520,	1540,	1560,	1580,	1600,	1650,	1700,	1750
+};
+
+static const std::vector<double> mass_bins_slice_5fette_fb = {
+       0,     10,     20,     30,     40,     50,     60,     70,     80,     90,    100,    110,    120,    130,
+     140,    150,    160,    170,    180,    190,    200,    225,    250,    275,    300,    325,    350,
+     360,	 370,	 380,	 390,	 400,	 410,	 420,	 430,	 440,	 450,	 460,	 470,	 480,	 490,
+     500,	 510,	 520,	 530,	 540,	 550,	 575,	 600,	 625,	 650,	 675,	 700,
+     710,	 720,	 730,	 740,	 750,	 760,	 770,	 780,	 790,	 800,	 810,	 820,	 830,	 840,
+     850,	 860,	 870,	 880,	 890,	 900,	 925,	 950,	 975,	1000,	1025,	1050,
+    1060,	1070,	1080,	1090,	1100,	1110,	1120,	1130,	1140,	1150,	1160,	1170,	1180,	1190,
+    1200,	1210,	1220,	1230,	1240,	1250,	1275,	1300,	1325,	1350,	1375,	1400,
+    1410,	1420,	1430,	1440,	1450,	1460,	1470,	1480,	1490,	1500,	1510,	1520,	1530,	1540,
+    1550,	1560,	1570,	1580,	1590,	1600,	1625,	1650,	1675,	1700,	1725,	1750
+ };
 
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
@@ -92,6 +120,9 @@ public:
     TH1D_ENTRY(DeltaR_tt, 40, 0, 6)
     TH1D_ENTRY(DeltaR_bb, 40, 0, 6)
     TH1D_ENTRY(DeltaR_hh, 40, 0, 6)
+    TH1D_ENTRY_CUSTOM(m_bb_slice, mass_bins_slice_5fette_fb)
+    TH1D_ENTRY_CUSTOM(m_bb_slice_up, mass_bins_slice_5fette_fb)
+    TH1D_ENTRY_CUSTOM(m_bb_slice_down, mass_bins_slice_5fette_fb)
     TH1D_ENTRY(MVA_BDT, 40, -1, 1)
     TH1D_ENTRY(mt_2, 20, 0, 200)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
@@ -133,11 +164,30 @@ public:
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
         pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
         const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
-        m_ttbb_kinfit().Fill(m_ttbb_kinFit,weight);
-        m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit,weight);
-        m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit,weight);
+        m_ttbb_kinfit().Fill(m_ttbb_kinFit, weight);
+        m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit, weight);
+        m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit, weight);
 
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+
+        FillSlice(m_bb_slice(), event.m_sv_vegas, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice_up(), event.m_sv_up_vegas, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice_down(), event.m_sv_down_vegas, eventInfo.Hbb.M(), weight);
+    }
+
+private:
+    static void FillSlice(TH1D& hist, double m_sv, double m_Hbb, double weight)
+    {
+        static const std::vector<double> slice_regions = { 60, 100, 140, 200, 600 };
+        static const double slice_size = 350;
+
+        if(m_sv >= slice_size) return;
+        const auto slice_region = std::find_if(slice_regions.begin(), slice_regions.end(),
+                                               [&](double x) { return m_Hbb < x; });
+        if(slice_region == slice_regions.end()) return;
+        const ptrdiff_t slice_id = slice_region - slice_regions.begin();
+        const double slice_shift = slice_size * slice_id;
+        hist.Fill(m_sv + slice_shift, weight);
     }
 };
 
@@ -234,11 +284,15 @@ public:
         std::cout << "Saving datacards... " << std::endl;
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mSV("emptyDatacard_mSV",mass_bins);
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", mass_ttbb_bins);
+        static const root_ext::SmartHistogram<TH1D> emptyDatacard_slice("emptyDatacard_slice", mass_bins_slice_5fette_fb);
 
         ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false, emptyDatacard_mSV);
 
         ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false,
                                         emptyDatacard_mttbb);
+
+        ProduceFileForLimitsCalculation("m_bb_slice", "m_bb_slice_up", "m_bb_slice_down", false,
+                                        emptyDatacard_slice);
 
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(false);
@@ -658,14 +712,19 @@ protected:
 
 private:
 
-    static const std::pair<double, double>& GetBlindRegion(const std::string& hist_name)
+    static const std::vector< std::pair<double, double> >& GetBlindRegion(const std::string& hist_name)
     {
-        static const std::vector< std::pair<double, double> > blindingRegions = {
-            { std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest() }, { 100, 150 }, { 250, 350 }
+        static const std::vector< std::vector< std::pair<double, double> > > blindingRegions = {
+            { { std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest() } },
+            { { 100, 150 } },
+            { { 250, 350 } },
+            { { 100, 150 }, { 450, 500 }, { 800, 850 }, { 1150, 1200 }, { 1500, 1550 } }
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 }
+            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
+            { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 },
+            { "m_bb_slice", 3 }, { "m_bb_slice_up", 3 }, { "m_bb_slice_down", 3 }
         };
 
         if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);

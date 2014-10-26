@@ -147,7 +147,7 @@ public:
     }
 
     void AddDataHistogram(TH1D* original_data, const std::string& legend_title,
-                          bool blind, const std::pair<double, double>& blind_region)
+                          bool blind, const std::vector< std::pair<double, double> >& blind_regions)
     {
         if(data_histogram)
             throw std::runtime_error("Only one data histogram per stack is supported.");
@@ -156,7 +156,7 @@ public:
         legend->AddEntry(data_histogram.get(), legend_title.c_str(), "LP");
 
         if(blind)
-            BlindHistogram(data_histogram, blind_region);
+            BlindHistogram(data_histogram, blind_regions);
     }
 
     bool NeedDraw() const
@@ -257,11 +257,15 @@ private:
         }
     }
 
-    static void BlindHistogram(hist_ptr histogram, const std::pair<double, double>& blind_region)
+    static void BlindHistogram(hist_ptr histogram, const std::vector< std::pair<double, double> >& blind_regions)
     {
         for(Int_t n = 1; n <= histogram->GetNbinsX(); ++n) {
             const double x = histogram->GetBinCenter(n);
-            const bool need_blind = x > blind_region.first && x < blind_region.second;
+            const auto blind_predicate = [&](const std::pair<double, double>& region) -> bool {
+                return x > region.first && x < region.second;
+            };
+
+            const bool need_blind = std::any_of(blind_regions.begin(), blind_regions.end(), blind_predicate);
             histogram->SetBinContent(n, need_blind ? 0. : histogram->GetBinContent(n));
             histogram->SetBinError(n, need_blind ? 0. : histogram->GetBinError(n));
         }
