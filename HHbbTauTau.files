@@ -299,3 +299,4 @@ Analysis/source/KinFitTreeProducer.C
 Analysis/studies/McTruthStudy.C
 Analysis/studies/McTruthStudy_flat.C
 Analysis/include/LightBaseBigTreeAnalyzer.h
+PatProduction/crab/multicrab_InclusiveJets.cfg

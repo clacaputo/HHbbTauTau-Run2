@@ -37,6 +37,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 
 #define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/GenEvent.h"
@@ -44,7 +45,8 @@
 class GenEventBlock : public edm::EDAnalyzer {
 public:
     explicit GenEventBlock(const edm::ParameterSet& iConfig) :
-        _genEventSrc(iConfig.getParameter<edm::InputTag>("genEventSrc")) {}
+        _genEventSrc(iConfig.getParameter<edm::InputTag>("genEventSrc")),
+        _lheProductSrc(iConfig.getParameter<edm::InputTag>("lheProductSrc")) {}
 
 private:
     virtual void endJob() { genEventTree.Write(); }
@@ -52,6 +54,7 @@ private:
 
 private:
     const edm::InputTag _genEventSrc;
+    const edm::InputTag _lheProductSrc;
 
 
     ntuple::GenEventTree genEventTree;
@@ -67,6 +70,11 @@ void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     //Embedded part
     edm::Handle<GenFilterInfo> genInfoEmbedded_Handle;
     iEvent.getByLabel(_genEventSrc,genInfoEmbedded_Handle);
+
+
+    edm::Handle< LHEEventProduct > LHEEvent_Handle;
+    iEvent.getByLabel(_lheProductSrc,LHEEvent_Handle);
+
     if (!genInfoEmbedded_Handle.isValid()) {
         edm::LogError("GenEventBlock") << "Error >> Failed to get GenFilterInfor for label: "
                                      << _genEventSrc;
@@ -75,6 +83,14 @@ void GenEventBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     else {
         const GenFilterInfo* genFilterInfo = genInfoEmbedded_Handle.product();
         genEventTree.embeddedWeight() = genFilterInfo->filterEfficiency();
+    }
+
+    if(!LHEEvent_Handle.isValid()){
+        genEventTree.nup() = std::numeric_limits<unsigned>::lowest();
+    }
+    else {
+        const LHEEventProduct* lheEvent = LHEEvent_Handle.product();
+        genEventTree.nup() = lheEvent->hepeup().NUP;
     }
 
     genEventTree.Fill();

@@ -30,6 +30,7 @@
 
 #define GENEVENT_DATA() \
     SIMPLE_VAR(Float_t, embeddedWeight) \
+    SIMPLE_VAR(UInt_t, nup) \
     /**/
 
 #define SIMPLE_VAR(type, name) DECLARE_SIMPLE_BRANCH_VARIABLE(type, name)

@@ -28,5 +28,6 @@
 import FWCore.ParameterSet.Config as cms
 
 genEventBlock = cms.EDAnalyzer("GenEventBlock",
-    genEventSrc = cms.InputTag('generator','minVisPtFilter','EmbeddedRECO')
+    genEventSrc = cms.InputTag('generator','minVisPtFilter','EmbeddedRECO'),
+    lheProductSrc = cms.InputTag('source')
 )
