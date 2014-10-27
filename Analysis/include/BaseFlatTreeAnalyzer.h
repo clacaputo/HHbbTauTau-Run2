@@ -181,7 +181,7 @@ private:
         static const std::vector<double> slice_regions = { 60, 100, 140, 200, 600 };
         static const double slice_size = 350;
 
-        if(m_sv >= slice_size) return;
+        if(m_sv < 0 || m_sv >= slice_size) return;
         const auto slice_region = std::find_if(slice_regions.begin(), slice_regions.end(),
                                                [&](double x) { return m_Hbb < x; });
         if(slice_region == slice_regions.end()) return;
@@ -379,11 +379,11 @@ protected:
         const PhysicalValue OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
         const PhysicalValue SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
 
-//        if (OS_ratio.value < 0 || SS_ratio.value < 0) {
-//            static const analysis::PhysicalValue v(1, 0.001);
-//            return analysis::PhysicalValuePair(v, v);
-//        }
-//        else
+        if (OS_ratio.value < 0 || SS_ratio.value < 0) {
+            static const analysis::PhysicalValue v(1, 0.001);
+            return analysis::PhysicalValuePair(v, v);
+        }
+        else
             return PhysicalValuePair(OS_ratio, SS_ratio);
     }
 
@@ -477,6 +477,11 @@ protected:
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
+            if(std::isnan(event.weight)) {
+                std::cerr << "ERROR: event " << event.evt << " will not be processed because event weight is NaN."
+                          << std::endl;
+                return;
+            }
 
             for(auto eventCategory : eventCategories) {
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
@@ -542,7 +547,6 @@ protected:
             }
         }
     }
-
 
     void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,
                        bool calc_BDTMitFisher)
@@ -698,16 +702,16 @@ protected:
 
         if(verbose)
             std::cout << "Integral after bkg subtraction: " << Integral(histogram, false) << ".\n" << std::endl;
-//        for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
-//            if (histogram.GetBinContent(n) >= 0) continue;
-//            const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
+        for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
+            if (histogram.GetBinContent(n) >= 0) continue;
+            const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
 
-//            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
-//                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
-//                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
-//                      << "].\n";
+            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
+                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
+                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
+                      << "].\n";
 //            histogram.SetBinContent(n,0);
-//        }
+        }
     }
 
 private:
