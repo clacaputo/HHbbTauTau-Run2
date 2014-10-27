@@ -212,8 +212,8 @@ public:
 
     static const EventRegionSet& EssentialEventRegions()
     {
-//        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
-        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::OS_NotIsolated };
+        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
+//        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::OS_NotIsolated };
         return regions;
     }
 
@@ -262,15 +262,16 @@ public:
             EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
 
             const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName(),
-                                                                  EventRegion::SS_Isolated,EventRegion::SS_NotIsolated);
-            std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
+                                                                  EventRegion::OS_NotIsolated,EventRegion::SS_NotIsolated);
+            //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
+            std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
                     CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
-                EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::OS_NotIsolated);
+                EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::SS_Isolated);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
 
