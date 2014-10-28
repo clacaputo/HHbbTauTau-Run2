@@ -86,6 +86,16 @@ public:
             mother->daughters.push_back(this);
         }
     }
+
+    const GenParticle* GetHardInteractionOrigin() const
+    {
+        for(const GenParticle* origin = this; origin->pdg == pdg; origin = origin->mothers.front()) {
+            if(origin->status == particles::HardInteractionProduct)
+                return origin;
+            if(origin->mothers.size() != 1) break;
+        }
+        throw exception("Hard interaction origin not found for particle ") << pdg << ", index = " << index;
+    }
 };
 
 class VisibleGenObject {

@@ -30,6 +30,39 @@ class McTruthStudyData : public analysis::BaseAnalyzerData {
 public:
     McTruthStudyData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
 
+    TH1D_ENTRY(MC_visible_pt, 20, 0, 200)
+    TH1D_ENTRY(MC_visible_eta, 20, 0, 5)
+    TH1D_ENTRY(MC_visible_phi, 32, 0, 3.2)
+    TH1D_ENTRY(MC_visible_energy, 50, 7000, 8000)
+
+    TH1D_ENTRY(MC_invisible_pt, 20, 0, 200)
+    TH1D_ENTRY(MC_invisible_eta, 20, 0, 5)
+    TH1D_ENTRY(MC_invisible_phi, 32, 0, 3.2)
+    TH1D_ENTRY(MC_invisible_energy, 40, 0, 400)
+
+    TH1D_ENTRY(MC_underlying_invisible_pt, 20, 0, 20)
+    TH1D_ENTRY(MC_underlying_invisible_eta, 20, 0, 5)
+    TH1D_ENTRY(MC_underlying_invisible_phi, 32, 0, 3.2)
+    TH1D_ENTRY(MC_underlying_invisible_energy, 20, 0, 20)
+
+    TH2D_ENTRY(MVA_MET_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
+    TH2D_ENTRY(MVA_MET_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
+    TH1D_ENTRY(MVA_MET_inaccuracy_phi, 32, 0, 3.2)
+
+    TH2D_ENTRY(MSSM_H_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
+    TH2D_ENTRY(MSSM_H_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
+    TH1D_ENTRY(MSSM_H_inaccuracy_phi, 32, 0, 3.2)
+
+    TH2D_ENTRY(MSSM_H_MET_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
+    TH2D_ENTRY(MSSM_H_MET_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
+    TH1D_ENTRY(MSSM_H_MET_inaccuracy_phi, 32, 0, 3.2)
+
+    TH2D_ENTRY(MSSM_H_SV_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
+    TH2D_ENTRY(MSSM_H_SV_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
+    TH1D_ENTRY(MSSM_H_SV_inaccuracy_phi, 32, 0, 3.2)
+
+    TH1D_ENTRY(MC_invisible_tau_ratio, 11, 0, 1.1)
+
     TH1D_ENTRY(DeltaRmin1_visible, 600, 0, 3)
     TH1D_ENTRY(DeltaRmin2_visible, 600, 0, 3)
     TH1D_ENTRY(DeltaRmin1_original, 600, 0, 3)
@@ -49,41 +82,6 @@ public:
     TH1D_ENTRY(goodMuonsFromZmm, 5, -0.5, 4.5)
     TH1D_ENTRY(hardElectronsZmm, 5, -0.5, 4.5)
     TH1D_ENTRY(hardMuonsZmm, 5, -0.5, 4.5)
-
-    TH1D_ENTRY(MC_total_momentum_pt, 20, 0, 200)
-    TH1D_ENTRY(MC_total_momentum_eta, 20, 0, 10)
-    TH1D_ENTRY(MC_total_momentum_phi, 32, 0, 3.2)
-    TH1D_ENTRY(MC_total_momentum_energy, 100, 0, 10000)
-
-    TH1D_ENTRY(MC_visible_momentum_pt, 20, 0, 200)
-    TH1D_ENTRY(MC_visible_momentum_eta, 20, 0, 10)
-    TH1D_ENTRY(MC_visible_momentum_phi, 32, 0, 3.2)
-    TH1D_ENTRY(MC_visible_momentum_energy, 100, 0, 10000)
-
-    TH1D_ENTRY(MC_invisible_momentum_pt, 20, 0, 200)
-    TH1D_ENTRY(MC_invisible_momentum_eta, 20, 0, 10)
-    TH1D_ENTRY(MC_invisible_momentum_phi, 32, 0, 3.2)
-    TH1D_ENTRY(MC_invisible_momentum_energy, 100, 0, 10000)
-
-    TH1D_ENTRY(MC_delta_invisible_momentum_pt, 20, 0, 200)
-    TH1D_ENTRY(MC_delta_invisible_momentum_eta, 20, 0, 10)
-    TH1D_ENTRY(MC_delta_invisible_momentum_phi, 32, 0, 3.2)
-    TH1D_ENTRY(MC_delta_invisible_momentum_energy, 100, 0, 10000)
-
-    TH1D_ENTRY(MC_H_invisible_momentum_pt, 20, 0, 200)
-    TH1D_ENTRY(MC_H_invisible_momentum_eta, 20, 0, 10)
-    TH1D_ENTRY(MC_H_invisible_momentum_phi, 32, 0, 3.2)
-    TH1D_ENTRY(MC_H_invisible_momentum_energy, 100, 0, 10000)
-
-    TH1D_ENTRY(MC_underlying_invisible_momentum_pt, 20, 0, 200)
-    TH1D_ENTRY(MC_underlying_invisible_momentum_eta, 20, 0, 10)
-    TH1D_ENTRY(MC_underlying_invisible_momentum_phi, 32, 0, 3.2)
-    TH1D_ENTRY(MC_underlying_invisible_momentum_energy, 100, 0, 10000)
-
-    TH1D_ENTRY(MET_predicition_delta_pt, 20, 0, 200)
-    TH1D_ENTRY(MET_predicition_delta_phi, 32, 0, 3.2)
-
-    TH1D_ENTRY(MC_invisible_momentum_tau_ratio, 11, 0, 1.1)
 };
 
 
@@ -103,45 +101,29 @@ protected:
     {
         using namespace analysis;
 
-        if(selection.GetFinalStateMC().b_jets.size() < 2 || selection.GetFinalStateMC().taus.size() < 2) return;
+        if(selection.GetFinalStateMC().b_jets.size() < 2 || selection.GetFinalStateMC().taus.size() < 2
+                || selection.bjets_all.size() < 2) return;
 
-        const VisibleGenObject& bjet1_visible = selection.GetFinalStateMC().b_jets.at(0);
-        const GenParticle* bjet1_MC = bjet1_visible.origin;
+        const GenParticle* MSSM_H_MC = selection.GetFinalStateMC().resonance->GetHardInteractionOrigin();
+        const GenParticle* H_TT_MC = selection.GetFinalStateMC().Higgs_TauTau->GetHardInteractionOrigin();
+//        const GenParticle* H_BB_MC = selection.GetFinalStateMC().Higgs_BB->GetHardInteractionOrigin();
 
-        const VisibleGenObject& bjet2_visible = selection.GetFinalStateMC().b_jets.at(1);
-        const GenParticle* bjet2_MC = bjet2_visible.origin;
+        const VisibleGenObject& tau_1_visible = selection.GetFinalStateMC().taus.at(0);
+        const VisibleGenObject& tau_2_visible = selection.GetFinalStateMC().taus.at(1);
+        const GenParticle* tau_1_MC = tau_1_visible.origin->GetHardInteractionOrigin();
+        const GenParticle* tau_2_MC = tau_2_visible.origin->GetHardInteractionOrigin();
 
-        const VisibleGenObject tau_1 = selection.GetFinalStateMC().taus.at(0);
-        const VisibleGenObject tau_2 = selection.GetFinalStateMC().taus.at(1);
-        const GenParticle* tau_MC_1 = tau_1.origin;
-        const GenParticle* tau_MC_2 = tau_2.origin;
+        const VisibleGenObject& bjet_1_visible = selection.GetFinalStateMC().b_jets.at(0);
+        const VisibleGenObject& bjet_2_visible = selection.GetFinalStateMC().b_jets.at(1);
+        const GenParticle* bjet_1_MC = bjet_1_visible.origin->GetHardInteractionOrigin();
+        const GenParticle* bjet_2_MC = bjet_2_visible.origin->GetHardInteractionOrigin();
 
-        TLorentzVector total_momentum, visible_momentum, invisible_momentum;
-        for(const GenParticle& genParticle : genEvent.genParticles) {
-            if(genParticle.status != particles::FinalStateParticle) continue;
-
-            total_momentum += genParticle.momentum;
-            if(particles::neutrinos.count(genParticle.pdg.Code))
-                invisible_momentum += genParticle.momentum;
-            else
-                visible_momentum += genParticle.momentum;
-        }
-        if(invisible_momentum.Pt() < 40)
-            return;
-        anaData.MC_total_momentum_pt().Fill(total_momentum.Pt());
-        anaData.MC_total_momentum_eta().Fill(std::abs(total_momentum.Eta()));
-        anaData.MC_total_momentum_phi().Fill(std::abs(total_momentum.Phi()));
-        anaData.MC_total_momentum_energy().Fill(total_momentum.E());
-
-        anaData.MC_visible_momentum_pt().Fill(visible_momentum.Pt());
-        anaData.MC_visible_momentum_eta().Fill(std::abs(visible_momentum.Eta()));
-        anaData.MC_visible_momentum_phi().Fill(std::abs(visible_momentum.Phi()));
-        anaData.MC_visible_momentum_energy().Fill(visible_momentum.E());
-
-        anaData.MC_invisible_momentum_pt().Fill(invisible_momentum.Pt());
-        anaData.MC_invisible_momentum_eta().Fill(std::abs(invisible_momentum.Eta()));
-        anaData.MC_invisible_momentum_phi().Fill(std::abs(invisible_momentum.Phi()));
-        anaData.MC_invisible_momentum_energy().Fill(invisible_momentum.E());
+        const TLorentzVector& tau_1_RECO = selection.GetLeg1().momentum;
+        const TLorentzVector& tau_2_RECO = selection.GetLeg2().momentum;
+        const TLorentzVector& bjet_1_RECO = selection.bjets_all.at(0).momentum;
+        const TLorentzVector& bjet_2_RECO = selection.bjets_all.at(1).momentum;
+        const TLorentzVector& MVA_MET = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,
+                                                                  selection.MET_with_recoil_corrections.phi, 0);
 
         unsigned n_lept_bjet = 0;
         for(const VisibleGenObject& bjet : selection.GetFinalStateMC().b_jets) {
@@ -149,55 +131,118 @@ protected:
                 ++n_lept_bjet;
         }
 
+        TLorentzVector MC_visible, MC_invisible;
+        for(const GenParticle& genParticle : genEvent.genParticles) {
+            if(genParticle.status != particles::FinalStateParticle) continue;
+            if(particles::neutrinos.count(genParticle.pdg.Code))
+                MC_invisible += genParticle.momentum;
+            else
+                MC_visible += genParticle.momentum;
+        }
+
+        anaData.MC_visible_pt().Fill(MC_visible.Pt());
+        anaData.MC_visible_eta().Fill(std::abs(MC_visible.Eta()));
+        anaData.MC_visible_phi().Fill(std::abs(MC_visible.Phi()));
+        anaData.MC_visible_energy().Fill(MC_visible.E());
+
+        anaData.MC_invisible_pt().Fill(MC_invisible.Pt());
+        anaData.MC_invisible_eta().Fill(std::abs(MC_invisible.Eta()));
+        anaData.MC_invisible_phi().Fill(std::abs(MC_invisible.Phi()));
+        anaData.MC_invisible_energy().Fill(MC_invisible.E());
+
+        std::ostringstream ss_name;
+        ss_name << "n_lept_b_" << n_lept_bjet;
+        const std::string inc_name = ss_name.str();
+        if(MC_invisible.Pt() < 30)
+            ss_name << "_low_inv";
+        else
+            ss_name << "_high_inv";
+        const std::string cat_name = ss_name.str();
 
 
-//            const TLorentzVector MET = MakeLorentzVectorPtEtaPhiM(correctedMET.pt, 0, correctedMET.phi, 0);
-        const TLorentzVector MET = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,
-                                                              selection.MET_with_recoil_corrections.phi, 0);
-        const TLorentzVector MET_predicition_delta = invisible_momentum - MET;
-        anaData.MET_predicition_delta_pt(n_lept_bjet).Fill(MET_predicition_delta.Pt());
-        anaData.MET_predicition_delta_phi(n_lept_bjet).Fill(std::abs(MET_predicition_delta.Phi()));
-
-        const VisibleGenObject H(selection.GetFinalStateMC().resonance->mothers.front());
+        const VisibleGenObject MSSM_H_genVisible(MSSM_H_MC);
         const GenParticle* genProton = *genEvent.primaryParticles.begin();
-        const VisibleGenObject proton(genProton, H.particlesProcessed);
-        const TLorentzVector delta_invisible = invisible_momentum - proton.invisibleMomentum - H.invisibleMomentum;
+        const VisibleGenObject underlying_visible(genProton, MSSM_H_genVisible.particlesProcessed);
+        anaData.MC_underlying_invisible_pt().Fill(underlying_visible.invisibleMomentum.Pt());
+        anaData.MC_underlying_invisible_eta().Fill(std::abs(underlying_visible.invisibleMomentum.Eta()));
+        anaData.MC_underlying_invisible_phi().Fill(std::abs(underlying_visible.invisibleMomentum.Phi()));
+        anaData.MC_underlying_invisible_energy().Fill(underlying_visible.invisibleMomentum.E());
 
-        anaData.MC_delta_invisible_momentum_pt().Fill(delta_invisible.Pt());
-        anaData.MC_delta_invisible_momentum_eta().Fill(std::abs(delta_invisible.Eta()));
-        anaData.MC_delta_invisible_momentum_phi().Fill(std::abs(delta_invisible.Phi()));
-        anaData.MC_delta_invisible_momentum_energy().Fill(delta_invisible.E());
+        const TLorentzVector MVA_MET_inaccuracy = MC_invisible - MVA_MET;
+        const double MVA_MET_inaccuracy_pt = (MC_invisible.Pt() - MVA_MET.Pt()) / MC_invisible.Pt();
+        const double MVA_MET_inaccuracy_pt_diff = MVA_MET_inaccuracy.Pt() / MC_invisible.Pt();
+        anaData.MVA_MET_inaccuracy_pt().Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt);
+        anaData.MVA_MET_inaccuracy_pt(inc_name).Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt);
+        anaData.MVA_MET_inaccuracy_pt_diff().Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt_diff);
+        anaData.MVA_MET_inaccuracy_pt_diff(inc_name).Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt_diff);
+        anaData.MVA_MET_inaccuracy_phi().Fill(std::abs(MVA_MET_inaccuracy.Phi()));
+        anaData.MVA_MET_inaccuracy_phi(inc_name).Fill(std::abs(MVA_MET_inaccuracy.Phi()));
 
-        anaData.MC_H_invisible_momentum_pt().Fill(H.invisibleMomentum.Pt());
-        anaData.MC_H_invisible_momentum_eta().Fill(std::abs(H.invisibleMomentum.Eta()));
-        anaData.MC_H_invisible_momentum_phi().Fill(std::abs(H.invisibleMomentum.Phi()));
-        anaData.MC_H_invisible_momentum_energy().Fill(H.invisibleMomentum.E());
+        const TLorentzVector MSSM_H_MC_visible = MSSM_H_MC->momentum - MSSM_H_genVisible.invisibleMomentum;
+        const TLorentzVector MSSM_H_RECO = tau_1_RECO + tau_2_RECO + bjet_1_RECO + bjet_2_RECO;
+        const TLorentzVector MSSM_H_inaccuracy = MSSM_H_MC_visible - MSSM_H_RECO;
+        const double MSSM_H_inaccuracy_pt = (MSSM_H_MC_visible.Pt() - MSSM_H_RECO.Pt()) / MSSM_H_MC_visible.Pt();
+        const double MSSM_H_inaccuracy_pt_diff = MSSM_H_inaccuracy.Pt() / MSSM_H_MC_visible.Pt();
+        anaData.MSSM_H_inaccuracy_pt().Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt);
+        anaData.MSSM_H_inaccuracy_pt(inc_name).Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt);
+        anaData.MSSM_H_inaccuracy_pt(cat_name).Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt);
+        anaData.MSSM_H_inaccuracy_pt_diff().Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt_diff);
+        anaData.MSSM_H_inaccuracy_pt_diff(inc_name).Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt_diff);
+        anaData.MSSM_H_inaccuracy_pt_diff(cat_name).Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt_diff);
+        anaData.MSSM_H_inaccuracy_phi().Fill(std::abs(MSSM_H_inaccuracy.Phi()));
+        anaData.MSSM_H_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_inaccuracy.Phi()));
+        anaData.MSSM_H_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_inaccuracy.Phi()));
 
-        anaData.MC_underlying_invisible_momentum_pt().Fill(proton.invisibleMomentum.Pt());
-        anaData.MC_underlying_invisible_momentum_eta().Fill(std::abs(proton.invisibleMomentum.Eta()));
-        anaData.MC_underlying_invisible_momentum_phi().Fill(std::abs(proton.invisibleMomentum.Phi()));
-        anaData.MC_underlying_invisible_momentum_energy().Fill(proton.invisibleMomentum.E());
+        const TLorentzVector MSSM_H_MET_RECO = MSSM_H_RECO + MVA_MET;
+        const TLorentzVector MSSM_H_MET_inaccuracy = MSSM_H_MC->momentum - MSSM_H_MET_RECO;
+        const double MSSM_H_MET_inaccuracy_pt = (MSSM_H_MC->momentum.Pt() - MSSM_H_MET_RECO.Pt())
+                / MSSM_H_MC->momentum.Pt();
+        const double MSSM_H_MET_inaccuracy_pt_diff = MSSM_H_MET_inaccuracy.Pt() / MSSM_H_MC->momentum.Pt();
+        anaData.MSSM_H_MET_inaccuracy_pt().Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt);
+        anaData.MSSM_H_MET_inaccuracy_pt(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt);
+        anaData.MSSM_H_MET_inaccuracy_pt(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt);
+        anaData.MSSM_H_MET_inaccuracy_pt_diff().Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt_diff);
+        anaData.MSSM_H_MET_inaccuracy_pt_diff(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt_diff);
+        anaData.MSSM_H_MET_inaccuracy_pt_diff(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt_diff);
+        anaData.MSSM_H_MET_inaccuracy_phi().Fill(std::abs(MSSM_H_MET_inaccuracy.Phi()));
+        anaData.MSSM_H_MET_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_MET_inaccuracy.Phi()));
+        anaData.MSSM_H_MET_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_MET_inaccuracy.Phi()));
 
-        const VisibleGenObject htt(selection.GetFinalStateMC().Higgs_TauTau->mothers.front());
-        const double tau_pt_ratio = htt.invisibleMomentum.Pt() / H.invisibleMomentum.Pt();
-        anaData.MC_invisible_momentum_tau_ratio(n_lept_bjet).Fill(tau_pt_ratio);
+        const sv_fit::FitResults sv_fit_result = sv_fit::Fit(sv_fit::FitAlgorithm::MarkovChain, selection.higgs,
+                                                             selection.MET_with_recoil_corrections, 1);
+        if(!sv_fit_result.has_valid_momentum)
+            throw analysis::exception("svFit not converged");
+        const TLorentzVector MSSM_H_SV = sv_fit_result.momentum + bjet_1_RECO + bjet_2_RECO;
+        const TLorentzVector MSSM_H_SV_inaccuracy = MSSM_H_MC->momentum - MSSM_H_SV;
+        const double MSSM_H_SV_inaccuracy_pt = (MSSM_H_MC->momentum.Pt() - MSSM_H_SV.Pt()) / MSSM_H_MC->momentum.Pt();
+        const double MSSM_H_SV_inaccuracy_pt_diff = MSSM_H_SV_inaccuracy.Pt() / MSSM_H_MC->momentum.Pt();
+        anaData.MSSM_H_SV_inaccuracy_pt(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt);
+        anaData.MSSM_H_SV_inaccuracy_pt(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt);
+        anaData.MSSM_H_SV_inaccuracy_pt_diff(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt_diff);
+        anaData.MSSM_H_SV_inaccuracy_pt_diff(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt_diff);
+        anaData.MSSM_H_SV_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_SV_inaccuracy.Phi()));
+        anaData.MSSM_H_SV_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_SV_inaccuracy.Phi()));
 
 
-        if (selection.bjets_all.size() > 1 && bjet1_MC->momentum.Pt() > 20 && bjet2_MC->momentum.Pt() > 20 &&
-                std::abs(bjet1_MC->momentum.Eta()) < 2.4 && std::abs(bjet2_MC->momentum.Eta()) < 2.4 ){
+        const VisibleGenObject H_TT_visible(H_TT_MC);
+        const double MC_invisible_tau_ratio = H_TT_visible.invisibleMomentum.Pt() / MC_invisible.Pt();
+        anaData.MC_invisible_tau_ratio(inc_name).Fill(MC_invisible_tau_ratio);
+        anaData.MC_invisible_tau_ratio(cat_name).Fill(MC_invisible_tau_ratio);
 
-            double deltaRmin_firstCouple =
-                    std::min(bjet1_MC->momentum.DeltaR(tau_MC_1->momentum),bjet1_MC->momentum.DeltaR(tau_MC_2->momentum));
-            double deltaRmin_secondCouple =
-                    std::min(bjet2_MC->momentum.DeltaR(tau_MC_1->momentum),bjet2_MC->momentum.DeltaR(tau_MC_2->momentum));
-            double deltaRmin_MC = std::min(deltaRmin_firstCouple,deltaRmin_secondCouple);
+        if (bjet_1_MC->momentum.Pt() > 20 && bjet_2_MC->momentum.Pt() > 20 &&
+            std::abs(bjet_1_MC->momentum.Eta()) < 2.4 && std::abs(bjet_2_MC->momentum.Eta()) < 2.4 ) {
 
-            //std::cout << "deltaRmin_MC=" << deltaRmin_MC << std::endl;
+            const double deltaRmin_firstCouple = std::min(bjet_1_MC->momentum.DeltaR(tau_1_MC->momentum),
+                                                          bjet_1_MC->momentum.DeltaR(tau_2_MC->momentum));
+            const double deltaRmin_secondCouple = std::min(bjet_2_MC->momentum.DeltaR(tau_1_MC->momentum),
+                                                           bjet_2_MC->momentum.DeltaR(tau_2_MC->momentum));
+            const double deltaRmin_MC = std::min(deltaRmin_firstCouple, deltaRmin_secondCouple);
+
             anaData.deltaRmin_MC().Fill(deltaRmin_MC);
-            anaData.DeltaRbjets_MC().Fill(bjet1_MC->momentum.DeltaR(bjet2_MC->momentum));
-            anaData.MinPtBjetsMC().Fill(std::min(bjet1_MC->momentum.Pt(),bjet2_MC->momentum.Pt()));
-            TLorentzVector bb_MC = bjet1_MC->momentum + bjet2_MC->momentum;
-            TLorentzVector bb_MC_visible = bjet1_visible.visibleMomentum + bjet2_visible.visibleMomentum;
+            anaData.DeltaRbjets_MC().Fill(bjet_1_MC->momentum.DeltaR(bjet_2_MC->momentum));
+            anaData.MinPtBjetsMC().Fill(std::min(bjet_1_MC->momentum.Pt(), bjet_2_MC->momentum.Pt()));
+            const TLorentzVector bb_MC = bjet_1_MC->momentum + bjet_2_MC->momentum;
+            const TLorentzVector bb_MC_visible = bjet_1_visible.visibleMomentum + bjet_2_visible.visibleMomentum;
 
             anaData.MassBB_MC().Fill(bb_MC.M());
             anaData.MassBB_MCvis().Fill(bb_MC_visible.M());
@@ -214,26 +259,25 @@ protected:
                 const Candidate& bjet = selection.bjets_all.at(i);
 //                double deltaPt1 = std::abs(bjet.momentum.Pt() - bjet1_MC->momentum.Pt())/bjet1_MC->momentum.Pt();
 //                double deltaPt2 = std::abs(bjet.momentum.Pt() - bjet2_MC->momentum.Pt())/bjet2_MC->momentum.Pt();
-                if (bjet.momentum.DeltaR(bjet1_MC->momentum) < deltaRmin1_original /*&& deltaPt1 < 0.4*/){
-                    deltaRmin1_original = bjet.momentum.DeltaR(bjet1_MC->momentum);
+                if (bjet.momentum.DeltaR(bjet_1_MC->momentum) < deltaRmin1_original /*&& deltaPt1 < 0.4*/){
+                    deltaRmin1_original = bjet.momentum.DeltaR(bjet_1_MC->momentum);
                     index_bjet1 = i;
                 }
 
-                if (bjet.momentum.DeltaR(bjet2_MC->momentum) < deltaRmin2_original /*&& deltaPt2 < 0.4*/){
-                    deltaRmin2_original = bjet.momentum.DeltaR(bjet2_MC->momentum);
+                if (bjet.momentum.DeltaR(bjet_2_MC->momentum) < deltaRmin2_original /*&& deltaPt2 < 0.4*/){
+                    deltaRmin2_original = bjet.momentum.DeltaR(bjet_2_MC->momentum);
                     index_bjet2 = i;
                 }
 
-                if (bjet.momentum.DeltaR(bjet1_visible.visibleMomentum) < deltaRmin1_visible){
-                    deltaRmin1_visible = bjet.momentum.DeltaR(bjet1_visible.visibleMomentum);
+                if (bjet.momentum.DeltaR(bjet_1_visible.visibleMomentum) < deltaRmin1_visible){
+                    deltaRmin1_visible = bjet.momentum.DeltaR(bjet_1_visible.visibleMomentum);
                     index_bjet1_vis = i;
                 }
 
-                if (bjet.momentum.DeltaR(bjet2_visible.visibleMomentum) < deltaRmin2_visible){
-                    deltaRmin2_visible = bjet.momentum.DeltaR(bjet2_visible.visibleMomentum);
+                if (bjet.momentum.DeltaR(bjet_2_visible.visibleMomentum) < deltaRmin2_visible){
+                    deltaRmin2_visible = bjet.momentum.DeltaR(bjet_2_visible.visibleMomentum);
                     index_bjet2_vis = i;
                 }
-
             }
 
             anaData.DeltaRmin1_original().Fill(deltaRmin1_original);
@@ -255,9 +299,9 @@ protected:
             else {
                 const Candidate& selectedBjets1 = selection.bjets_all.at(index_bjet1);
                 const Candidate& selectedBjets2 = selection.bjets_all.at(index_bjet2);
-                double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet1_MC->momentum.Pt());
-                double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet2_MC->momentum.Pt());
-                deltaPtMax = std::max(deltaPt1/bjet1_MC->momentum.Pt(),deltaPt2/bjet2_MC->momentum.Pt());
+                double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet_1_MC->momentum.Pt());
+                double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet_2_MC->momentum.Pt());
+                deltaPtMax = std::max(deltaPt1/bjet_1_MC->momentum.Pt(), deltaPt2/bjet_2_MC->momentum.Pt());
             }
             anaData.deltaPtMax().Fill(deltaPtMax);
 
@@ -268,10 +312,11 @@ protected:
             else {
                 const Candidate& selectedBjets1 = selection.bjets_all.at(index_bjet1_vis);
                 const Candidate& selectedBjets2 = selection.bjets_all.at(index_bjet2_vis);
-                double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet1_visible.visibleMomentum.Pt());
-                double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet2_visible.visibleMomentum.Pt());
+                double deltaPt1 = std::abs(selectedBjets1.momentum.Pt() - bjet_1_visible.visibleMomentum.Pt());
+                double deltaPt2 = std::abs(selectedBjets2.momentum.Pt() - bjet_2_visible.visibleMomentum.Pt());
                 deltaPtMax_vis =
-                        std::max(deltaPt1/bjet1_visible.visibleMomentum.Pt(),deltaPt2/bjet2_visible.visibleMomentum.Pt());
+                        std::max(deltaPt1/bjet_1_visible.visibleMomentum.Pt(),
+                                 deltaPt2/bjet_2_visible.visibleMomentum.Pt());
             }
             anaData.deltaPtMax_vis().Fill(deltaPtMax_vis);
         }
