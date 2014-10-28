@@ -300,6 +300,15 @@ static const EventCategorySet TwoJetsEventCategories =
         { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
 
 typedef std::set<EventRegion> EventRegionSet;
+typedef std::map<EventRegion, EventRegion> EventRegionMap;
+static const EventRegionMap HighMt_LowMt_RegionMap = { {EventRegion::OS_Iso_HighMt, EventRegion::OS_Isolated},
+                                                     {EventRegion::SS_Iso_HighMt, EventRegion::SS_Isolated},
+                                                       {EventRegion::OS_NotIso_HighMt, EventRegion::OS_NotIsolated},
+                                                       {EventRegion::SS_NotIso_HighMt, EventRegion::SS_NotIsolated} };
+static const EventRegionSet HighMtRegions = {EventRegion::OS_Iso_HighMt, EventRegion::SS_Iso_HighMt,
+                                             EventRegion::OS_NotIso_HighMt, EventRegion::SS_NotIso_HighMt};
+static const EventRegionSet LowMtRegions = {EventRegion::OS_Isolated, EventRegion::SS_Isolated,
+                                             EventRegion::OS_NotIsolated, EventRegion::SS_NotIsolated};
 
 static const EventRegionSet AllEventRegions = tools::collect_map_keys(detail::eventRegionNamesMap);
 

@@ -554,7 +554,10 @@ protected:
 
         // needs to be filles with NUP!
         // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
-        flatTree->n_extraJets_MC() = default_value ;
+        if (config.MaxTreeVersion() == 2)
+            flatTree->n_extraJets_MC() = event->genEvent().nup;
+        else
+            flatTree->n_extraJets_MC() = default_value;
 
         // MET
         const TLorentzVector MET_momentum = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,

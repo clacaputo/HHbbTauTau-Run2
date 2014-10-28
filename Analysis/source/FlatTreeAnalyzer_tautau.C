@@ -56,6 +56,13 @@ protected:
         return std::shared_ptr<FlatAnalyzerData_tautau>(new FlatAnalyzerData_tautau());
     }
 
+    virtual const analysis::EventRegionSet& EssentialEventRegions() override
+    {
+        static const analysis::EventRegionSet regions = { analysis::EventRegion::OS_Isolated,
+                                                analysis::EventRegion::OS_NotIsolated };
+        return regions;
+    }
+
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
     {
         using analysis::EventRegion;
@@ -76,11 +83,29 @@ protected:
         return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
     }
 
-    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory eventCategory,
+                                                            const std::string& hist_name) override
+    {
+        return BaseFlatTreeAnalyzer::CalculateQCDScaleFactor(eventCategory, hist_name, analysis::EventRegion::SS_Isolated,
+                                       analysis::EventRegion::SS_NotIsolated);
+    }
+
+    virtual void EstimateQCD(analysis::EventCategory eventCategory, const std::string& hist_name,
+                             const analysis::PhysicalValue& scale_factor) override
+    {
+        return BaseFlatTreeAnalyzer::EstimateQCD(eventCategory,hist_name,scale_factor,
+                                                 analysis::EventRegion::OS_NotIsolated);
+    }
+
+    virtual PhysicalValueMap CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
                                                                    const std::string& /*hist_name*/) override
     {
+        PhysicalValueMap valueMap;
         static const analysis::PhysicalValue v(1, 0.001);
-        return analysis::PhysicalValuePair(v, v);
+        for (analysis::EventRegion eventRegion : analysis::LowMtRegions){
+            valueMap[eventRegion] = v;
+        }
+        return valueMap;
     }
 
 };

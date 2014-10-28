@@ -197,6 +197,7 @@ public:
 
     typedef std::map<std::string, RegionAnaData> AnaDataForEventCategory;
     typedef std::map<EventCategory, AnaDataForEventCategory> FullAnaData;
+    typedef std::map<EventRegion, PhysicalValue> PhysicalValueMap;
 
     static const std::string ReferenceHistogramName() { return "m_sv"; }
 
@@ -210,10 +211,9 @@ public:
         return categories;
     }
 
-    static const EventRegionSet& EssentialEventRegions()
+    virtual const EventRegionSet& EssentialEventRegions()
     {
         static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
-//        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::OS_NotIsolated };
         return regions;
     }
 
@@ -255,14 +255,14 @@ public:
             CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,false);
 
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
-            std::cout << eventCategory << " OS_HighMt_data / OS_HighMt_mc = "
-                      << wjets_scale_factors.first << "\n"
-                      << eventCategory << " SS_HighMt_data / SS_HighMt_mc = "
-                      << wjets_scale_factors.second << std::endl;
+            for (EventRegion eventRegion : LowMtRegions){
+                std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
+                             wjets_scale_factors.at(eventRegion) << std::endl;
+            }
+
             EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
 
-            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName(),
-                                                                  EventRegion::OS_NotIsolated,EventRegion::SS_NotIsolated);
+            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
             //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
@@ -271,7 +271,7 @@ public:
                     CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
-                EstimateQCD(eventCategory, hist.name, qcd_scale_factor,EventRegion::SS_Isolated);
+                EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
 
@@ -305,6 +305,11 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
+    virtual PhysicalValue CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name)
+    {
+        return CalculateQCDScaleFactor(eventCategory, hist_name, EventRegion::OS_NotIsolated,EventRegion::SS_NotIsolated);
+    }
+
     virtual PhysicalValue CalculateQCDScaleFactor(EventCategory eventCategory, const std::string& hist_name,
                                                   EventRegion num_eventRegion, EventRegion den_eventRegion)
     {
@@ -334,6 +339,12 @@ protected:
     }
 
     virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name,
+                             const PhysicalValue& scale_factor)
+    {
+        return EstimateQCD(eventCategory,hist_name,scale_factor,EventRegion::SS_Isolated);
+    }
+
+    virtual void EstimateQCD(EventCategory eventCategory, const std::string& hist_name,
                              const PhysicalValue& scale_factor, EventRegion shapeRegion)
     {
         using analysis::EventRegion;
@@ -350,8 +361,9 @@ protected:
         histogram.Scale(scale_factor.value);
     }
 
-    virtual PhysicalValuePair CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name)
+    virtual PhysicalValueMap CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name)
     {
+        PhysicalValueMap valueMap;
         using analysis::EventRegion;
         using analysis::DataCategoryType;
 
@@ -359,37 +371,29 @@ protected:
         const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        auto hist_OS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Iso_HighMt, hist_name);
-        auto hist_SS_HighMt_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Iso_HighMt, hist_name);
-        auto hist_OS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::OS_Iso_HighMt, hist_name);
-        auto hist_SS_HighMt_data = GetHistogram(eventCategory, data.name, EventRegion::SS_Iso_HighMt, hist_name);
-        if(!hist_OS_HighMt_mc || !hist_SS_HighMt_mc || !hist_OS_HighMt_data || !hist_SS_HighMt_data)
-            throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
-
-        TH1D& hist_OS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Iso_HighMt, *hist_OS_HighMt_data);
-        TH1D& hist_SS_HighMt = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Iso_HighMt, *hist_SS_HighMt_data);
-
-        SubtractBackgroundHistograms(hist_OS_HighMt, eventCategory, EventRegion::OS_Iso_HighMt, wjets.name, true);
-        SubtractBackgroundHistograms(hist_SS_HighMt, eventCategory, EventRegion::SS_Iso_HighMt, wjets.name, true);
-
-        const PhysicalValue n_OS_HighMt = Integral(hist_OS_HighMt, false);
-        const PhysicalValue n_OS_HighMt_mc = Integral(*hist_OS_HighMt_mc, false);
-        const PhysicalValue n_SS_HighMt = Integral(hist_SS_HighMt, false);
-        const PhysicalValue n_SS_HighMt_mc = Integral(*hist_SS_HighMt_mc, false);
-
-        const PhysicalValue OS_ratio = n_OS_HighMt / n_OS_HighMt_mc;
-        const PhysicalValue SS_ratio = n_SS_HighMt / n_SS_HighMt_mc;
-
-        if (OS_ratio.value < 0 || SS_ratio.value < 0) {
-            static const analysis::PhysicalValue v(1, 0.001);
-            return analysis::PhysicalValuePair(v, v);
+        for (const auto& eventRegion : HighMt_LowMt_RegionMap){
+            auto hist_mc = GetHistogram(eventCategory, wjets_mc.name, eventRegion.first, hist_name);
+            auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
+            if(!hist_mc || !hist_data)
+                throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
+            TH1D& hist_HighMt = CloneHistogram(eventCategory, wjets.name, eventRegion.first, *hist_data);
+            SubtractBackgroundHistograms(hist_HighMt, eventCategory, eventRegion.first, wjets.name, true);
+            const PhysicalValue n_HighMt = Integral(hist_HighMt, false);
+            const PhysicalValue n_HighMt_mc = Integral(*hist_mc, false);
+            const PhysicalValue ratio = n_HighMt / n_HighMt_mc;
+            if (ratio.value < 0){
+                static const analysis::PhysicalValue v(1, 0.001);
+                valueMap[eventRegion.second] = v;
+            }
+            else
+                valueMap[eventRegion.second] = ratio;
         }
-        else
-            return PhysicalValuePair(OS_ratio, SS_ratio);
+
+        return valueMap;
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValuePair& scale_factors)
+                               const PhysicalValueMap& scale_factor_map)
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
@@ -397,24 +401,15 @@ protected:
         const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
         const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
 
-        if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_Isolated, hist_name)) {
-            TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_Isolated, *hist_OS_mc);
-            hist_OS.Scale(scale_factors.first.value);
-        }
+        for(EventRegion eventRegion : LowMtRegions) {
+            if(scale_factor_map.count(eventRegion)){
+                const PhysicalValue scale_factor = scale_factor_map.at(eventRegion);
+                if(auto hist_mc = GetHistogram(eventCategory, wjets_mc.name, eventRegion, hist_name)) {
+                    TH1D& hist = CloneHistogram(eventCategory, wjets.name, eventRegion, *hist_mc);
+                    hist.Scale(scale_factor.value);
+                }
+            }
 
-        if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_Isolated, hist_name)) {
-            TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_Isolated, *hist_SS_mc);
-            hist_SS.Scale(scale_factors.second.value);
-        }
-
-        if(auto hist_OS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::OS_NotIsolated, hist_name)) {
-            TH1D& hist_OS = CloneHistogram(eventCategory, wjets.name, EventRegion::OS_NotIsolated, *hist_OS_mc);
-            hist_OS.Scale(scale_factors.first.value);
-        }
-
-        if(auto hist_SS_mc = GetHistogram(eventCategory, wjets_mc.name, EventRegion::SS_NotIsolated, hist_name)) {
-            TH1D& hist_SS = CloneHistogram(eventCategory, wjets.name, EventRegion::SS_NotIsolated, *hist_SS_mc);
-            hist_SS.Scale(scale_factors.second.value);
         }
     }
 

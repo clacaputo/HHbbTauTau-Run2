@@ -74,7 +74,8 @@ protected:
         const bool low_mt = event.mt_1 < electronID::mt;
 
         if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
-        if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-        return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
+        else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+        else if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
+        else return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
     }
 };
