@@ -94,7 +94,7 @@ public:
                 return origin;
             if(origin->mothers.size() != 1) break;
         }
-        throw exception("Hard interaction origin not found for particle ") << pdg << ", index = " << index;
+        throw exception("Hard interaction origin not found for particle ") << pdg.Name() << ", index = " << index;
     }
 };
 
