@@ -57,9 +57,17 @@ public:
     TH2D_ENTRY(MSSM_H_MET_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
     TH1D_ENTRY(MSSM_H_MET_inaccuracy_phi, 32, 0, 3.2)
 
+    TH2D_ENTRY(MSSM_H_MET_obs_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
+    TH2D_ENTRY(MSSM_H_MET_obs_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
+    TH1D_ENTRY(MSSM_H_MET_obs_inaccuracy_phi, 32, 0, 3.2)
+
     TH2D_ENTRY(MSSM_H_SV_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
     TH2D_ENTRY(MSSM_H_SV_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
     TH1D_ENTRY(MSSM_H_SV_inaccuracy_phi, 32, 0, 3.2)
+
+    TH2D_ENTRY(MSSM_H_SV_obs_inaccuracy_pt, 20, 0, 200, 20, -1, 1)
+    TH2D_ENTRY(MSSM_H_SV_obs_inaccuracy_pt_diff, 20, 0, 200, 10, 0, 1)
+    TH1D_ENTRY(MSSM_H_SV_obs_inaccuracy_phi, 32, 0, 3.2)
 
     TH1D_ENTRY(MC_invisible_tau_ratio, 11, 0, 1.1)
 
@@ -175,8 +183,8 @@ protected:
         anaData.MVA_MET_inaccuracy_pt(inc_name).Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt);
         anaData.MVA_MET_inaccuracy_pt_diff().Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt_diff);
         anaData.MVA_MET_inaccuracy_pt_diff(inc_name).Fill(MC_invisible.Pt(), MVA_MET_inaccuracy_pt_diff);
-        anaData.MVA_MET_inaccuracy_phi().Fill(std::abs(MVA_MET_inaccuracy.Phi()));
-        anaData.MVA_MET_inaccuracy_phi(inc_name).Fill(std::abs(MVA_MET_inaccuracy.Phi()));
+        anaData.MVA_MET_inaccuracy_phi().Fill(std::abs(MC_invisible.DeltaPhi(MVA_MET)));
+        anaData.MVA_MET_inaccuracy_phi(inc_name).Fill(std::abs(MC_invisible.DeltaPhi(MVA_MET)));
 
         const TLorentzVector MSSM_H_MC_visible = MSSM_H_MC->momentum - MSSM_H_genVisible.invisibleMomentum;
         const TLorentzVector MSSM_H_RECO = tau_1_RECO + tau_2_RECO + bjet_1_RECO + bjet_2_RECO;
@@ -189,9 +197,9 @@ protected:
         anaData.MSSM_H_inaccuracy_pt_diff().Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt_diff);
         anaData.MSSM_H_inaccuracy_pt_diff(inc_name).Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt_diff);
         anaData.MSSM_H_inaccuracy_pt_diff(cat_name).Fill(MSSM_H_MC_visible.Pt(), MSSM_H_inaccuracy_pt_diff);
-        anaData.MSSM_H_inaccuracy_phi().Fill(std::abs(MSSM_H_inaccuracy.Phi()));
-        anaData.MSSM_H_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_inaccuracy.Phi()));
-        anaData.MSSM_H_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_inaccuracy.Phi()));
+        anaData.MSSM_H_inaccuracy_phi().Fill(std::abs(MSSM_H_MC_visible.DeltaPhi(MSSM_H_RECO)));
+        anaData.MSSM_H_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_MC_visible.DeltaPhi(MSSM_H_RECO)));
+        anaData.MSSM_H_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_MC_visible.DeltaPhi(MSSM_H_RECO)));
 
         const TLorentzVector MSSM_H_MET_RECO = MSSM_H_RECO + MVA_MET;
         const TLorentzVector MSSM_H_MET_inaccuracy = MSSM_H_MC->momentum - MSSM_H_MET_RECO;
@@ -204,9 +212,9 @@ protected:
         anaData.MSSM_H_MET_inaccuracy_pt_diff().Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt_diff);
         anaData.MSSM_H_MET_inaccuracy_pt_diff(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt_diff);
         anaData.MSSM_H_MET_inaccuracy_pt_diff(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_MET_inaccuracy_pt_diff);
-        anaData.MSSM_H_MET_inaccuracy_phi().Fill(std::abs(MSSM_H_MET_inaccuracy.Phi()));
-        anaData.MSSM_H_MET_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_MET_inaccuracy.Phi()));
-        anaData.MSSM_H_MET_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_MET_inaccuracy.Phi()));
+        anaData.MSSM_H_MET_inaccuracy_phi().Fill(std::abs(MSSM_H_MC->momentum.DeltaPhi(MSSM_H_MET_RECO)));
+        anaData.MSSM_H_MET_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_MC->momentum.DeltaPhi(MSSM_H_MET_RECO)));
+        anaData.MSSM_H_MET_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_MC->momentum.DeltaPhi(MSSM_H_MET_RECO)));
 
         const sv_fit::FitResults sv_fit_result = sv_fit::Fit(sv_fit::FitAlgorithm::MarkovChain, selection.higgs,
                                                              selection.MET_with_recoil_corrections, 1);
@@ -216,18 +224,49 @@ protected:
         const TLorentzVector MSSM_H_SV_inaccuracy = MSSM_H_MC->momentum - MSSM_H_SV;
         const double MSSM_H_SV_inaccuracy_pt = (MSSM_H_MC->momentum.Pt() - MSSM_H_SV.Pt()) / MSSM_H_MC->momentum.Pt();
         const double MSSM_H_SV_inaccuracy_pt_diff = MSSM_H_SV_inaccuracy.Pt() / MSSM_H_MC->momentum.Pt();
+        anaData.MSSM_H_SV_inaccuracy_pt().Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt);
         anaData.MSSM_H_SV_inaccuracy_pt(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt);
         anaData.MSSM_H_SV_inaccuracy_pt(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt);
+        anaData.MSSM_H_SV_inaccuracy_pt_diff().Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt_diff);
         anaData.MSSM_H_SV_inaccuracy_pt_diff(inc_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt_diff);
         anaData.MSSM_H_SV_inaccuracy_pt_diff(cat_name).Fill(MSSM_H_MC->momentum.Pt(), MSSM_H_SV_inaccuracy_pt_diff);
-        anaData.MSSM_H_SV_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_SV_inaccuracy.Phi()));
-        anaData.MSSM_H_SV_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_SV_inaccuracy.Phi()));
-
+        anaData.MSSM_H_SV_inaccuracy_phi().Fill(std::abs(MSSM_H_MC->momentum.DeltaPhi(MSSM_H_SV)));
+        anaData.MSSM_H_SV_inaccuracy_phi(inc_name).Fill(std::abs(MSSM_H_MC->momentum.DeltaPhi(MSSM_H_SV)));
+        anaData.MSSM_H_SV_inaccuracy_phi(cat_name).Fill(std::abs(MSSM_H_MC->momentum.DeltaPhi(MSSM_H_SV)));
 
         const VisibleGenObject H_TT_visible(H_TT_MC);
         const double MC_invisible_tau_ratio = H_TT_visible.invisibleMomentum.Pt() / MC_invisible.Pt();
+        anaData.MC_invisible_tau_ratio().Fill(MC_invisible_tau_ratio);
         anaData.MC_invisible_tau_ratio(inc_name).Fill(MC_invisible_tau_ratio);
         anaData.MC_invisible_tau_ratio(cat_name).Fill(MC_invisible_tau_ratio);
+
+        const TLorentzVector Observable_MC = tau_1_visible.origin->momentum
+                + tau_2_visible.origin->momentum + bjet_1_visible.origin->momentum + bjet_2_visible.origin->momentum;
+        const TLorentzVector MSSM_H_MET_obs_inaccuracy = Observable_MC - MSSM_H_MET_RECO;
+        const double MSSM_H_MET_obs_inaccuracy_pt = (Observable_MC.Pt() - MSSM_H_MET_RECO.Pt()) / Observable_MC.Pt();
+        const double MSSM_H_MET_obs_inaccuracy_pt_diff = MSSM_H_MET_obs_inaccuracy.Pt() / Observable_MC.Pt();
+        anaData.MSSM_H_MET_obs_inaccuracy_pt().Fill(Observable_MC.Pt(), MSSM_H_MET_obs_inaccuracy_pt);
+        anaData.MSSM_H_MET_obs_inaccuracy_pt(inc_name).Fill(Observable_MC.Pt(), MSSM_H_MET_obs_inaccuracy_pt);
+        anaData.MSSM_H_MET_obs_inaccuracy_pt(cat_name).Fill(Observable_MC.Pt(), MSSM_H_MET_obs_inaccuracy_pt);
+        anaData.MSSM_H_MET_obs_inaccuracy_pt_diff().Fill(Observable_MC.Pt(), MSSM_H_MET_obs_inaccuracy_pt_diff);
+        anaData.MSSM_H_MET_obs_inaccuracy_pt_diff(inc_name).Fill(Observable_MC.Pt(), MSSM_H_MET_obs_inaccuracy_pt_diff);
+        anaData.MSSM_H_MET_obs_inaccuracy_pt_diff(cat_name).Fill(Observable_MC.Pt(), MSSM_H_MET_obs_inaccuracy_pt_diff);
+        anaData.MSSM_H_MET_obs_inaccuracy_phi().Fill(std::abs(Observable_MC.DeltaPhi(MSSM_H_MET_RECO)));
+        anaData.MSSM_H_MET_obs_inaccuracy_phi(inc_name).Fill(std::abs(Observable_MC.DeltaPhi(MSSM_H_MET_RECO)));
+        anaData.MSSM_H_MET_obs_inaccuracy_phi(cat_name).Fill(std::abs(Observable_MC.DeltaPhi(MSSM_H_MET_RECO)));
+
+        const TLorentzVector MSSM_H_SV_obs_inaccuracy = Observable_MC - MSSM_H_SV;
+        const double MSSM_H_SV_obs_inaccuracy_pt = (Observable_MC.Pt() - MSSM_H_SV.Pt()) / Observable_MC.Pt();
+        const double MSSM_H_SV_obs_inaccuracy_pt_diff = MSSM_H_SV_obs_inaccuracy.Pt() / Observable_MC.Pt();
+        anaData.MSSM_H_SV_obs_inaccuracy_pt().Fill(Observable_MC.Pt(), MSSM_H_SV_obs_inaccuracy_pt);
+        anaData.MSSM_H_SV_obs_inaccuracy_pt(inc_name).Fill(Observable_MC.Pt(), MSSM_H_SV_obs_inaccuracy_pt);
+        anaData.MSSM_H_SV_obs_inaccuracy_pt(cat_name).Fill(Observable_MC.Pt(), MSSM_H_SV_obs_inaccuracy_pt);
+        anaData.MSSM_H_SV_obs_inaccuracy_pt_diff().Fill(Observable_MC.Pt(), MSSM_H_SV_obs_inaccuracy_pt_diff);
+        anaData.MSSM_H_SV_obs_inaccuracy_pt_diff(inc_name).Fill(Observable_MC.Pt(), MSSM_H_SV_obs_inaccuracy_pt_diff);
+        anaData.MSSM_H_SV_obs_inaccuracy_pt_diff(cat_name).Fill(Observable_MC.Pt(), MSSM_H_SV_obs_inaccuracy_pt_diff);
+        anaData.MSSM_H_SV_obs_inaccuracy_phi().Fill(std::abs(Observable_MC.DeltaPhi(MSSM_H_SV)));
+        anaData.MSSM_H_SV_obs_inaccuracy_phi(inc_name).Fill(std::abs(Observable_MC.DeltaPhi(MSSM_H_SV)));
+        anaData.MSSM_H_SV_obs_inaccuracy_phi(cat_name).Fill(std::abs(Observable_MC.DeltaPhi(MSSM_H_SV)));
 
         if (bjet_1_MC->momentum.Pt() > 20 && bjet_2_MC->momentum.Pt() > 20 &&
             std::abs(bjet_1_MC->momentum.Eta()) < 2.4 && std::abs(bjet_2_MC->momentum.Eta()) < 2.4 ) {
