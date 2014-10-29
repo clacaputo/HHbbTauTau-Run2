@@ -432,6 +432,7 @@ file: W4jets.root 0.3150
 type: BACKGROUND
 type: LIMITS
 type: W_JETS
+datacard: W
 title: Wjets
 
 [EWK]
