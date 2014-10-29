@@ -252,7 +252,7 @@ public:
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (EventCategory eventCategory : EventCategoriesToProcess()) {
 
-            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,false);
+            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,true);
 
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             for (EventRegion eventRegion : LowMtRegions){
@@ -268,7 +268,7 @@ public:
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
-                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
+                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
                 EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
