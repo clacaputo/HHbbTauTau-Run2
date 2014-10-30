@@ -42,15 +42,16 @@ namespace analysis {
 
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
-enum class DataCategoryType { Signal, Background, Data, DYJets, ZL, ZJ, ZTT, ZTT_MC, Embedded, Limits, Composit, QCD,
-                              WJets, WJets_MC };
+enum class DataCategoryType { Signal, Background, Data, DYJets, DYJets_incl, DYJets_excl, ZL, ZJ, ZTT, ZTT_MC, Embedded,
+                              Limits, Composit, QCD, WJets, WJets_MC };
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
-    { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" }, { DataCategoryType::ZL, "ZL" },
-    { DataCategoryType::ZJ, "ZJ" }, { DataCategoryType::ZTT, "ZTT" }, { DataCategoryType::ZTT_MC, "ZTT_MC" },
-    { DataCategoryType::Embedded, "EMBEDDED" }, { DataCategoryType::Limits, "LIMITS" },
-    { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" }, { DataCategoryType::WJets, "W_JETS" },
-    { DataCategoryType::WJets_MC, "W_JETS_MC" }
+    { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" },
+    { DataCategoryType::DYJets_incl, "DY_JETS_incl" },{ DataCategoryType::DYJets_excl, "DY_JETS_excl" },
+    { DataCategoryType::ZL, "ZL" }, { DataCategoryType::ZJ, "ZJ" }, { DataCategoryType::ZTT, "ZTT" },
+    { DataCategoryType::ZTT_MC, "ZTT_MC" }, { DataCategoryType::Embedded, "EMBEDDED" },
+    { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" },
+    { DataCategoryType::WJets, "W_JETS" }, { DataCategoryType::WJets_MC, "W_JETS_MC" }
 };
 
 std::ostream& operator<< (std::ostream& s, const DataCategoryType& dataCategoryType) {

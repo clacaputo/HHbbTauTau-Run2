@@ -458,7 +458,9 @@ protected:
     {
         static const bool applyMVAcut = false;
 
-        const analysis::DataCategory& DYJets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets);
+        const analysis::DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
+        const analysis::DataCategory& DYJets_excl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_excl);
+
 
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
@@ -483,8 +485,14 @@ protected:
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
-                if (dataCategory.name == DYJets.name)
+                if (dataCategory.name == DYJets_excl.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
+                else if (dataCategory.name == DYJets_incl.name){
+                    const double new_weight =
+                            (eventInfo.event->n_extraJets_MC >= 5 && eventInfo.event->n_extraJets_MC < 10) ?
+                                weight/2 : weight ;
+                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, new_weight);
+                }
 
                 const bool fill_all = EssentialEventRegions().count(eventRegion);
                 GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, weight, fill_all);

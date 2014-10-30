@@ -455,15 +455,34 @@ file: tt_hadr.root 0.0719
 file: tt_lept.root 0.0430
 file: tt_semi.root 0.0862
 
-[DYJets MC]
-type: DY_JETS
-title: Z #rightarrow ll
-color: yellow_custom
-file: DYJetsToLL.root 2.2662
+#old
+#[DYJets MC]
+#type: DY_JETS
+#title: Z #rightarrow ll
+#color: yellow_custom
+#file: DYJetsToLL.root 2.2662
 #file: DY1JetsToLL.root 0.4596
 #file: DY2JetsToLL.root 0.1632
 #file: DY3JetsToLL.root 0.0914
 #file: DY4JetsToLL.root 0.0708
+
+#new
+[DYJets MC]
+#type: DY_JETS
+type: DY_JETS_incl
+title: Z #rightarrow ll
+color: yellow_custom
+file: DYJetsToLL.root 2.2662
+
+[DYJets MC]
+#type: DY_JETS
+type: DY_JETS_excl
+title: Z #rightarrow ll
+color: yellow_custom
+file: DY1JetsToLL.root 0.2730
+file: DY2JetsToLL.root 0.0969
+file: DY3JetsToLL.root 0.0543
+file: DY4JetsToLL.root 0.0420
 
 [ZL]
 type: BACKGROUND
