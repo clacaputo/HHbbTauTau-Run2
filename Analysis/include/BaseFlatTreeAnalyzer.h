@@ -127,14 +127,16 @@ public:
     TH1D_ENTRY(mt_2, 20, 0, 200)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
 
-    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all)
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true)
     {
         const ntuple::Flat& event = *eventInfo.event;
         m_sv().Fill(event.m_sv_vegas, weight);
         if(!fill_all) return;
 
-        m_sv_up().Fill(event.m_sv_up_vegas, weight);
-        m_sv_down().Fill(event.m_sv_down_vegas, weight);
+
+        m_sv_up().Fill(doESvariation ? event.m_sv_up_vegas : event.m_sv_vegas, weight);
+        m_sv_down().Fill(doESvariation ? event.m_sv_down_vegas : event.m_sv_vegas, weight);
+
         pt_1().Fill(event.pt_1, weight);
         eta_1().Fill(event.eta_1, weight);
         pt_2().Fill(event.pt_2, weight);
@@ -165,14 +167,14 @@ public:
         pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
         const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
         m_ttbb_kinfit().Fill(m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_up().Fill(1.04*m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_down().Fill(0.96*m_ttbb_kinFit, weight);
+        m_ttbb_kinfit_up().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+        m_ttbb_kinfit_down().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
 
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
 
         FillSlice(m_bb_slice(), event.m_sv_vegas, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_up(), event.m_sv_up_vegas, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_down(), event.m_sv_down_vegas, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice_up(), doESvariation ? event.m_sv_up_vegas : event.m_sv_vegas, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice_down(), doESvariation ? event.m_sv_down_vegas : event.m_sv_vegas, eventInfo.Hbb.M(), weight);
     }
 
 private:
@@ -368,18 +370,27 @@ protected:
         using analysis::DataCategoryType;
 
         const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
+        const analysis::DataCategoryPtrSet& wjets_mc_categories = dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
-        for (const auto& eventRegion : HighMt_LowMt_RegionMap){
-            auto hist_mc = GetHistogram(eventCategory, wjets_mc.name, eventRegion.first, hist_name);
+        for (const auto& eventRegion : HighMt_LowMt_RegionMap){            
             auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
-            if(!hist_mc || !hist_data)
-                throw analysis::exception("Unable to find histograms for Wjet scale factors estimation");
+            if(!hist_data)
+                throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
             TH1D& hist_HighMt = CloneHistogram(eventCategory, wjets.name, eventRegion.first, *hist_data);
             SubtractBackgroundHistograms(hist_HighMt, eventCategory, eventRegion.first, wjets.name, true);
             const PhysicalValue n_HighMt = Integral(hist_HighMt, false);
-            const PhysicalValue n_HighMt_mc = Integral(*hist_mc, false);
+            PhysicalValue n_HighMt_mc;
+            bool hist_mc_found = false;
+            for(const analysis::DataCategory* wjets_category : wjets_mc_categories){
+                auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion.first, hist_name);
+                if(!hist_mc)
+                    continue;
+                hist_mc_found = true;
+                n_HighMt_mc += Integral(*hist_mc, false);
+            }
+            if (!hist_mc_found)
+                throw analysis::exception("Unable to find mc histograms for Wjet scale factors estimation");
             const PhysicalValue ratio = n_HighMt / n_HighMt_mc;
             if (ratio.value < 0){
                 static const analysis::PhysicalValue v(1, 0.001);
@@ -399,15 +410,22 @@ protected:
         using analysis::DataCategoryType;
 
         const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategory& wjets_mc = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC);
+        const analysis::DataCategoryPtrSet& wjets_mc_categories = dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
         for(EventRegion eventRegion : LowMtRegions) {
             if(scale_factor_map.count(eventRegion)){
                 const PhysicalValue scale_factor = scale_factor_map.at(eventRegion);
-                if(auto hist_mc = GetHistogram(eventCategory, wjets_mc.name, eventRegion, hist_name)) {
-                    TH1D& hist = CloneHistogram(eventCategory, wjets.name, eventRegion, *hist_mc);
-                    hist.Scale(scale_factor.value);
+                TH1D* hist = nullptr;
+                for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
+                    if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion, hist_name)) {
+                        if (!hist)
+                            hist = &CloneHistogram(eventCategory, wjets.name, eventRegion, *hist_mc);
+                        else
+                            hist->Add(hist_mc);
+                    }
                 }
+                if (hist)
+                    hist->Scale(scale_factor.value);
             }
 
         }
@@ -460,7 +478,7 @@ protected:
 
         const analysis::DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
         const analysis::DataCategory& DYJets_excl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_excl);
-
+        const analysis::DataCategory& WJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC_incl);
 
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
@@ -478,24 +496,30 @@ protected:
             if(std::isnan(event.weight)) {
                 std::cerr << "ERROR: event " << event.evt << " will not be processed because event weight is NaN."
                           << std::endl;
-                return;
+                continue;
             }
 
             for(auto eventCategory : eventCategories) {
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
+                double corrected_weight = weight;
+                const bool fill_all = EssentialEventRegions().count(eventRegion);
+                const bool doESvariation = !dataCategory.IsData();
                 if (dataCategory.name == DYJets_excl.name)
-                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
+                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
                 else if (dataCategory.name == DYJets_incl.name){
-                    const double new_weight =
-                            (eventInfo.event->n_extraJets_MC >= 5 && eventInfo.event->n_extraJets_MC < 10) ?
-                                weight/2 : weight ;
-                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, new_weight);
+                    if (eventInfo.event->n_extraJets_MC > 5 && eventInfo.event->n_extraJets_MC < 10)
+                        corrected_weight = corrected_weight/2;
+                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
+                }
+                else if (dataCategory.name == WJets_incl.name){
+                    if (eventInfo.event->n_extraJets_MC > 5 && eventInfo.event->n_extraJets_MC < 10)
+                        corrected_weight = corrected_weight/2;
+                    GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight, fill_all,doESvariation);
                 }
 
-                const bool fill_all = EssentialEventRegions().count(eventRegion);
-                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, weight, fill_all);
+                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight, fill_all,doESvariation);
             }
         }
     }

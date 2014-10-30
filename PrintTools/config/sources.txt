@@ -418,15 +418,21 @@ file: WZJetsTo3LNu.root 0.0103
 file: T_tW.root 0.4394
 file: Tbar_tW.root 0.4431
 
-[Wjets_MC]
+[Wjets_MC_incl]
+type: W_JETS_MC_incl
 type: W_JETS_MC
 title: Wjets MC
-#file: WJetsToLNu_v1.root 9.3855
-#file: WJetsToLNu_v2.root 9.3855
-file: W1JetsToLNu_V19.root 3.5716
-file: W2JetsToLNu_V19.root 1.1232
-file: W3JetsToLNu_V19.root 0.6708
-file: W4jets.root 0.3150
+file: WJetsToLNu_v1.root 9.3855
+file: WJetsToLNu_v2.root 9.3855
+
+[Wjets_MC_excl]
+type: W_JETS_MC_excl
+type: W_JETS_MC
+title: Wjets MC
+file: W1JetsToLNu_V19.root 2.1299
+file: W2JetsToLNu_V19.root 0.6698
+file: W3JetsToLNu_V19.root 0.4000
+file: W4jets.root 0.1879
 
 [Wjets]
 type: BACKGROUND
@@ -455,25 +461,13 @@ file: tt_hadr.root 0.0719
 file: tt_lept.root 0.0430
 file: tt_semi.root 0.0862
 
-#old
-#[DYJets MC]
-#type: DY_JETS
-#title: Z #rightarrow ll
-#color: yellow_custom
-#file: DYJetsToLL.root 2.2662
-#file: DY1JetsToLL.root 0.4596
-#file: DY2JetsToLL.root 0.1632
-#file: DY3JetsToLL.root 0.0914
-#file: DY4JetsToLL.root 0.0708
-
 #new
 [DYJets_incl MC]
 #type: DY_JETS
 type: DY_JETS_incl
 title: Z #rightarrow ll
 color: yellow_custom
-#file: DYJetsToLL.root 2.2662
-file: DYJetsToLL_xac.root 2.2662
+file: DYJetsToLL.root 2.2662
 
 [DYJets_excl MC]
 #type: DY_JETS

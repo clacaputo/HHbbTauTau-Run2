@@ -99,10 +99,26 @@ struct PhysicalValue {
         return PhysicalValue(value + other.value, new_error);
     }
 
+    PhysicalValue& operator+=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
+        value = value + other.value;
+        error = new_error;
+        return *this;
+    }
+
     PhysicalValue operator-(const PhysicalValue& other) const
     {
         const double new_error = std::sqrt(sqr(error) + sqr(other.error));
         return PhysicalValue(value - other.value, new_error);
+    }
+
+    PhysicalValue& operator-=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
+        value = value - other.value;
+        error = new_error;
+        return *this;
     }
 
     PhysicalValue operator*(const PhysicalValue& other) const
@@ -111,11 +127,28 @@ struct PhysicalValue {
         return PhysicalValue(value * other.value, new_error);
     }
 
+    PhysicalValue& operator*=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(other.value * error) + sqr(value * other.error));
+        value = value * other.value;
+        error = new_error;
+        return *this;
+    }
+
     PhysicalValue operator/(const PhysicalValue& other) const
     {
         const double new_error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value)))
                 / std::abs(other.value);
         return PhysicalValue(value / other.value, new_error);
+    }
+
+    PhysicalValue& operator/=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value)))
+                / std::abs(other.value);
+        value = value / other.value;
+        error = new_error;
+        return *this;
     }
 
     bool operator<(const PhysicalValue& other) const { return value < other.value; }

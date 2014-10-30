@@ -30,9 +30,9 @@ class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY(mt_1, 20, 0, 200)
 
-    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all) override
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true) override
     {
-        FlatAnalyzerData::Fill(eventInfo, weight, fill_all);
+        FlatAnalyzerData::Fill(eventInfo, weight, fill_all, doESvariation);
         if(!fill_all) return;
 
         const ntuple::Flat& event = *eventInfo.event;
