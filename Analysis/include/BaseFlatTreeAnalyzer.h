@@ -379,7 +379,7 @@ protected:
         for (const auto& eventRegion : HighMt_LowMt_RegionMap){            
             auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
             if(!hist_data)
-                throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
+                throw exception("Unable to find data histograms for Wjet scale factors estimation");
             TH1D& hist_HighMt = CloneHistogram(eventCategory, wjets.name, eventRegion.first, *hist_data);
             SubtractBackgroundHistograms(hist_HighMt, eventCategory, eventRegion.first, wjets.name, true);
             const PhysicalValue n_HighMt = Integral(hist_HighMt, false);
@@ -392,16 +392,18 @@ protected:
                     n_HighMt_mc += Integral(*hist_mc, false);
                 }
             }
-            if (!hist_mc_found)
-                throw analysis::exception("Unable to find mc histograms for Wjet scale factors estimation");
-            PhysicalValue ratio = n_HighMt / n_HighMt_mc;
-            if (ratio.value < 0) {
-                std::cerr << "Negative number of estimated events in Wjets SF estimation for "
-                    << eventCategory << " " << eventRegion.second << std::endl;
-                ratio = PhysicalValue(1, 0.0001);
+            try {
+                if (!hist_mc_found)
+                    throw exception("Unable to find mc histograms for Wjet scale factors estimation.");
+                if(n_HighMt < 0)
+                    throw exception("Negative number of estimated events in Wjets SF estimation for ")
+                            << eventCategory << " " << eventRegion.second << ".";
+                valueMap[eventRegion.second] = n_HighMt / n_HighMt_mc;
+            } catch(exception& ex) {
+                static const PhysicalValue defaultValue(1, 0.0001);
+                std::cerr << ex.message() << " Using default value " << defaultValue << "." << std::endl;
+                valueMap[eventRegion.second] = defaultValue;
             }
-
-            valueMap[eventRegion.second] = ratio;
         }
 
         return valueMap;

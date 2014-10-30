@@ -102,7 +102,7 @@ protected:
     {
         PhysicalValueMap valueMap;
         static const analysis::PhysicalValue v(1, 0.001);
-        for (analysis::EventRegion eventRegion : analysis::LowMtRegions){
+        for (analysis::EventRegion eventRegion : analysis::QcdRegions){
             valueMap[eventRegion] = v;
         }
         return valueMap;
