@@ -467,14 +467,15 @@ file: tt_semi.root 0.0862
 #file: DY4JetsToLL.root 0.0708
 
 #new
-[DYJets MC]
+[DYJets_incl MC]
 #type: DY_JETS
 type: DY_JETS_incl
 title: Z #rightarrow ll
 color: yellow_custom
-file: DYJetsToLL.root 2.2662
+#file: DYJetsToLL.root 2.2662
+file: DYJetsToLL_xac.root 2.2662
 
-[DYJets MC]
+[DYJets_excl MC]
 #type: DY_JETS
 type: DY_JETS_excl
 title: Z #rightarrow ll
