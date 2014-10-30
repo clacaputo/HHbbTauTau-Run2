@@ -257,7 +257,7 @@ public:
             CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,true);
 
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
-            for (EventRegion eventRegion : LowMtRegions){
+            for (EventRegion eventRegion : QcdRegions){
                 std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
                              wjets_scale_factors.at(eventRegion) << std::endl;
             }
@@ -337,6 +337,8 @@ protected:
 
         const PhysicalValue n_num = Integral(hist_num, false);
         const PhysicalValue n_den = Integral(hist_den, false);
+        if(n_num.value < 0 || n_den.value < 0)
+            throw exception("Negative number of estimated events in QCD SF estimation for ") << eventCategory;
         return n_num / n_den;
     }
 
@@ -370,7 +372,8 @@ protected:
         using analysis::DataCategoryType;
 
         const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategoryPtrSet& wjets_mc_categories = dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
+        const analysis::DataCategoryPtrSet& wjets_mc_categories =
+                dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
 
         for (const auto& eventRegion : HighMt_LowMt_RegionMap){            
@@ -380,24 +383,23 @@ protected:
             TH1D& hist_HighMt = CloneHistogram(eventCategory, wjets.name, eventRegion.first, *hist_data);
             SubtractBackgroundHistograms(hist_HighMt, eventCategory, eventRegion.first, wjets.name, true);
             const PhysicalValue n_HighMt = Integral(hist_HighMt, false);
+
             PhysicalValue n_HighMt_mc;
             bool hist_mc_found = false;
             for(const analysis::DataCategory* wjets_category : wjets_mc_categories){
-                auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion.first, hist_name);
-                if(!hist_mc)
-                    continue;
-                hist_mc_found = true;
-                n_HighMt_mc += Integral(*hist_mc, false);
+                if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion.first, hist_name)) {
+                    hist_mc_found = true;
+                    n_HighMt_mc += Integral(*hist_mc, false);
+                }
             }
             if (!hist_mc_found)
                 throw analysis::exception("Unable to find mc histograms for Wjet scale factors estimation");
             const PhysicalValue ratio = n_HighMt / n_HighMt_mc;
-            if (ratio.value < 0){
-                static const analysis::PhysicalValue v(1, 0.001);
-                valueMap[eventRegion.second] = v;
-            }
-            else
-                valueMap[eventRegion.second] = ratio;
+            if (ratio.value < 0)
+                throw exception("Negative number of estimated events in QCD SF estimation for ")
+                    << eventCategory << " " << eventRegion.second;
+
+            valueMap[eventRegion.second] = ratio;
         }
 
         return valueMap;
@@ -410,24 +412,25 @@ protected:
         using analysis::DataCategoryType;
 
         const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategoryPtrSet& wjets_mc_categories = dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
+        const analysis::DataCategoryPtrSet& wjets_mc_categories =
+                dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
-        for(EventRegion eventRegion : LowMtRegions) {
-            if(scale_factor_map.count(eventRegion)){
-                const PhysicalValue scale_factor = scale_factor_map.at(eventRegion);
-                TH1D* hist = nullptr;
-                for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
-                    if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion, hist_name)) {
-                        if (!hist)
-                            hist = &CloneHistogram(eventCategory, wjets.name, eventRegion, *hist_mc);
-                        else
-                            hist->Add(hist_mc);
-                    }
+        for(EventRegion eventRegion : QcdRegions) {
+            if(!scale_factor_map.count(eventRegion))
+                throw exception("W-jet SF not found for ") << eventRegion;
+
+            const PhysicalValue& scale_factor = scale_factor_map.at(eventRegion);
+            TH1D* hist = nullptr;
+            for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
+                if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion, hist_name)) {
+                    if (!hist)
+                        hist = &CloneHistogram(eventCategory, wjets.name, eventRegion, *hist_mc);
+                    else
+                        hist->Add(hist_mc);
                 }
-                if (hist)
-                    hist->Scale(scale_factor.value);
             }
-
+            if (hist)
+                hist->Scale(scale_factor.value);
         }
     }
 
@@ -503,23 +506,19 @@ protected:
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
-                double corrected_weight = weight;
+
+                const bool isMixedInclusiveSample = dataCategory.name == DYJets_incl.name
+                                                 || dataCategory.name == WJets_incl.name;
+                const bool haveExtraJets = eventInfo.event->n_extraJets_MC > 5 && eventInfo.event->n_extraJets_MC < 10;
+                const double corrected_weight = isMixedInclusiveSample && haveExtraJets ? weight / 2 : weight;
+
+                if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
+                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
+
                 const bool fill_all = EssentialEventRegions().count(eventRegion);
                 const bool doESvariation = !dataCategory.IsData();
-                if (dataCategory.name == DYJets_excl.name)
-                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
-                else if (dataCategory.name == DYJets_incl.name){
-                    if (eventInfo.event->n_extraJets_MC > 5 && eventInfo.event->n_extraJets_MC < 10)
-                        corrected_weight = corrected_weight/2;
-                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
-                }
-                else if (dataCategory.name == WJets_incl.name){
-                    if (eventInfo.event->n_extraJets_MC > 5 && eventInfo.event->n_extraJets_MC < 10)
-                        corrected_weight = corrected_weight/2;
-                    GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight, fill_all,doESvariation);
-                }
-
-                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight, fill_all,doESvariation);
+                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
+                                                                               fill_all, doESvariation);
             }
         }
     }
