@@ -394,10 +394,12 @@ protected:
             }
             if (!hist_mc_found)
                 throw analysis::exception("Unable to find mc histograms for Wjet scale factors estimation");
-            const PhysicalValue ratio = n_HighMt / n_HighMt_mc;
-            if (ratio.value < 0)
-                throw exception("Negative number of estimated events in QCD SF estimation for ")
-                    << eventCategory << " " << eventRegion.second;
+            PhysicalValue ratio = n_HighMt / n_HighMt_mc;
+            if (ratio.value < 0) {
+                std::cerr << "Negative number of estimated events in Wjets SF estimation for "
+                    << eventCategory << " " << eventRegion.second << std::endl;
+                ratio = PhysicalValue(1, 0.0001);
+            }
 
             valueMap[eventRegion.second] = ratio;
         }
