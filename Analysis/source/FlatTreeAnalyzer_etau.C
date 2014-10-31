@@ -66,7 +66,7 @@ protected:
         using namespace cuts::Htautau_Summer13::ETau;
 
         if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || (event.mt_1 >= electronID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                || (event.mt_1 >= electronID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) /*|| event.pt_2 <= 30*/ )
             return EventRegion::Unknown;
 
         const bool os = event.q_1 * event.q_2 == -1;
