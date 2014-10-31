@@ -79,7 +79,8 @@ public:
     typedef std::shared_ptr<TH1D> hist_ptr;
     typedef std::vector<hist_ptr> hist_ptr_vector;
 
-    StackedPlotDescriptor(const analysis::HistogramDescriptor& _hist_descriptor, const std::string& page_title)
+    StackedPlotDescriptor(const analysis::HistogramDescriptor& _hist_descriptor, const std::string& page_title,
+                          bool draw_title)
         : hist_descriptor(_hist_descriptor),
           data_histogram(nullptr),
           stack(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str())),
@@ -91,15 +92,26 @@ public:
         page.title = page_title;
         page.side.axis_titleX = hist_descriptor.Xaxis_title;
         page.side.axis_titleY = hist_descriptor.Yaxis_title;
-
-        page.side.layout.main_pad.right_top.x = 0.95;
-        page.side.layout.main_pad.right_top.y = 1;
-        page.side.layout.main_pad.left_bottom.x = 0.05;
-        page.side.layout.main_pad.left_bottom.y = 0.1;
-        page.side.layout.ratio_pad.right_top.x = 0.95;
-        page.side.layout.ratio_pad.right_top.y = 0.1;
-        page.side.layout.ratio_pad.left_bottom.x = 0.05;
-        page.side.layout.ratio_pad.left_bottom.y = 0;
+        page.layout.has_title = draw_title;
+        if (page.layout.has_title) {
+            page.side.layout.main_pad.right_top.x = 0.9;
+            page.side.layout.main_pad.right_top.y = 0.9;
+            page.side.layout.main_pad.left_bottom.x = 0.1;
+            page.side.layout.main_pad.left_bottom.y = 0.1;
+            page.side.layout.ratio_pad.right_top.x = 0.9;
+            page.side.layout.ratio_pad.right_top.y = 0.1;
+            page.side.layout.ratio_pad.left_bottom.x = 0.1;
+            page.side.layout.ratio_pad.left_bottom.y = 0;
+        } else {
+            page.side.layout.main_pad.right_top.x = 0.95;
+            page.side.layout.main_pad.right_top.y = 1;
+            page.side.layout.main_pad.left_bottom.x = 0.05;
+            page.side.layout.main_pad.left_bottom.y = 0.1;
+            page.side.layout.ratio_pad.right_top.x = 0.95;
+            page.side.layout.ratio_pad.right_top.y = 0.1;
+            page.side.layout.ratio_pad.left_bottom.x = 0.05;
+            page.side.layout.ratio_pad.left_bottom.y = 0;
+        }
 
         legend->SetFillColor(0);
         legend->SetTextSize(0.035);
@@ -168,6 +180,11 @@ public:
     {
         cms_tdr::setTDRStyle();
 
+        if(page.layout.has_title) {
+            TPaveLabel *title = root_ext::Adapter::NewPaveLabel(page.layout.title_box, page.title);
+            title->SetTextFont(page.layout.title_font);
+            title->Draw();
+        }
         main_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.main_pad));
         if(page.side.use_log_scaleX)
             main_pad->SetLogx();
@@ -175,6 +192,7 @@ public:
             main_pad->SetLogy();
         main_pad->Draw();
         main_pad->cd();
+
 
         if (background_histograms.size()){
             stack->Draw("HIST");
@@ -235,6 +253,7 @@ public:
         canvas.cd();
         if (data_histogram)
             ratio_pad->Draw();
+
     }
 
 private:

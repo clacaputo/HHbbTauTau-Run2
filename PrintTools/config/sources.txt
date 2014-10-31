@@ -356,6 +356,77 @@ datacard: ggAToZhToLLBB350
 file: ggA_Zh_bbtautau_350.root 0.0658264
 limits_sf: 1
 
+[ggAToZhToLLTauTau260]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=260)
+datacard: ggAToZhToLLTauTau260
+file: ggA_Zh_lltautau_260.root 0.0399589
+limits_sf: 1
+
+[ggAToZhToLLTauTau270]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=270)
+datacard: ggAToZhToLLTauTau270
+file: ggA_Zh_lltautau_270.root 0.040722
+limits_sf: 1
+
+[ggAToZhToLLTauTau280]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=280)
+datacard: ggAToZhToLLTauTau280
+file: ggA_Zh_lltautau_280.root 0.0409862
+limits_sf: 1
+
+[ggAToZhToLLTauTau290]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=290)
+datacard: ggAToZhToLLTauTau290
+file: ggA_Zh_lltautau_290.root 0.0262824
+limits_sf: 1
+
+[ggAToZhToLLTauTau300]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=300)
+datacard: ggAToZhToLLTauTau300
+file: ggA_Zh_lltautau_300.root 0.0394639
+limits_sf: 1
+
+[ggAToZhToLLTauTau310]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=310)
+datacard: ggAToZhToLLTauTau310
+file: ggA_Zh_lltautau_310.root 0.0403454
+limits_sf: 1
+
+[ggAToZhToLLTauTau320]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=320)
+datacard: ggAToZhToLLTauTau320
+file: ggA_Zh_lltautau_320.root 0.0397466
+limits_sf: 1
+
+[ggAToZhToLLTauTau330]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=330)
+datacard: ggAToZhToLLTauTau330
+file: ggA_Zh_lltautau_330.root 0.0400897
+limits_sf: 1
+
+[ggAToZhToLLTauTau340]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=340)
+datacard: ggAToZhToLLTauTau340
+file: ggA_Zh_lltautau_340.root 0.0400517
+limits_sf: 1
+
+[ggAToZhToLLTauTau350]
+type: LIMITS
+title: gg#rightarrowA#rightarrowZh#rightarrowll#tau#tau(m_{A}=350)
+datacard: ggAToZhToLLTauTau350
+file: ggA_Zh_lltautau_350.root 0.0403194
+limits_sf: 1
+
+
 [qqH125]
 type: BACKGROUND
 type: LIMITS

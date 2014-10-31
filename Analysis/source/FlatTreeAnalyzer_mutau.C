@@ -67,7 +67,7 @@ protected:
 
         if(!event.againstMuonTight_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) /*|| event.pt_2 <= 30*/ )
             return EventRegion::Unknown;
 
         const bool os = event.q_1 * event.q_2 == -1;

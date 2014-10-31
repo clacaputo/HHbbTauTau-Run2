@@ -112,6 +112,15 @@ public:
     TH1D_ENTRY_CUSTOM(m_ttbb_kinfit, mass_ttbb_bins)
     TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up, mass_ttbb_bins)
     TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_up, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_down, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_massCut, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up_massCut, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down_massCut, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_massCut, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_up_massCut, mass_ttbb_bins)
+    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_down_massCut, mass_ttbb_bins)
     TH1D_ENTRY(DeltaPhi_tt, 22, 0., 3.3)
     TH1D_ENTRY(DeltaPhi_bb, 22, 0., 3.3)
     TH1D_ENTRY(DeltaPhi_bb_MET, 22, 0., 3.3)
@@ -126,16 +135,24 @@ public:
     TH1D_ENTRY(MVA_BDT, 40, -1, 1)
     TH1D_ENTRY(mt_2, 20, 0, 200)
     TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
+    TH1D_ENTRY(convergence, 10, -3.5, 6.5)
+    TH1D_ENTRY(chi2, 20, 0, 100)
+    TH1D_ENTRY(fit_probability, 20, 0, 1)
+    TH1D_ENTRY(pull_balance, 20, -10, 10)
+    TH1D_ENTRY(pull_balance_1, 100, -10, 10)
+    TH1D_ENTRY(pull_balance_2, 100, -10, 10)
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true)
     {
         const ntuple::Flat& event = *eventInfo.event;
-        m_sv().Fill(event.m_sv_vegas, weight);
+        double mass_tautau = event.m_sv_MC;
+        double mass_tautau_up = event.m_sv_up_MC;
+        double mass_tautau_down = event.m_sv_down_MC;
+        m_sv().Fill(mass_tautau, weight);
         if(!fill_all) return;
 
-
-        m_sv_up().Fill(doESvariation ? event.m_sv_up_vegas : event.m_sv_vegas, weight);
-        m_sv_down().Fill(doESvariation ? event.m_sv_down_vegas : event.m_sv_vegas, weight);
+        m_sv_up().Fill(doESvariation ? mass_tautau_up : mass_tautau, weight);
+        m_sv_down().Fill(doESvariation ? mass_tautau_down : mass_tautau, weight);
 
         pt_1().Fill(event.pt_1, weight);
         eta_1().Fill(event.eta_1, weight);
@@ -164,17 +181,38 @@ public:
         DeltaPhi_hh().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.Hbb)), weight);
         DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
-        pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
-        const double m_ttbb_kinFit = event.kinfit_bb_tt_mass.at(eventInfo.kinfit_data_index);
+        pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);        
+        const double m_ttbb_kinFit = eventInfo.kinfit_data_mass;
         m_ttbb_kinfit().Fill(m_ttbb_kinFit, weight);
         m_ttbb_kinfit_up().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
         m_ttbb_kinfit_down().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+        if (eventInfo.convergence > 0){
+            m_ttbb_kinfit_only().Fill(m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_only_up().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_only_down().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+        }
+        if (mass_tautau > 90 && mass_tautau < 150 && eventInfo.Hbb.M() > 70 && eventInfo.Hbb.M() < 150){
+            m_ttbb_kinfit_massCut().Fill(m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_up_massCut().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_down_massCut().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+            if (eventInfo.convergence > 0){
+                m_ttbb_kinfit_only_massCut().Fill(m_ttbb_kinFit, weight);
+                m_ttbb_kinfit_only_up_massCut().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+                m_ttbb_kinfit_only_down_massCut().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+            }
+        }
 
+        convergence().Fill(eventInfo.convergence,weight);
+        chi2().Fill(eventInfo.chi2,weight);
+        fit_probability().Fill(eventInfo.fit_probability,weight);
+        pull_balance().Fill(eventInfo.pull_balance,weight);
+        pull_balance_1().Fill(eventInfo.pull_balance_1,weight);
+        pull_balance_2().Fill(eventInfo.pull_balance_2,weight);
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
 
-        FillSlice(m_bb_slice(), event.m_sv_vegas, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_up(), doESvariation ? event.m_sv_up_vegas : event.m_sv_vegas, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_down(), doESvariation ? event.m_sv_down_vegas : event.m_sv_vegas, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice(), mass_tautau, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice_up(), doESvariation ? mass_tautau_up : mass_tautau, eventInfo.Hbb.M(), weight);
+        FillSlice(m_bb_slice_down(), doESvariation ? mass_tautau_down : mass_tautau, eventInfo.Hbb.M(), weight);
     }
 
 private:
@@ -293,6 +331,12 @@ public:
 
         ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false,
                                         emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", "m_ttbb_kinfit_only_up", "m_ttbb_kinfit_only_down", false,
+                                        emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", "m_ttbb_kinfit_massCut_up", "m_ttbb_kinfit_massCut_down", false,
+                                        emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", "m_ttbb_kinfit_only_massCut_up", "m_ttbb_kinfit_only_massCut_down", false,
+                                        emptyDatacard_mttbb);
 
         ProduceFileForLimitsCalculation("m_bb_slice", "m_bb_slice_up", "m_bb_slice_down", false,
                                         emptyDatacard_slice);
@@ -395,7 +439,7 @@ protected:
             try {
                 if (!hist_mc_found)
                     throw exception("Unable to find mc histograms for Wjet scale factors estimation.");
-                if(n_HighMt < 0)
+                if(n_HighMt.value < 0)
                     throw exception("Negative number of estimated events in Wjets SF estimation for ")
                             << eventCategory << " " << eventRegion.second << ".";
                 valueMap[eventRegion.second] = n_HighMt / n_HighMt_mc;
@@ -497,7 +541,9 @@ protected:
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  cuts::Htautau_Summer13::btag::CSVT);
-            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
+            const bool fill_all = EssentialEventRegions().count(eventRegion);
+            const bool doESvariation = !dataCategory.IsData();
+            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1),fill_all);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
             if(std::isnan(event.weight)) {
@@ -519,8 +565,6 @@ protected:
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
 
-                const bool fill_all = EssentialEventRegions().count(eventRegion);
-                const bool doESvariation = !dataCategory.IsData();
                 GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
                                                                                fill_all, doESvariation);
             }
@@ -611,7 +655,7 @@ protected:
             for (const HistogramDescriptor& hist : histograms) {
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
-                StackedPlotDescriptor stackDescriptor(hist, ss_title.str());
+                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(),true);
 
                 for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                     if(!category->draw) continue;
