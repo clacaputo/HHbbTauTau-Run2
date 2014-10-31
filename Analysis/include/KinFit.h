@@ -85,11 +85,15 @@ struct FitResults {
     double mass;
     int convergence;
     double chi2;
+    double fit_probability;
     double pull_balance;
+    double pull_balance_1;
+    double pull_balance_2;
 
     FitResults()
         : has_valid_mass(false), mass(default_double_value), convergence(default_int_value), chi2(default_double_value),
-          pull_balance(default_double_value)
+          fit_probability(default_double_value), pull_balance(default_double_value),
+          pull_balance_1(default_double_value), pull_balance_2(default_double_value)
     {}
 };
 
@@ -97,9 +101,9 @@ inline FitResults Fit(const FitInput& input)
 {
     static const bool debug = false;
     static const Int_t higgs_mass_hypotesis = 125;
-    static const Int_t convergence_cut = 0;
-    static const Double_t chi2_cut = 25;
-    static const Double_t pull_balance_cut = 0;
+//    static const Int_t convergence_cut = 0;
+//    static const Double_t chi2_cut = 25;
+//    static const Double_t pull_balance_cut = 0;
 
     const std::vector<Int_t> hypo_mh1 = { higgs_mass_hypotesis };
     const std::vector<Int_t> hypo_mh2 = { higgs_mass_hypotesis };
@@ -140,14 +144,13 @@ inline FitResults Fit(const FitInput& input)
     const std::pair<Int_t, Int_t> hypo(hypo_mh1.at(0), hypo_mh2.at(0));
     const Int_t convergence = kinFit.getConvergenceFullFit().at(hypo);
     const Double_t chi2 = kinFit.getChi2FullFit().at(hypo);
+    const Double_t fitprob = kinFit.getFitProbFullFit().at(hypo);
+    const Double_t pull_b1 = kinFit.getPullB1FullFit().at(hypo);
+    const Double_t pull_b2 = kinFit.getPullB2FullFit().at(hypo);
     const Double_t pull_balance = kinFit.getPullBalanceFullFit().at(hypo);
     const Double_t mH = kinFit.getMHFullFit().at(hypo);
 
     if (debug) {
-        const Double_t fitprob = kinFit.getFitProbFullFit().at(hypo);
-        const Double_t pull_b1 = kinFit.getPullB1FullFit().at(hypo);
-        const Double_t pull_b2 = kinFit.getPullB2FullFit().at(hypo);
-
         std::cout << "fit convergence =  " << convergence << std::endl;
         std::cout << "fit chi2 =         " << chi2 << std::endl;
         std::cout << "fit fitprob =      " << fitprob << std::endl;
@@ -161,8 +164,11 @@ inline FitResults Fit(const FitInput& input)
     result.convergence = convergence;
     result.chi2 = chi2;
     result.mass = mH;
+    result.fit_probability = fitprob;
     result.pull_balance = pull_balance;
-    result.has_valid_mass = convergence > convergence_cut && chi2 < chi2_cut && pull_balance > pull_balance_cut;
+    result.pull_balance_1 = pull_b1;
+    result.pull_balance_2 = pull_b2;
+    result.has_valid_mass = convergence != 0;
     if(!result.has_valid_mass && debug)
         std::cerr << "four body mass with kin Fit cannot be calculated" << std::endl;
 

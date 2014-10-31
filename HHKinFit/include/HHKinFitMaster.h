@@ -4,16 +4,21 @@
 #include <Rtypes.h>
 #include <stdio.h>
 #include <TMatrixD.h>
+#include <TGraph2D.h>
+#include <TCanvas.h>
 #include <map>
 #include <utility>
 #include <vector>
+#include <sstream>
 
 #include "TLorentzVector.h"
+
+typedef std::map<std::pair<double, double>, double> Chi2Map;
 
 class HHKinFitMaster
 {
 public:
-  HHKinFitMaster( const TLorentzVector* bjet1, const TLorentzVector* bjet2, const TLorentzVector* tauvis1, const TLorentzVector* tauvis2 );
+  HHKinFitMaster( TLorentzVector* bjet1, TLorentzVector* bjet2, TLorentzVector* tauvis1, TLorentzVector* tauvis2, Bool_t truthinput=0, TLorentzVector* heavyhiggsgen=NULL);
 
   void doFullFit();
   
@@ -31,7 +36,11 @@ public:
   std::map< std::pair< Int_t, Int_t >, Double_t > getPullB1FullFit();
   std::map< std::pair< Int_t, Int_t >, Double_t > getPullB2FullFit();
   std::map< std::pair< Int_t, Int_t >, Double_t > getPullBalanceFullFit();
+  std::map< std::pair< Int_t, Int_t >, Double_t > getPullBalanceFullFitX();
+  std::map< std::pair< Int_t, Int_t >, Double_t > getPullBalanceFullFitY();
   std::map< std::pair< Int_t, Int_t >, Int_t > getConvergenceFullFit();
+
+  
 
   //Hypotheses
   void addMh1Hypothesis(std::vector<Int_t> v);
@@ -40,8 +49,15 @@ public:
   void addMh2Hypothesis(Double_t m1, Double_t m2=0, Double_t m3=0, Double_t m4=0, Double_t m5=0, Double_t m6=0, Double_t m7=0, Double_t m8=0, Double_t m9=0, Double_t m10=0);
 
   //Resolution  
-  Double_t GetBjetResoultion(Double_t eta, Double_t et);
+  Double_t GetBjetResolution(Double_t eta, Double_t et);
 
+  TLorentzVector m_bjet1_fitted;
+  TLorentzVector m_bjet2_fitted;
+  TLorentzVector m_tau1_fitted;
+  TLorentzVector m_tau2_fitted;
+  TLorentzVector m_bjet1_smeared;
+  TLorentzVector m_bjet2_smeared;
+  TLorentzVector m_met_smeared; 
 private:
   //hypotheses
   std::vector< Int_t > m_mh1;
@@ -66,6 +82,8 @@ private:
   std::map< std::pair< Int_t, Int_t >, Double_t > m_fullFitPullB1;
   std::map< std::pair< Int_t, Int_t >, Double_t > m_fullFitPullB2;
   std::map< std::pair< Int_t, Int_t >, Double_t > m_fullFitPullBalance;
+  std::map< std::pair< Int_t, Int_t >, Double_t > m_fullFitPullBalanceX;
+  std::map< std::pair< Int_t, Int_t >, Double_t > m_fullFitPullBalanceY;
   std::map< std::pair< Int_t, Int_t >, Int_t > m_fullFitConvergence;
 
   Double_t m_bestChi2FullFit;
