@@ -144,7 +144,6 @@ PSMath::PSfit (Int_t iloop, Int_t &iter, Int_t &method, Int_t &mode,
     xx = PSLineSearch (mode, xh, xlimit, epsxLS, epsf, x, f, chi2);
     for (Int_t ip = 0; ip < np; ip++) {
       a[ip] = astart[ip] + xx * daN[ip];
-      aMemory[ip] = astart[ip];
     }
 
     if (mode <= 0) {                                            // Minimum found

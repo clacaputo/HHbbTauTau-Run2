@@ -74,7 +74,7 @@ inline Double_t ErrEt(Float_t Et, Float_t Eta)
 {
 Double_t InvPerr2, a, b, c;
 const int NYBINS = 5;
-double YBND[NYBINS+1] = {0,0.5,1.0,1.5,2.0,2.5};
+//double YBND[NYBINS+1] = {0,0.5,1.0,1.5,2.0,2.5};
 double PAR[NYBINS][3] = {
 {3.51, 0.826, 0.0364},{3.23, 0.851, 0.0367},{4.36, 0.871, 0.0415},
 {5.22, 0.713, 0.0229},{5.07, 0.610, 0.0207}};
@@ -89,7 +89,7 @@ if (fabs(Eta) < 2. && fabs(Eta) >2.5) iy =4;
 InvPerr2 = sqrt(pow(PAR[iy][0]/Et,2) + pow(PAR[iy][1],2)/Et + pow(PAR[iy][2],2));
 //std::cout<< InvPerr2 << " kin invPerr "<<std::endl;
 }
-else if(fabs(Eta) > 2.5){
+else {
 a = 4.8;
 b = 0.89;
 c = 0.043;
