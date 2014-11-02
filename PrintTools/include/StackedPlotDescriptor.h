@@ -32,6 +32,7 @@
 
 #include <TH1.h>
 #include <THStack.h>
+#include <TLine.h>
 
 #include "RootPrintSource.h"
 #include "TdrStyle.h"
@@ -99,9 +100,9 @@ public:
             page.side.layout.main_pad.left_bottom.x = 0.1;
             page.side.layout.main_pad.left_bottom.y = 0.1;
             page.side.layout.ratio_pad.right_top.x = 0.9;
-            page.side.layout.ratio_pad.right_top.y = 0.1;
+            page.side.layout.ratio_pad.right_top.y = 0.15;
             page.side.layout.ratio_pad.left_bottom.x = 0.1;
-            page.side.layout.ratio_pad.left_bottom.y = 0;
+            page.side.layout.ratio_pad.left_bottom.y = 0.05;
         } else {
             page.side.layout.main_pad.right_top.x = 0.95;
             page.side.layout.main_pad.right_top.y = 1;
@@ -149,6 +150,7 @@ public:
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
         histogram->SetLineColor(color);
+        histogram->SetLineStyle(kDashed);
         histogram->Scale(scale_factor);
         signal_histograms.push_back(histogram);
         std::ostringstream ss;
@@ -204,7 +206,8 @@ public:
             const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
             stack->SetMinimum(minY);
 
-            stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+            //stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+            stack->GetXaxis()->SetTitle("");
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
         }
 
@@ -220,6 +223,7 @@ public:
 
         legend->Draw("same");
 
+        const std::string axis_titleX = page.side.axis_titleX;
         if (data_histogram){
             ratio_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.ratio_pad));
             ratio_pad->Draw();
@@ -230,22 +234,30 @@ public:
             ratio_histogram = hist_ptr(static_cast<TH1D*>(data_histogram->Clone()));
             ratio_histogram->Divide(sum_backgound_histogram.get());
 
-            ratio_histogram->GetYaxis()->SetRangeUser(0.8,1.2);
-            ratio_histogram->GetYaxis()->SetNdivisions(3);
+            ratio_histogram->GetYaxis()->SetRangeUser(0.7,1.3);
+            ratio_histogram->GetYaxis()->SetNdivisions(3,4);
             ratio_histogram->GetYaxis()->SetLabelSize(0.2);
             ratio_histogram->GetYaxis()->SetTitleSize(0.25);
             ratio_histogram->GetYaxis()->SetTitleOffset(0.15);
-            ratio_histogram->GetYaxis()->SetTitle("Obs/Est");
+            ratio_histogram->GetYaxis()->SetTitle("Obs/Bkg");
             ratio_histogram->GetXaxis()->SetNdivisions(-1);
-            ratio_histogram->GetXaxis()->SetTitle("");
-            ratio_histogram->GetXaxis()->SetLabelSize(0.0001);
+            ratio_histogram->GetXaxis()->SetTitle(axis_titleX.c_str());
+            ratio_histogram->GetXaxis()->SetLabelSize(1);
             ratio_histogram->SetMarkerStyle(7);
-            ratio_histogram->SetMarkerColor(2);
+            ratio_histogram->SetMarkerColor(1);
 
-            ratio_histogram->Draw("histp");
+            ratio_histogram->Draw("E0P");
 
             TLine* line = new TLine();
+            line->SetLineStyle(3);
             line->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 1, ratio_histogram->GetXaxis()->GetXmax(), 1);
+            TLine* line1 = new TLine();
+            line1->SetLineStyle(3);
+            line1->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 1.2, ratio_histogram->GetXaxis()->GetXmax(), 1.2);
+            TLine* line2 = new TLine();
+            line2->SetLineStyle(3);
+            line2->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 0.8, ratio_histogram->GetXaxis()->GetXmax(), 0.8);
+
         }
 
         canvas.cd();
