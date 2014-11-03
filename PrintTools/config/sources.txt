@@ -536,12 +536,24 @@ datacard: ZTT
 [DYJets]
 type: BACKGROUND
 type: COMPOSIT
-title: Z #rightarrow ll
+#title: Z #rightarrow ll
+title: Z #rightarrow #tau#tau
 draw: true
 color: yellow_custom
+#subcategory: ZL
+#subcategory: ZJ
+subcategory: ZTT
+
+[DYJets_ll]
+type: BACKGROUND
+type: COMPOSIT
+title: Z #rightarrow ll
+#title: Z #rightarrow #tau#tau
+draw: true
+color: cyan
 subcategory: ZL
 subcategory: ZJ
-subcategory: ZTT
+#subcategory: ZTT
 
 [DiBoson]
 type: BACKGROUND
@@ -612,10 +624,10 @@ file: tt_semi.root 0.0862
 
 
 [SMhiggs ALL]
-type: BACKGROUND
+type: SIGNAL
 type: COMPOSIT
 title: SMhiggs
-draw: true
+draw: false
 color: azure
 subcategory: qqH125
 subcategory: VH125
