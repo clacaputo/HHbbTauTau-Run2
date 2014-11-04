@@ -125,6 +125,16 @@ public:
         throw std::runtime_error("daughter with specified type not found.");
     }
 
+    CandidateVector GetDaughters(Type daughterType) const
+    {
+        CandidateVector result;
+        for(const Candidate& daughter : daughters) {
+            if(daughter.type == daughterType)
+                result.push_back(daughter);
+        }
+        return result;
+    }
+
     const Candidate& GetLeadingDaughter(Type expectedDaughterType = Unknown) const
     {
         if(!daughters.size())

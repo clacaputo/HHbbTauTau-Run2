@@ -116,9 +116,9 @@ protected:
         cut(higgsTriggered.size(), "trigger obj match");
 
         selection.higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        selection.eventType = DoEventCategorization(selection.higgs);
 
-        cut(!config.isDYEmbeddedSample() || MatchTausFromHiggsWithGenTaus(selection.higgs, selection.muTau_MC),
-            "tau match with MC truth");
+        cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");
 
         CalculateFullEventWeight(selection.higgs);
 
@@ -295,8 +295,8 @@ protected:
 
         for(const analysis::VisibleGenObject& tau_MC : final_state.taus) {
             if(tau_MC.finalStateChargedLeptons.size() == 1
-                    && tau_MC.finalStateChargedLeptons.at(0)->pdg.Code == particles::mu)
-                final_state.muon = tau_MC.finalStateChargedLeptons.at(0);
+                    && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::mu)
+                final_state.muon = *tau_MC.finalStateChargedLeptons.begin();
             else if(tau_MC.finalStateChargedHadrons.size() >= 1)
                 final_state.tau_jet = &tau_MC;
         }

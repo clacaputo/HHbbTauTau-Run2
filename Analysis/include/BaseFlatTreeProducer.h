@@ -44,6 +44,7 @@ struct SelectionResults {
     VertexVector vertices;
     ntuple::MET pfMET;
     ntuple::MET MET_with_recoil_corrections;
+    ntuple::EventType eventType;
     virtual const Candidate& GetLeg1() const = 0;
     virtual const Candidate& GetLeg2() const = 0;
     virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
@@ -334,8 +335,7 @@ protected:
         return true;
     }
 
-
-    ntuple::EventType DoEventCategorization(const analysis::Candidate& higgs)
+    ntuple::EventType DoEventCategorization(const Candidate& higgs)
     {
         using namespace cuts::Htautau_Summer13::DrellYannCategorization;
         if(!config.DoZEventCategorization())
@@ -364,21 +364,37 @@ protected:
         while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
             Z_mc = Z_mc->daughters.front();
 
+        const CandidateVector hadronic_taus = higgs.GetDaughters(Candidate::Tau);
 
         GenParticlePtrVector ZProducts;
-        const bool z_tt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
-        if (!z_tt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+        if(FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true)) {
+            size_t n_hadronic_matches = 0;
+            for(const Candidate& reco_tau : hadronic_taus) {
+                for(const GenParticle* gen_product : ZProducts) {
+                    const VisibleGenObject visible_gen_object(gen_product);
+                    if(visible_gen_object.finalStateChargedLeptons.size() ||
+                            visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
+                    if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
+                        ++n_hadronic_matches;
+                        break;
+                    }
+                }
+            }
+            return n_hadronic_matches == hadronic_taus.size() ? ntuple::EventType::ZTT : ntuple::EventType::ZJ;
+        }
+
+        if (!FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
-        const auto matchedParticles_first =
-                FindMatchedParticles(higgs.daughters.at(0).momentum, ZProducts, deltaR_matchGenParticle);
-        const auto matchedParticles_second =
-                FindMatchedParticles(higgs.daughters.at(1).momentum, ZProducts, deltaR_matchGenParticle);
-
-        if (matchedParticles_first.size() >= 1 && matchedParticles_second.size() >= 1)
-            return z_tt ? ntuple::EventType::ZTT : ntuple::EventType::ZL;
-        return z_tt ? ntuple::EventType::ZTT_no_match : ntuple::EventType::ZJ;
+        for(const Candidate& reco_tau : hadronic_taus) {
+            for(const GenParticle* gen_product : ZProducts) {
+                if(gen_product->momentum.Pt() <= minimal_genParticle_pt) continue;
+                if(HasMatchWithMCParticle(reco_tau.momentum, gen_product, deltaR_matchGenParticle))
+                    return ntuple::EventType::ZL;
+            }
+        }
+        return ntuple::EventType::ZJ;
     }
 
     bool GenFilterForZevents(const finalState::bbTauTau& final_state)
@@ -386,25 +402,10 @@ protected:
         using namespace cuts::Htautau_Summer13::DYEmbedded;
         if (final_state.taus.size() != 2)
             throw exception("not 2 taus in the event at Gen Level");
-        const GenParticle* firstTau = final_state.taus.at(0).GetOriginGenParticle();
-        const GenParticle* secondTau = final_state.taus.at(1).GetOriginGenParticle();
+        const GenParticle* firstTau = final_state.taus.at(0).origin;
+        const GenParticle* secondTau = final_state.taus.at(1).origin;
         if ((firstTau->momentum + secondTau->momentum).M() > invariantMassCut) return true;
         return false;
-    }
-
-    bool MatchTausFromHiggsWithGenTaus(const analysis::Candidate& higgs, const finalState::bbTauTau& final_state)
-    {
-        using namespace cuts::Htautau_Summer13::DYEmbedded;
-        std::set<const GenParticle *> all_matched_particles;
-        for(const auto& daughter : higgs.daughters) {
-            const VisibleGenObjectVector matched_particles =
-                    FindMatchedObjects(daughter.momentum, final_state.taus, deltaR_betweenTaus);
-            if(!matched_particles.size())
-                return false;
-            for(const auto& gen_object : matched_particles)
-                all_matched_particles.insert(gen_object.origin);
-        }
-        return all_matched_particles.size() >= higgs.daughters.size();
     }
 
     analysis::kinematic_fit::FitResultsMap RunKinematicFit(const CandidateVector& bjets, const Candidate& higgs_to_taus,
@@ -442,7 +443,7 @@ protected:
         flatTree->run() = event->eventInfo().run;
         flatTree->lumi() = event->eventInfo().lumis;
         flatTree->evt() = event->eventInfo().EventId;
-        flatTree->eventType() = static_cast<int>(DoEventCategorization(selection.higgs));
+        flatTree->eventType() = static_cast<int>(selection.eventType);
 
         flatTree->npv() = selection.vertices.size();
         if (config.ApplyPUreweight()){
@@ -614,13 +615,13 @@ protected:
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(selection.GetLeg2().index);
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
         flatTree->againstElectronLooseMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-                    ntuple_tau_leg2.againstElectronMVA3category, ntuple_tau_leg2.againstElectronMVA3raw, 0);
+                    ntuple_tau_leg2, 0);
         flatTree->againstElectronMediumMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-                    ntuple_tau_leg2.againstElectronMVA3category, ntuple_tau_leg2.againstElectronMVA3raw, 1);
+                    ntuple_tau_leg2, 1);
         flatTree->againstElectronTightMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-                    ntuple_tau_leg2.againstElectronMVA3category, ntuple_tau_leg2.againstElectronMVA3raw, 2);
+                    ntuple_tau_leg2, 2);
         flatTree->againstElectronVTightMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-                    ntuple_tau_leg2.againstElectronMVA3category, ntuple_tau_leg2.againstElectronMVA3raw, 3);
+                    ntuple_tau_leg2, 3);
         flatTree->againstElectronLoose_2()                     = ntuple_tau_leg2.againstElectronLoose  ;
         flatTree->againstElectronMedium_2()                    = ntuple_tau_leg2.againstElectronMedium ;
         flatTree->againstElectronTight_2()                     = ntuple_tau_leg2.againstElectronTight  ;

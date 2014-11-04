@@ -102,9 +102,9 @@ class VisibleGenObject {
 public:
     const GenParticle* origin;
 
-    GenParticlePtrVector finalStateChargedLeptons;
-    GenParticlePtrVector finalStateChargedHadrons;
-    GenParticlePtrVector finalStateNeutralHadrons;
+    GenParticleSet finalStateChargedLeptons;
+    GenParticleSet finalStateChargedHadrons;
+    GenParticleSet finalStateNeutralHadrons;
 
     TLorentzVector chargedLeptonsMomentum;
     TLorentzVector chargedHadronsMomentum;
@@ -127,11 +127,6 @@ public:
     VisibleGenObject(const GenParticle *_origin, const GenParticleSet& particlesToIgnore) : origin(_origin)
     {
         CollectInfo(origin, particlesProcessed, particlesToIgnore);
-    }
-
-    const GenParticle* GetOriginGenParticle() const
-    {
-        return origin;
     }
 
     bool operator < (const VisibleGenObject& other) const
@@ -157,13 +152,13 @@ private:
 
             visibleMomentum += particle->momentum;
             if(particle->pdg.Code == particles::e || particle->pdg.Code == particles::mu) {
-                finalStateChargedLeptons.push_back(particle);
+                finalStateChargedLeptons.insert(particle);
                 chargedLeptonsMomentum += particle->momentum;
             } else if(particle->charge) {
-                finalStateChargedHadrons.push_back(particle);
+                finalStateChargedHadrons.insert(particle);
                 chargedHadronsMomentum += particle->momentum;
             } else {
-                finalStateNeutralHadrons.push_back(particle);
+                finalStateNeutralHadrons.insert(particle);
                 neutralHadronsMomentum += particle->momentum;
             }
 
@@ -361,10 +356,12 @@ inline bool HasMatchWithMCParticle(const TLorentzVector& candidateMomentum, cons
     return genParticle && candidateMomentum.DeltaR(genParticle->momentum) < deltaR;
 }
 
-inline bool HasMatchWithMCObject(const TLorentzVector& candidateMomentum, const VisibleGenObject* genObject, double deltaR)
+inline bool HasMatchWithMCObject(const TLorentzVector& candidateMomentum, const VisibleGenObject* genObject,
+                                 double deltaR, bool useVisibleMomentum = false)
 {
-    //return genObject && candidateMomentum.DeltaR(genObject->visibleMomentum) < deltaR;
-    return genObject && candidateMomentum.DeltaR(genObject->origin->momentum) < deltaR;
+    if(!genObject) return false;
+    const TLorentzVector& momentum = useVisibleMomentum ? genObject->visibleMomentum : genObject->origin->momentum;
+    return candidateMomentum.DeltaR(momentum) < deltaR;
 }
 
 template<typename Container>

@@ -117,9 +117,9 @@ protected:
 
 
         selection.higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        selection.eventType = DoEventCategorization(selection.higgs);
 
-        cut(!config.isDYEmbeddedSample() || MatchTausFromHiggsWithGenTaus(selection.higgs, selection.eTau_MC),
-            "tau match with MC truth");
+        cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");
 
         CalculateFullEventWeight(selection.higgs);
 
@@ -215,6 +215,8 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::tauID;
+        using namespace cuts::Htautau_Summer13::customTauMVA;
+
         cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
 
@@ -223,7 +225,7 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        const bool againstElectron =  againstElectronMediumMVA3_Custom(object);
+        const bool againstElectron =  ComputeAntiElectronMVA3New(object, againstElectronMVA3_customWP_id);
         cut(Y(againstElectron), "vs_e_mediumMVA");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) <
             cuts::skim::ETau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
@@ -241,6 +243,8 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::tauID;
+        using namespace cuts::Htautau_Summer13::customTauMVA;
+
         cuts::Cutter cut(objectSelector);
         const ntuple::Tau& object = correctedTaus.at(id);
 
@@ -249,7 +253,7 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        const bool againstElectron =  againstElectronMediumMVA3_Custom(object);
+        const bool againstElectron =  ComputeAntiElectronMVA3New(object, againstElectronMVA3_customWP_id);
         cut(Y(againstElectron), "vs_e_mediumMVA");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
@@ -293,16 +297,6 @@ protected:
         return electron;
     }
 
-    bool againstElectronMediumMVA3_Custom(const ntuple::Tau& tau)
-    {
-        using namespace cuts::Htautau_Summer13::ETau::tauID;
-        const int icut = std::round(tau.againstElectronMVA3category);
-        if(icut < 0) return false;
-		const size_t ucut = (size_t)icut;
-        if(ucut >= againstElectronMediumMVA3_customValues.size()) return true;
-        return tau.againstElectronMVA3raw > againstElectronMediumMVA3_customValues.at(ucut);
-    }
-
     bool FindAnalysisFinalState(analysis::finalState::bbETaujet& final_state)
     {
         const bool base_result = BaseFlatTreeProducer::FindAnalysisFinalState(final_state);
@@ -311,8 +305,8 @@ protected:
 
         for (const analysis::VisibleGenObject& tau_MC : final_state.taus) {
             if(tau_MC.finalStateChargedLeptons.size() == 1
-                    && tau_MC.finalStateChargedLeptons.at(0)->pdg.Code == particles::e)
-                final_state.electron = tau_MC.finalStateChargedLeptons.at(0);
+                    && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::e)
+                final_state.electron = *tau_MC.finalStateChargedLeptons.begin();
             else if(tau_MC.finalStateChargedHadrons.size() >= 1)
                 final_state.tau_jet = &tau_MC;
         }
