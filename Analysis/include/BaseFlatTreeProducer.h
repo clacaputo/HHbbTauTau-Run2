@@ -350,11 +350,12 @@ protected:
 
         GenParticleSet Zparticles;
         for(const GenParticle* z : Zparticles_all) {
-            if(z->mothers.size() == 1) {
-                const GenParticle* mother = z->mothers.front();
-                if(mother->pdg.Code == particles::Z && mother->status == particles::HardInteractionProduct)
-                    Zparticles.insert(z);
-            }
+            const bool is_hard_interaction_z = z->mothers.size() == 1 && z->mothers.front()->pdg.Code == particles::Z
+                    && z->mothers.front()->status == particles::HardInteractionProduct;
+            const bool is_pp_z = z->mothers.size() == 2 && z->mothers.at(0)->pdg.Code == particles::p
+                    && z->mothers.at(1)->pdg.Code == particles::p;
+            if(is_hard_interaction_z || is_pp_z)
+                Zparticles.insert(z);
          }
 
         if (Zparticles.size() > 1 || Zparticles.size() == 0)
