@@ -68,6 +68,36 @@ namespace kinematic_fit {
 namespace two_body {
 
 namespace detail {
+//cca from https://github.com/cvernier/kinfit/blob/master/test/kinFit4b.C
+
+inline Double_t ErrEt(Float_t Et, Float_t Eta)
+{
+Double_t InvPerr2, a, b, c;
+const int NYBINS = 5;
+//double YBND[NYBINS+1] = {0,0.5,1.0,1.5,2.0,2.5};
+double PAR[NYBINS][3] = {
+{3.51, 0.826, 0.0364},{3.23, 0.851, 0.0367},{4.36, 0.871, 0.0415},
+{5.22, 0.713, 0.0229},{5.07, 0.610, 0.0207}};
+int iy =0;
+if (fabs(Eta) < 2.5){
+if (fabs(Eta) < 0.5 && fabs(Eta) >0.) iy =0;
+if (fabs(Eta) < 1. && fabs(Eta) >0.5) iy =1;
+if (fabs(Eta) < 1.5 && fabs(Eta) >1.) iy =2;
+if (fabs(Eta) < 2. && fabs(Eta) >1.5) iy =3;
+if (fabs(Eta) < 2. && fabs(Eta) >2.5) iy =4;
+///std::cout<< iy << " kin iy "<<std::endl;
+InvPerr2 = sqrt(pow(PAR[iy][0]/Et,2) + pow(PAR[iy][1],2)/Et + pow(PAR[iy][2],2));
+//std::cout<< InvPerr2 << " kin invPerr "<<std::endl;
+}
+else {
+a = 4.8;
+b = 0.89;
+c = 0.043;
+InvPerr2 = (a * a) + (b * b) * Et + (c * c) * Et * Et;
+}
+return InvPerr2;
+}
+//cca
 inline Double_t ErrEta(Float_t Et, Float_t Eta)
 {
     Double_t InvPerr2, a, b, c;
@@ -83,7 +113,7 @@ inline Double_t ErrEta(Float_t Et, Float_t Eta)
     InvPerr2 = a/(Et * Et) + b/Et + c;
     return InvPerr2;
 }
-
+/*cca
 inline Double_t ErrEt(Float_t Et, Float_t Eta)
 {
     Double_t InvPerr2, a, b, c;
@@ -99,6 +129,7 @@ inline Double_t ErrEt(Float_t Et, Float_t Eta)
     InvPerr2 = (a * a) + (b * b) * Et + (c * c) * Et * Et;
     return InvPerr2;
 }
+*/
 
 inline Double_t ErrPhi(Float_t Et, Float_t Eta)
 {
@@ -143,7 +174,8 @@ inline FitResults Fit_KinFitter(const FitInput& input)
     TFitConstraintM m_bb;
     m_bb.addParticle1(&_jet1);
     m_bb.addParticle1(&_jet2);
-    m_bb.setMassConstraint(125.0);
+    m_bb.setMassConstraint(125.6);
+//cca Higgs mass 125.6 and not 125.0
 
     TKinFitter _fitter;
     _fitter.addMeasParticle(&_jet1);
@@ -156,7 +188,7 @@ inline FitResults Fit_KinFitter(const FitInput& input)
     _fitter.setVerbosity(0);
     const Int_t fit_result = _fitter.fit();
 
-    std::cout << "fit result: " << fit_result << std::endl;
+/*    std::cout << "test fit result: " << fit_result << std::endl;
     if(fit_result == 0) {
         std::cout << "Old 1: " << input.bjet_momentums.at(0) << std::endl;
         std::cout << "Old 2: " << input.bjet_momentums.at(1) << std::endl;
@@ -170,7 +202,8 @@ inline FitResults Fit_KinFitter(const FitInput& input)
         const double m_new = ((*_jet1.getCurr4Vec()) + (*_jet2.getCurr4Vec())).M();
         std::cout << "M old: " << m_old << std::endl;
         std::cout << "M new: " << m_new << std::endl;
-    }
+   }
+*/
     result.convergence = fit_result;
     result.bjet_momentums.push_back(*_jet1.getCurr4Vec());
     result.bjet_momentums.push_back(*_jet2.getCurr4Vec());

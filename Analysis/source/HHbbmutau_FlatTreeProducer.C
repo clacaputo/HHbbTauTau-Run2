@@ -26,40 +26,54 @@
 
 #include "Analysis/include/BaseFlatTreeProducer.h"
 
-class HHbbmutau_FlatTreeProducer : public analysis::BaseFlatTreeProducer {
+namespace analysis {
+struct SelectionResults_mutau : public SelectionResults {
+    finalState::bbMuTaujet muTau_MC;
+    const Candidate& GetMuon() const { return higgs.GetDaughter(Candidate::Mu); }
+    const Candidate& GetTau() const { return higgs.GetDaughter(Candidate::Tau); }
+
+    virtual const Candidate& GetLeg1() const override { return GetMuon(); }
+    virtual const Candidate& GetLeg2() const override { return GetTau(); }
+    virtual const finalState::bbTauTau& GetFinalStateMC() const override { return muTau_MC; }
+};
+} // namespace analysis
+
+class HHbbmutau_FlatTreeProducer : public virtual analysis::BaseFlatTreeProducer {
 public:
     HHbbmutau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
                                const std::string& configFileName, const std::string& _prefix = "none",
                                size_t _maxNumberOfEvents = 0,
                                std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
-          anaData(*outputFile)
+          baseAnaData(*outputFile)
     {
-        anaData.getOutputFile().cd();
+        baseAnaData.getOutputFile().cd();
     }
 
-    virtual analysis::BaseAnalyzerData& GetAnaData() override { return anaData; }
+    virtual analysis::BaseAnalyzerData& GetAnaData() override { return baseAnaData; }
 
-    virtual void ProcessEvent(std::shared_ptr<const analysis::EventDescriptor> _event) override
+protected:
+    virtual analysis::SelectionResults& ApplyBaselineSelection() override
     {
-        BaseFlatTreeProducer::ProcessEvent(_event);
         using namespace analysis;
         using namespace cuts::Htautau_Summer13;
         using namespace cuts::Htautau_Summer13::MuTau;
 
-        if (!FindAnalysisFinalState(muTau_MC) && config.RequireSpecificFinalState()) return;
+        selection = SelectionResults_mutau();
 
-        cuts::Cutter cut(&anaData.Selection("event"));
+        cuts::Cutter cut(&GetAnaData().Selection("event"));
         cut(true, "total");
 
-        cut(!config.isDYEmbeddedSample() || GenFilterForZevents(muTau_MC), "genFilter");
+        cut(FindAnalysisFinalState(selection.muTau_MC) || !config.RequireSpecificFinalState(), "spec_final_state");
+        cut(!config.isDYEmbeddedSample() || GenFilterForZevents(selection.muTau_MC), "genFilter");
 
-        const auto& selectedTriggerPath = config.isDYEmbeddedSample() ? DYEmbedded::trigger::hltPaths : trigger::hltPaths;
+        const auto& selectedTriggerPath = config.isDYEmbeddedSample()
+                ? DYEmbedded::trigger::hltPaths : trigger::hltPaths;
         cut(HaveTriggerFired(selectedTriggerPath), "trigger");
 
-        const VertexVector vertices = CollectVertices();
-        cut(vertices.size(), "vertex");
-        primaryVertex = vertices.front();
+        selection.vertices = CollectVertices();
+        cut(selection.vertices.size(), "vertex");
+        primaryVertex = selection.vertices.front();
 
         const auto z_muons = CollectZmuons();
         const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);
@@ -78,8 +92,8 @@ public:
         const auto allmuons = CollectMuons();
         cut(allmuons.size(), "muon_cand");
 
-        correctedTaus = config.ApplyTauESCorrection() ? ApplyTauCorrections(muTau_MC.hadronic_taus,false) : event->taus();
-
+        correctedTaus = config.ApplyTauESCorrection()
+                ? ApplyTauCorrections(selection.muTau_MC.hadronic_taus,false) : event->taus();
 
         const auto alltaus = CollectTaus();
         cut(alltaus.size(), "tau_cand");
@@ -88,8 +102,8 @@ public:
 
         // First check OS, isolated higgs candidates
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
-        auto higgses = FindCompatibleObjects(muons, signaltaus, DeltaR_betweenSignalObjects,
-                                             Candidate::Higgs, "H_mu_tau", 0);
+        auto higgses = FindCompatibleObjects(muons, signaltaus, DeltaR_betweenSignalObjects, Candidate::Higgs,
+                                             "H_mu_tau", 0);
         if(!higgses.size())
             higgses = FindCompatibleObjects(allmuons, alltaus, DeltaR_betweenSignalObjects,
                                             Candidate::Higgs, "H_mu_tau");
@@ -101,54 +115,40 @@ public:
 
         cut(higgsTriggered.size(), "trigger obj match");
 
-        const Candidate higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        selection.higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        selection.eventType = DoEventCategorization(selection.higgs);
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(higgs,event->pfCandidates(),
-                                                                event->jets(),primaryVertex,
-                                                                vertices,event->taus());
+        cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");
 
-        correctedMET = config.ApplyTauESCorrection() ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
+        CalculateFullEventWeight(selection.higgs);
 
-
-        const auto looseJets = CollectLooseJets();
-
-        const auto filteredLooseJets = FilterCompatibleObjects(looseJets, higgs,
-                                                               cuts::Htautau_Summer13::jetID::deltaR_signalObjects);
-
-
-        const auto jets = CollectJets(filteredLooseJets);
-        const auto bjets_all = CollectBJets(filteredLooseJets, false, false);
-        const auto retagged_bjets = CollectBJets(filteredLooseJets, config.isMC(), true);
-
-
-        postRecoilMET = ApplyRecoilCorrections(higgs, muTau_MC.resonance, jets.size(), correctedMET);
-
-
-        const auto svfitResults = analysis::sv_fit::FitWithUncertainties(higgs, postRecoilMET,
-                                                                         tauCorrections::energyUncertainty,
-                                                                         true, true);
-//        std::cout << "Event ID: " << event->eventInfo().EventId << std::endl;
-        const auto kinfitResults = RunKinematicFit(bjets_all, higgs, postRecoilMET, true, true);
-
-        cut(!config.isDYEmbeddedSample() || MatchTausFromHiggsWithGenTaus(higgs,muTau_MC), "tau match with MC truth");
-
-        CalculateFullEventWeight(higgs);
-
-        ntuple::MET pfMET;
         if (!config.isMC() || config.isDYEmbeddedSample()){
-            pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
+            selection.pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         }
         else
-            pfMET = event->metPF();
+            selection.pfMET = event->metPF();
 
-        FillHistogramsForMCstudies(muTau_MC, bjets_all);
 
-        FillFlatTree(higgs, svfitResults, kinfitResults, jets, filteredLooseJets, bjets_all, retagged_bjets, vertices, pfMET);
+        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(selection.higgs, event->pfCandidates(),
+                                                                event->jets(), primaryVertex,
+                                                                selection.vertices, event->taus());
 
+        const ntuple::MET correctedMET = config.ApplyTauESCorrection()
+                ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
+
+        const auto looseJets = CollectLooseJets();
+        selection.jetsPt20 = FilterCompatibleObjects(looseJets, selection.higgs, jetID::deltaR_signalObjects);
+
+
+        selection.jets = CollectJets(selection.jetsPt20);
+        selection.bjets_all = CollectBJets(selection.jetsPt20, false, false);
+        selection.retagged_bjets = CollectBJets(selection.jetsPt20, config.isMC(), true);
+
+
+        selection.MET_with_recoil_corrections = ApplyRecoilCorrections(selection.higgs, selection.muTau_MC.resonance,
+                                                                       selection.jets.size(), correctedMET);
+        return selection;
     }
-
-protected:
-
 
     virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
                                            root_ext::AnalyzerData& _anaData,
@@ -221,13 +221,12 @@ protected:
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > cuts::skim::MuTau::tauID::againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < cuts::skim::MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits)
+            < cuts::skim::MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
         const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
         cut(Y(DeltaZ)  < dz, "dz");
 
-
         const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
-
         return tau;
     }
 
@@ -296,8 +295,8 @@ protected:
 
         for(const analysis::VisibleGenObject& tau_MC : final_state.taus) {
             if(tau_MC.finalStateChargedLeptons.size() == 1
-                    && tau_MC.finalStateChargedLeptons.at(0)->pdg.Code == particles::mu)
-                final_state.muon = tau_MC.finalStateChargedLeptons.at(0);
+                    && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::mu)
+                final_state.muon = *tau_MC.finalStateChargedLeptons.begin();
             else if(tau_MC.finalStateChargedHadrons.size() >= 1)
                 final_state.tau_jet = &tau_MC;
         }
@@ -375,24 +374,16 @@ protected:
         DMweights.push_back(weight);
     }
 
-    void FillFlatTree(const analysis::Candidate& higgs,
-                      const analysis::sv_fit::FitResultsWithUncertainties& svfitResults,
-                      const analysis::kinematic_fit::FitResultsMap& kinfitResults,
-                      const analysis::CandidateVector& jets, const analysis::CandidateVector& jetsPt20,
-                      const analysis::CandidateVector& bjets_all, const analysis::CandidateVector& retagged_bjets,
-                      const analysis::VertexVector& vertices, const ntuple::MET& pfMET)
+    virtual void FillFlatTree(const analysis::SelectionResults& /*selection*/) override
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
         static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
 
-        const analysis::Candidate& muon = higgs.GetDaughter(analysis::Candidate::Mu);
+        BaseFlatTreeProducer::FillFlatTree(selection);
+
+        const analysis::Candidate& muon = selection.GetMuon();
         const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-
-
-        BaseFlatTreeProducer::FillFlatTree(higgs, svfitResults, kinfitResults, jets, jetsPt20, bjets_all,
-                                           retagged_bjets, vertices, muon, tau, pfMET, muTau_MC);
-
+        const analysis::Candidate& tau = selection.GetTau();
 
         flatTree->channel() = static_cast<int>(analysis::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
@@ -412,9 +403,10 @@ protected:
         flatTree->againstMuonMedium_1() = false;
         flatTree->againstMuonTight_1() = false;
 
-        const bool muon_matched = analysis::HasMatchWithMCParticle(muon.momentum, muTau_MC.muon, cuts::DeltaR_MC_Match);
+        const bool muon_matched = analysis::HasMatchWithMCParticle(muon.momentum, selection.muTau_MC.muon,
+                                                                   cuts::DeltaR_MC_Match);
         if(muon_matched) {
-            const TLorentzVector& momentum = muTau_MC.muon->momentum;
+            const TLorentzVector& momentum = selection.muTau_MC.muon->momentum;
             flatTree->pt_1_MC   () = momentum.Pt()  ;
             flatTree->phi_1_MC  () = momentum.Phi() ;
             flatTree->eta_1_MC  () = momentum.Eta() ;
@@ -423,7 +415,7 @@ protected:
             flatTree->phi_1_visible_MC  () = momentum.Phi() ;
             flatTree->eta_1_visible_MC  () = momentum.Eta() ;
             flatTree->m_1_visible_MC    () = momentum.M()   ;
-            flatTree->pdgId_1_MC() = muTau_MC.muon->pdg.ToInteger();
+            flatTree->pdgId_1_MC() = selection.muTau_MC.muon->pdg.ToInteger();
         } else {
             flatTree->pt_1_MC   () = default_value ;
             flatTree->phi_1_MC  () = default_value ;
@@ -436,19 +428,20 @@ protected:
             flatTree->pdgId_1_MC() = particles::NONEXISTENT.RawCode();
         }
 
-        const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, muTau_MC.tau_jet, cuts::DeltaR_MC_Match);
+        const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, selection.muTau_MC.tau_jet,
+                                                                cuts::DeltaR_MC_Match);
         if(tau_matched) {
-            const TLorentzVector& momentum = muTau_MC.tau_jet->origin->momentum;
+            const TLorentzVector& momentum = selection.muTau_MC.tau_jet->origin->momentum;
             flatTree->pt_2_MC   () = momentum.Pt()  ;
             flatTree->phi_2_MC  () = momentum.Phi() ;
             flatTree->eta_2_MC  () = momentum.Eta() ;
             flatTree->m_2_MC    () = momentum.M()   ;
-            const TLorentzVector& visible_momentum = muTau_MC.tau_jet->visibleMomentum;
+            const TLorentzVector& visible_momentum = selection.muTau_MC.tau_jet->visibleMomentum;
             flatTree->pt_2_visible_MC   () = visible_momentum.Pt()  ;
             flatTree->phi_2_visible_MC  () = visible_momentum.Phi() ;
             flatTree->eta_2_visible_MC  () = visible_momentum.Eta() ;
             flatTree->m_2_visible_MC    () = visible_momentum.M()   ;
-            flatTree->pdgId_2_MC() = muTau_MC.tau_jet->origin->pdg.ToInteger();
+            flatTree->pdgId_2_MC() = selection.muTau_MC.tau_jet->origin->pdg.ToInteger();
         } else {
             flatTree->pt_2_MC   () = default_value ;
             flatTree->phi_2_MC  () = default_value ;
@@ -464,9 +457,9 @@ protected:
         flatTree->Fill();
     }
 
-private:
-    analysis::BaseAnalyzerData anaData;
-    analysis::finalState::bbMuTaujet muTau_MC;
+protected:
+    analysis::BaseAnalyzerData baseAnaData;
+    analysis::SelectionResults_mutau selection;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

@@ -36,20 +36,23 @@
 #include <Rtypes.h>
 
 #include "AnalysisBase/include/AnalysisTypes.h"
+#include "AnalysisBase/include/Tools.h"
 
 namespace analysis {
 
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
-enum class DataCategoryType { Signal, Background, Data, DYJets, ZL, ZJ, ZTT, ZTT_MC, Embedded, Limits, Composit, QCD,
-                              WJets, WJets_MC };
+enum class DataCategoryType { Signal, Background, Data, DYJets, DYJets_incl, DYJets_excl, ZL, ZJ, ZTT, ZTT_MC, Embedded,
+                              Limits, Composit, QCD, WJets, WJets_MC, WJets_MC_incl, WJets_MC_excl};
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
-    { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" }, { DataCategoryType::ZL, "ZL" },
-    { DataCategoryType::ZJ, "ZJ" }, { DataCategoryType::ZTT, "ZTT" }, { DataCategoryType::ZTT_MC, "ZTT_MC" },
-    { DataCategoryType::Embedded, "EMBEDDED" }, { DataCategoryType::Limits, "LIMITS" },
-    { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" }, { DataCategoryType::WJets, "W_JETS" },
-    { DataCategoryType::WJets_MC, "W_JETS_MC" }
+    { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" },
+    { DataCategoryType::DYJets_incl, "DY_JETS_incl" },{ DataCategoryType::DYJets_excl, "DY_JETS_excl" },
+    { DataCategoryType::ZL, "ZL" }, { DataCategoryType::ZJ, "ZJ" }, { DataCategoryType::ZTT, "ZTT" },
+    { DataCategoryType::ZTT_MC, "ZTT_MC" }, { DataCategoryType::Embedded, "EMBEDDED" },
+    { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" },
+    { DataCategoryType::WJets, "W_JETS" }, { DataCategoryType::WJets_MC, "W_JETS_MC" },
+    { DataCategoryType::WJets_MC_incl, "W_JETS_MC_incl" }, { DataCategoryType::WJets_MC_excl, "W_JETS_MC_excl" }
 };
 
 std::ostream& operator<< (std::ostream& s, const DataCategoryType& dataCategoryType) {
@@ -114,8 +117,11 @@ public:
                 all_sources.insert(source_entry.first);
         }
         const auto& signal_names = ParseSignalList(signal_list);
-        for(const auto& signal_name : signal_names)
+        for(const auto& signal_name : signal_names) {
+            if(!categories.count(signal_name))
+                throw exception("Undefined signal '") << signal_name << "'.";
             categories[signal_name].draw = true;
+        }
     }
 
     const DataCategoryPtrVector& GetAllCategories() const { return all_categories; }
@@ -242,9 +248,11 @@ private:
 
         std::set<std::string> result;
         size_t prev_pos = 0;
-        for(size_t pos = signal_list.find(separator); pos != std::string::npos;
-                                                      pos = signal_list.find(separator, prev_pos)) {
-            const std::string signal_name = signal_list.substr(prev_pos, pos - 1);
+        for(bool next = true; next;) {
+            const size_t pos = signal_list.find(separator, prev_pos);
+            next = pos != std::string::npos;
+            const size_t last_pos = next ? pos - 1 : std::string::npos;
+            const std::string signal_name = signal_list.substr(prev_pos, last_pos);
             result.insert(signal_name);
             prev_pos = pos + 1;
         }
@@ -266,8 +274,10 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     return s;
 }
 
-enum class EventRegion { Unknown, OS_Isolated, OS_NotIsolated, SS_Isolated, SS_NotIsolated, OS_HighMt, SS_HighMt };
-enum class EventCategory { Inclusive, OneJet_ZeroBtag, OneJet_OneBtag, TwoJets_ZeroBtag, TwoJets_OneBtag, TwoJets_TwoBtag };
+enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_NotIsolated = 2, SS_Isolated = 3, SS_NotIsolated = 4,
+                         OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_NotIso_HighMt = 7, SS_NotIso_HighMt = 8 };
+enum class EventCategory { Inclusive = 0, OneJet_ZeroBtag = 1, OneJet_OneBtag = 2, TwoJets_ZeroBtag = 3,
+                           TwoJets_OneBtag = 4, TwoJets_TwoBtag = 5 };
 
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
@@ -278,15 +288,32 @@ static const std::map<EventCategory, std::string> eventCategoryNamesMap =
 static const std::map<EventRegion, std::string> eventRegionNamesMap =
           { { EventRegion::Unknown, "Unknown"}, { EventRegion::OS_Isolated, "OS_Isolated"},
             { EventRegion::OS_NotIsolated, "OS_NotIsolated"}, { EventRegion::SS_Isolated, "SS_Isolated"},
-            { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_HighMt, "OS_HighMt"},
-            { EventRegion::SS_HighMt, "SS_HighMt"} };
+            { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_Iso_HighMt, "OS_Iso_HighMt"},
+            { EventRegion::SS_Iso_HighMt, "SS_Iso_HighMt"} , { EventRegion::OS_NotIso_HighMt, "OS_NotIso_HighMt"},
+            { EventRegion::SS_NotIso_HighMt, "SS_NotIso_HighMt"} };
 } // namespace detail
+
 typedef std::vector<EventCategory> EventCategoryVector;
 typedef std::set<EventCategory> EventCategorySet;
 
+static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
 static const EventCategorySet OneJetEventCategories = { EventCategory::OneJet_ZeroBtag, EventCategory::OneJet_OneBtag };
 static const EventCategorySet TwoJetsEventCategories =
         { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
+
+typedef std::set<EventRegion> EventRegionSet;
+typedef std::map<EventRegion, EventRegion> EventRegionMap;
+static const EventRegionMap HighMt_LowMt_RegionMap = { {EventRegion::OS_Iso_HighMt, EventRegion::OS_Isolated},
+                                                     {EventRegion::SS_Iso_HighMt, EventRegion::SS_Isolated},
+                                                       {EventRegion::OS_NotIso_HighMt, EventRegion::OS_NotIsolated},
+                                                       {EventRegion::SS_NotIso_HighMt, EventRegion::SS_NotIsolated} };
+static const EventRegionSet HighMtRegions = {EventRegion::OS_Iso_HighMt, EventRegion::SS_Iso_HighMt,
+                                             EventRegion::OS_NotIso_HighMt, EventRegion::SS_NotIso_HighMt};
+
+static const EventRegionSet QcdRegions = {EventRegion::OS_Isolated, EventRegion::SS_Isolated,
+                                             EventRegion::OS_NotIsolated, EventRegion::SS_NotIsolated};
+
+static const EventRegionSet AllEventRegions = tools::collect_map_keys(detail::eventRegionNamesMap);
 
 std::ostream& operator<<(std::ostream& s, const EventCategory& eventCategory) {
     s << detail::eventCategoryNamesMap.at(eventCategory);

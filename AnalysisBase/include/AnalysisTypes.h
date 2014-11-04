@@ -65,7 +65,24 @@ std::istream& operator>> (std::istream& s, Channel& c)
 template<typename T>
 T sqr(const T& x) { return x * x; }
 
+namespace detail {
+template<typename char_type>
+struct PhysicalValueErrorSeparator;
+
+template<>
+struct PhysicalValueErrorSeparator<char> {
+    static std::string Get() { return " +/- "; }
+};
+
+template<>
+struct PhysicalValueErrorSeparator<wchar_t> {
+    static std::wstring Get() { return L" \u00B1 "; }
+};
+
+}
+
 struct PhysicalValue {
+
     double value;
     double error;
 
@@ -82,10 +99,26 @@ struct PhysicalValue {
         return PhysicalValue(value + other.value, new_error);
     }
 
+    PhysicalValue& operator+=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
+        value = value + other.value;
+        error = new_error;
+        return *this;
+    }
+
     PhysicalValue operator-(const PhysicalValue& other) const
     {
         const double new_error = std::sqrt(sqr(error) + sqr(other.error));
         return PhysicalValue(value - other.value, new_error);
+    }
+
+    PhysicalValue& operator-=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
+        value = value - other.value;
+        error = new_error;
+        return *this;
     }
 
     PhysicalValue operator*(const PhysicalValue& other) const
@@ -94,11 +127,28 @@ struct PhysicalValue {
         return PhysicalValue(value * other.value, new_error);
     }
 
+    PhysicalValue& operator*=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(other.value * error) + sqr(value * other.error));
+        value = value * other.value;
+        error = new_error;
+        return *this;
+    }
+
     PhysicalValue operator/(const PhysicalValue& other) const
     {
         const double new_error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value)))
                 / std::abs(other.value);
         return PhysicalValue(value / other.value, new_error);
+    }
+
+    PhysicalValue& operator/=(const PhysicalValue& other)
+    {
+        const double new_error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value)))
+                / std::abs(other.value);
+        value = value / other.value;
+        error = new_error;
+        return *this;
     }
 
     bool operator<(const PhysicalValue& other) const { return value < other.value; }
@@ -111,7 +161,7 @@ struct PhysicalValue {
     }
 
     template<typename char_type>
-    std::basic_string<char_type> ToString(bool print_error, const std::basic_string<char_type>& error_separator) const
+    std::basic_string<char_type> ToString(bool print_error) const
     {
         static const int number_of_significant_digits_in_error = 2;
         const int precision = error ? std::floor(std::log10(error)) - number_of_significant_digits_in_error + 1
@@ -123,7 +173,7 @@ struct PhysicalValue {
         std::basic_ostringstream<char_type> ss;
         ss << std::setprecision(decimals_to_print) << std::fixed << value_rounded;
         if(print_error)
-            ss << error_separator << error_rounded;
+            ss << detail::PhysicalValueErrorSeparator<char_type>::Get() << error_rounded;
         return ss.str();
     }
 };
@@ -132,13 +182,13 @@ typedef std::pair<PhysicalValue, PhysicalValue> PhysicalValuePair;
 
 std::ostream& operator<<(std::ostream& s, const PhysicalValue& v)
 {
-    s << v.ToString<char>(true, " +/- ");
+    s << v.ToString<char>(true);
     return s;
 }
 
 std::wostream& operator<<(std::wostream& s, const PhysicalValue& v)
 {
-    s << v.ToString<wchar_t>(true, L" \u00B1 ");
+    s << v.ToString<wchar_t>(true);
     return s;
 }
 

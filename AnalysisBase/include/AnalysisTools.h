@@ -44,7 +44,7 @@ static const particles::ParticleCodes TauMuonicDecay = { particles::mu, particle
 static const particles::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
-                               const std::vector<std::string>& interestinghltPaths, size_t& n)
+                               const std::set<std::string>& interestinghltPaths, size_t& n)
 {
     for (; n < objectMatchedPaths.size(); ++n){
         for (const std::string& interestingPath : interestinghltPaths){
@@ -57,7 +57,7 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
 }
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
-                               const std::vector<std::string>& interestinghltPaths)
+                               const std::set<std::string>& interestinghltPaths)
 {
     size_t n = 0;
     return HaveTriggerMatched(objectMatchedPaths, interestinghltPaths, n);
@@ -129,7 +129,7 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
 }
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
-                               const std::vector<std::string>& interestingPaths,
+                               const std::set<std::string>& interestingPaths,
                                const analysis::Candidate& candidate, double deltaR_Limit)
 {
     for (const std::string& interestinPath : interestingPaths){
@@ -139,7 +139,7 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
 }
 
 inline bool HaveTriggerMatched(const EventDescriptor& event,
-                               const std::vector<std::string>& interestingPaths,
+                               const std::set<std::string>& interestingPaths,
                                const analysis::Candidate& candidate)
 {
     for (const std::string& interestinPath : interestingPaths){

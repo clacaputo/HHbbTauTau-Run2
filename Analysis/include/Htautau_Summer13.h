@@ -32,7 +32,9 @@
 
 #include <TMath.h>
 
+#include "AnalysisBase/include/AnalysisMath.h"
 #include "AnalysisBase/include/Tools.h"
+#include "AnalysisBase/include/exception.h"
 #include "TreeProduction/interface/Tau.h"
 #include "TreeProduction/interface/Jet.h"
 
@@ -49,7 +51,7 @@ const double DeltaR_triggerMatch = 0.5; // <
 namespace MuTau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const std::vector<std::string> hltPaths =
+        const std::set<std::string> hltPaths =
             { "HLT_IsoMu17_eta2p1_LooseIsoPFTau20", "HLT_IsoMu18_eta2p1_LooseIsoPFTau20" };
     }
 
@@ -76,7 +78,8 @@ namespace MuTau {
 //        const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
         //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
         const bool isGlobalMuonPromptTight = true;
-              // = https://cmssdt.cern.ch/SDT/lxr/source/DataFormats/MuonReco/src/MuonSelectors.cc#567 and 590 definition
+              // = https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/DataFormats/MuonReco/src/MuonSelectors.cc#L534
+              // def: https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/DataFormats/MuonReco/src/MuonSelectors.cc#L534
               // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
         const bool isPFMuon = true; // = def of isTightMuon
         const int nMatched_Stations = 1; // > def of isTightMuon
@@ -125,7 +128,7 @@ namespace MuTau {
 namespace ETau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const std::vector<std::string> hltPaths =
+        const std::set<std::string> hltPaths =
             { "HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
               "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20" };
     }
@@ -172,9 +175,8 @@ namespace ETau {
                                                       // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
 
         // > https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/physicsobjects/Tau.py#L62
-        const std::vector<double> againstElectronMediumMVA3_customValues = {
-            0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95,0.897,0.958,0.955,0.942
-        };
+        const size_t againstElectronMVA3_customWP_id = 1; // = custom medium working point
+
         // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauEleAnalyzer.py#L187
         // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/HiggsHTohh/test/HiggsHTohh.cpp#L1060 (no dB)
         const double dz = 0.2; // <
@@ -218,7 +220,7 @@ namespace TauTau {
          {"HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1", false},
          {"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1",false} };
 
-        const std::vector<std::string> hltPaths = tools::collect_map_keys(hltPathsMap);
+        const std::set<std::string> hltPaths = tools::collect_map_keys(hltPathsMap);
     }
 
     namespace tauID {
@@ -231,7 +233,8 @@ namespace TauTau {
         const double againstElectronLooseMVA3 = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
                                                      // recommended only for sub-leading pt tau
                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
-                                                     // MVA3 is recommended, but it does not exists any more for new tauID
+                                                     // MVA3 is recommended, but it does not exists any more
+                                                     // for new tauID
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5; // not equivalent to the medium working point (1.5)
@@ -295,7 +298,7 @@ namespace jetID {
 
     const double pt_loose = 20; // >
 
-    //https://github.com/ajgilbert/ICHiggsTauTau/blob/38f0bedebe1e7ff432bdcbd7753f38cfaf95405f/plugins/MVAMETPairProducer.cc#L410
+    // https://github.com/ajgilbert/ICHiggsTauTau/blob/production-27Feb2014/plugins/MVAMETPairProducer.cc#L410
     inline bool passPFLooseId(const ntuple::Jet& jet)
     {
         TLorentzVector momentum;
@@ -366,44 +369,52 @@ namespace tauCorrections {
 
 namespace DrellYannCategorization {
     const double minimal_genParticle_pt = 8; // > GeV
-    const double deltaR_matchGenParticle = 0.3;
-           // < https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L757
+    const double deltaR_matchGenParticle = 0.5; // < twiki HiggsToTauTauWorkingSummer2013#E_MU_TAU_channel
+    // < 0.3 https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L757
+
+    const double minimal_visible_momentum = 18; // > GeV
 }
 
 namespace DYEmbedded {
     namespace trigger {
         // Riccardo repository: https://github.com/rmanzoni/HTT/tree/
         //a03b227073b2d4d8a2abe95367c014694588bf98/CMGTools/H2TauTau/python/proto/samples/run2012/trigger*.py
-        const std::vector<std::string> hltPaths = { "HLT_Mu17_Mu8"};
+        const std::set<std::string> hltPaths = { "HLT_Mu17_Mu8"};
     }
 
-    const double invariantMassCut = 50.;
-    const double deltaR_betweenTaus = 0.3;
-        //https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L757
+    const double invariantMassCut = 50.; // > GeV
+           // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/EmbedWeighter.py#L132
+
+    const double deltaR_matchGenParticle = DrellYannCategorization::deltaR_matchGenParticle;
 }
 
 namespace customTauMVA {
-    bool ComputeAntiElectronMVA3New(int category, float raw, int WP)
+    bool ComputeAntiElectronMVA3New(const ntuple::Tau& tau, size_t WP)
     {
-      if (category < 0 ) return false ;
-      if (category > 15) return true  ;
+        static size_t n_categories = 16;
+        static const std::vector< std::vector<float> > cuts {
+            { 0.835, 0.831, 0.849, 0.859, 0.873, 0.823, 0.85, 0.855, 0.816, 0.861, 0.862, 0.847, 0.893, 0.82,
+                0.845, 0.851 }, // loose
+            { 0.933, 0.921, 0.944, 0.945, 0.918, 0.941, 0.981, 0.943, 0.956, 0.947, 0.951, 0.95, 0.897, 0.958,
+                0.955, 0.942 }, // medium
+            { 0.96, 0.968, 0.971, 0.972, 0.969, 0.959, 0.981, 0.965, 0.975, 0.972, 0.974, 0.971, 0.897, 0.971,
+                0.961, 0.97 }, // tight
+            { 0.978, 0.98, 0.982, 0.985, 0.977, 0.974, 0.989, 0.977, 0.986, 0.983, 0.984, 0.983, 0.971, 0.987,
+                0.977, 0.981 } // very tight
+        };
 
-      float cutsLoose    [16] = {0.835,0.831,0.849,0.859,0.873,0.823,0.85 ,0.855,0.816,0.861,0.862,0.847,0.893,0.82 ,0.845,0.851} ;
-      float cutsMedium   [16] = {0.933,0.921,0.944,0.945,0.918,0.941,0.981,0.943,0.956,0.947,0.951,0.95 ,0.897,0.958,0.955,0.942} ;
-      float cutsTight    [16] = { 0.96,0.968,0.971,0.972,0.969,0.959,0.981,0.965,0.975,0.972,0.974,0.971,0.897,0.971,0.961,0.97 } ;
-      float cutsVeryTight[16] = {0.978,0.98 ,0.982,0.985,0.977,0.974,0.989,0.977,0.986,0.983,0.984,0.983,0.971,0.987,0.977,0.981} ;
+        const int category = std::round(tau.againstElectronMVA3category);
+        const float raw = tau.againstElectronMVA3raw;
 
-      switch (WP)
-      {
-        case 0 : return (raw > cutsLoose    [category]) ;
-        case 1 : return (raw > cutsMedium   [category]) ;
-        case 2 : return (raw > cutsTight    [category]) ;
-        case 3 : return (raw > cutsVeryTight[category]) ;
-      }
+        if(category < 0) return false;
+        const size_t u_category = static_cast<size_t>(category);
+        if(u_category >= n_categories) return true;
 
-      return false ; // to avoid warnings, smarter solutions exist
+        if(WP >= cuts.size())
+            throw std::runtime_error("Bad working point");
+
+        return raw > cuts.at(WP).at(u_category);
     }
-
 }
 
 } // Htautau_Summer13

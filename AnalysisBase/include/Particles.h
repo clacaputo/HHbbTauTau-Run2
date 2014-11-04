@@ -29,6 +29,7 @@
 #include <cmath>
 #include <string>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <sstream>
 #include <vector>
@@ -355,6 +356,9 @@ PARTICLE(Jet, 0);
 PARTICLE(NONEXISTENT, std::numeric_limits<int>::max());
 
 #undef PARTICLE
+
+static const std::set< particles::ParticleCode > neutrinos = { nu_e, nu_mu, nu_tau };
+
 
 enum Status {
     FinalStateParticle = 1, Decayed_or_fragmented = 2, HardInteractionProduct = 3,

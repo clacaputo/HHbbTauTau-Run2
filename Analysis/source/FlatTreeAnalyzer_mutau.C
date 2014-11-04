@@ -30,6 +30,20 @@
 
 #include "Analysis/include/BaseFlatTreeAnalyzer.h"
 
+class FlatAnalyzerData_mutau : public analysis::FlatAnalyzerData {
+public:
+    TH1D_ENTRY(mt_1, 50, 0, 50)
+
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true) override
+    {
+        FlatAnalyzerData::Fill(eventInfo, weight, fill_all, doESvariation);
+        if(!fill_all) return;
+
+        const ntuple::Flat& event = *eventInfo.event;
+        mt_1().Fill(event.mt_1, weight);
+    }
+};
+
 class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
@@ -41,6 +55,11 @@ public:
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::MuTau; }
 
+    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData() override
+    {
+        return std::shared_ptr<FlatAnalyzerData_mutau>(new FlatAnalyzerData_mutau());
+    }
+
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
     {
         using analysis::EventRegion;
@@ -48,16 +67,17 @@ protected:
 
         if(!event.againstMuonTight_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) /*|| event.pt_2 <= 30*/ )
             return EventRegion::Unknown;
 
         const bool os = event.q_1 * event.q_2 == -1;
         const bool iso = event.pfRelIso_1 < muonID::pFRelIso;
         const bool low_mt = event.mt_1 < muonID::mt;
 
-        if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_HighMt;
-        if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_HighMt;
-        return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
+        if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
+        else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+        else if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
+        else return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
     }
 
     virtual bool PassMvaCut(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory eventCategory) override
@@ -72,11 +92,4 @@ protected:
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
-
-//    virtual analysis::PhysicalValuePair CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
-//                                                                   const std::string& /*hist_name*/) override
-//    {
-//        static const analysis::PhysicalValue v(1, 0.001);
-//        return analysis::PhysicalValuePair(v, v);
-//    }
 };

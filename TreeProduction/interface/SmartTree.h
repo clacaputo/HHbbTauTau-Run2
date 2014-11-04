@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <memory>
+#include <iostream>
 
 #ifdef SMART_TREE_FOR_CMSSW
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -215,10 +216,14 @@ protected:
     void AddSimpleBranch(const std::string& name, DataType& value)
     {
         if(readMode) {
-            EnableBranch(name);
-            tree->SetBranchAddress(name.c_str(), &value);
-            if(tree->GetReadEntry() >= 0)
-                tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
+            try {
+                EnableBranch(name);
+                tree->SetBranchAddress(name.c_str(), &value);
+                if(tree->GetReadEntry() >= 0)
+                    tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
+            } catch(std::runtime_error& error) {
+                std::cerr << "ERROR: " << error.what() << std::endl;
+            }
         } else {
             TBranch* branch = tree->Branch(name.c_str(), &value);
             const Long64_t n_entries = tree->GetEntries();
@@ -236,10 +241,14 @@ protected:
             throw std::runtime_error("Entry is already defined.");
         entries[name] = entry;
         if(readMode) {
-            EnableBranch(name);
-            tree->SetBranchAddress(name.c_str(), &entry->value);
-            if(tree->GetReadEntry() >= 0)
-                tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
+            try {
+                EnableBranch(name);
+                tree->SetBranchAddress(name.c_str(), &entry->value);
+                if(tree->GetReadEntry() >= 0)
+                    tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
+            } catch(std::runtime_error& error) {
+                std::cerr << "ERROR: " << error.what() << std::endl;
+            }
         } else {
             TBranch* branch = tree->Branch(name.c_str(), entry->value);
             const Long64_t n_entries = tree->GetEntries();

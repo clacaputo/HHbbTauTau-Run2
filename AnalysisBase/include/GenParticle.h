@@ -86,34 +86,47 @@ public:
             mother->daughters.push_back(this);
         }
     }
+
+    const GenParticle* GetHardInteractionOrigin() const
+    {
+        for(const GenParticle* origin = this; origin->pdg == pdg; origin = origin->mothers.front()) {
+            if(origin->status == particles::HardInteractionProduct)
+                return origin;
+            if(origin->mothers.size() != 1) break;
+        }
+        throw exception("Hard interaction origin not found for particle ") << pdg.Name() << ", index = " << index;
+    }
 };
 
 class VisibleGenObject {
 public:
     const GenParticle* origin;
 
-    GenParticlePtrVector finalStateChargedLeptons;
-    GenParticlePtrVector finalStateChargedHadrons;
-    GenParticlePtrVector finalStateNeutralHadrons;
+    GenParticleSet finalStateChargedLeptons;
+    GenParticleSet finalStateChargedHadrons;
+    GenParticleSet finalStateNeutralHadrons;
 
     TLorentzVector chargedLeptonsMomentum;
     TLorentzVector chargedHadronsMomentum;
     TLorentzVector neutralHadronsMomentum;
     TLorentzVector visibleMomentum;
+    TLorentzVector invisibleMomentum;
+
+    GenParticleSet particlesProcessed;
 
 public:
 
-    VisibleGenObject() : origin(nullptr) {}
+    explicit VisibleGenObject() : origin(nullptr) {}
 
-    VisibleGenObject(const GenParticle *_origin) : origin(_origin)
+    explicit VisibleGenObject(const GenParticle *_origin) : origin(_origin)
     {
-        GenParticleSet particlesProcessed;
-        CollectInfo(origin, particlesProcessed);
+        const GenParticleSet particlesToIgnore;
+        CollectInfo(origin, particlesProcessed, particlesToIgnore);
     }
 
-    const GenParticle* GetOriginGenParticle() const
+    VisibleGenObject(const GenParticle *_origin, const GenParticleSet& particlesToIgnore) : origin(_origin)
     {
-        return origin;
+        CollectInfo(origin, particlesProcessed, particlesToIgnore);
     }
 
     bool operator < (const VisibleGenObject& other) const
@@ -123,32 +136,36 @@ public:
 
 
 private:
-    void CollectInfo(const GenParticle* particle, GenParticleSet& particlesProcessed)
+    void CollectInfo(const GenParticle* particle, GenParticleSet& particlesProcessed,
+                     const GenParticleSet& particlesToIgnore)
     {
         if(particle->status == particles::Status::FinalStateParticle && particle->daughters.size() != 0)
             throw exception("Invalid gen particle");
 
-        if(particlesProcessed.count(particle)) return;
+        if(particlesProcessed.count(particle) || particlesToIgnore.count(particle)) return;
         particlesProcessed.insert(particle);
-        if(particle->status == particles::Status::FinalStateParticle && particle->pdg.Code != particles::nu_e
-                && particle->pdg.Code != particles::nu_mu && particle->pdg.Code != particles::nu_tau) {
+        if(particle->status == particles::Status::FinalStateParticle) {
+            if(particles::neutrinos.count(particle->pdg.Code)) {
+                invisibleMomentum += particle->momentum;
+                return;
+            }
 
             visibleMomentum += particle->momentum;
             if(particle->pdg.Code == particles::e || particle->pdg.Code == particles::mu) {
-                finalStateChargedLeptons.push_back(particle);
+                finalStateChargedLeptons.insert(particle);
                 chargedLeptonsMomentum += particle->momentum;
             } else if(particle->charge) {
-                finalStateChargedHadrons.push_back(particle);
+                finalStateChargedHadrons.insert(particle);
                 chargedHadronsMomentum += particle->momentum;
             } else {
-                finalStateNeutralHadrons.push_back(particle);
+                finalStateNeutralHadrons.insert(particle);
                 neutralHadronsMomentum += particle->momentum;
             }
 
         }
 
         for(const GenParticle* daughter : particle->daughters){
-            CollectInfo(daughter, particlesProcessed);
+            CollectInfo(daughter, particlesProcessed, particlesToIgnore);
         }
     }
 };
@@ -339,10 +356,12 @@ inline bool HasMatchWithMCParticle(const TLorentzVector& candidateMomentum, cons
     return genParticle && candidateMomentum.DeltaR(genParticle->momentum) < deltaR;
 }
 
-inline bool HasMatchWithMCObject(const TLorentzVector& candidateMomentum, const VisibleGenObject* genObject, double deltaR)
+inline bool HasMatchWithMCObject(const TLorentzVector& candidateMomentum, const VisibleGenObject* genObject,
+                                 double deltaR, bool useVisibleMomentum = false)
 {
-    //return genObject && candidateMomentum.DeltaR(genObject->visibleMomentum) < deltaR;
-    return genObject && candidateMomentum.DeltaR(genObject->origin->momentum) < deltaR;
+    if(!genObject) return false;
+    const TLorentzVector& momentum = useVisibleMomentum ? genObject->visibleMomentum : genObject->origin->momentum;
+    return candidateMomentum.DeltaR(momentum) < deltaR;
 }
 
 template<typename Container>
