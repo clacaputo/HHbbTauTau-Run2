@@ -1,3 +1,30 @@
+[DATA TauPlusX]
+type: DATA
+type: LIMITS
+channel: eTau
+channel: muTau
+title: Observed
+datacard: data_obs
+draw: true
+color: black
+file: TauPlusX_A.root 1
+file: TauPlusX_B.root 1
+file: TauPlusX_C.root 1
+file: TauPlusX_D.root 1
+
+[DATA Tau]
+type: DATA
+type: LIMITS
+channel: tauTau
+title: Observed
+datacard: data_obs
+draw: true
+color: black
+file: Tau_A.root 1
+file: Tau_B.root 1
+file: Tau_C.root 1
+file: Tau_D.root 1
+
 [Radion300]
 type: SIGNAL
 type: LIMITS
@@ -455,83 +482,6 @@ file: VBF_HToBB.root 0.01797
 file: WH_WToLNu_HToBB.root 0.0008668
 file: ZH_ZToLL_HToBB.root 0.0004528
 
-[SMhiggs ALL]
-type: BACKGROUND
-type: COMPOSIT
-title: SMhiggs
-draw: true
-color: azure
-subcategory: qqH125
-subcategory: VH125
-subcategory: ggH125
-subcategory: SMHiggs_other
-
-[QCD]
-type: BACKGROUND
-type: LIMITS
-type: QCD
-title: QCD
-datacard: QCD
-draw: true
-color: pink_custom
-
-[DiBoson]
-type: BACKGROUND
-type: LIMITS
-title: DiBoson
-datacard: VV
-file: ZZJetsTo4L.root 0.0007
-file: ZZJetsTo2L2Nu.root 0.0148
-file: ZZJetsTo2L2Q.root 0.0254
-file: WWJetsTo2L2Nu.root 0.0593
-file: WZJetsTo2L2Q.root 0.0135
-file: WZJetsTo3LNu.root 0.0103
-file: T_tW.root 0.4394
-file: Tbar_tW.root 0.4431
-
-[Wjets_MC_incl]
-type: W_JETS_MC_incl
-type: W_JETS_MC
-title: Wjets MC
-file: WJetsToLNu_v1.root 9.3855
-file: WJetsToLNu_v2.root 9.3855
-
-[Wjets_MC_excl]
-type: W_JETS_MC_excl
-type: W_JETS_MC
-title: Wjets MC
-file: W1JetsToLNu_V19.root 2.1299
-file: W2JetsToLNu_V19.root 0.6698
-file: W3JetsToLNu_V19.root 0.4000
-file: W4jets.root 0.1879
-
-[Wjets]
-type: BACKGROUND
-type: LIMITS
-type: W_JETS
-datacard: W
-title: Wjets
-
-[EWK]
-type: BACKGROUND
-type: COMPOSIT
-title: Electroweak
-draw: true
-color: red_custom
-subcategory: DiBoson
-subcategory: Wjets
-
-[TTbar]
-type: BACKGROUND
-type: LIMITS
-title: t#bar{t}
-datacard: TT
-draw: true
-color: violet_custom
-file: tt_hadr.root 0.0719
-file: tt_lept.root 0.0430
-file: tt_semi.root 0.0862
-
 #new
 [DYJets_incl MC]
 #type: DY_JETS
@@ -586,39 +536,104 @@ datacard: ZTT
 [DYJets]
 type: BACKGROUND
 type: COMPOSIT
-title: Z #rightarrow ll
+#title: Z #rightarrow ll
+title: Z #rightarrow #tau#tau
 draw: true
 color: yellow_custom
-subcategory: ZL
-subcategory: ZJ
+#subcategory: ZL
+#subcategory: ZJ
 subcategory: ZTT
 
-[DATA TauPlusX]
-type: DATA
-type: LIMITS
-channel: eTau
-channel: muTau
-title: Observed
-datacard: data_obs
+[DYJets_ll]
+type: BACKGROUND
+type: COMPOSIT
+title: Z #rightarrow ll
+#title: Z #rightarrow #tau#tau
 draw: true
-color: black
-file: TauPlusX_A.root 1
-file: TauPlusX_B.root 1
-file: TauPlusX_C.root 1
-file: TauPlusX_D.root 1
+color: cyan
+subcategory: ZL
+subcategory: ZJ
+#subcategory: ZTT
 
-[DATA Tau]
-type: DATA
+[DiBoson]
+type: BACKGROUND
 type: LIMITS
-channel: tauTau
-title: Observed
-datacard: data_obs
+title: DiBoson
+datacard: VV
+file: ZZJetsTo4L.root 0.0007
+file: ZZJetsTo2L2Nu.root 0.0148
+file: ZZJetsTo2L2Q.root 0.0254
+file: WWJetsTo2L2Nu.root 0.0593
+file: WZJetsTo2L2Q.root 0.0135
+file: WZJetsTo3LNu.root 0.0103
+file: T_tW.root 0.4394
+file: Tbar_tW.root 0.4431
+
+[Wjets_MC_incl]
+type: W_JETS_MC_incl
+type: W_JETS_MC
+title: Wjets MC
+file: WJetsToLNu_v1.root 9.3855
+file: WJetsToLNu_v2.root 9.3855
+
+[Wjets_MC_excl]
+type: W_JETS_MC_excl
+type: W_JETS_MC
+title: Wjets MC
+file: W1JetsToLNu_V19.root 2.1299
+file: W2JetsToLNu_V19.root 0.6698
+file: W3JetsToLNu_V19.root 0.4000
+file: W4jets.root 0.1879
+
+[Wjets]
+type: BACKGROUND
+type: LIMITS
+type: W_JETS
+datacard: W
+title: Wjets
+
+[EWK]
+type: BACKGROUND
+type: COMPOSIT
+title: Electroweak
 draw: true
-color: black
-file: Tau_A.root 1
-file: Tau_B.root 1
-file: Tau_C.root 1
-file: Tau_D.root 1
+color: red_custom
+subcategory: DiBoson
+subcategory: Wjets
+
+[QCD]
+type: BACKGROUND
+type: LIMITS
+type: QCD
+title: QCD
+datacard: QCD
+draw: true
+color: pink_custom
+
+
+[TTbar]
+type: BACKGROUND
+type: LIMITS
+title: t#bar{t}
+datacard: TT
+draw: true
+color: violet_custom
+file: tt_hadr.root 0.0719
+file: tt_lept.root 0.0430
+file: tt_semi.root 0.0862
+
+
+[SMhiggs ALL]
+type: SIGNAL
+type: COMPOSIT
+title: SMhiggs
+draw: false
+color: azure
+subcategory: qqH125
+subcategory: VH125
+subcategory: ggH125
+subcategory: SMHiggs_other
+
 
 [EMBEDDED MuTau]
 type: EMBEDDED

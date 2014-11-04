@@ -32,6 +32,7 @@
 
 #include <TH1.h>
 #include <THStack.h>
+#include <TLine.h>
 
 #include "RootPrintSource.h"
 #include "TdrStyle.h"
@@ -47,6 +48,7 @@ struct HistogramDescriptor {
     std::string Xaxis_title;
     std::string Yaxis_title;
     bool useLogY;
+    double max_Y;
 
     static HistogramDescriptorVector ReadFromFile(const std::string& config_name)
     {
@@ -63,6 +65,7 @@ struct HistogramDescriptor {
             ss >> hist.Xaxis_title;
             ss >> hist.Yaxis_title;
             ss >> std::boolalpha >> hist.useLogY;
+            ss >> hist.max_Y;
             histograms.push_back(hist);
         }
         return histograms;
@@ -84,7 +87,7 @@ public:
         : hist_descriptor(_hist_descriptor),
           data_histogram(nullptr),
           stack(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str())),
-          legend(new TLegend (0.60, 0.65, 0.67, 0.90)),
+          legend(new TLegend (0.6, 0.55, 0.8, 0.90)),
           text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC"))
     {
         page.side.use_log_scaleY = hist_descriptor.useLogY;
@@ -94,27 +97,27 @@ public:
         page.side.axis_titleY = hist_descriptor.Yaxis_title;
         page.layout.has_title = draw_title;
         if (page.layout.has_title) {
-            page.side.layout.main_pad.right_top.x = 0.9;
-            page.side.layout.main_pad.right_top.y = 0.9;
-            page.side.layout.main_pad.left_bottom.x = 0.1;
-            page.side.layout.main_pad.left_bottom.y = 0.1;
-            page.side.layout.ratio_pad.right_top.x = 0.9;
-            page.side.layout.ratio_pad.right_top.y = 0.1;
-            page.side.layout.ratio_pad.left_bottom.x = 0.1;
-            page.side.layout.ratio_pad.left_bottom.y = 0;
-        } else {
             page.side.layout.main_pad.right_top.x = 0.95;
-            page.side.layout.main_pad.right_top.y = 1;
+            page.side.layout.main_pad.right_top.y = 0.95;
             page.side.layout.main_pad.left_bottom.x = 0.05;
-            page.side.layout.main_pad.left_bottom.y = 0.1;
+            page.side.layout.main_pad.left_bottom.y = 0.25;
             page.side.layout.ratio_pad.right_top.x = 0.95;
-            page.side.layout.ratio_pad.right_top.y = 0.1;
+            page.side.layout.ratio_pad.right_top.y = 0.3;
             page.side.layout.ratio_pad.left_bottom.x = 0.05;
-            page.side.layout.ratio_pad.left_bottom.y = 0;
+            page.side.layout.ratio_pad.left_bottom.y = 0.05;
+        } else {
+            page.side.layout.main_pad.right_top.x = 1;
+            page.side.layout.main_pad.right_top.y = 1;
+            page.side.layout.main_pad.left_bottom.x = 0.02;
+            page.side.layout.main_pad.left_bottom.y = 0.21;
+            page.side.layout.ratio_pad.right_top.x = 1;
+            page.side.layout.ratio_pad.right_top.y = 0.30;
+            page.side.layout.ratio_pad.left_bottom.x = 0.02;
+            page.side.layout.ratio_pad.left_bottom.y = 0.02;
         }
 
         legend->SetFillColor(0);
-        legend->SetTextSize(0.035);
+        legend->SetTextSize(0.025);
         legend->SetTextFont(42);
         legend->SetFillStyle (0);
         legend->SetFillColor (0);
@@ -149,6 +152,7 @@ public:
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
         histogram->SetLineColor(color);
+        histogram->SetLineStyle(kDashed);
         histogram->Scale(scale_factor);
         signal_histograms.push_back(histogram);
         std::ostringstream ss;
@@ -198,14 +202,24 @@ public:
             stack->Draw("HIST");
             if (data_histogram){
                 const Double_t maxY = std::max(stack->GetMaximum(), data_histogram->GetMaximum());
-                stack->SetMaximum(maxY*1.1);
+                stack->SetMaximum(maxY*hist_descriptor.max_Y);
             }
 
             const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
             stack->SetMinimum(minY);
 
-            stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+            //stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+            stack->GetXaxis()->SetTitleOffset(1.03);
+            stack->GetXaxis()->SetTitleSize(0.03);
+            stack->GetXaxis()->SetTitle("");
+            stack->GetXaxis()->SetLabelSize(0.03);
+            stack->GetXaxis()->SetLabelColor(kWhite);
+
+            stack->GetYaxis()->SetTitleSize(0.03);
+            stack->GetYaxis()->SetTitleOffset(1.5);
+            stack->GetYaxis()->SetLabelSize(0.04);
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
+
         }
 
         for(const hist_ptr& signal : signal_histograms)
@@ -220,6 +234,7 @@ public:
 
         legend->Draw("same");
 
+        const std::string axis_titleX = page.side.axis_titleX;
         if (data_histogram){
             ratio_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.ratio_pad));
             ratio_pad->Draw();
@@ -230,29 +245,44 @@ public:
             ratio_histogram = hist_ptr(static_cast<TH1D*>(data_histogram->Clone()));
             ratio_histogram->Divide(sum_backgound_histogram.get());
 
-            ratio_histogram->GetYaxis()->SetRangeUser(0.8,1.2);
-            ratio_histogram->GetYaxis()->SetNdivisions(3);
-            ratio_histogram->GetYaxis()->SetLabelSize(0.2);
-            ratio_histogram->GetYaxis()->SetTitleSize(0.25);
-            ratio_histogram->GetYaxis()->SetTitleOffset(0.15);
-            ratio_histogram->GetYaxis()->SetTitle("Obs/Est");
-            ratio_histogram->GetXaxis()->SetNdivisions(-1);
-            ratio_histogram->GetXaxis()->SetTitle("");
-            ratio_histogram->GetXaxis()->SetLabelSize(0.0001);
+            ratio_histogram->GetYaxis()->SetRangeUser(0.75,1.3);
+            ratio_histogram->GetYaxis()->SetNdivisions(505);
+            ratio_histogram->GetYaxis()->SetLabelSize(0.09);
+            ratio_histogram->GetYaxis()->SetTitleSize(0.12);
+            ratio_histogram->GetYaxis()->SetTitleOffset(0.3);
+            ratio_histogram->GetYaxis()->SetTitle("Obs/Bkg");
+            ratio_histogram->GetXaxis()->SetNdivisions(510);
+            ratio_histogram->GetXaxis()->SetTitle(axis_titleX.c_str());
+            ratio_histogram->GetXaxis()->SetTitleSize(0.09);
+            ratio_histogram->GetXaxis()->SetTitleOffset(0.95);
+            //ratio_histogram->GetXaxis()->SetLabelColor(kBlack);
+            ratio_histogram->GetXaxis()->SetLabelSize(0.09);
             ratio_histogram->SetMarkerStyle(7);
-            ratio_histogram->SetMarkerColor(2);
+            ratio_histogram->SetMarkerColor(1);
 
-            ratio_histogram->Draw("histp");
+            ratio_histogram->Draw("E0P");
 
             TLine* line = new TLine();
+            line->SetLineStyle(3);
             line->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 1, ratio_histogram->GetXaxis()->GetXmax(), 1);
+            TLine* line1 = new TLine();
+            line1->SetLineStyle(3);
+            line1->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 1.2, ratio_histogram->GetXaxis()->GetXmax(), 1.2);
+            TLine* line2 = new TLine();
+            line2->SetLineStyle(3);
+            line2->DrawLine(ratio_histogram->GetXaxis()->GetXmin(), 0.8, ratio_histogram->GetXaxis()->GetXmax(), 0.8);
+            ratio_pad->SetTopMargin(0.04);
+            ratio_pad->SetBottomMargin(0.3);
+            ratio_pad->Update();
         }
 
         canvas.cd();
         main_pad->Draw();
+
         canvas.cd();
         if (data_histogram)
             ratio_pad->Draw();
+
 
     }
 

@@ -45,7 +45,7 @@ namespace root_ext {
 class PdfPrinter {
 public:
     PdfPrinter(const std::string& _output_file_name)
-        : canvas(new TCanvas()), output_file_name(_output_file_name)
+        : canvas(new TCanvas("","",700,700)), output_file_name(_output_file_name)
     {
         canvas->Print((output_file_name + "[").c_str());
     }
