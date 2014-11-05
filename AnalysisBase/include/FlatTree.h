@@ -241,11 +241,12 @@ namespace ntuple {
 inline float DefaultFloatFillValueForFlatTree() { return std::numeric_limits<float>::lowest(); }
 inline int DefaultIntegerFillValueForFlatTree() { return std::numeric_limits<int>::lowest(); }
 
-enum class EventType { Unknown = 0, ZL = 1, ZJ = 2, ZTT = 3 };
+enum class EventType { Unknown = 0, ZL = 1, ZJ = 2, ZTT = 3, ZTT_L };
 
 namespace detail {
 std::map<EventType, std::string> EventTypeNameMap = {
-    { EventType::Unknown, "Unknown" }, { EventType::ZL, "ZL" }, { EventType::ZJ, "ZJ" }, { EventType::ZTT, "ZTT" }
+    { EventType::Unknown, "Unknown" }, { EventType::ZL, "ZL" }, { EventType::ZJ, "ZJ" }, { EventType::ZTT, "ZTT" },
+    { EventType::ZTT_L, "ZTT_L" }
 };
 } // namespace detail
 

@@ -346,6 +346,8 @@ protected:
         static const particles::ParticleCodes ZDecay_muons = { particles::mu, particles::mu };
         static const particles::ParticleCodes ZDecay_taus = { particles::tau, particles::tau };
 
+        static const particles::ParticleCodes light_lepton_codes = { particles::e, particles::mu };
+
         const GenParticleSet Zparticles_all = genEvent.GetParticles(Zcode);
 
         GenParticleSet Zparticles;
@@ -365,36 +367,37 @@ protected:
         while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
             Z_mc = Z_mc->daughters.front();
 
+        const GenParticleSet light_leptons = genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
         const CandidateVector hadronic_taus = higgs.GetDaughters(Candidate::Tau);
 
         GenParticlePtrVector ZProducts;
-        if(FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true)) {
-            size_t n_hadronic_matches = 0;
-            for(const Candidate& reco_tau : hadronic_taus) {
-                for(const GenParticle* gen_product : ZProducts) {
-                    const VisibleGenObject visible_gen_object(gen_product);
-                    if(visible_gen_object.finalStateChargedLeptons.size() ||
-                            visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
-                    if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
-                        ++n_hadronic_matches;
-                        break;
-                    }
-                }
-            }
-            return n_hadronic_matches == hadronic_taus.size() ? ntuple::EventType::ZTT : ntuple::EventType::ZJ;
-        }
-
-        if (!FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+        const bool ztt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
+        if (!ztt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
+        size_t n_hadronic_matches = 0, n_leptonic_matches = 0;
         for(const Candidate& reco_tau : hadronic_taus) {
             for(const GenParticle* gen_product : ZProducts) {
-                if(gen_product->momentum.Pt() <= minimal_genParticle_pt) continue;
-                if(HasMatchWithMCParticle(reco_tau.momentum, gen_product, deltaR_matchGenParticle))
-                    return ntuple::EventType::ZL;
+                const VisibleGenObject visible_gen_object(gen_product);
+                if(visible_gen_object.finalStateChargedLeptons.size() ||
+                        visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
+                if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
+                    ++n_hadronic_matches;
+                    break;
+                }
+            }
+
+            for(const GenParticle* gen_product : light_leptons) {
+                if(HasMatchWithMCParticle(reco_tau.momentum, gen_product, deltaR_matchGenParticle)) {
+                    ++n_leptonic_matches;
+                    break;
+                }
             }
         }
+
+        if(ztt && n_hadronic_matches == hadronic_taus.size()) return ntuple::EventType::ZTT;
+        if(n_leptonic_matches) return ztt ? ntuple::EventType::ZTT_L : ntuple::EventType::ZL;
         return ntuple::EventType::ZJ;
     }
 
