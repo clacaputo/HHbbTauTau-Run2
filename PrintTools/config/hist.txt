@@ -1,5 +1,5 @@
 # histo_name title x_axis_title y_axis_title use_logY max_Y
-m_sv m_sv M_{#tau#tau}[GeV] dN/dm_{#tau#tau}[1/GeV] false 1.1
+m_sv m_sv M_{#tau#tau}[GeV] dN/dm_{#tau#tau}[1/GeV] false 1.5
 m_sv_up m_sv_up M_{#tau#tau}[GeV] Events false 1.1
 m_sv_down m_sv_down M_{#tau#tau}[GeV] Events false 1.1
 m_vis m_vis M_{vis}[GeV] Events false 1.1
