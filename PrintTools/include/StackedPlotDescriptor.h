@@ -83,13 +83,13 @@ public:
     typedef std::vector<hist_ptr> hist_ptr_vector;
 
     StackedPlotDescriptor(const analysis::HistogramDescriptor& _hist_descriptor, const std::string& page_title,
-                          bool draw_title, const std::string& channelNameLatex)
+                          bool draw_title, const std::string& channelNameLatex, bool _draw_ratio)
         : hist_descriptor(_hist_descriptor),
           data_histogram(nullptr),
 //          stack(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str())),
-          legend(new TLegend (0.6, 0.55, 0.85, 0.90)),
+//          legend(new TLegend (0.6, 0.55, 0.85, 0.90)),
           text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")),
-          channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")), channelName(channelNameLatex)
+          channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")), channelName(channelNameLatex), draw_ratio(_draw_ratio)
     {
         page.side.use_log_scaleY = hist_descriptor.useLogY;
         page.side.fit_range_x = false;
@@ -97,26 +97,29 @@ public:
         page.side.axis_titleX = hist_descriptor.Xaxis_title;
         page.side.axis_titleY = hist_descriptor.Yaxis_title;
         page.layout.has_title = draw_title;
-        if (page.layout.has_title) {
-            page.side.layout.main_pad.right_top.x = 0.95;
-            page.side.layout.main_pad.right_top.y = 0.94;
-            page.side.layout.main_pad.left_bottom.x = 0.02;
-            page.side.layout.main_pad.left_bottom.y = 0.19;
-            page.side.layout.ratio_pad.right_top.x = 1;
-            page.side.layout.ratio_pad.right_top.y = 0.28;
-            page.side.layout.ratio_pad.left_bottom.x = 0.02;
-            page.side.layout.ratio_pad.left_bottom.y = 0.02;
-        } else {
-            page.side.layout.main_pad.right_top.x = 1;
-            page.side.layout.main_pad.right_top.y = 1;
-            page.side.layout.main_pad.left_bottom.x = 0.02;
-            page.side.layout.main_pad.left_bottom.y = 0.21;
-            page.side.layout.ratio_pad.right_top.x = 1;
-            page.side.layout.ratio_pad.right_top.y = 0.30;
-            page.side.layout.ratio_pad.left_bottom.x = 0.02;
-            page.side.layout.ratio_pad.left_bottom.y = 0.02;
+        if (draw_ratio){
+            if (page.layout.has_title) {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.19,0.95,0.94);
+                page.side.layout.ratio_pad = root_ext::Box(0.02,0.02,1,0.28);
+            } else {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.21,1,1);
+                page.side.layout.ratio_pad = root_ext::Box(0.02,0.02,1,0.30);
+            }
+        }
+        else {
+            if (page.layout.has_title) {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.02,0.95,0.94);
+            } else {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.02,1,1);
+            }
         }
 
+        if (draw_ratio){
+            legend = std::shared_ptr<TLegend>(new TLegend (0.6, 0.55, 0.85, 0.90));
+        }
+        else {
+            legend = std::shared_ptr<TLegend>(new TLegend (0.55, 0.60, 0.80, 0.95));
+        }
         legend->SetFillColor(0);
         legend->SetTextSize(0.025);
         legend->SetTextFont(42);
@@ -159,8 +162,9 @@ public:
     void AddSignalHistogram(TH1D* original_signal, const std::string& legend_title, Color_t color, unsigned scale_factor)
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
-        histogram->SetLineColor(color);
-        histogram->SetLineStyle(7);
+        //histogram->SetLineColor(color);
+        histogram->SetLineColor(4);
+        histogram->SetLineStyle(2);
         histogram->SetLineWidth(3);
         histogram->Scale(scale_factor);
         signal_histograms.push_back(histogram);
@@ -226,12 +230,18 @@ public:
             const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
             stack->SetMinimum(minY);
 
-            //stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
-            stack->GetXaxis()->SetTitleOffset(1.03);
-            stack->GetXaxis()->SetTitleSize(0.03);
-            stack->GetXaxis()->SetTitle("");
-            stack->GetXaxis()->SetLabelSize(0.03);
-            stack->GetXaxis()->SetLabelColor(kWhite);
+
+            if (draw_ratio){
+                stack->GetXaxis()->SetTitle("");
+                stack->GetXaxis()->SetLabelColor(kWhite);
+
+            }
+            else {
+                stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+                stack->GetXaxis()->SetTitleOffset(1.05);
+                stack->GetXaxis()->SetTitleSize(0.04);
+                stack->GetXaxis()->SetLabelSize(0.04);
+            }
 
             stack->GetYaxis()->SetTitleSize(0.05);
             stack->GetYaxis()->SetTitleOffset(1.6);
@@ -254,7 +264,7 @@ public:
         legend->Draw("same");
 
         const std::string axis_titleX = page.side.axis_titleX;
-        if (data_histogram){
+        if (data_histogram && draw_ratio){
             ratio_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.ratio_pad));
             ratio_pad->Draw();
 
@@ -300,7 +310,7 @@ public:
         main_pad->Draw();
 
         canvas.cd();
-        if (data_histogram)
+        if (data_histogram && draw_ratio)
             ratio_pad->Draw();
 
 
@@ -335,8 +345,8 @@ private:
             };
 
             const bool need_blind = std::any_of(blind_regions.begin(), blind_regions.end(), blind_predicate);
-            histogram->SetBinContent(n, need_blind ? 0. : histogram->GetBinContent(n));
-            histogram->SetBinError(n, need_blind ? 0. : histogram->GetBinError(n));
+            histogram->SetBinContent(n, need_blind ? -1 : histogram->GetBinContent(n));
+            histogram->SetBinError(n, need_blind ? -1 : histogram->GetBinError(n));
         }
     }
 
@@ -354,6 +364,7 @@ private:
     std::shared_ptr<TPaveText> channelText;
     std::shared_ptr<TPad> main_pad, ratio_pad;
     std::string channelName;
+    bool draw_ratio;
 };
 
 } // namespace analysis
