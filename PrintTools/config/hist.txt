@@ -1,9 +1,9 @@
 # histo_name title x_axis_title y_axis_title use_logY max_Y
-m_sv m_sv M_{#tau#tau}[GeV] Events false 1.1
+m_sv m_sv M_{#tau#tau}[GeV] dN/dm_{#tau#tau}[1/GeV] false 1.1
 m_sv_up m_sv_up M_{#tau#tau}[GeV] Events false 1.1
 m_sv_down m_sv_down M_{#tau#tau}[GeV] Events false 1.1
 m_vis m_vis M_{vis}[GeV] Events false 1.1
-m_bb m_bb M_{bb}[GeV] Events false 1.1
+m_bb m_bb M_{jj}[GeV] dN/dm_{bb}[1/GeV] false 1.1
 m_ttbb m_ttbb M_{#tau#taubb}[GeV] Events false 1.1
 m_ttbb_kinfit m_ttbb_kinfit M_{#tau#taubb}[GeV] Events false 1.1
 m_ttbb_kinfit_up m_ttbb_kinfit_up M_{#tau#taubb}[GeV] Events false 1.1
@@ -26,14 +26,16 @@ pull_balance_2 pull_balance_2 pull_balance_2 Events false 1.1
 m_bb_slice m_bb_slice 2DM_{sv}[GeV] Events false 1.1
 m_bb_slice_up m_bb_slice_up 2DM_{sv}[GeV] Events false 1.1
 m_bb_slice_down m_bb_slice_down 2DM_{sv}[GeV] Events false 1.1
-pt_1 pt_1 P_{T}[GeV] Events false 1.1
-eta_1 eta_1 #eta Events false 2
-pt_2 pt_2 P_{T}[GeV] Events false 1.1
-eta_2 eta_2 #eta Events false 2
-pt_b1 pt_b1 P_{T}[GeV] Events false 1.1
-eta_b1 eta_b1 #eta Events false 2
-pt_b2 pt_b2 P_{T}[GeV] Events false 1.1
-eta_b2 eta_b2 #eta Events false 2
+pt_1 pt_1 P_{T}(leading#tau_{h})[GeV] Events false 1.1
+eta_1 eta_1 #eta(leading#tau_{h}) Events false 2
+pt_2 pt_2 P_{T}(subleading#tau_{h})[GeV] Events false 1
+eta_2 eta_2 #eta(subleading#tau_{h}) Events false 2
+pt_b1 pt_b1 P_{T}[GeV](leading_jet) Events false 1.1
+eta_b1 eta_b1 #eta(leading_jet)  Events false 2
+csv_b1 csv_b1 CSV(leading_jet)  Events false 1.1
+pt_b2 pt_b2 P_{T}[GeV](subleading_jet)  Events false 1.1
+eta_b2 eta_b2 #eta(subleading_jet)  Events false 2
+csv_b2 csv_b2 CSV(subleading_jet)  Events false 1.1
 pt_H_tt pt_H_tt P_{T}[GeV] Events false 1.1
 pt_H_bb pt_H_bb P_{T}[GeV] Events false 1.1
 pt_H_hh pt_H_hh P_{T}[GeV] Events false 1.1
@@ -51,6 +53,7 @@ DeltaPhi_tt_MET DeltaPhi_tt_MET #Delta#Phi_{#tau#tau,MET}[rad] Events false 1.5
 mt_1 mt_1 M_{T}[GeV] Events false 1.1
 mt_2 mt_2 M_{T}[GeV] Events false 1.1
 pt_H_tt_MET pt_H_tt_MET P_{T}[GeV] Events false 1.1
+MET MET E_{T}^{miss}[GeV] Events false 1.1
 #EventSelection EventSelection cuts n_entries -0.5 15.5 1 15 1
 #VertexSelection VertexSelection cuts n_entries -0.5 15.5 1 1
 #ElectronSelection ElectronSelection cuts n_entries -0.5 15.5 1 1

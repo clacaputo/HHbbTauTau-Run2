@@ -98,8 +98,10 @@ public:
     TH1D_ENTRY(eta_2, 25, -2.5, 2.5)
     TH1D_ENTRY(pt_b1, 20, 0, 200)
     TH1D_ENTRY(eta_b1, 25, -2.5, 2.5)
+    TH1D_ENTRY(csv_b1, 25, 0, 1)
     TH1D_ENTRY(pt_b2, 20, 0, 200)
     TH1D_ENTRY(eta_b2, 25, -2.5, 2.5)
+    TH1D_ENTRY(csv_b2, 25, 0, 1)
     TH1D_ENTRY(pt_H_tt, 20, 0, 300)
     TH1D_ENTRY(pt_H_bb, 20, 0, 300)
     TH1D_ENTRY(pt_H_hh, 20, 0, 300)
@@ -141,6 +143,7 @@ public:
     TH1D_ENTRY(pull_balance, 20, -10, 10)
     TH1D_ENTRY(pull_balance_1, 100, -10, 10)
     TH1D_ENTRY(pull_balance_2, 100, -10, 10)
+    TH1D_ENTRY(MET, 20, 0, 100)
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true)
     {
@@ -165,12 +168,15 @@ public:
         pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
         DeltaPhi_tt_MET().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.MET)), weight);
         mt_2().Fill(event.mt_2, weight);
+        MET().Fill(eventInfo.MET.Pt(),weight);
 
         if(!eventInfo.has_bjet_pair) return;
         pt_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
         eta_b1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
+        csv_b1().Fill(eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
         pt_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
         eta_b2().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
+        csv_b2().Fill(eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.second), weight);
         DeltaPhi_bb().Fill(std::abs(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaPhi(
                                        eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second))), weight);
         DeltaR_bb().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).DeltaR(
@@ -342,8 +348,10 @@ public:
                                         emptyDatacard_slice);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        PrintStackedPlots(false);
-        PrintStackedPlots(true);
+        PrintStackedPlots(false,false);
+        PrintStackedPlots(true,false);
+        PrintStackedPlots(false,true);
+        PrintStackedPlots(true,true);
     }
 
 protected:
@@ -647,17 +655,18 @@ protected:
         eventInfo.mva_BDTMitFisher = getMVA(calc_BDTMitFisher, MVA_Selections::BDTMitFisher);
     }
 
-    void PrintStackedPlots(bool isBlind)
+    void PrintStackedPlots(bool isBlind, bool drawRatio)
     {
         const std::string blindCondition = isBlind ? "_blind" : "_noBlind";
-        root_ext::PdfPrinter printer(outputFileName + blindCondition + ".pdf");
+        const std::string ratioCondition = drawRatio ? "_ratio" : "_noRatio";
+        root_ext::PdfPrinter printer(outputFileName + blindCondition + ratioCondition + ".pdf");
 
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             for (const HistogramDescriptor& hist : histograms) {
-                //root_ext::PdfPrinter printer(outputFileName + blindCondition + "_" + hist.name + ".pdf");
+                //root_ext::PdfPrinter printer(outputFileName + blindCondition + "_" + hist.name + ratioCondition +".pdf");
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
-                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(),false,ChannelNameLatex());
+                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(),false,ChannelNameLatex(),drawRatio);
 
                 for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                     if(!category->draw) continue;
@@ -798,7 +807,7 @@ private:
         static const std::vector< std::vector< std::pair<double, double> > > blindingRegions = {
             { { std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest() } },
             { { 100, 150 } },
-            { { 250, 350 } },
+            { { 200, 400 } },
             { { 100, 150 }, { 450, 500 }, { 800, 850 }, { 1150, 1200 }, { 1500, 1550 } }
         };
         static const std::map<std::string, size_t> histogramsToBlind = {
