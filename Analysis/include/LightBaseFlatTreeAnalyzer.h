@@ -69,7 +69,7 @@ public:
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
         : inputFile(new TFile(inputFileName.c_str(),"READ")),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
-          flatTree(new ntuple::FlatTree(*inputFile, "flatTree"))
+          flatTree(new ntuple::FlatTree(*inputFile, "flatTree")), recalc_kinfit(true)
     {
         TH1::SetDefaultSumw2();
     }
@@ -83,7 +83,7 @@ public:
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets, CSVM, CSVT);
-            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
+            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), recalc_kinfit);
             for (EventCategory eventCategory : eventCategories)
                 AnalyzeEvent(eventInfo, eventCategory);
         }
@@ -175,6 +175,9 @@ protected:
 private:
     std::shared_ptr<TFile> inputFile, outputFile;
     std::shared_ptr<ntuple::FlatTree> flatTree;
+
+protected:
+    bool recalc_kinfit;
 };
 
 } // namespace analysis

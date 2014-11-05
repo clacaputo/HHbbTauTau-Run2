@@ -33,6 +33,7 @@
 #include <TPad.h>
 #include <TCanvas.h>
 #include <TLegend.h>
+#include <TColor.h>
 
 namespace root_ext {
 
@@ -40,7 +41,9 @@ static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"b
                                                            {"red",kRed}, {"green",kGreen}, {"blue",kBlue},
                                                            {"yellow",kYellow}, {"magenta",kMagenta}, {"cyan",kCyan},
                                                            {"orange",kOrange}, {"spring",kSpring}, {"teal",kTeal},
-                                                           {"azure",kAzure}, {"violet",kViolet},{"pink",kPink},
+                                                           {"azure",kAzure},
+                                                           {"azure_custom",(EColor)TColor::GetColor(100,182,232)},
+                                                           {"violet",kViolet},{"pink",kPink},
                                                            {"pink_custom", (EColor) TColor::GetColor(250,202,255)},
                                                            {"red_custom", (EColor) TColor::GetColor(222,90,106)},
                                                            {"violet_custom", (EColor) TColor::GetColor(155,152,204)},

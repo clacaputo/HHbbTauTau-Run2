@@ -83,12 +83,13 @@ public:
     typedef std::vector<hist_ptr> hist_ptr_vector;
 
     StackedPlotDescriptor(const analysis::HistogramDescriptor& _hist_descriptor, const std::string& page_title,
-                          bool draw_title)
+                          bool draw_title, const std::string& channelNameLatex, bool _draw_ratio)
         : hist_descriptor(_hist_descriptor),
           data_histogram(nullptr),
-          stack(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str())),
-          legend(new TLegend (0.6, 0.55, 0.8, 0.90)),
-          text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC"))
+//          stack(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str())),
+//          legend(new TLegend (0.6, 0.55, 0.85, 0.90)),
+          text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")),
+          channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")), channelName(channelNameLatex), draw_ratio(_draw_ratio)
     {
         page.side.use_log_scaleY = hist_descriptor.useLogY;
         page.side.fit_range_x = false;
@@ -96,26 +97,29 @@ public:
         page.side.axis_titleX = hist_descriptor.Xaxis_title;
         page.side.axis_titleY = hist_descriptor.Yaxis_title;
         page.layout.has_title = draw_title;
-        if (page.layout.has_title) {
-            page.side.layout.main_pad.right_top.x = 0.95;
-            page.side.layout.main_pad.right_top.y = 0.95;
-            page.side.layout.main_pad.left_bottom.x = 0.05;
-            page.side.layout.main_pad.left_bottom.y = 0.25;
-            page.side.layout.ratio_pad.right_top.x = 0.95;
-            page.side.layout.ratio_pad.right_top.y = 0.3;
-            page.side.layout.ratio_pad.left_bottom.x = 0.05;
-            page.side.layout.ratio_pad.left_bottom.y = 0.05;
-        } else {
-            page.side.layout.main_pad.right_top.x = 1;
-            page.side.layout.main_pad.right_top.y = 1;
-            page.side.layout.main_pad.left_bottom.x = 0.02;
-            page.side.layout.main_pad.left_bottom.y = 0.21;
-            page.side.layout.ratio_pad.right_top.x = 1;
-            page.side.layout.ratio_pad.right_top.y = 0.30;
-            page.side.layout.ratio_pad.left_bottom.x = 0.02;
-            page.side.layout.ratio_pad.left_bottom.y = 0.02;
+        if (draw_ratio){
+            if (page.layout.has_title) {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.19,0.95,0.94);
+                page.side.layout.ratio_pad = root_ext::Box(0.02,0.02,1,0.28);
+            } else {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.21,1,1);
+                page.side.layout.ratio_pad = root_ext::Box(0.02,0.02,1,0.30);
+            }
+        }
+        else {
+            if (page.layout.has_title) {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.02,0.95,0.94);
+            } else {
+                page.side.layout.main_pad = root_ext::Box(0.02,0.02,1,1);
+            }
         }
 
+        if (draw_ratio){
+            legend = std::shared_ptr<TLegend>(new TLegend (0.6, 0.55, 0.85, 0.90));
+        }
+        else {
+            legend = std::shared_ptr<TLegend>(new TLegend (0.55, 0.60, 0.80, 0.95));
+        }
         legend->SetFillColor(0);
         legend->SetTextSize(0.025);
         legend->SetTextFont(42);
@@ -124,13 +128,20 @@ public:
         legend->SetBorderSize(0);
 
         text->SetTextSize(0.03);
-        text->SetTextFont(42);
+        text->SetTextFont(62);
         text->SetFillColor(0);
         text->SetBorderSize(0);
         text->SetMargin(0.01);
         text->SetTextAlign(12); // align left
-        text->AddText(0.01,0.5, "CMS Preliminary");
-        text->AddText(0.25, 0.6, "#sqrt{s} = 8 TeV  L = 19.7 fb^{-1}");
+        text->AddText(0.01,0.5, "CMS, 19.7 fb^{-1} at 8 TeV");
+
+        channelText->SetTextSize(0.05);
+        channelText->SetTextFont(62);
+        channelText->SetFillColor(0);
+        channelText->SetBorderSize(0);
+        channelText->SetMargin(0.01);
+        channelText->SetTextAlign(12); // align left
+        channelText->AddText(channelName.c_str());
     }
 
     const std::string& GetTitle() const { return page.title; }
@@ -140,7 +151,7 @@ public:
         hist_ptr histogram = PrepareHistogram(original_histogram);
         histogram->SetFillColor(color);
         background_histograms.push_back(histogram);
-        stack->Add(histogram.get());
+        //stack->Add(histogram.get());
         legend->AddEntry(histogram.get(), legend_title.c_str(), "f");
         if(!sum_backgound_histogram)
             sum_backgound_histogram = hist_ptr( static_cast<TH1D*>(histogram->Clone()) );
@@ -151,8 +162,10 @@ public:
     void AddSignalHistogram(TH1D* original_signal, const std::string& legend_title, Color_t color, unsigned scale_factor)
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
-        histogram->SetLineColor(color);
-        histogram->SetLineStyle(kDashed);
+        //histogram->SetLineColor(color);
+        histogram->SetLineColor(4);
+        histogram->SetLineStyle(2);
+        histogram->SetLineWidth(3);
         histogram->Scale(scale_factor);
         signal_histograms.push_back(histogram);
         std::ostringstream ss;
@@ -199,43 +212,59 @@ public:
 
 
         if (background_histograms.size()){
+            stack = std::shared_ptr<THStack>(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str()));
+            for (auto iter = background_histograms.rbegin(); iter != background_histograms.rend(); ++iter){
+                stack->Add(iter->get());
+            }
             stack->Draw("HIST");
             if (data_histogram){
-                const Double_t maxY = std::max(stack->GetMaximum(), data_histogram->GetMaximum());
+                const Int_t maxBin = data_histogram->GetMaximumBin();
+                const Double_t maxData = data_histogram->GetBinContent(maxBin) + data_histogram->GetBinError(maxBin);
+                Double_t maxY = std::max(stack->GetMaximum(), maxData);
+                for (const hist_ptr& signal : signal_histograms){
+                    maxY = std::max(maxY,signal->GetMaximum());
+                }
                 stack->SetMaximum(maxY*hist_descriptor.max_Y);
             }
 
             const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
             stack->SetMinimum(minY);
 
-            //stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
-            stack->GetXaxis()->SetTitleOffset(1.03);
-            stack->GetXaxis()->SetTitleSize(0.03);
-            stack->GetXaxis()->SetTitle("");
-            stack->GetXaxis()->SetLabelSize(0.03);
-            stack->GetXaxis()->SetLabelColor(kWhite);
 
-            stack->GetYaxis()->SetTitleSize(0.03);
-            stack->GetYaxis()->SetTitleOffset(1.5);
+            if (draw_ratio){
+                stack->GetXaxis()->SetTitle("");
+                stack->GetXaxis()->SetLabelColor(kWhite);
+
+            }
+            else {
+                stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
+                stack->GetXaxis()->SetTitleOffset(1.05);
+                stack->GetXaxis()->SetTitleSize(0.04);
+                stack->GetXaxis()->SetLabelSize(0.04);
+            }
+
+            stack->GetYaxis()->SetTitleSize(0.05);
+            stack->GetYaxis()->SetTitleOffset(1.6);
             stack->GetYaxis()->SetLabelSize(0.04);
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
-
         }
 
         for(const hist_ptr& signal : signal_histograms)
             signal->Draw("SAME HIST");
 
         if(data_histogram) {
-            data_histogram->SetMarkerStyle(7);
+            data_histogram->SetMarkerStyle(20);
+            data_histogram->SetMarkerSize(1);
             data_histogram->Draw("samepPE0");
         }
 
         text->Draw("same");
+        channelText->Draw("same");
 
         legend->Draw("same");
 
         const std::string axis_titleX = page.side.axis_titleX;
-        if (data_histogram){
+        if (data_histogram && draw_ratio){
             ratio_pad = std::shared_ptr<TPad>(root_ext::Adapter::NewPad(page.side.layout.ratio_pad));
             ratio_pad->Draw();
 
@@ -247,18 +276,19 @@ public:
 
             ratio_histogram->GetYaxis()->SetRangeUser(0.75,1.3);
             ratio_histogram->GetYaxis()->SetNdivisions(505);
-            ratio_histogram->GetYaxis()->SetLabelSize(0.09);
-            ratio_histogram->GetYaxis()->SetTitleSize(0.12);
-            ratio_histogram->GetYaxis()->SetTitleOffset(0.3);
+            ratio_histogram->GetYaxis()->SetLabelSize(0.11);
+            ratio_histogram->GetYaxis()->SetTitleSize(0.14);
+            ratio_histogram->GetYaxis()->SetTitleOffset(0.55);
             ratio_histogram->GetYaxis()->SetTitle("Obs/Bkg");
             ratio_histogram->GetXaxis()->SetNdivisions(510);
             ratio_histogram->GetXaxis()->SetTitle(axis_titleX.c_str());
-            ratio_histogram->GetXaxis()->SetTitleSize(0.09);
-            ratio_histogram->GetXaxis()->SetTitleOffset(0.95);
+            ratio_histogram->GetXaxis()->SetTitleSize(0.1);
+            ratio_histogram->GetXaxis()->SetTitleOffset(0.98);
             //ratio_histogram->GetXaxis()->SetLabelColor(kBlack);
-            ratio_histogram->GetXaxis()->SetLabelSize(0.09);
-            ratio_histogram->SetMarkerStyle(7);
+            ratio_histogram->GetXaxis()->SetLabelSize(0.1);
+            ratio_histogram->SetMarkerStyle(20);
             ratio_histogram->SetMarkerColor(1);
+            ratio_histogram->SetMarkerSize(1);
 
             ratio_histogram->Draw("E0P");
 
@@ -280,7 +310,7 @@ public:
         main_pad->Draw();
 
         canvas.cd();
-        if (data_histogram)
+        if (data_histogram && draw_ratio)
             ratio_pad->Draw();
 
 
@@ -315,8 +345,8 @@ private:
             };
 
             const bool need_blind = std::any_of(blind_regions.begin(), blind_regions.end(), blind_predicate);
-            histogram->SetBinContent(n, need_blind ? 0. : histogram->GetBinContent(n));
-            histogram->SetBinError(n, need_blind ? 0. : histogram->GetBinError(n));
+            histogram->SetBinContent(n, need_blind ? -1 : histogram->GetBinContent(n));
+            histogram->SetBinError(n, need_blind ? -1 : histogram->GetBinError(n));
         }
     }
 
@@ -331,8 +361,10 @@ private:
     std::shared_ptr<THStack> stack;
     std::shared_ptr<TLegend> legend;
     std::shared_ptr<TPaveText> text;
-
+    std::shared_ptr<TPaveText> channelText;
     std::shared_ptr<TPad> main_pad, ratio_pad;
+    std::string channelName;
+    bool draw_ratio;
 };
 
 } // namespace analysis
