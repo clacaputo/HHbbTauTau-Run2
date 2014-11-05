@@ -83,7 +83,7 @@ public:
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets, CSVM, CSVT);
-            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1));
+            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1),true);
             for (EventCategory eventCategory : eventCategories)
                 AnalyzeEvent(eventInfo, eventCategory);
         }

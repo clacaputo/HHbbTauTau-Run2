@@ -41,6 +41,10 @@ namespace detail {
 std::map<Channel, std::string> ChannelNameMap = {
     { Channel::ETau, "eTau" }, { Channel::MuTau, "muTau" }, { Channel::TauTau, "tauTau" }
 };
+
+std::map<Channel, std::string> ChannelNameMapLatex = {
+    { Channel::ETau, "e#tau" }, { Channel::MuTau, "#mu#tau" }, { Channel::TauTau, "#tau#tau" }
+};
 } // namespace detail
 
 std::ostream& operator<< (std::ostream& s, const Channel& c)

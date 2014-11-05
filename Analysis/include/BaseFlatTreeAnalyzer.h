@@ -483,6 +483,7 @@ protected:
     }
 
     const std::string& ChannelName() const { return detail::ChannelNameMap.at(ChannelId()); }
+    const std::string& ChannelNameLatex() const { return detail::ChannelNameMapLatex.at(ChannelId()); }
 
     virtual std::shared_ptr<FlatAnalyzerData> MakeAnaData()
     {
@@ -580,7 +581,7 @@ protected:
 
         const std::map<ntuple::EventType, std::string> type_category_map = {
             { ntuple::EventType::ZL, ZL.name }, { ntuple::EventType::ZJ, ZJ.name },
-            { ntuple::EventType::ZTT, ZTT_MC.name }, { ntuple::EventType::ZTT_no_match, ZTT_MC.name }
+            { ntuple::EventType::ZTT, ZTT_MC.name }
         };
 
         if(type_category_map.count(eventInfo.eventType)) {
@@ -653,9 +654,10 @@ protected:
 
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             for (const HistogramDescriptor& hist : histograms) {
+                //root_ext::PdfPrinter printer(outputFileName + blindCondition + "_" + hist.name + ".pdf");
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist.title;
-                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(),false);
+                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(),false,ChannelNameLatex());
 
                 for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                     if(!category->draw) continue;

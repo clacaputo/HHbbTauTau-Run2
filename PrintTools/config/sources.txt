@@ -161,8 +161,8 @@ type: LIMITS
 title: hh#rightarrow#tau#taubb(m_{H}=300  tan#beta=2.5)
 datacard: ggHTohhTo2Tau2B300
 color: blue
-file: ggH_hh_bbtautau_300.root 0.0253141
-limits_sf: 1.7
+file: ggH_hh_bbtautau_300.root 0.0027785
+limits_sf: 15.51
 draw_sf: 10
 
 [ggHhh310]
@@ -550,7 +550,7 @@ type: COMPOSIT
 title: Z #rightarrow ll
 #title: Z #rightarrow #tau#tau
 draw: true
-color: cyan
+color: azure_custom
 subcategory: ZL
 subcategory: ZJ
 #subcategory: ZTT
