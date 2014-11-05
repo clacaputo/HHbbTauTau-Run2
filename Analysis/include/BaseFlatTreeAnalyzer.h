@@ -58,6 +58,7 @@ namespace analysis {
 
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
+static const std::vector<double> mass_bins_2j2t = { 0,20,40,60,80,100,120,140,160,180,200,250,300,350};
 static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
                                                     300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
                                                     650, 700, 750, 800, 850, 900, 950, 1000 };
@@ -280,6 +281,11 @@ public:
         for(const DataCategory* dataCategory : dataCategoryCollection.GetAllCategories()) {
             if(!dataCategory->sources_sf.size()) continue;
             std::cout << *dataCategory << std::endl;
+            for (const EventRegion& eventRegion : AllEventRegions){
+                GetAnaData(EventCategory::TwoJets_TwoBtag,dataCategory->name,eventRegion).Get((TH1D*)nullptr,"m_sv","",mass_bins_2j2t);
+                GetAnaData(EventCategory::TwoJets_TwoBtag,dataCategory->name,eventRegion).Get((TH1D*)nullptr,"m_sv_up","",mass_bins_2j2t);
+                GetAnaData(EventCategory::TwoJets_TwoBtag,dataCategory->name,eventRegion).Get((TH1D*)nullptr,"m_sv_down","",mass_bins_2j2t);
+            }
             for(const auto& source_entry : dataCategory->sources_sf) {
                 const std::string fullFileName = inputPath + "/" + source_entry.first;
                 std::shared_ptr<TFile> file(new TFile(fullFileName.c_str(), "READ"));
@@ -595,6 +601,9 @@ protected:
         if(type_category_map.count(eventInfo.eventType)) {
             const std::string& name = type_category_map.at(eventInfo.eventType);
             const bool fill_all = EssentialEventRegions().count(eventRegion);
+            GetAnaData(EventCategory::TwoJets_TwoBtag,name,eventRegion).Get((TH1D*)nullptr,"m_sv","",mass_bins_2j2t);
+            GetAnaData(EventCategory::TwoJets_TwoBtag,name,eventRegion).Get((TH1D*)nullptr,"m_sv_up","",mass_bins_2j2t);
+            GetAnaData(EventCategory::TwoJets_TwoBtag,name,eventRegion).Get((TH1D*)nullptr,"m_sv_down","",mass_bins_2j2t);
             GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all);
         }
     }
