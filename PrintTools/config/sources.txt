@@ -486,14 +486,14 @@ file: ZH_ZToLL_HToBB.root 0.0004528
 [DYJets_incl MC]
 #type: DY_JETS
 type: DY_JETS_incl
-title: Z #rightarrow ll
+title: Z #rightarrow ll(incl)
 color: yellow_custom
 file: DYJetsToLL.root 2.2662
 
 [DYJets_excl MC]
 #type: DY_JETS
 type: DY_JETS_excl
-title: Z #rightarrow ll
+title: Z #rightarrow ll(excl)
 color: yellow_custom
 file: DY1JetsToLL.root 0.2730
 file: DY2JetsToLL.root 0.0969
@@ -524,11 +524,11 @@ subcategory: ZJ
 
 [ZTT_MC]
 type: ZTT_MC
-title: Z #rightarrow tautau
+title: Z #rightarrow tautau(MC)
 
 [ZTT_L]
 type: ZTT_L
-title: Z #rightarrow tautau
+title: Z #rightarrow tautau(leptonic)
 
 [ZTT]
 type: BACKGROUND

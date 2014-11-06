@@ -107,7 +107,8 @@ struct FlatEventInfo {
             resonance = Htt_MET + Hbb;
             if (recalculate_mass_KinFit){
                 using namespace analysis::kinematic_fit;
-                const four_body::FitInput four_body_input(bjet_momentums.at(0), bjet_momentums.at(1),
+                const four_body::FitInput four_body_input(bjet_momentums.at(selected_bjets.first),
+                                                          bjet_momentums.at(selected_bjets.second),
                                                           lepton_momentums.at(0), lepton_momentums.at(1),
                                                           MET, MET_covariance);
 

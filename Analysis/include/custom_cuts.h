@@ -31,6 +31,13 @@ namespace cuts {
 
     const double DeltaR_MC_Match = 0.3; // <
 
+    namespace massWindow{
+        const double m_tautau_low = 90;
+        const double m_tautau_high = 150;
+        const double m_bb_low = 70;
+        const double m_bb_high = 150;
+    }
+
     namespace jetCorrections {
         const double energyUncertainty = 0.05;
     }
