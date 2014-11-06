@@ -855,6 +855,9 @@ private:
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
             { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
             { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 },
+            { "m_ttbb_kinfit_only", 2 }, { "m_ttbb_kinfit_only_up", 2 }, { "m_ttbb_kinfit_only_down", 2 },
+            { "m_ttbb_kinfit_massCut", 2 }, { "m_ttbb_kinfit_up_massCut", 2 }, { "m_ttbb_kinfit_down_massCut", 2 },
+            { "m_ttbb_kinfit_only_massCut", 2 }, { "m_ttbb_kinfit_only_up_massCut", 2 }, { "m_ttbb_kinfit_only_down_massCut", 2 },
             { "m_bb_slice", 3 }, { "m_bb_slice_up", 3 }, { "m_bb_slice_down", 3 }
         };
 

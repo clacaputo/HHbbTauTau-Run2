@@ -25,21 +25,21 @@ sub compare {
 
 #### IT 
 $groupCERN="IT";
-$pathTauTau2012CERN="/Users/Tita/Desktop/analysis_HH_bbTauTau/src/HHbbTauTau/data";
-$fileTauTau2012CERN="htt_mt.inputs-Hhh-8TeV_m_sv";
+$pathTauTau2012CERN="/Users/Tita/Desktop/analysis_HH_bbTauTau/Limits/auxiliaries/shapes/Italians";
+$fileTauTau2012CERN="htt_et.inputs-Hhh-8TeV_m_sv";
 
 
 
 #### ImperialCollege - IC 
 $groupMIT="IC";
 $pathTauTau2012MIT="/Users/Tita/Desktop/analysis_HH_bbTauTau/Limits/auxiliaries/shapes/Imperial";
-$fileTauTau2012MIT="htt_mt.inputs-Hhh-8TeV_m_sv";
+$fileTauTau2012MIT="htt_et.inputs-Hhh-8TeV_m_sv";
 
 
 #### SET BIN MAXIMUM
 $maxbin = 0 ;  ## 0 means full range, 26 means up to 350
 
-compare("muTau","2012",$groupCERN,$pathTauTau2012CERN,$fileTauTau2012CERN,$groupMIT,$pathTauTau2012MIT,$fileTauTau2012MIT,$maxbin);
+compare("eleTau","2012",$groupCERN,$pathTauTau2012CERN,$fileTauTau2012CERN,$groupMIT,$pathTauTau2012MIT,$fileTauTau2012MIT,$maxbin);
 
 
 
