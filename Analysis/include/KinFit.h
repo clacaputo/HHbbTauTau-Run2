@@ -168,7 +168,9 @@ inline FitResults Fit(const FitInput& input)
     result.pull_balance = pull_balance;
     result.pull_balance_1 = pull_b1;
     result.pull_balance_2 = pull_b2;
-    result.has_valid_mass = convergence != 0;
+    result.has_valid_mass = convergence > 0;
+    if (!result.has_valid_mass)
+        result.mass = (b1+b2+tau1+tau2+mvaMET).M();
     if(!result.has_valid_mass && debug)
         std::cerr << "four body mass with kin Fit cannot be calculated" << std::endl;
 
@@ -263,6 +265,8 @@ FitResults Fit(const FitInput& input)
 
 struct FitResultsWithUncertainties {
     four_body::FitResults fit_bb_tt;
+    four_body::FitResults fit_bb_tt_down;
+    four_body::FitResults fit_bb_tt_up;
     four_body::FitResults fit_bb_down_tt_down;
     four_body::FitResults fit_bb_down_tt_up;
     four_body::FitResults fit_bb_up_tt_down;
@@ -280,6 +284,8 @@ inline FitResultsWithUncertainties FitWithUncertainties(const four_body::FitInpu
     FitResultsWithUncertainties result;
     if(fit_four_body) {
         result.fit_bb_tt = four_body::Fit(input);
+        result.fit_bb_tt_down = four_body::Fit(four_body::FitInput(input, 1, 1 - tau_energy_uncertainty));
+        result.fit_bb_tt_up = four_body::Fit(four_body::FitInput(input, 1, 1 + tau_energy_uncertainty));
 //        result.fit_bb_down_tt_down = four_body::Fit(four_body::FitInput(input, 1 - bjet_energy_uncertainty,
 //                                                                        1 - tau_energy_uncertainty));
 //        result.fit_bb_down_tt_up = four_body::Fit(four_body::FitInput(input, 1 - bjet_energy_uncertainty,

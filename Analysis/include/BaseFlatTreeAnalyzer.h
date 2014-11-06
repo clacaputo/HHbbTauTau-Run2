@@ -189,32 +189,35 @@ public:
         DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
         pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);        
-        const double m_ttbb_kinFit = eventInfo.kinfit_data_mass;
+        const analysis::kinematic_fit::FitResultsWithUncertainties kinFitResults = eventInfo.fitResults;
+        const double m_ttbb_kinFit = kinFitResults.fit_bb_tt.mass;
+        const double m_ttbb_kinFit_up = kinFitResults.fit_bb_tt_up.mass;
+        const double m_ttbb_kinFit_down = kinFitResults.fit_bb_tt_down.mass;
         m_ttbb_kinfit().Fill(m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_up().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_down().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
-        if (eventInfo.convergence > 0){
+        m_ttbb_kinfit_up().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
+        m_ttbb_kinfit_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
+        if (kinFitResults.fit_bb_tt.has_valid_mass){
             m_ttbb_kinfit_only().Fill(m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_only_up().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_only_down().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_only_up().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_only_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
         }
         if (mass_tautau > 90 && mass_tautau < 150 && eventInfo.Hbb.M() > 70 && eventInfo.Hbb.M() < 150){
             m_ttbb_kinfit_massCut().Fill(m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_up_massCut().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_down_massCut().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
-            if (eventInfo.convergence > 0){
+            m_ttbb_kinfit_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
+            m_ttbb_kinfit_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
+            if (kinFitResults.fit_bb_tt.has_valid_mass){
                 m_ttbb_kinfit_only_massCut().Fill(m_ttbb_kinFit, weight);
-                m_ttbb_kinfit_only_up_massCut().Fill(doESvariation ? 1.04*m_ttbb_kinFit : m_ttbb_kinFit, weight);
-                m_ttbb_kinfit_only_down_massCut().Fill(doESvariation ? 0.96*m_ttbb_kinFit : m_ttbb_kinFit, weight);
+                m_ttbb_kinfit_only_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
+                m_ttbb_kinfit_only_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
             }
         }
 
-        convergence().Fill(eventInfo.convergence,weight);
-        chi2().Fill(eventInfo.chi2,weight);
-        fit_probability().Fill(eventInfo.fit_probability,weight);
-        pull_balance().Fill(eventInfo.pull_balance,weight);
-        pull_balance_1().Fill(eventInfo.pull_balance_1,weight);
-        pull_balance_2().Fill(eventInfo.pull_balance_2,weight);
+        convergence().Fill(kinFitResults.fit_bb_tt.convergence,weight);
+        chi2().Fill(kinFitResults.fit_bb_tt.chi2,weight);
+        fit_probability().Fill(kinFitResults.fit_bb_tt.fit_probability,weight);
+        pull_balance().Fill(kinFitResults.fit_bb_tt.pull_balance,weight);
+        pull_balance_1().Fill(kinFitResults.fit_bb_tt.pull_balance_1,weight);
+        pull_balance_2().Fill(kinFitResults.fit_bb_tt.pull_balance_2,weight);
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
 
         FillSlice(m_bb_slice(), mass_tautau, eventInfo.Hbb.M(), weight);
@@ -592,10 +595,11 @@ protected:
         const analysis::DataCategory& ZL = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZL);
         const analysis::DataCategory& ZJ = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZJ);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
 
         const std::map<ntuple::EventType, std::string> type_category_map = {
             { ntuple::EventType::ZL, ZL.name }, { ntuple::EventType::ZJ, ZJ.name },
-            { ntuple::EventType::ZTT, ZTT_MC.name }
+            { ntuple::EventType::ZTT, ZTT_MC.name }, {ntuple::EventType::ZTT_L, ZTT_L.name}
         };
 
         if(type_category_map.count(eventInfo.eventType)) {
@@ -631,12 +635,23 @@ protected:
                 : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
         const double embedded_scaleFactor = useEmbedded ? scale_factor.value : 1;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
+        const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
 
         for(EventRegion eventRegion : AllEventRegions) {
-            if(auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name)) {
-                TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
-                ztt_hist.Scale(embedded_scaleFactor);
 
+            auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
+            auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name);
+            TH1D ztt_hist;
+            if (embedded_hist){
+                ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
+                ztt_hist.Scale(embedded_scaleFactor);
+                if (ztt_l_hist){
+                    TH1D* ztt_l_hist_ptr = static_cast<TH1D*>(ztt_l_hist->Clone());
+                    ztt_hist.Add(ztt_l_hist_ptr);
+                }
+            }
+            if (!embedded_hist && ztt_l_hist){
+                ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
             }
         }
     }

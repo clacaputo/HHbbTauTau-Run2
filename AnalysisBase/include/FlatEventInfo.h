@@ -33,6 +33,9 @@
 #include "AnalysisTypes.h"
 #include "exception.h"
 #include "Analysis/include/KinFit.h"
+#include "Analysis/include/custom_cuts.h"
+#include "Analysis/include/Htautau_Summer13.h"
+
 
 namespace analysis {
 
@@ -73,11 +76,7 @@ struct FlatEventInfo {
     TLorentzVector MET, Htt, Htt_MET, Hbb, resonance;
     TMatrixD MET_covariance;
     bool recalculate_mass_KinFit;
-    double kinfit_data_mass;
-    int convergence;
-    double chi2;
-    double fit_probability;
-    double pull_balance, pull_balance_1, pull_balance_2;
+    analysis::kinematic_fit::FitResultsWithUncertainties fitResults;
     double mva_BDT, mva_BDTD, mva_BDTMitFisher;
 
     FlatEventInfo(const ntuple::Flat& _event, const BjetPair& _selected_bjets, bool _recalculate_mass_KinFit)
@@ -85,10 +84,7 @@ struct FlatEventInfo {
           channel(static_cast<analysis::Channel>(_event.channel)),
           lepton_momentums(2), bjet_momentums(_event.pt_Bjets.size()), selected_bjets(_selected_bjets),
           has_bjet_pair(false), MET_covariance(2, 2), recalculate_mass_KinFit(_recalculate_mass_KinFit),
-          kinfit_data_mass(std::numeric_limits<size_t>::lowest()), convergence(std::numeric_limits<size_t>::lowest()),
-          chi2(std::numeric_limits<size_t>::lowest()), fit_probability(std::numeric_limits<size_t>::lowest()),
-          pull_balance(std::numeric_limits<size_t>::lowest()), pull_balance_1(std::numeric_limits<size_t>::lowest()),
-          pull_balance_2(std::numeric_limits<size_t>::lowest()), mva_BDT(-1), mva_BDTD(-1), mva_BDTMitFisher(-1)
+          mva_BDT(-1), mva_BDTD(-1), mva_BDTMitFisher(-1)
     {
         lepton_momentums.at(0).SetPtEtaPhiM(event->pt_1, event->eta_1, event->phi_1, event->m_1);
         lepton_momentums.at(1).SetPtEtaPhiM(event->pt_2, event->eta_2, event->phi_2, event->m_2);
@@ -114,30 +110,14 @@ struct FlatEventInfo {
                 const four_body::FitInput four_body_input(bjet_momentums.at(0), bjet_momentums.at(1),
                                                           lepton_momentums.at(0), lepton_momentums.at(1),
                                                           MET, MET_covariance);
-                const four_body::FitResults four_body_result_HHKinFit = four_body::Fit(four_body_input);
-                if (!four_body_result_HHKinFit.has_valid_mass){
-                    //throw exception("kin fit has convergence = 0!");
+
+                fitResults = FitWithUncertainties(four_body_input,cuts::jetCorrections::energyUncertainty,
+                                             cuts::Htautau_Summer13::tauCorrections::energyUncertainty,false,true);
+                if (fitResults.fit_bb_tt.convergence == 0){
                     std::cout << "kin fit has convergence = 0! event = " << event->evt << std::endl;
                 }
-                if (four_body_result_HHKinFit.convergence <= 0)
-                    kinfit_data_mass = resonance.M();
-                else
-                    kinfit_data_mass = four_body_result_HHKinFit.mass;
-                convergence = four_body_result_HHKinFit.convergence;
-                chi2 = four_body_result_HHKinFit.chi2;
-                fit_probability = four_body_result_HHKinFit.fit_probability;
-                pull_balance = four_body_result_HHKinFit.pull_balance;
-                pull_balance_1 = four_body_result_HHKinFit.pull_balance_1;
-                pull_balance_2 = four_body_result_HHKinFit.pull_balance_2;
+            }
 
-            }
-            else {
-                const size_t kinfit_data_index = CombinationPairToIndex(selected_bjets, bjet_momentums.size());
-                kinfit_data_mass = event->kinfit_bb_tt_mass.at(kinfit_data_index);
-                convergence = event->kinfit_bb_tt_convergence.at(kinfit_data_index);
-                chi2 = event->kinfit_bb_tt_chi2.at(kinfit_data_index);
-                pull_balance = event->kinfit_bb_tt_pull_balance.at(kinfit_data_index);
-            }
         }
     }
 };

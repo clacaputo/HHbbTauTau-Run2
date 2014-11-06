@@ -526,6 +526,10 @@ subcategory: ZJ
 type: ZTT_MC
 title: Z #rightarrow tautau
 
+[ZTT_L]
+type: ZTT_L
+title: Z #rightarrow tautau
+
 [ZTT]
 type: BACKGROUND
 type: ZTT
