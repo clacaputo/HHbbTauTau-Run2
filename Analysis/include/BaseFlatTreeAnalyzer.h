@@ -204,7 +204,7 @@ public:
             m_ttbb_kinfit_only_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
 
         if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
-                eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high){
+                eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
             m_ttbb_kinfit_massCut().Fill(m_ttbb_kinFit, weight);
             m_ttbb_kinfit_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
             m_ttbb_kinfit_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
@@ -214,7 +214,6 @@ public:
                 m_ttbb_kinfit_only_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
             if (eventInfo.fitResults.fit_bb_tt_down.has_valid_mass)
                 m_ttbb_kinfit_only_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-
         }
 
         convergence().Fill(eventInfo.fitResults.fit_bb_tt.convergence,weight);
@@ -776,6 +775,7 @@ protected:
                 hist_up->Scale(dataCategory->limits_sf);
                 hist_up->Write(nameUp.c_str());
 
+
                 std::shared_ptr<TH1D> hist_down;
                 if(auto hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down))
                     hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_down_orig->Clone()));
@@ -789,6 +789,19 @@ protected:
 
                 hist_down->Scale(dataCategory->limits_sf);
                 hist_down->Write(nameDown.c_str());
+
+                if(dataCategory->datacard == "ZL") {
+                    const std::string name_syst_prefix = dataCategory->datacard + "_CMS_htt_" + dataCategory->datacard
+                            + "Scale_" + channel_name + "_8TeV";
+                    const std::string name_syst_up = name_syst_prefix + "Up";
+                    const std::string name_syst_down = name_syst_prefix + "Down";
+                    std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                    hist_syst_up->Scale(1.02);
+                    hist_syst_up->Write(name_syst_up.c_str());
+                    std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
+                    hist_syst_down->Scale(0.98);
+                    hist_syst_down->Write(name_syst_down.c_str());
+                }
             }
         }
         outputFile->Close();
