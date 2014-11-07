@@ -188,7 +188,7 @@ public:
         DeltaPhi_hh().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.Hbb)), weight);
         DeltaR_hh().Fill(eventInfo.Htt.DeltaR(eventInfo.Hbb), weight);
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
-        pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);        
+        pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
 
         const double m_ttbb_kinFit = eventInfo.fitResults.fit_bb_tt.mass;
         const double m_ttbb_kinFit_up = eventInfo.fitResults.fit_bb_tt_up.mass;
@@ -352,9 +352,9 @@ public:
                                         emptyDatacard_mttbb);
         ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", "m_ttbb_kinfit_only_up", "m_ttbb_kinfit_only_down", false,
                                         emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", "m_ttbb_kinfit_massCut_up", "m_ttbb_kinfit_massCut_down", false,
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", "m_ttbb_kinfit_up_massCut", "m_ttbb_kinfit_down_massCut", false,
                                         emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", "m_ttbb_kinfit_only_massCut_up", "m_ttbb_kinfit_only_massCut_down", false,
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", "m_ttbb_kinfit_only_up_massCut", "m_ttbb_kinfit_only_down_massCut", false,
                                         emptyDatacard_mttbb);
 
         ProduceFileForLimitsCalculation("m_bb_slice", "m_bb_slice_up", "m_bb_slice_down", false,
@@ -851,6 +851,8 @@ private:
             { { 200, 400 } },
             { { 100, 150 }, { 450, 500 }, { 800, 850 }, { 1150, 1200 }, { 1500, 1550 } }
         };
+
+
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
             { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },

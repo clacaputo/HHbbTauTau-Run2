@@ -49,7 +49,7 @@ protected:
         if(!PassSelection(eventInfo, category)) return;
         if (!analysis::TwoJetsEventCategories.count(category)) return;
 
-        if(category == EventCategory::TwoJets_ZeroBtag && eventInfo.eventType == ntuple::EventType::ZJ)
+        if(category == EventCategory::TwoJets_ZeroBtag && eventInfo.eventType == ntuple::EventType::ZL)
             std::cout << eventInfo.event->evt << std::endl;
     }
 
