@@ -376,10 +376,15 @@ protected:
                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
+        std::cout << "Ztt? " << ztt << std::endl;
         size_t n_hadronic_matches = 0, n_leptonic_matches = 0;
         for(const Candidate& reco_tau : hadronic_taus) {
+            std::cout << "RecoTau: " << reco_tau.momentum << std::endl;
             for(const GenParticle* gen_product : ZProducts) {
                 const VisibleGenObject visible_gen_object(gen_product);
+                 std::cout <<  "GenVisibleTau: " << visible_gen_object.visibleMomentum <<
+                              "; NofLeptons: " << visible_gen_object.finalStateChargedLeptons.size() <<
+                             "; GenTauOrigin: " << visible_gen_object.origin->momentum << std::endl;
                 if(visible_gen_object.finalStateChargedLeptons.size() ||
                         visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
                 if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
