@@ -27,64 +27,39 @@
 #pragma once
 
 namespace cuts {
-    const double minDeltaR_betweenHiggses = 1; // >
+const double DeltaR_MC_Match = 0.3; // <
 
-    const double DeltaR_MC_Match = 0.3; // <
-
-    namespace massWindow{
-        const double m_tautau_low = 90;
-        const double m_tautau_high = 150;
-        const double m_bb_low = 70;
-        const double m_bb_high = 150;
-    }
-
-    namespace jetCorrections {
-        const double energyUncertainty = 0.05;
-    }
-
-    namespace skim {
-        namespace TauTau {
-
-            namespace tauID {
-                const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
-            }
-        }
-
-        namespace ETau {
-
-            const double pFRelIso = 0.5; // <
-            namespace tauID {
-                const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
-            }
-        }
-
-        namespace MuTau {
-
-            const double pFRelIso = 0.5; // <
-            namespace tauID {
-                const double againstMuonLoose = 0.5; // >
-                const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
-            }
-        }
-    }
-
-    namespace btag {
-        const double CSVL = 0.244; // loose twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-        const double CSVM = 0.679; //medium twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-        const double CSVT = 0.898; //medium twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-
-        namespace signal {
-            const double pt = 20; // > AN-2013/075 HH->bb gamma gamma
-            const double eta = 2.4; // < twiki HiggsToTauTauWorkingSummer2013#bjets
-            const double CSV = CSVM; // recommended twiki HiggsToTauTauWorkingSummer2013#bjets
-        }
-        namespace veto {
-            const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-            const double eta = 2.4; // < twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-            const double CSV = CSVT; // twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-            const double passLooseID = true; // = twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-            const double deltaR_signalObjects = 0.4; // > twiki HiggsToTauTauWorkingSummer2013#Cuts_for_VH_e_mu_tau
-        }
-    }
-
+namespace massWindow{
+    const double m_tautau_low = 90;
+    const double m_tautau_high = 150;
+    const double m_bb_low = 70;
+    const double m_bb_high = 150;
 }
+
+namespace jetCorrections {
+    const double energyUncertainty = 0.05;
+}
+
+namespace skim {
+    namespace TauTau {
+        namespace tauID {
+            const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
+        }
+    }
+
+    namespace ETau {
+        const double pFRelIso = 0.5; // <
+        namespace tauID {
+            const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
+        }
+    }
+
+    namespace MuTau {
+        const double pFRelIso = 0.5; // <
+        namespace tauID {
+            const double againstMuonLoose = 0.5; // >
+            const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 10; // <
+        }
+    }
+} // namespace skim
+} // namespace cuts

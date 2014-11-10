@@ -56,4 +56,3 @@ protected:
 private:
     EventSelectionStudyData anaData;
 };
-
