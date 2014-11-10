@@ -380,6 +380,8 @@ protected:
         for(const Candidate& reco_tau : hadronic_taus) {
             for(const GenParticle* gen_product : ZProducts) {
                 const VisibleGenObject visible_gen_object(gen_product);
+                std::cout << "RecoTau: " << reco_tau.momentum << "; GenVisibleTau: " << visible_gen_object.visibleMomentum <<
+                             "; GenTauOrigin: " << visible_gen_object.origin->momentum << std::endl;
                 if(visible_gen_object.finalStateChargedLeptons.size() ||
                         visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
                 if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
