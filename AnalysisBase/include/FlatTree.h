@@ -124,6 +124,12 @@
     SIMPLE_VAR(Float_t, pt_sv_up_MC) /* Pt of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
     SIMPLE_VAR(Float_t, m_sv_down_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
     SIMPLE_VAR(Float_t, pt_sv_down_MC) /* Pt of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, eta_sv_MC) /* Eta of H_tautau corrected by svFit using integration method MC */ \
+    SIMPLE_VAR(Float_t, phi_sv_MC) /* Phi of H_tautau corrected by svFit using integration method MC */ \
+    SIMPLE_VAR(Float_t, eta_sv_up_MC) /* Eta of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, phi_sv_up_MC) /* Phi of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
+    SIMPLE_VAR(Float_t, eta_sv_down_MC) /* Eta of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, phi_sv_down_MC) /* Phi of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
     \
@@ -133,6 +139,14 @@
     VECTOR_VAR(Int_t, kinfit_bb_tt_convergence) /* Convergence of four body kinematic fit for each bjet combination */ \
     VECTOR_VAR(Float_t, kinfit_bb_tt_chi2) /* Chi-square of four body kinematic fit for each bjet combination */ \
     VECTOR_VAR(Float_t, kinfit_bb_tt_pull_balance) /* Pull balance of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_up_mass) /* Four body mass calculated using kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Int_t, kinfit_bb_tt_up_convergence) /* Convergence of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_up_chi2) /* Chi-square of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_up_pull_balance) /* Pull balance of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_down_mass) /* Four body mass calculated using kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Int_t, kinfit_bb_tt_down_convergence) /* Convergence of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_down_chi2) /* Chi-square of four body kinematic fit for each bjet combination */ \
+    VECTOR_VAR(Float_t, kinfit_bb_tt_down_pull_balance) /* Pull balance of four body kinematic fit for each bjet combination */ \
     /*SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_down)*/ /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled down by their uncertainties */ \
     /*SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_up)*/ /* Four body mass calculated using kinematic fit when BjetES scaled down and TauES scaled up by their uncertainties */ \
     /*SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_down)*/ /* Four body mass calculated using kinematic fit when BjetES scaled up and TauES scaled down by their uncertainties */ \
@@ -182,7 +196,8 @@
     SIMPLE_VAR(Int_t, njets) /* number of jets passing jet id ( pt > 30 ) */ \
     SIMPLE_VAR(Int_t, njetspt20) /* number of jets passing jet id ( pt > 20 ) */ \
     /* b-jets info */ \
-    SIMPLE_VAR(Int_t, nBjets) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
+    SIMPLE_VAR(Int_t, nBjets) /* number of btags not passing btag id (medium CSV WP) ( pt > 20 ) without re-tag applied */ \
+    SIMPLE_VAR(Int_t, nBjets_retagged) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
     /* All b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
     VECTOR_VAR(Float_t, pt_Bjets) /* pt of b-jets */ \
     VECTOR_VAR(Float_t, eta_Bjets) /* eta of b-jets */ \
@@ -212,6 +227,8 @@
     SIMPLE_VAR(Float_t, idweight_2) /* ID weight for the second leg */ \
     SIMPLE_VAR(Float_t, isoweight_1) /* Isolation weight for the first leg */ \
     SIMPLE_VAR(Float_t, isoweight_2) /* Isolation weight for the second leg */ \
+    SIMPLE_VAR(Float_t, fakeweight_1) /* fake rate weight for the first leg (only e->tau)*/ \
+    SIMPLE_VAR(Float_t, fakeweight_2) /* fake rate weight for the second leg */ \
     SIMPLE_VAR(Float_t, decayModeWeight_1) /* decay mode weight for the first leg */ \
     SIMPLE_VAR(Float_t, decayModeWeight_2) /* decay mode weight for the second leg */ \
     SIMPLE_VAR(Float_t, embeddedWeight) /* Weight for embedded events */ \

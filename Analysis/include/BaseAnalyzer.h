@@ -109,14 +109,8 @@ public:
         }
         TH1::SetDefaultSumw2();
         if(config.ApplyPUreweight()){
-            //std::cout << "I'm here" << std::endl;
             pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
         }
-        if(config.ApplyRecoilCorrection())
-            recoilCorrectionProducer = std::shared_ptr<RecoilCorrectionProducer>(
-                        new RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo(),
-                                                     config.RecoilCorrection_fileZmmData(),
-                                                     config.RecoilCorrection_fileZmmMC()));
     }
 
     virtual ~BaseAnalyzer() {}
@@ -165,6 +159,7 @@ public:
 
 protected:
     virtual BaseAnalyzerData& GetAnaData() = 0;
+    virtual RecoilCorrectionProducer& GetRecoilCorrectionProducer() = 0;
 
     void SetPUWeight(float nPU)
     {
@@ -194,9 +189,9 @@ protected:
         for (double weight : DMweights){
             eventWeight *= weight;
         }
-//        for (double weight : fakeWeights){
-//            eventWeight *= weight;
-//        }
+        for (double weight : fakeWeights){
+            eventWeight *= weight;
+        }
     }
 
     virtual void CalculateTriggerWeights(const Candidate& candidate) = 0;
@@ -500,7 +495,7 @@ protected:
             if(!resonance && config.ApplyRecoilCorrectionForW())
                 resonance = FindWboson();
             if(resonance)
-                return recoilCorrectionProducer->ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+                return GetRecoilCorrectionProducer().ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
         }
         return correctedMET;
     }
@@ -576,7 +571,6 @@ protected:
     std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
     std::shared_ptr<TH1D> pu_weights;
     MvaMetProducer mvaMetProducer;
-    std::shared_ptr<RecoilCorrectionProducer> recoilCorrectionProducer;
 };
 
 } // analysis

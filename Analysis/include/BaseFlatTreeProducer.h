@@ -280,8 +280,11 @@ protected:
                 for(const GenParticle* tau : HiggsDecayProducts.at(0)) {
                     const VisibleGenObject tau_products(tau);
                     final_state.taus.push_back(tau_products);
-                    if(tau_products.finalStateChargedHadrons.size() != 0)
+//                    if(tau_products.finalStateChargedHadrons.size() != 0)
+                    if(!IsLeptonicTau(tau)){
+                        std::cout << "FindAnalysisFinalState 1st" << std::endl;
                         final_state.hadronic_taus.push_back(tau_products);
+                    }
                 }
                 for(const GenParticle* b : HiggsDecayProducts.at(1))
                     final_state.b_jets.push_back(VisibleGenObject(b));
@@ -307,8 +310,11 @@ protected:
                 for(const GenParticle* tau : resonanceDecayProducts) {
                     const VisibleGenObject tau_products(tau);
                     final_state.taus.push_back(tau_products);
-                    if(tau_products.finalStateChargedHadrons.size() != 0)
+//                    if(tau_products.finalStateChargedHadrons.size() != 0)
+                    if(!IsLeptonicTau(tau)){
+                        std::cout << "FindAnalysisFinalState 2nd" << std::endl;
                         final_state.hadronic_taus.push_back(tau_products);
+                    }
                 }
                 final_state.Higgs_TauTau = SM_particle;
                 SM_ResonanceToTauTau.push_back(SM_particle);
@@ -382,10 +388,13 @@ protected:
             std::cout << "RecoTau: " << reco_tau.momentum << std::endl;
             for(const GenParticle* gen_product : ZProducts) {
                 const VisibleGenObject visible_gen_object(gen_product);
-                 std::cout <<  "GenVisibleTau: " << visible_gen_object.visibleMomentum <<
-                              "; NofLeptons: " << visible_gen_object.finalStateChargedLeptons.size() <<
-                             "; GenTauOrigin: " << visible_gen_object.origin->momentum << std::endl;
-                if(visible_gen_object.finalStateChargedLeptons.size() ||
+//                 std::cout <<  "GenVisibleTau: " << visible_gen_object.visibleMomentum <<
+//                              "; NofLeptons: " << visible_gen_object.finalStateChargedLeptons.size() <<
+//                             "; GenTauOrigin: " << visible_gen_object.origin->momentum <<
+//                               "; pdg: " << visible_gen_object.origin->pdg.Code.Name() << ", status= " <<
+//                               visible_gen_object.origin->status << std::endl;
+                if((gen_product->pdg.Code == particles::tau && gen_product->status == particles::Decayed_or_fragmented &&
+                    IsLeptonicTau(gen_product)) ||
                         visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
                 if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
                     ++n_hadronic_matches;
@@ -400,7 +409,8 @@ protected:
                 }
             }
         }
-
+        //genEvent.Print();
+        std::cout << "Done Z matches, " << n_hadronic_matches << " " << n_leptonic_matches << std::endl;
         if(ztt && n_hadronic_matches == hadronic_taus.size()) return ntuple::EventType::ZTT;
         if(n_leptonic_matches) return ztt ? ntuple::EventType::ZTT_L : ntuple::EventType::ZL;
         return ntuple::EventType::ZJ;
@@ -470,7 +480,8 @@ protected:
         flatTree->idweight_2()      = IDweights.at(1);
         flatTree->isoweight_1()     = IsoWeights.at(0);
         flatTree->isoweight_2()     = IsoWeights.at(1);
-        // flatTree->fakeweight()      = fakeWeights.at(1); // what's this?
+        flatTree->fakeweight_1()     = fakeWeights.at(0); // e -> tau fake rate
+        flatTree->fakeweight_2()     = fakeWeights.at(1); // jet -> tau fake rate - default
         flatTree->weight()          = eventWeight;
         flatTree->embeddedWeight()  = config.isDYEmbeddedSample() ? event->genEvent().embeddedWeight : 1.;
 
@@ -494,6 +505,18 @@ protected:
                 ? selection.svfitResults.fit_mc_down.mass : default_value;
         flatTree->pt_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
                 ? selection.svfitResults.fit_mc_down.momentum.Pt() : default_value;
+        flatTree->eta_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
+                ? selection.svfitResults.fit_mc.momentum.Eta() : default_value;
+        flatTree->phi_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
+                ? selection.svfitResults.fit_mc.momentum.Phi() : default_value;
+        flatTree->eta_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_momentum
+                ? selection.svfitResults.fit_mc_up.momentum.Eta() : default_value;
+        flatTree->phi_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_momentum
+                ? selection.svfitResults.fit_mc_up.momentum.Phi() : default_value;
+        flatTree->eta_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
+                ? selection.svfitResults.fit_mc_down.momentum.Eta() : default_value;
+        flatTree->phi_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
+                ? selection.svfitResults.fit_mc_down.momentum.Phi() : default_value;
         flatTree->DeltaR_leptons() = selection.GetLeg1().momentum.DeltaR(selection.GetLeg2().momentum) ;
         flatTree->pt_tt()          = (selection.GetLeg1().momentum + selection.GetLeg2().momentum).Pt();
 
@@ -504,6 +527,16 @@ protected:
             flatTree->kinfit_bb_tt_convergence().push_back(result_4body.convergence);
             flatTree->kinfit_bb_tt_chi2().push_back(result_4body.chi2);
             flatTree->kinfit_bb_tt_pull_balance().push_back(result_4body.pull_balance);
+            const analysis::kinematic_fit::four_body::FitResults& result_4body_tt_up = fit_result_entry.second.fit_bb_tt_up;
+            flatTree->kinfit_bb_tt_up_mass().push_back(result_4body_tt_up.mass);
+            flatTree->kinfit_bb_tt_up_convergence().push_back(result_4body_tt_up.convergence);
+            flatTree->kinfit_bb_tt_up_chi2().push_back(result_4body_tt_up.chi2);
+            flatTree->kinfit_bb_tt_up_pull_balance().push_back(result_4body_tt_up.pull_balance);
+            const analysis::kinematic_fit::four_body::FitResults& result_4body_tt_down = fit_result_entry.second.fit_bb_tt_down;
+            flatTree->kinfit_bb_tt_down_mass().push_back(result_4body_tt_down.mass);
+            flatTree->kinfit_bb_tt_down_convergence().push_back(result_4body_tt_down.convergence);
+            flatTree->kinfit_bb_tt_down_chi2().push_back(result_4body_tt_down.chi2);
+            flatTree->kinfit_bb_tt_down_pull_balance().push_back(result_4body_tt_down.pull_balance);
 
 //            const analysis::kinematic_fit::two_body::FitResults& result_2body = fit_result_entry.second.fit_bb;
 //            TLorentzVector ditau_momentum;
@@ -642,7 +675,8 @@ protected:
         // Jets
         flatTree->njets()     = selection.jets.size();
         flatTree->njetspt20() = selection.jetsPt20.size();
-        flatTree->nBjets()    = selection.retagged_bjets.size();
+        flatTree->nBjets()    = selection.bjets_all.size();
+        flatTree->nBjets_retagged()    = selection.retagged_bjets.size();
 
         for (const Candidate& jet : selection.bjets_all) {
             const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);

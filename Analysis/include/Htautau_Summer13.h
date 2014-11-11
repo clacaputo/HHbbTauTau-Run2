@@ -149,6 +149,13 @@ namespace ETau {
                                                                     { 0.9804, 0.9900 } };
     }
 
+    // twiki HiggsToTauTauWorkingSummer2013
+    namespace electronEtoTauFakeRateWeight {
+        const std::vector<double> eta = { 1.5 };
+        const std::vector< std::vector< double > > scaleFactors = { { 1.37, 2.18 },
+                                                                    { 1.11, 0.47 } };
+    }
+
     namespace electronID{
         const double pt = 24; // >  HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
         const double eta_high = 2.1; // <  HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state

@@ -48,9 +48,18 @@ public:
           baseAnaData(*outputFile)
     {
         baseAnaData.getOutputFile().cd();
+        if(config.ApplyRecoilCorrection())
+            recoilCorrectionProducer_mutau = std::shared_ptr<analysis::RecoilCorrectionProducer>(
+                        new analysis::RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo_MuTau(),
+                                                               config.RecoilCorrection_fileZmmData_MuTau(),
+                                                               config.RecoilCorrection_fileZmmMC_MuTau()));
     }
 
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return baseAnaData; }
+    virtual analysis::RecoilCorrectionProducer& GetRecoilCorrectionProducer() override
+    {
+        return *recoilCorrectionProducer_mutau;
+    }
 
 protected:
     virtual analysis::SelectionResults& ApplyBaselineSelection() override
@@ -297,8 +306,11 @@ protected:
             if(tau_MC.finalStateChargedLeptons.size() == 1
                     && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::mu)
                 final_state.muon = *tau_MC.finalStateChargedLeptons.begin();
-            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
+//            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
+            else if(!analysis:: IsLeptonicTau(tau_MC.origin)){
+                std::cout << "FindAnalysisFinalState mutau" << std::endl;
                 final_state.tau_jet = &tau_MC;
+            }
         }
 
         if (!final_state.muon || !final_state.tau_jet) return false;
@@ -354,12 +366,19 @@ protected:
     {
         fakeWeights.clear();
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const double tau_pt = tau.momentum.Pt();
-        const double fake_weight =
-                (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
-        // first mu, second tau
-        fakeWeights.push_back(1);
-        fakeWeights.push_back(fake_weight);
+        if (config.ApplyJetToTauFakeRate()){
+            const double tau_pt = tau.momentum.Pt() < 200 ? tau.momentum.Pt() : 200 ;
+            const double fake_weight =
+                    (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
+            // first mu, second tau
+            fakeWeights.push_back(1);
+            fakeWeights.push_back(fake_weight);
+        }
+        else {
+            // first mu, second tau
+            fakeWeights.push_back(1);
+            fakeWeights.push_back(1);
+        }
     }
 
     virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
@@ -460,6 +479,7 @@ protected:
 protected:
     analysis::BaseAnalyzerData baseAnaData;
     analysis::SelectionResults_mutau selection;
+    std::shared_ptr<analysis::RecoilCorrectionProducer> recoilCorrectionProducer_mutau;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

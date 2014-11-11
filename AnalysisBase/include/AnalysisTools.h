@@ -37,11 +37,24 @@
 #include "Particles.h"
 #include "EventDescriptor.h"
 #include "AnalysisMath.h"
+#include "GenParticle.h"
 
 namespace analysis {
 
 static const particles::ParticleCodes TauMuonicDecay = { particles::mu, particles::nu_mu, particles::nu_tau };
 static const particles::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
+
+inline bool IsLeptonicTau(const GenParticle* genParticle)
+{
+    GenParticlePtrVector tauProducts;
+    if (!FindDecayProducts(*genParticle,TauMuonicDecay,tauProducts,false) &&
+            !FindDecayProducts(*genParticle,TauElectronDecay,tauProducts,false)) {
+        std::cout << "It is HadTau" << std::endl;
+        return false;
+    }
+    std::cout << "It is LeptTau" << std::endl;
+    return true;
+}
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
                                const std::set<std::string>& interestinghltPaths, size_t& n)

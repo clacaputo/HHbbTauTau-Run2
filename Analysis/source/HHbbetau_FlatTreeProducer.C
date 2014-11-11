@@ -48,9 +48,18 @@ public:
           baseAnaData(*outputFile)
     {
         baseAnaData.getOutputFile().cd();
+        if(config.ApplyRecoilCorrection())
+            recoilCorrectionProducer_etau = std::shared_ptr<analysis::RecoilCorrectionProducer>(
+                        new analysis::RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo_ETau(),
+                                                               config.RecoilCorrection_fileZmmData_ETau(),
+                                                               config.RecoilCorrection_fileZmmMC_ETau()));
     }
 
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return baseAnaData; }
+    virtual analysis::RecoilCorrectionProducer& GetRecoilCorrectionProducer() override
+    {
+        return *recoilCorrectionProducer_etau;
+    }
 
 protected:
     virtual analysis::SelectionResults& ApplyBaselineSelection() override
@@ -118,11 +127,11 @@ protected:
 
         selection.higgs = SelectSemiLeptonicHiggs(higgsTriggered);
         selection.eventType = DoEventCategorization(selection.higgs);
-
+        std::cout << "after event categorization" << std::endl;
         cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");
-
+        std::cout << "after DY embedded" << std::endl;
         CalculateFullEventWeight(selection.higgs);
-
+        std::cout << "after full event weight" << std::endl;
         if (!config.isMC() || config.isDYEmbeddedSample()){
             selection.pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         }
@@ -307,8 +316,11 @@ protected:
             if(tau_MC.finalStateChargedLeptons.size() == 1
                     && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::e)
                 final_state.electron = *tau_MC.finalStateChargedLeptons.begin();
-            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
+//            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
+            else if(!analysis::IsLeptonicTau(tau_MC.origin)){
+                std::cout << "FindAnalysisFinalState etau" << std::endl;
                 final_state.tau_jet = &tau_MC;
+            }
         }
 
         if (!final_state.electron || !final_state.tau_jet) return false;
@@ -370,6 +382,49 @@ protected:
         // first electron, second tau
         DMweights.push_back(1);
         DMweights.push_back(weight);
+    }
+
+    virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
+    {
+        using namespace cuts::Htautau_Summer13::DrellYannCategorization;
+        using namespace cuts::Htautau_Summer13::ETau::electronEtoTauFakeRateWeight;
+        fakeWeights.clear();
+        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
+        if (config.ApplyEtoTauFakeRate()){
+            static const particles::ParticleCodes light_lepton_codes = { particles::e, particles::mu };
+            const analysis::GenParticleSet light_leptons =
+                    genEvent.GetHardParticles(light_lepton_codes, minimal_genParticle_pt);
+            unsigned matches = 0;
+            for(const analysis::GenParticle* gen_product : light_leptons) {
+                if(HasMatchWithMCParticle(tau.momentum, gen_product, deltaR_matchGenParticle)) {
+                    ++matches;
+                }
+            }
+            if (matches > 0){
+                const ntuple::Tau& tau_leg = correctedTaus.at(tau.index);
+                const size_t eta_bin = std::abs(tau.momentum.Eta()) < eta.at(0) ? 0 : 1;
+                size_t decayModeBin;
+                if (tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero) decayModeBin = 0;
+                if (tau_leg.decayMode == ntuple::tau_id::kOneProng1PiZero) decayModeBin = 1;
+                const double fake_weight = scaleFactors.at(eta_bin).at(decayModeBin);
+                // first e, second tau
+                fakeWeights.push_back(fake_weight);
+                fakeWeights.push_back(1);
+            }
+        }
+        else if (config.ApplyJetToTauFakeRate()){
+            const double tau_pt = tau.momentum.Pt() < 200 ? tau.momentum.Pt() : 200 ;
+            const double fake_weight =
+                    (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
+            // first e, second tau
+            fakeWeights.push_back(1);
+            fakeWeights.push_back(fake_weight);
+        }
+        else {
+            // first e, second tau
+            fakeWeights.push_back(1);
+            fakeWeights.push_back(1);
+        }
     }
 
     virtual void FillFlatTree(const analysis::SelectionResults& /*selection*/) override
@@ -458,6 +513,7 @@ protected:
 protected:
     analysis::BaseAnalyzerData baseAnaData;
     analysis::SelectionResults_etau selection;
+    std::shared_ptr<analysis::RecoilCorrectionProducer> recoilCorrectionProducer_etau;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

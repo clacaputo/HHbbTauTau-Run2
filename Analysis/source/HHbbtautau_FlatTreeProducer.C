@@ -53,9 +53,18 @@ public:
           baseAnaData(*outputFile)
     {
         baseAnaData.getOutputFile().cd();
+        if(config.ApplyRecoilCorrection())
+            recoilCorrectionProducer_tautau = std::shared_ptr<analysis::RecoilCorrectionProducer>(
+                        new analysis::RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo_TauTau(),
+                                                               config.RecoilCorrection_fileZmmData_TauTau(),
+                                                               config.RecoilCorrection_fileZmmMC_TauTau()));
     }
 
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return baseAnaData; }
+    virtual analysis::RecoilCorrectionProducer& GetRecoilCorrectionProducer() override
+    {
+        return *recoilCorrectionProducer_tautau;
+    }
 
 protected:
     virtual analysis::SelectionResults& ApplyBaselineSelection() override
@@ -329,6 +338,14 @@ protected:
         DMweights.push_back(subLeadWeight);
     }
 
+    virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
+    {
+        fakeWeights.clear();
+        // first leadTau, second subLeadTau
+        fakeWeights.push_back(1);
+        fakeWeights.push_back(1);
+    }
+
     virtual void FillFlatTree(const analysis::SelectionResults& /*selection*/) override
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
@@ -422,6 +439,7 @@ protected:
     analysis::BaseAnalyzerData baseAnaData;
     analysis::SelectionResults_tautau selection;
     HiggsWithTriggerPath selectedHiggsWithTriggerPath;
+    std::shared_ptr<analysis::RecoilCorrectionProducer> recoilCorrectionProducer_tautau;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"
