@@ -307,12 +307,10 @@ protected:
 //                    && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::mu)
 //                final_state.muon = *tau_MC.finalStateChargedLeptons.begin();
             analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC.origin,analysis::TauMuonicDecay,tauProducts,false)){
-                const analysis::GenParticle* muon = tauProducts.at(0);
-                final_state.muon = muon;
-            }
+            if (analysis::FindDecayProducts(*tau_MC.origin,analysis::TauMuonicDecay,tauProducts,false))
+                final_state.muon = tauProducts.at(0);
 //            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
-            else if(!analysis:: IsLeptonicTau(tau_MC.origin)){
+            else if(!analysis:: IsLeptonicTau(*tau_MC.origin)){
                 final_state.tau_jet = &tau_MC;
             }
         }
@@ -368,11 +366,10 @@ protected:
 
     virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
     {
+        using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
         fakeWeights.clear();
-        double fakeJetToTauWeight = 1;
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        if (config.ApplyJetToTauFakeRate())
-            fakeJetToTauWeight = cuts::Htautau_Summer13::jetToTauFakeRateWeight::CalculateJetToTauFakeWeight(tau);
+        double fakeJetToTauWeight = config.ApplyJetToTauFakeRate() ? CalculateJetToTauFakeWeight(tau.momentum.Pt()) : 1;
         // first mu, second tau
         fakeWeights.push_back(1);
         fakeWeights.push_back(fakeJetToTauWeight);

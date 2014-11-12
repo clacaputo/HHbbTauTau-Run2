@@ -44,13 +44,13 @@ namespace analysis {
 static const particles::ParticleCodes TauMuonicDecay = { particles::mu, particles::nu_mu, particles::nu_tau };
 static const particles::ParticleCodes TauElectronDecay = { particles::e, particles::nu_e, particles::nu_tau };
 
-inline bool IsLeptonicTau(const GenParticle* genParticle)
+inline bool IsLeptonicTau(const GenParticle& genParticle)
 {
-    if (genParticle->pdg.Code != particles::tau)
+    if (genParticle.pdg.Code != particles::tau)
         throw exception("genParticle is not a tau!");
     GenParticlePtrVector tauProducts;
-    return FindDecayProducts(*genParticle,TauMuonicDecay,tauProducts,false) ||
-                FindDecayProducts(*genParticle,TauElectronDecay,tauProducts,false);
+    return FindDecayProducts(genParticle,TauMuonicDecay,tauProducts,false) ||
+                FindDecayProducts(genParticle,TauElectronDecay,tauProducts,false);
 }
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,

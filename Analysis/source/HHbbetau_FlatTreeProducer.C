@@ -317,12 +317,11 @@ protected:
 //                    && (*tau_MC.finalStateChargedLeptons.begin())->pdg.Code == particles::e)
 //            final_state.electron = *tau_MC.finalStateChargedLeptons.begin();
             analysis::GenParticlePtrVector tauProducts;
-            if (analysis::FindDecayProducts(*tau_MC.origin,analysis::TauElectronDecay,tauProducts,false)){
-                const analysis::GenParticle* electron = tauProducts.at(0);
-                final_state.electron = electron;
-            }
+            if (analysis::FindDecayProducts(*tau_MC.origin,analysis::TauElectronDecay,tauProducts,false))
+                final_state.electron = tauProducts.at(0);
+
 //            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
-            else if(!analysis::IsLeptonicTau(tau_MC.origin)){
+            else if(!analysis::IsLeptonicTau(*tau_MC.origin)){
                 final_state.tau_jet = &tau_MC;
             }
         }
@@ -395,24 +394,18 @@ protected:
         using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
         fakeWeights.clear();
         double fakeEtoTauWeight = 1;
-        double fakeJetToTauWeight = 1;
+
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
         const ntuple::Tau& tau_leg = correctedTaus.at(tau.index);
         if (config.ApplyEtoTauFakeRate()){
             static const particles::ParticleCodes light_lepton_codes = { particles::e };
             const analysis::GenParticleSet light_leptons =
                     genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
-            unsigned matches = 0;
-            for(const analysis::GenParticle* gen_product : light_leptons) {
-                if(HasMatchWithMCParticle(tau.momentum, gen_product, deltaR_matchGenParticle))
-                    ++matches;
-            }
-            if (matches > 0)
-                fakeEtoTauWeight = CalculateEtoTauFakeWeight(tau,tau_leg);
+            if (analysis::FindMatchedParticles(tau.momentum,light_leptons,deltaR_matchGenParticle).size() > 0)
+                fakeEtoTauWeight = CalculateEtoTauFakeWeight(tau_leg);
         }
-        if (config.ApplyJetToTauFakeRate()){
-            fakeJetToTauWeight = CalculateJetToTauFakeWeight(tau);
-        }        
+        double fakeJetToTauWeight = config.ApplyJetToTauFakeRate() ? CalculateJetToTauFakeWeight(tau.momentum.Pt()) : 1;
+
         // first e, second tau
         fakeWeights.push_back(fakeEtoTauWeight);
         fakeWeights.push_back(fakeJetToTauWeight);

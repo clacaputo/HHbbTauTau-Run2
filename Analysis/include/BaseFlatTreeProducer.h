@@ -281,7 +281,7 @@ protected:
                     const VisibleGenObject tau_products(tau);
                     final_state.taus.push_back(tau_products);
 //                    if(tau_products.finalStateChargedHadrons.size() != 0)
-                    if(!IsLeptonicTau(tau)){
+                    if(!IsLeptonicTau(*tau)){
 
                         final_state.hadronic_taus.push_back(tau_products);
                     }
@@ -311,7 +311,7 @@ protected:
                     const VisibleGenObject tau_products(tau);
                     final_state.taus.push_back(tau_products);
 //                    if(tau_products.finalStateChargedHadrons.size() != 0)
-                    if(!IsLeptonicTau(tau)){
+                    if(!IsLeptonicTau(*tau)){
 
                         final_state.hadronic_taus.push_back(tau_products);
                     }
@@ -393,7 +393,7 @@ protected:
 //                             "; GenTauOrigin: " << visible_gen_object.origin->momentum <<
 //                               "; pdg: " << visible_gen_object.origin->pdg.Code.Name() << ", status= " <<
 //                               visible_gen_object.origin->status << std::endl;
-                if(gen_product->pdg.Code != particles::tau || IsLeptonicTau(gen_product) ||
+                if(gen_product->pdg.Code != particles::tau || IsLeptonicTau(*gen_product) ||
                         visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
                 if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
                     ++n_hadronic_matches;
