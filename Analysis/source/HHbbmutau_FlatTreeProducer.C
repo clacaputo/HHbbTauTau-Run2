@@ -308,10 +308,8 @@ protected:
 //                final_state.muon = *tau_MC.finalStateChargedLeptons.begin();
             analysis::GenParticlePtrVector tauProducts;
             if (analysis::FindDecayProducts(*tau_MC.origin,analysis::TauMuonicDecay,tauProducts,false)){
-                for (const analysis::GenParticle* product : tauProducts){
-                    if (product->pdg.Code != particles::mu) continue;
-                    final_state.muon = product;
-                }
+                const analysis::GenParticle* muon = tauProducts.at(0);
+                final_state.muon = muon;
             }
 //            else if(tau_MC.finalStateChargedHadrons.size() >= 1)
             else if(!analysis:: IsLeptonicTau(tau_MC.origin)){
@@ -373,11 +371,8 @@ protected:
         fakeWeights.clear();
         double fakeJetToTauWeight = 1;
         const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        if (config.ApplyJetToTauFakeRate()){
-            const double tau_pt = tau.momentum.Pt() < 200 ? tau.momentum.Pt() : 200 ;
-            fakeJetToTauWeight =
-                    (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
-        }
+        if (config.ApplyJetToTauFakeRate())
+            fakeJetToTauWeight = cuts::Htautau_Summer13::jetToTauFakeRateWeight::CalculateJetToTauFakeWeight(tau);
         // first mu, second tau
         fakeWeights.push_back(1);
         fakeWeights.push_back(fakeJetToTauWeight);

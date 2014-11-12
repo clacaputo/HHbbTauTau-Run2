@@ -35,6 +35,8 @@
 #include "AnalysisBase/include/AnalysisMath.h"
 #include "AnalysisBase/include/Tools.h"
 #include "AnalysisBase/include/exception.h"
+#include "AnalysisBase/include/Candidate.h"
+#include "AnalysisBase/include/GenParticle.h"
 #include "TreeProduction/interface/Tau.h"
 #include "TreeProduction/interface/Jet.h"
 
@@ -147,13 +149,6 @@ namespace ETau {
         const std::vector<double> pt = { 24, 30 };
         const std::vector< std::vector< double > > scaleFactors = { { 0.9417, 0.9471 },
                                                                     { 0.9804, 0.9900 } };
-    }
-
-    // twiki HiggsToTauTauWorkingSummer2013
-    namespace electronEtoTauFakeRateWeight {
-        const std::vector<double> eta = { 1.5 };
-        const std::vector< std::vector< double > > scaleFactors = { { 1.37, 2.18 },
-                                                                    { 1.11, 0.47 } };
     }
 
     namespace electronID{
@@ -372,6 +367,32 @@ namespace tauCorrections {
         }
         return 1.0;
     }
+}
+
+namespace jetToTauFakeRateWeight {
+
+    inline double CalculateJetToTauFakeWeight(const analysis::Candidate& tau)
+    {
+        const double tau_pt = tau.momentum.Pt() < 200 ? tau.momentum.Pt() : 200 ;
+        return (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
+    }
+}
+
+// twiki HiggsToTauTauWorkingSummer2013
+namespace electronEtoTauFakeRateWeight {
+    const std::vector<double> eta = { 1.5 };
+    const std::vector< std::vector< double > > scaleFactors = { { 1.37, 2.18 },
+                                                                { 1.11, 0.47 } };
+
+    inline double CalculateEtoTauFakeWeight(const analysis::Candidate& tau, const ntuple::Tau& tau_leg)
+    {
+        const size_t eta_bin = std::abs(tau.momentum.Eta()) < eta.at(0) ? 0 : 1;
+        size_t decayModeBin;
+        if (tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero) decayModeBin = 0;
+        if (tau_leg.decayMode == ntuple::tau_id::kOneProng1PiZero) decayModeBin = 1;
+        return scaleFactors.at(eta_bin).at(decayModeBin);
+    }
+
 }
 
 namespace DrellYannCategorization {

@@ -46,6 +46,8 @@ static const particles::ParticleCodes TauElectronDecay = { particles::e, particl
 
 inline bool IsLeptonicTau(const GenParticle* genParticle)
 {
+    if (genParticle->pdg.Code != particles::tau)
+        throw exception("genParticle is not a tau!");
     GenParticlePtrVector tauProducts;
     return FindDecayProducts(*genParticle,TauMuonicDecay,tauProducts,false) ||
                 FindDecayProducts(*genParticle,TauElectronDecay,tauProducts,false);
