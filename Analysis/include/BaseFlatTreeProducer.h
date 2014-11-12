@@ -282,7 +282,7 @@ protected:
                     final_state.taus.push_back(tau_products);
 //                    if(tau_products.finalStateChargedHadrons.size() != 0)
                     if(!IsLeptonicTau(tau)){
-                        std::cout << "FindAnalysisFinalState 1st" << std::endl;
+
                         final_state.hadronic_taus.push_back(tau_products);
                     }
                 }
@@ -312,7 +312,7 @@ protected:
                     final_state.taus.push_back(tau_products);
 //                    if(tau_products.finalStateChargedHadrons.size() != 0)
                     if(!IsLeptonicTau(tau)){
-                        std::cout << "FindAnalysisFinalState 2nd" << std::endl;
+
                         final_state.hadronic_taus.push_back(tau_products);
                     }
                 }
@@ -382,10 +382,10 @@ protected:
                  && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
             throw exception("not leptonic Z decay");
 
-        std::cout << "Ztt? " << ztt << std::endl;
+
         size_t n_hadronic_matches = 0, n_leptonic_matches = 0;
         for(const Candidate& reco_tau : hadronic_taus) {
-            std::cout << "RecoTau: " << reco_tau.momentum << std::endl;
+
             for(const GenParticle* gen_product : ZProducts) {
                 const VisibleGenObject visible_gen_object(gen_product);
 //                 std::cout <<  "GenVisibleTau: " << visible_gen_object.visibleMomentum <<
@@ -393,8 +393,7 @@ protected:
 //                             "; GenTauOrigin: " << visible_gen_object.origin->momentum <<
 //                               "; pdg: " << visible_gen_object.origin->pdg.Code.Name() << ", status= " <<
 //                               visible_gen_object.origin->status << std::endl;
-                if((gen_product->pdg.Code == particles::tau && gen_product->status == particles::Decayed_or_fragmented &&
-                    IsLeptonicTau(gen_product)) ||
+                if(gen_product->pdg.Code != particles::tau || IsLeptonicTau(gen_product) ||
                         visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
                 if(HasMatchWithMCObject(reco_tau.momentum, &visible_gen_object, deltaR_matchGenParticle, true)) {
                     ++n_hadronic_matches;
@@ -410,7 +409,7 @@ protected:
             }
         }
         //genEvent.Print();
-        std::cout << "Done Z matches, " << n_hadronic_matches << " " << n_leptonic_matches << std::endl;
+
         if(ztt && n_hadronic_matches == hadronic_taus.size()) return ntuple::EventType::ZTT;
         if(n_leptonic_matches) return ztt ? ntuple::EventType::ZTT_L : ntuple::EventType::ZL;
         return ntuple::EventType::ZJ;

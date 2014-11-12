@@ -47,13 +47,8 @@ static const particles::ParticleCodes TauElectronDecay = { particles::e, particl
 inline bool IsLeptonicTau(const GenParticle* genParticle)
 {
     GenParticlePtrVector tauProducts;
-    if (!FindDecayProducts(*genParticle,TauMuonicDecay,tauProducts,false) &&
-            !FindDecayProducts(*genParticle,TauElectronDecay,tauProducts,false)) {
-        std::cout << "It is HadTau" << std::endl;
-        return false;
-    }
-    std::cout << "It is LeptTau" << std::endl;
-    return true;
+    return FindDecayProducts(*genParticle,TauMuonicDecay,tauProducts,false) ||
+                FindDecayProducts(*genParticle,TauElectronDecay,tauProducts,false);
 }
 
 inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,

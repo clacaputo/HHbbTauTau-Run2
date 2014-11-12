@@ -49,7 +49,7 @@ public:
         auto _event = std::shared_ptr<analysis::EventDescriptor>(new analysis::EventDescriptor());
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor.ExtractNext(*_event); ++n) {
             timer.Report(n);
-            std::cout << _event->eventId().eventId << std::endl;
+//            std::cout << _event->eventId().eventId << std::endl;
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             try {
                 HmutauAnalyzer.ProcessEvent(_event);
