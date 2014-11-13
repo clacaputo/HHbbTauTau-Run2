@@ -154,7 +154,7 @@ protected:
         selection.retagged_bjets = CollectBJets(selection.jetsPt20, config.isMC(), true);
 
 
-        selection.MET_with_recoil_corrections = ApplyRecoilCorrections(selection.higgs, selection.muTau_MC.resonance,
+        selection.MET_with_recoil_corrections = ApplyRecoilCorrections(selection.higgs, selection.muTau_MC.Higgs_TauTau,
                                                                        selection.jets.size(), correctedMET);
         return selection;
     }
