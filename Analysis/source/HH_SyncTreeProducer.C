@@ -137,8 +137,8 @@ protected:
         syncTree->metcov10() = event.metcov10;
         syncTree->metcov11() = event.metcov11;
 
-        syncTree->mvamet() = eventInfo.MET.Pt();
-        syncTree->mvametphi() = eventInfo.MET.Phi();
+        syncTree->mvamet() = event.mvamet;
+        syncTree->mvametphi() = event.mvametphi;
         syncTree->mvacov00() = event.mvacov00;
         syncTree->mvacov01() = event.mvacov01;
         syncTree->mvacov10() = event.mvacov10;
@@ -195,7 +195,8 @@ protected:
 //            syncTree->jpass_2() = default_value;
 //        }
 
-        syncTree->nbtag() = event.nBjets_retagged;
+        //syncTree->nbtag() = event.nBjets_retagged;
+        syncTree->nbtag() = event.nBjets;
 
         syncTree->bpt_1() = default_value;
         syncTree->beta_1() = default_value;

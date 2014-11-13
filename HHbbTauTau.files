@@ -305,3 +305,4 @@ PrintTools/source/compareDataCard.C
 PrintTools/source/runDataCardComparison.pl
 Analysis/config/dyjets_old.cfg
 Analysis/source/HH_SyncTreeProducer.C
+Analysis/config/Wjets_old.cfg
