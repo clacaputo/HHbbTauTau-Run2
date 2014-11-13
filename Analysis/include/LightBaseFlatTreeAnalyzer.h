@@ -69,7 +69,7 @@ public:
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
         : inputFile(new TFile(inputFileName.c_str(),"READ")),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
-          flatTree(new ntuple::FlatTree(*inputFile, "flatTree")), recalc_kinfit(true)
+          flatTree(new ntuple::FlatTree(*inputFile, "flatTree")), recalc_kinfit(false)
     {
         TH1::SetDefaultSumw2();
     }
@@ -95,25 +95,6 @@ protected:
 
     TFile& GetOutputFile() { return *outputFile; }
 
-    bool PassSelection(const FlatEventInfo& eventInfo, EventCategory /*category*/) const
-    {
-        using namespace cuts::Htautau_Summer13;
-        const ntuple::Flat& event = *eventInfo.event;
-        if(eventInfo.channel == Channel::MuTau)
-            return event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    && event.againstMuonTight_2
-                    && event.mt_1 < MuTau::muonID::mt
-                    && event.pfRelIso_1 < MuTau::muonID::pFRelIso
-                    && event.q_1 * event.q_2 == -1;
-
-        if(eventInfo.channel == Channel::TauTau)
-            return event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    && event.againstElectronLooseMVA_2
-                    && event.q_1 * event.q_2 == -1;
-
-        throw exception("Channel '") << eventInfo.channel << "' is not supported.";
-    }
 
     analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo) const
     {

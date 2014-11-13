@@ -304,3 +304,4 @@ Analysis/studies/EventSelectionStudy.C
 PrintTools/source/compareDataCard.C
 PrintTools/source/runDataCardComparison.pl
 Analysis/config/dyjets_old.cfg
+Analysis/source/HH_SyncTreeProducer.C
