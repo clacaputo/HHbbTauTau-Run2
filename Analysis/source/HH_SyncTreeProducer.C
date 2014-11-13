@@ -55,12 +55,11 @@ protected:
     {
         using analysis::EventCategory;
 
-        const analysis::EventRegionSet interestedEventRegion = {analysis::EventRegion::OS_Isolated,
-                                                     analysis::EventRegion::SS_Isolated};
+//        const analysis::EventRegionSet interestedEventRegion = {analysis::EventRegion::OS_Isolated,
+//                                                     analysis::EventRegion::SS_Isolated};
 
         if (category != EventCategory::Inclusive) return;
-        const analysis::EventRegion eventRegion = DetermineEventRegion(eventInfo);
-        if (!interestedEventRegion.count(eventRegion)) return;
+        if (!PassSyncTreeSelection(eventInfo)) return;
 
         const ntuple::Flat& event = *eventInfo.event;
         static const double default_value = ntuple::DefaultFillValueForSyncTree();

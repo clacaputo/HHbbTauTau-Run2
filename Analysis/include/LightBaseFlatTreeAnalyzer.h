@@ -96,6 +96,39 @@ protected:
     TFile& GetOutputFile() { return *outputFile; }
 
 
+    bool PassSyncTreeSelection(const FlatEventInfo& eventInfo) const
+    {
+        using analysis::EventRegion;
+        const ntuple::Flat& event = *eventInfo.event;
+        if (eventInfo.channel == Channel::MuTau){
+            using namespace cuts::Htautau_Summer13::MuTau;
+
+            if(!event.againstMuonTight_2
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || event.pfRelIso_1 >= muonID::pFRelIso || event.q_1 * event.q_2 == +1)
+                return false;
+            return true;
+        }
+        if (eventInfo.channel == Channel::ETau){
+            using namespace cuts::Htautau_Summer13::ETau;
+
+            if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || event.pfRelIso_1 >= electronID::pFRelIso || event.q_1 * event.q_2 == +1)
+                return false;
+            return true;
+        }
+        if (eventInfo.channel == Channel::TauTau){
+            using namespace cuts::Htautau_Summer13::TauTau::tauID;
+
+            if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+                        || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits)
+                return false;
+            return true;
+        }
+        throw analysis::exception("unsupported channel ") << eventInfo.channel;
+    }
+
     analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo) const
     {
         using analysis::EventRegion;
