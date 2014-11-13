@@ -195,8 +195,8 @@ protected:
 //            syncTree->jpass_2() = default_value;
 //        }
 
-        //syncTree->nbtag() = event.nBjets_retagged;
-        syncTree->nbtag() = event.nBjets;
+        syncTree->nbtag() = event.nBjets_retagged;
+        //syncTree->nbtag() = event.nBjets;
 
         syncTree->bpt_1() = default_value;
         syncTree->beta_1() = default_value;
