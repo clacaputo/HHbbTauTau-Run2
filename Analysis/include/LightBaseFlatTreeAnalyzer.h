@@ -69,7 +69,7 @@ public:
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
         : inputFile(new TFile(inputFileName.c_str(),"READ")),
           outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
-          flatTree(new ntuple::FlatTree(*inputFile, "flatTree")), recalc_kinfit(false)
+          flatTree(new ntuple::FlatTree(*inputFile, "flatTree")), recalc_kinfit(true)
     {
         TH1::SetDefaultSumw2();
     }
