@@ -159,8 +159,8 @@ protected:
         for(const Candidate& higgs : higgses) {
             const Candidate& subleading_tau = higgs.GetSubleadingDaughter(Candidate::Tau);
             const ntuple::Tau& ntuple_subleadingTau = correctedTaus.at(subleading_tau.index);
-            const bool passAgainstElectronLoose = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-                        ntuple_subleadingTau.againstElectronMVA3category, ntuple_subleadingTau.againstElectronMVA3raw, 0);
+            const bool passAgainstElectronLoose =
+                    cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(ntuple_subleadingTau,0);
             if(passAgainstElectronLoose)
                 result.push_back(higgs);
         }
