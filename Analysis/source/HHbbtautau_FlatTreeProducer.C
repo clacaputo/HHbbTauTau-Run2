@@ -366,6 +366,7 @@ protected:
         flatTree->passid_1() = false;
         flatTree->passiso_1() = false;
         flatTree->decayMode_1() = ntuple_tau_leg1.decayMode;
+        flatTree->iso_1() = ntuple_tau_leg1.byIsolationMVAraw;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = ntuple_tau_leg1.byCombinedIsolationDeltaBetaCorrRaw3Hits;
         flatTree->againstElectronLooseMVA_1() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg1, 0);
@@ -381,6 +382,8 @@ protected:
         flatTree->againstMuonLoose_1() = ntuple_tau_leg1.againstMuonLoose;
         flatTree->againstMuonMedium_1() = ntuple_tau_leg1.againstMuonMedium;
         flatTree->againstMuonTight_1() = ntuple_tau_leg1.againstMuonTight;
+        flatTree->againstElectronMVA3raw_1() = ntuple_tau_leg1.againstElectronMVA3raw;
+        flatTree->byIsolationMVA2raw_1() = ntuple_tau_leg1.byIsolationMVA2raw;
 
         const auto leadTau_matches = analysis::FindMatchedObjects(leadTau.momentum, selection.tauTau_MC.hadronic_taus,
                                                                   cuts::DeltaR_MC_Match);
