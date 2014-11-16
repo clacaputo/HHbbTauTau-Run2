@@ -65,13 +65,20 @@
     /* First lepton - hadronic tau specific */ \
     SIMPLE_VAR(Int_t, decayMode_1) /* tau decay mode as defined in ntuple::tau_id::hadronicDecayMode */ \
     SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_1) /* tau raw isolation value */ \
+    SIMPLE_VAR(Float_t, iso_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Bool_t, againstElectronLooseMVA_1) /* Whether tau passes loose MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_1) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_1) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronVTightMVA_1) /* Whether tau passes very tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_custom_1) /* Whether tau passes loose MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_custom_1) /* Whether tau passes medium MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_custom_1) /* Whether tau passes tight MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_custom_1) /* Whether tau passes very tight MVA against electron custom discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_1) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_1) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_1) /* Whether tau passes tight against electron discriminator */ \
+    SIMPLE_VAR(Float_t, againstElectronMVA3raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, byIsolationMVA2raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Bool_t, againstMuonLoose_1) /* Whether tau passes loose against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonMedium_1) /* Whether tau passes medium against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonTight_1) /* Whether tau passes tight against muon discriminator */ \
@@ -87,6 +94,7 @@
     SIMPLE_VAR(Float_t, mt_2) /* mT of second lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, d0_2) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_2) /* dZ with respect to primary vertex */ \
+    SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     /* Gen particle quantities of second signal lepton matched with the truth */ \
     SIMPLE_VAR(Int_t, pdgId_2_MC) /* PDG ID or particles::NONEXISTENT, if there is no matched genParticle. */ \
     SIMPLE_VAR(Float_t, pt_2_MC) /* pT */ \
@@ -104,9 +112,15 @@
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_2) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronVTightMVA_2) /* Whether tau passes very tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_custom_2) /* Whether tau passes loose MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_custom_2) /* Whether tau passes medium MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_custom_2) /* Whether tau passes tight MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_custom_2) /* Whether tau passes very tight MVA against electron custom discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_2) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_2) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_2) /* Whether tau passes tight against electron discriminator */ \
+    SIMPLE_VAR(Float_t, againstElectronMVA3raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, byIsolationMVA2raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Bool_t, againstMuonLoose_2) /* Whether tau passes loose against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonMedium_2) /* Whether tau passes medium against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonTight_2) /* Whether tau passes tight against muon discriminator */ \
@@ -195,6 +209,14 @@
     /* Jets info */ \
     SIMPLE_VAR(Int_t, njets) /* number of jets passing jet id ( pt > 30 ) */ \
     SIMPLE_VAR(Int_t, njetspt20) /* number of jets passing jet id ( pt > 20 ) */ \
+    /* All jets pt > 30 sorted in pt after applying Jet energy corrections (excluding hadronic Tau) */ \
+    VECTOR_VAR(Float_t, pt_jets) /* Jets Pt after corrections */ \
+    VECTOR_VAR(Float_t, eta_jets) /* Jets Eta */ \
+    VECTOR_VAR(Float_t, phi_jets) /* Jets Phi */ \
+    VECTOR_VAR(Float_t, ptraw_jets) /* Jets Raw Pt (before corrections) */ \
+    VECTOR_VAR(Float_t, ptunc_jets) /* Jet Unc (relative to Jet corrected pT) */ \
+    VECTOR_VAR(Float_t, mva_jets) /* Jet MVA id value */ \
+    VECTOR_VAR(Bool_t, passPU_jets) /* Whether Jet pass PU Id Loose WP */ \
     /* b-jets info */ \
     SIMPLE_VAR(Int_t, nBjets) /* number of btags not passing btag id (medium CSV WP) ( pt > 20 ) without re-tag applied */ \
     SIMPLE_VAR(Int_t, nBjets_retagged) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \

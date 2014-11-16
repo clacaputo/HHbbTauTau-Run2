@@ -270,14 +270,20 @@ protected:
         // RM: for the three channels, mt, et, tt this leg is always a tau
         const ntuple::Tau& ntuple_tau_leg2 = selection.GetLeg2()->GetNtupleObject<ntuple::Tau>();
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
-        flatTree->againstElectronLooseMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+        flatTree->iso_2()                  = ntuple_tau_leg2.byIsolationMVAraw;
+        flatTree->againstElectronLooseMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg2, 0);
-        flatTree->againstElectronMediumMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+        flatTree->againstElectronMediumMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg2, 1);
-        flatTree->againstElectronTightMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+        flatTree->againstElectronTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg2, 2);
-        flatTree->againstElectronVTightMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+        flatTree->againstElectronVTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg2, 3);
+        flatTree->againstElectronLooseMVA_2() = ntuple_tau_leg2.againstElectronLooseMVA3;
+        flatTree->againstElectronMediumMVA_2() = ntuple_tau_leg2.againstElectronMediumMVA3;
+        flatTree->againstElectronTightMVA_2() = ntuple_tau_leg2.againstElectronTightMVA3;
+        flatTree->againstElectronVTightMVA_2() = ntuple_tau_leg2.againstElectronVTightMVA3;
+
         flatTree->againstElectronLoose_2()                     = ntuple_tau_leg2.againstElectronLoose  ;
         flatTree->againstElectronMedium_2()                    = ntuple_tau_leg2.againstElectronMedium ;
         flatTree->againstElectronTight_2()                     = ntuple_tau_leg2.againstElectronTight  ;
@@ -285,6 +291,8 @@ protected:
         flatTree->againstMuonMedium_2()                        = ntuple_tau_leg2.againstMuonMedium     ;
         flatTree->againstMuonTight_2()                         = ntuple_tau_leg2.againstMuonTight      ;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.byCombinedIsolationDeltaBetaCorrRaw3Hits ;
+        flatTree->againstElectronMVA3raw_2()                   = ntuple_tau_leg2.againstElectronMVA3raw;
+        flatTree->byIsolationMVA2raw_2()                       = ntuple_tau_leg2.byIsolationMVA2raw;
 
         // Jets
         flatTree->njets()     = selection.jets.size();
@@ -292,8 +300,20 @@ protected:
         flatTree->nBjets()    = selection.bjets_all.size();
         flatTree->nBjets_retagged()    = selection.retagged_bjets.size();
 
-        for (const CandidatePtr& jet : selection.bjets_all) {
-            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();
+
+        for (const Candidate& jet : selection.jets){
+            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
+            flatTree->pt_jets().push_back(jet.momentum.Pt());
+            flatTree->eta_jets().push_back(jet.momentum.Eta());
+            flatTree->phi_jets().push_back(jet.momentum.Phi());
+            flatTree->ptraw_jets().push_back(ntuple_jet.pt_raw);
+            flatTree->ptunc_jets().push_back(ntuple_jet.pt_raw);//to put uncertainties -> put pt_raw only to compile
+            flatTree->mva_jets().push_back(ntuple_jet.puIdMVA);
+            flatTree->passPU_jets().push_back(ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits));
+        }
+
+        for (const Candidate& jet : selection.bjets_all) {
+            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
 
             flatTree->pt_Bjets()      .push_back( jet->GetMomentum().Pt() );
             flatTree->eta_Bjets()     .push_back( jet->GetMomentum().Eta() );

@@ -57,6 +57,8 @@ protected:
         if (!analysis::TwoJetsEventCategories.count(category)) return;
         const analysis::EventRegion eventRegion = DetermineEventRegion(eventInfo);
         if (eventRegion == analysis::EventRegion::Unknown) return;
+        if (eventInfo.fitResults.fit_bb_tt.convergence != 0) return;
+        //std::cout << "event: " << eventInfo.event->evt << ", convergence= " << eventInfo.fitResults.fit_bb_tt.convergence << std::endl;
         kinFitTree->evt() = eventInfo.event->evt;
         kinFitTree->channel() = static_cast<int>(eventInfo.channel);
         kinFitTree->eventCategory() = static_cast<int>(category);

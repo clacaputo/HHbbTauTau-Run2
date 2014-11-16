@@ -380,17 +380,24 @@ protected:
         flatTree->passid_1() = true;
         flatTree->passiso_1() = ntuple_electron.pfRelIso < cuts::Htautau_Summer13::ETau::electronID::pFRelIso;
         flatTree->decayMode_1() = default_int_value;
+        flatTree->iso_1() = ntuple_electron.pfRelIso;
         flatTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = default_value;
         flatTree->againstElectronLooseMVA_1() = false;
         flatTree->againstElectronMediumMVA_1() = false;
         flatTree->againstElectronTightMVA_1() = false;
         flatTree->againstElectronVTightMVA_1() = false;
+        flatTree->againstElectronLooseMVA_custom_1() = false;
+        flatTree->againstElectronMediumMVA_custom_1() = false;
+        flatTree->againstElectronTightMVA_custom_1() = false;
+        flatTree->againstElectronVTightMVA_custom_1() = false;
         flatTree->againstElectronLoose_1() = false;
         flatTree->againstElectronMedium_1() = false;
         flatTree->againstElectronTight_1() = false;
         flatTree->againstMuonLoose_1() = false;
         flatTree->againstMuonMedium_1() = false;
         flatTree->againstMuonTight_1() = false;
+        flatTree->againstElectronMVA3raw_1() = default_int_value;
+        flatTree->byIsolationMVA2raw_1() = default_int_value;
 
         const bool electron_matched = analysis::HasMatchWithMCParticle(electron->GetMomentum(),
                                                                        selection.eTau_MC.electron,

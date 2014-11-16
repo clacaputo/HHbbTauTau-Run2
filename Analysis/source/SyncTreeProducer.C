@@ -99,12 +99,12 @@ protected:
         syncTree->d0_1() = event.d0_1;
         syncTree->dZ_1() = event.dZ_1;
 
-        // leg1 lepton specific variable should be filled outside. Here all them set to the default value.
-        syncTree->iso_1() = event.pfRelIso_1;
+        // MVA iso for hadronic Tau, Delta Beta for muon and electron
+        syncTree->iso_1() = event.iso_1;
         syncTree->mva_1() = event.mva_1;
         syncTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_1() = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1;
-        syncTree->againstElectronMVA3raw_1() = default_value;
-        syncTree->byIsolationMVA2raw_1() = default_value;
+        syncTree->againstElectronMVA3raw_1() = event.againstElectronMVA3raw_1;
+        syncTree->byIsolationMVA2raw_1() = event.byIsolationMVA2raw_1;
         syncTree->againstMuonLoose2_1() = event.againstMuonLoose_1;
         syncTree->againstMuonMedium2_1() = event.againstMuonMedium_1;
         syncTree->againstMuonTight2_1() = event.againstMuonTight_1;
@@ -118,10 +118,10 @@ protected:
         syncTree->d0_2() = event.d0_2;
         syncTree->dZ_2() = event.dZ_2;
 
-        syncTree->iso_2() = default_value;
+        syncTree->iso_2() = event.iso_2;
         syncTree->byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2;
-        syncTree->againstElectronMVA3raw_2() = default_value;
-        syncTree->byIsolationMVA2raw_2() = default_value;
+        syncTree->againstElectronMVA3raw_2() = event.againstElectronMVA3raw_2;
+        syncTree->byIsolationMVA2raw_2() = event.byIsolationMVA2raw_2;
         syncTree->againstMuonLoose2_2() = event.againstMuonLoose_2;
         syncTree->againstMuonMedium2_2() = event.againstMuonMedium_2;
         syncTree->againstMuonTight2_2() = event.againstMuonTight_2;
@@ -146,53 +146,40 @@ protected:
         syncTree->njets() = event.njets;
         syncTree->njetspt20() = event.njetspt20;
 
-//        if (event.njets >= 1) {
-//            const Candidate& jet = jets.at(0);
-//            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
-//            syncTree->jpt_1() = event
-//            syncTree->jeta_1() = jet.momentum.Eta();
-//            syncTree->jphi_1() = jet.momentum.Phi();
-//            syncTree->jptraw_1() = ntuple_jet.pt_raw;
-//            //syncTree->jptunc_1();
-//            syncTree->jmva_1() = ntuple_jet.puIdMVA;
-//            //syncTree->jlrm_1();
-//            //syncTree->jctm_1();
-//            syncTree->jpass_1() = ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits);
-//        } else {
-//            syncTree->jpt_1() = default_value;
-//            syncTree->jeta_1() = default_value;
-//            syncTree->jphi_1() = default_value;
-//            syncTree->jptraw_1() = default_value;
-//            //syncTree->jptunc_1() = default_value;
-//            syncTree->jmva_1() = default_value;
-////            syncTree->jlrm_1() = default_value;
-////            syncTree->jctm_1() = default_value;
-//            syncTree->jpass_1() = default_value;
-//        }
+        syncTree->jpt_1() = default_value;
+        syncTree->jeta_1() = default_value;
+        syncTree->jphi_1() = default_value;
+        syncTree->jptraw_1() = default_value;
+        //syncTree->jptunc_1() = default_value;
+        syncTree->jmva_1() = default_value;
+        syncTree->jpass_1() = default_value;
+        syncTree->jpt_2() = default_value;
+        syncTree->jeta_2() = default_value;
+        syncTree->jphi_2() = default_value;
+        syncTree->jptraw_2() = default_value;
+//            syncTree->jptunc_2() = default_value;
+        syncTree->jmva_2() = default_value;
+        syncTree->jpass_2() = default_value;
 
-//        if (jets.size() >= 2) {
-//            const Candidate& jet = jets.at(1);
-//            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
-//            syncTree->jpt_2() = jet.momentum.Pt();
-//            syncTree->jeta_2() = jet.momentum.Eta();
-//            syncTree->jphi_2() = jet.momentum.Phi();
-//            syncTree->jptraw_2() = ntuple_jet.pt_raw;
-//            //syncTree->jptunc_2();
-//            syncTree->jmva_2() = ntuple_jet.puIdMVA;
-//            //syncTree->jlrm_2();
-//            //syncTree->jctm_2();
-//            syncTree->jpass_2() = ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits);
-//        } else {
-//            syncTree->jpt_2() = default_value;
-//            syncTree->jeta_2() = default_value;
-//            syncTree->jphi_2() = default_value;
-//            syncTree->jptraw_2() = default_value;
-////            syncTree->jptunc_2() = default_value;
-//            syncTree->jmva_2() = default_value;
-////            syncTree->jlrm_2() = default_value;
-////            syncTree->jctm_2() = default_value;
-//            syncTree->jpass_2() = default_value;
-//        }
+        if (event.njets >= 1) {
+            syncTree->jpt_1() = event.pt_jets.at(0);
+            syncTree->jeta_1() = event.eta_jets.at(0);
+            syncTree->jphi_1() = event.phi_jets.at(0);
+            syncTree->jptraw_1() = event.ptraw_jets.at(0);
+            //syncTree->jptunc_1();
+            syncTree->jmva_1() = event.mva_jets.at(0);
+            syncTree->jpass_1() = event.passPU_jets.at(0);
+        }
+
+        if (jets.size() >= 2) {
+            syncTree->jpt_2() = event.pt_jets.at(1);
+            syncTree->jeta_2() = event.eta_jets.at(1);
+            syncTree->jphi_2() = event.phi_jets.at(1);
+            syncTree->jptraw_2() = event.ptraw_jets.at(1);
+            //syncTree->jptunc_2();
+            syncTree->jmva_2() = event.mva_jets.at(1);
+            syncTree->jpass_2() = event.passPU_jets.at(1);
+        }
 
         syncTree->nbtag() = event.nBjets_retagged;
         //syncTree->nbtag() = event.nBjets;
