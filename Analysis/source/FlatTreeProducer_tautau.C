@@ -157,8 +157,8 @@ protected:
         cut(true, ">0 tau cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
-        cut(Y(DeltaZ)  < dz, "dz");
+//        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
+//        cut(Y(DeltaZ)  < dz, "dz");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
