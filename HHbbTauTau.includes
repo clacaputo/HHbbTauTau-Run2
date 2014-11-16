@@ -6,3 +6,4 @@ $$(BOOST_INCLUDE_PATH)
 $$(ROOT_INCLUDE_PATH)
 $$(HEPMC_INCLUDE_PATH)
 /usr/include
+Analysis/include

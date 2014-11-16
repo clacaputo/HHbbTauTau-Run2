@@ -262,49 +262,8 @@ FitResults Fit(const FitInput& input)
 
 } // namespace two_body
 
-struct FitResultsWithUncertainties {
-    four_body::FitResults fit_bb_tt;
-    four_body::FitResults fit_bb_tt_down;
-    four_body::FitResults fit_bb_tt_up;
-    four_body::FitResults fit_bb_down_tt_down;
-    four_body::FitResults fit_bb_down_tt_up;
-    four_body::FitResults fit_bb_up_tt_down;
-    four_body::FitResults fit_bb_up_tt_up;
-
-    two_body::FitResults fit_bb;
-    two_body::FitResults fit_bb_down;
-    two_body::FitResults fit_bb_up;
-};
-
-inline FitResultsWithUncertainties FitWithUncertainties(const four_body::FitInput& input, double bjet_energy_uncertainty,
-                                                        double tau_energy_uncertainty, bool fit_two_bjets,
-                                                        bool fit_four_body)
-{
-    FitResultsWithUncertainties result;
-    if(fit_four_body) {
-        result.fit_bb_tt = four_body::Fit(input);
-        result.fit_bb_tt_down = four_body::Fit(four_body::FitInput(input, 1, 1 - tau_energy_uncertainty));
-        result.fit_bb_tt_up = four_body::Fit(four_body::FitInput(input, 1, 1 + tau_energy_uncertainty));
-//        result.fit_bb_down_tt_down = four_body::Fit(four_body::FitInput(input, 1 - bjet_energy_uncertainty,
-//                                                                        1 - tau_energy_uncertainty));
-//        result.fit_bb_down_tt_up = four_body::Fit(four_body::FitInput(input, 1 - bjet_energy_uncertainty,
-//                                                                      1 + tau_energy_uncertainty));
-//        result.fit_bb_up_tt_down = four_body::Fit(four_body::FitInput(input, 1 + bjet_energy_uncertainty,
-//                                                                      1 - tau_energy_uncertainty));
-//        result.fit_bb_up_tt_up = four_body::Fit(four_body::FitInput(input, 1 + bjet_energy_uncertainty,
-//                                                                    1 + tau_energy_uncertainty));
-    }
-    if(fit_two_bjets) {
-//        const two_body::FitInput two_body_input(input.bjet_momentums.at(0), input.bjet_momentums.at(1));
-//        result.fit_bb = two_body::Fit(two_body_input);
-//        result.fit_bb_down = two_body::Fit(two_body::FitInput(two_body_input, 1 - bjet_energy_uncertainty));
-//        result.fit_bb_up = two_body::Fit(two_body::FitInput(two_body_input, 1 + bjet_energy_uncertainty));
-    }
-    return result;
-}
-
 typedef std::pair<size_t, size_t> FitId;
-typedef std::map<FitId, FitResultsWithUncertainties> FitResultsMap;
+typedef std::map<FitId, four_body::FitResults> FitResultsMap;
 
 } // namespace kinematic_fit
 } // namespace analysis

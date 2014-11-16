@@ -62,14 +62,9 @@ struct FitResults {
     FitResults() : has_valid_mass(false), mass(default_value), has_valid_momentum(false) {}
 };
 
-struct FitResultsWithUncertainties {
+struct CombinedFitResults {
     FitResults fit_vegas;
-    FitResults fit_vegas_down;
-    FitResults fit_vegas_up;
-
     FitResults fit_mc;
-    FitResults fit_mc_down;
-    FitResults fit_mc_up;
 };
 
 inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate, const ntuple::MET& met,
@@ -140,21 +135,14 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
     return result;
 }
 
-inline FitResultsWithUncertainties FitWithUncertainties(const Candidate& higgsCandidate, const ntuple::MET& met,
-                                                        double tau_energy_uncertainty, bool fitWithVegas,
-                                                        bool fitWithMarkovChain)
+CombinedFitResults CombinedFit(const Candidate& higgsCandidate, const ntuple::MET& met, bool fitWithVegas,
+                               bool fitWithMarkovChain)
 {
-    FitResultsWithUncertainties result;
-    if(fitWithVegas) {
+    CombinedFitResults result;
+    if(fitWithVegas)
         result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1.);
-        result.fit_vegas_up = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 + tau_energy_uncertainty);
-        result.fit_vegas_down = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 - tau_energy_uncertainty);
-    }
-    if(fitWithMarkovChain) {
+    if(fitWithMarkovChain)
         result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1.);
-        result.fit_mc_up = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 + tau_energy_uncertainty);
-        result.fit_mc_down = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 - tau_energy_uncertainty);
-    }
     return result;
 }
 

@@ -54,17 +54,16 @@ public:
     virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event) override
     {
         using namespace analysis;
-        using namespace cuts::Htautau_Summer13;
 
         BaseAnalyzer::ProcessEvent(_event);
 
         SelectionResults& selection = ApplyBaselineSelection();
 
-        selection.svfitResults = sv_fit::FitWithUncertainties(*selection.higgs, selection.MET_with_recoil_corrections,
-                                                              tauCorrections::energyUncertainty, true, true);
+        selection.svfitResults = sv_fit::CombinedFit(*selection.higgs, selection.MET_with_recoil_corrections,
+                                                     true, true);
 
         selection.kinfitResults = RunKinematicFit(selection.bjets_all, *selection.higgs,
-                                                  selection.MET_with_recoil_corrections, true, true);
+                                                  selection.MET_with_recoil_corrections);
         FillFlatTree(selection);
     }
 
@@ -78,6 +77,7 @@ protected:
         flatTree->lumi() = event->eventInfo().lumis;
         flatTree->evt() = event->eventInfo().EventId;
         flatTree->eventType() = static_cast<int>(selection.eventType);
+        flatTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
 
         flatTree->npv() = selection.vertices.size();
         if (config.ApplyPUreweight()){
@@ -104,65 +104,23 @@ protected:
         flatTree->mvis() = selection.higgs->GetMomentum().M();
         flatTree->m_sv_vegas() = selection.svfitResults.fit_vegas.has_valid_mass
                 ? selection.svfitResults.fit_vegas.mass : default_value;
-        flatTree->m_sv_up_vegas() = selection.svfitResults.fit_vegas_up.has_valid_mass
-                ? selection.svfitResults.fit_vegas_up.mass : default_value;
-        flatTree->m_sv_down_vegas() = selection.svfitResults.fit_vegas_down.has_valid_mass
-                ? selection.svfitResults.fit_vegas_down.mass : default_value;
         flatTree->m_sv_MC() = selection.svfitResults.fit_mc.has_valid_mass
                 ? selection.svfitResults.fit_mc.mass : default_value;
         flatTree->pt_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
                 ? selection.svfitResults.fit_mc.momentum.Pt() : default_value;
-        flatTree->m_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_mass
-                ? selection.svfitResults.fit_mc_up.mass : default_value;
-        flatTree->pt_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_momentum
-                ? selection.svfitResults.fit_mc_up.momentum.Pt() : default_value;
-        flatTree->m_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_mass
-                ? selection.svfitResults.fit_mc_down.mass : default_value;
-        flatTree->pt_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
-                ? selection.svfitResults.fit_mc_down.momentum.Pt() : default_value;
         flatTree->eta_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
                 ? selection.svfitResults.fit_mc.momentum.Eta() : default_value;
         flatTree->phi_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
                 ? selection.svfitResults.fit_mc.momentum.Phi() : default_value;
-        flatTree->eta_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_momentum
-                ? selection.svfitResults.fit_mc_up.momentum.Eta() : default_value;
-        flatTree->phi_sv_up_MC() = selection.svfitResults.fit_mc_up.has_valid_momentum
-                ? selection.svfitResults.fit_mc_up.momentum.Phi() : default_value;
-        flatTree->eta_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
-                ? selection.svfitResults.fit_mc_down.momentum.Eta() : default_value;
-        flatTree->phi_sv_down_MC() = selection.svfitResults.fit_mc_down.has_valid_momentum
-                ? selection.svfitResults.fit_mc_down.momentum.Phi() : default_value;
+
         flatTree->DeltaR_leptons() = selection.GetLeg1()->GetMomentum().DeltaR(selection.GetLeg2()->GetMomentum()) ;
         flatTree->pt_tt()          = (selection.GetLeg1()->GetMomentum() + selection.GetLeg2()->GetMomentum()).Pt();
 
         // Kinematic fit
-        for(const auto& fit_result_entry : selection.kinfitResults) {
-            const kinematic_fit::four_body::FitResults& result_4body = fit_result_entry.second.fit_bb_tt;
-            flatTree->kinfit_bb_tt_mass().push_back(result_4body.mass);
-            flatTree->kinfit_bb_tt_convergence().push_back(result_4body.convergence);
-            flatTree->kinfit_bb_tt_chi2().push_back(result_4body.chi2);
-            flatTree->kinfit_bb_tt_pull_balance().push_back(result_4body.pull_balance);
-            const kinematic_fit::four_body::FitResults& result_4body_tt_up = fit_result_entry.second.fit_bb_tt_up;
-            flatTree->kinfit_bb_tt_up_mass().push_back(result_4body_tt_up.mass);
-            flatTree->kinfit_bb_tt_up_convergence().push_back(result_4body_tt_up.convergence);
-            flatTree->kinfit_bb_tt_up_chi2().push_back(result_4body_tt_up.chi2);
-            flatTree->kinfit_bb_tt_up_pull_balance().push_back(result_4body_tt_up.pull_balance);
-            const kinematic_fit::four_body::FitResults& result_4body_tt_down = fit_result_entry.second.fit_bb_tt_down;
-            flatTree->kinfit_bb_tt_down_mass().push_back(result_4body_tt_down.mass);
-            flatTree->kinfit_bb_tt_down_convergence().push_back(result_4body_tt_down.convergence);
-            flatTree->kinfit_bb_tt_down_chi2().push_back(result_4body_tt_down.chi2);
-            flatTree->kinfit_bb_tt_down_pull_balance().push_back(result_4body_tt_down.pull_balance);
-
-//            const kinematic_fit::two_body::FitResults& result_2body = fit_result_entry.second.fit_bb;
-//            TLorentzVector ditau_momentum;
-//            ditau_momentum.SetPtEtaPhiM(svfitResults.fit_mc.pt, higgs.momentum.Eta(), higgs.momentum.Phi(),
-//                                        svfitResults.fit_mc.mass);
-//            const TLorentzVector combined_momentum = ditau_momentum + result_2body.bjet_momentums.at(0)
-//                                                                    + result_2body.bjet_momentums.at(1);
-//            flatTree->kinfit_bb_sv_mass().push_back(combined_momentum.M());
-//            flatTree->kinfit_bb_convergence().push_back(result_2body.convergence);
-//            flatTree->kinfit_bb_chi2().push_back(result_2body.chi2);
-        }
+        flatTree->kinfit_bb_tt_mass() = selection.kinfitResults.mass;
+        flatTree->kinfit_bb_tt_convergence() = selection.kinfitResults.convergence;
+        flatTree->kinfit_bb_tt_chi2() = selection.kinfitResults.chi2;
+        flatTree->kinfit_bb_tt_pull_balance() = selection.kinfitResults.pull_balance;
 
         // Hhh generator info candidate
         if(selection.GetFinalStateMC().resonance) {

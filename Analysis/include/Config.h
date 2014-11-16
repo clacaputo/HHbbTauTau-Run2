@@ -50,6 +50,9 @@ public:
     ANA_CONFIG_PARAMETER(bool, ApplyEtoTauFakeRate, false)
     ANA_CONFIG_PARAMETER(bool, ApplyJetToTauFakeRate, false)
 
+    ANA_CONFIG_PARAMETER(bool, EstimateTauEnergyUncertainties, false)
+    ANA_CONFIG_PARAMETER(bool, EstimateJetEnergyUncertainties, false)
+
     ANA_CONFIG_PARAMETER(bool, ApplyPUreweight, false)
     ANA_CONFIG_PARAMETER(std::string, PUreweight_fileName, "")
     ANA_CONFIG_PARAMETER(double, PUreweight_maxAvailablePU, 60.0)

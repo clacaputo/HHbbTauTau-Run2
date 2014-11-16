@@ -300,3 +300,4 @@ PrintTools/source/runDataCardComparison.pl
 Analysis/config/dyjets_old.cfg
 Analysis/source/SyncTreeProducer.C
 Analysis/config/Wjets_old.cfg
+Analysis/include/JetEnergyUncertainty.h

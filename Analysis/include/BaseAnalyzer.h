@@ -100,8 +100,8 @@ private:
 struct SelectionResults {
     virtual ~SelectionResults() {}
     CandidatePtr higgs;
-    sv_fit::FitResultsWithUncertainties svfitResults;
-    kinematic_fit::FitResultsMap kinfitResults;
+    sv_fit::CombinedFitResults svfitResults;
+    kinematic_fit::four_body::FitResults kinfitResults;
     CandidatePtrVector jets;
     CandidatePtrVector jetsPt20;
     CandidatePtrVector bjets_all;
@@ -155,15 +155,15 @@ public:
             timer->Report(n);
 //            std::cout << "event = " << _event->eventId().eventId << std::endl;
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
-            try {
-                ProcessEvent(_event);
-            } catch(cuts::cut_failed&){}
-            GetAnaData().Selection("event").fill_selection(eventWeight);
+            TryProcessEvent(_event, EventEnergyScale::Central);
             if(config.RunSingleEvent()) break;
+            if(config.EstimateTauEnergyUncertainties()) {
+                TryProcessEvent(_event, EventEnergyScale::TauUp);
+                TryProcessEvent(_event, EventEnergyScale::TauDown);
+            }
         }
         timer->Report(n, true);
     }
-
 
     virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)
     {
@@ -187,10 +187,38 @@ public:
         return eventWeight;
     }
 
+private:
+    void TryProcessEvent(std::shared_ptr<const EventDescriptor> _event, EventEnergyScale energyScale)
+    {
+        eventEnergyScale = energyScale;
+        scaledTaus = _event->taus();
+        scaledJets = _event->jets();
+        if(energyScale == EventEnergyScale::TauUp || energyScale == EventEnergyScale::TauDown) {
+            const double sign = energyScale == EventEnergyScale::TauUp ? +1 : -1;
+            const double sf = 1.0 + sign * cuts::Htautau_Summer13::tauCorrections::energyUncertainty;
+            for(ntuple::Tau& tau : scaledTaus) {
+                const TLorentzVector momentum = MakeLorentzVectorPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
+                const TLorentzVector scaled_momentum = momentum * sf;
+                tau.pt = scaled_momentum.Pt();
+                tau.eta = scaled_momentum.Eta();
+                tau.phi = scaled_momentum.Phi();
+                tau.mass = scaled_momentum.M();
+            }
+        }
+
+        try {
+            ProcessEvent(_event);
+        } catch(cuts::cut_failed&){}
+        GetAnaData().Selection("event").fill_selection(eventWeight);
+    }
+
 protected:
     virtual BaseAnalyzerData& GetAnaData() = 0;
     virtual RecoilCorrectionProducer& GetRecoilCorrectionProducer() = 0;
     virtual SelectionResults& ApplyBaselineSelection() = 0;
+
+    const ntuple::TauVector& GetNtupleTaus() const { return scaledTaus; }
+    const ntuple::JetVector& GetNtupleJets() const { return scaledJets; }
 
     void SetPUWeight(float nPU)
     {
@@ -469,7 +497,7 @@ protected:
 
     CandidatePtrVector CollectLooseJets()
     {
-        return CollectCandidateObjects("loose_jets", &BaseAnalyzer::SelectLooseJet, event->jets());
+        return CollectCandidateObjects("loose_jets", &BaseAnalyzer::SelectLooseJet, GetNtupleJets());
     }
 
     virtual void SelectLooseJet(const CandidatePtr& jet, SelectionManager& selectionManager, cuts::Cutter& cut)
@@ -587,7 +615,7 @@ protected:
 
         ntuple::TauVector correctedTaus;
 
-        for(const ntuple::Tau& tau : event->taus()) {
+        for(const ntuple::Tau& tau : GetNtupleTaus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
 
@@ -608,7 +636,7 @@ protected:
     ntuple::MET ApplyTauCorrectionsToMVAMET(const ntuple::MET& metMVA, const ntuple::TauVector& correctedTaus)
     {
         TLorentzVector sumCorrectedTaus, sumTaus;
-        for(const ntuple::Tau& tau : event->taus()) {
+        for(const ntuple::Tau& tau : GetNtupleTaus()) {
             TLorentzVector momentum;
             momentum.SetPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
             sumTaus += momentum;
@@ -895,30 +923,23 @@ protected:
         return false;
     }
 
-    kinematic_fit::FitResultsMap RunKinematicFit(const CandidatePtrVector& bjets, const Candidate& higgs_to_taus,
-                                                 const ntuple::MET& met, bool fit_two_bjets, bool fit_four_body)
+    kinematic_fit::four_body::FitResults RunKinematicFit(const CandidatePtrVector& bjets,
+                                                         const Candidate& higgs_to_taus, const ntuple::MET& met)
     {
-        using namespace kinematic_fit;
+        using namespace kinematic_fit::four_body;
         using namespace cuts::Htautau_Summer13;
 
-        FitResultsMap result;
-        TLorentzVector met_momentum;
-        met_momentum.SetPtEtaPhiM(met.pt, 0, met.phi, 0);
+        if(bjets.size() < 2)
+            return FitResults();
+
+        const TLorentzVector met_momentum = MakeLorentzVectorPtEtaPhiM(met.pt, 0, met.phi, 0);
         const TMatrix met_cov = ntuple::VectorToSignificanceMatrix(met.significanceMatrix);
 
-        for(size_t n = 0; n < bjets.size(); ++n) {
-            for(size_t k = n + 1; k < bjets.size(); ++k) {
-                const FitId id(n, k);
-                const four_body::FitInput input(bjets.at(n)->GetMomentum(), bjets.at(k)->GetMomentum(),
-                                                higgs_to_taus.GetDaughters().at(0)->GetMomentum(),
-                                                higgs_to_taus.GetDaughters().at(1)->GetMomentum(),
-                                                met_momentum, met_cov);
-                result[id] = FitWithUncertainties(input, cuts::jetCorrections::energyUncertainty,
-                                                  tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
-
-            }
-        }
-        return result;
+        const FitInput input(bjets.at(0)->GetMomentum(), bjets.at(1)->GetMomentum(),
+                             higgs_to_taus.GetDaughters().at(0)->GetMomentum(),
+                             higgs_to_taus.GetDaughters().at(1)->GetMomentum(),
+                             met_momentum, met_cov);
+        return Fit(input);
     }
 
     ntuple::MET ComputeMvaMet(const CandidatePtr& higgs, const VertexPtrVector& goodVertices)
@@ -929,12 +950,12 @@ protected:
             if(daughter->GetType() == Candidate::Type::Tau) {
                 const ntuple::Tau* ntuple_tau = &daughter->GetNtupleObject<ntuple::Tau>();
                 const auto position = ntuple_tau - &(*correctedTaus.begin());
-                original = CandidatePtr(new Candidate(event->taus().at(position)));
+                original = CandidatePtr(new Candidate(GetNtupleTaus().at(position)));
             }
             originalDaughters.push_back(original);
         }
         CandidatePtr originalHiggs(new Candidate(higgs->GetType(), originalDaughters.at(0), originalDaughters.at(1)));
-        return mvaMetProducer.ComputeMvaMet(originalHiggs, event->pfCandidates(), event->jets(), primaryVertex,
+        return mvaMetProducer.ComputeMvaMet(originalHiggs, event->pfCandidates(), GetNtupleJets(), primaryVertex,
                                             goodVertices);
     }
 
@@ -953,6 +974,11 @@ protected:
     std::shared_ptr<TH1D> pu_weights;
     MvaMetProducer mvaMetProducer;
     ntuple::TauVector correctedTaus;
+    EventEnergyScale eventEnergyScale;
+
+private:
+    ntuple::TauVector scaledTaus;
+    ntuple::JetVector scaledJets;
 };
 
 } // analysis
