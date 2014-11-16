@@ -1,5 +1,5 @@
 /*!
- * \file HmutauFlatTreeProducer.C
+ * \file FlatTreeProducer_mutau.C
  * \brief Generate flat-tree for Htautau analysis using looser selection.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
@@ -29,21 +29,21 @@
 namespace analysis {
 struct SelectionResults_mutau : public SelectionResults {
     finalState::bbMuTaujet muTau_MC;
-    const Candidate& GetMuon() const { return higgs.GetDaughter(Candidate::Mu); }
-    const Candidate& GetTau() const { return higgs.GetDaughter(Candidate::Tau); }
+    CandidatePtr GetMuon() const { return higgs->GetDaughter(Candidate::Type::Muon); }
+    CandidatePtr GetTau() const { return higgs->GetDaughter(Candidate::Type::Tau); }
 
-    virtual const Candidate& GetLeg1() const override { return GetMuon(); }
-    virtual const Candidate& GetLeg2() const override { return GetTau(); }
+    virtual CandidatePtr GetLeg1() const override { return GetMuon(); }
+    virtual CandidatePtr GetLeg2() const override { return GetTau(); }
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return muTau_MC; }
 };
 } // namespace analysis
 
-class HHbbmutau_FlatTreeProducer : public virtual analysis::BaseFlatTreeProducer {
+class FlatTreeProducer_mutau : public virtual analysis::BaseFlatTreeProducer {
 public:
-    HHbbmutau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
-                               const std::string& configFileName, const std::string& _prefix = "none",
-                               size_t _maxNumberOfEvents = 0,
-                               std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
+    FlatTreeProducer_mutau(const std::string& inputFileName, const std::string& outputFileName,
+                           const std::string& configFileName, const std::string& _prefix = "none",
+                           size_t _maxNumberOfEvents = 0,
+                           std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile)
     {
@@ -82,10 +82,11 @@ protected:
 
         selection.vertices = CollectVertices();
         cut(selection.vertices.size(), "vertex");
-        primaryVertex = selection.vertices.front();
+        primaryVertex = selection.GetPrimaryVertex();
 
         const auto z_muons = CollectZmuons();
-        const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Z, "Z_mu_mu", 0);
+        const auto z_muon_candidates = FindCompatibleObjects(z_muons, ZmumuVeto::deltaR, Candidate::Type::Z,
+                                                             "Z_mu_mu", 0);
         cut(!z_muon_candidates.size(), "z_mumu_veto");
 
         const auto electrons_bkg = CollectBackgroundElectrons();
@@ -111,11 +112,11 @@ protected:
 
         // First check OS, isolated higgs candidates
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
-        auto higgses = FindCompatibleObjects(muons, signaltaus, DeltaR_betweenSignalObjects, Candidate::Higgs,
+        auto higgses = FindCompatibleObjects(muons, signaltaus, DeltaR_betweenSignalObjects, Candidate::Type::Higgs,
                                              "H_mu_tau", 0);
         if(!higgses.size())
             higgses = FindCompatibleObjects(allmuons, alltaus, DeltaR_betweenSignalObjects,
-                                            Candidate::Higgs, "H_mu_tau");
+                                            Candidate::Type::Higgs, "H_mu_tau");
 
         cut(higgses.size(), "mu_tau");
 
@@ -138,9 +139,7 @@ protected:
             selection.pfMET = event->metPF();
 
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(selection.higgs, event->pfCandidates(),
-                                                                event->jets(), primaryVertex,
-                                                                selection.vertices, event->taus());
+        const ntuple::MET mvaMet = ComputeMvaMet(selection.higgs, selection.vertices);
 
         const ntuple::MET correctedMET = config.ApplyTauESCorrection()
                 ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
@@ -159,15 +158,12 @@ protected:
         return selection;
     }
 
-    virtual analysis::Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                           root_ext::AnalyzerData& _anaData,
-                                           const std::string& selection_label) override
+    virtual void SelectMuon(const analysis::CandidatePtr& muon, analysis::SelectionManager& selectionManager,
+                            cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::muonID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event->muons().at(id);
-        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+        const ntuple::Muon& object = muon->GetNtupleObject<ntuple::Muon>();
 
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
@@ -177,52 +173,30 @@ protected:
         cut(X(nMatchedStations) > nMatched_Stations, "stations");
         cut(X(pixHits) > pixHits, "pix_hits");
         cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
+        const double dB_PV = analysis::Calculate_dxy(mu_vertex, primaryVertex->GetPosition(), muon->GetMomentum());
         cut(std::abs( Y(dB_PV) ) < dB, "dB");
-        //cut(X(pfRelIso) < cuts::skim::MuTau::pFRelIso, "pFRelIso");
-
-        return muon;
     }
 
-    virtual analysis::Candidate SelectSignalMuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                                 root_ext::AnalyzerData& _anaData,
-                                                 const std::string& selection_label) override
+    virtual void SelectSignalMuon(const analysis::CandidatePtr& muon,
+                                  analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::muonID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event->muons().at(id);
-        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+        const ntuple::Muon& object = muon->GetNtupleObject<ntuple::Muon>();
 
-        cut(true, ">0 mu cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
-        cut(X(isPFMuon) == isPFMuon, "PF");
-        cut(X(nMatchedStations) > nMatched_Stations, "stations");
-        cut(X(pixHits) > pixHits, "pix_hits");
-        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double dB_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
-        cut(std::abs( Y(dB_PV) ) < dB, "dB");
+        SelectMuon(muon, selectionManager, cut);
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
-
-        return muon;
     }
 
-    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData,
-                                          const std::string& selection_label) override
+    virtual void SelectTau(const analysis::CandidatePtr& tau, analysis::SelectionManager& selectionManager,
+                           cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::tauID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
+        const ntuple::Tau& object = tau->GetNtupleObject<ntuple::Tau>();
 
         cut(true, ">0 tau cand");
         cut(X(pt) > pt, "pt");
@@ -231,69 +205,48 @@ protected:
         cut(X(againstMuonLoose) > cuts::skim::MuTau::tauID::againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits)
-            < cuts::skim::MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+            < cuts::skim::MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "relaxed_Iso3Hits");
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
-
-        const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
-        return tau;
     }
 
-    virtual analysis::Candidate SelectSignalTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                                root_ext::AnalyzerData& _anaData,
-                                                const std::string& selection_label) override
+    virtual void SelectSignalTau(const analysis::CandidatePtr& tau,
+                                 analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::MuTau;
         using namespace cuts::Htautau_Summer13::MuTau::tauID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
+        const ntuple::Tau& object = tau->GetNtupleObject<ntuple::Tau>();
 
-        cut(true, ">0 tau cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
+        SelectTau(tau, selectionManager, cut);
         cut(X(againstMuonTight) > againstMuonTight, "vs_mu_tight");
-        cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
-        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-
-
-        const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
-
-        return tau;
+        cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "loose_Iso3Hits");
     }
 
-    analysis::CandidateVector CollectZmuons()
+    analysis::CandidatePtrVector CollectZmuons()
     {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectZmuon(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event->muons().size());
+        const auto base_selector = [&](const analysis::CandidatePtr& candidate,
+                                       analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+            { SelectZmuon(candidate, selectionManager, cut); };
+        return CollectObjects<analysis::Candidate>("z_muons", base_selector, event->muons());
     }
 
-    virtual analysis::Candidate SelectZmuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                            root_ext::AnalyzerData& _anaData,
-                                            const std::string& selection_label)
+    virtual void SelectZmuon(const analysis::CandidatePtr& muon, analysis::SelectionManager& selectionManager,
+                             cuts::Cutter& cut)
     {
         using namespace cuts::Htautau_Summer13::MuTau::ZmumuVeto;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Muon& object = event->muons().at(id);
-        const analysis::Candidate muon(analysis::Candidate::Mu, id, object);
+        const ntuple::Muon& object = muon->GetNtupleObject<ntuple::Muon>();
 
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 mu_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = analysis::Calculate_dxy(mu_vertex,primaryVertex.position,muon.momentum);
+        const double d0_PV = analysis::Calculate_dxy(mu_vertex, primaryVertex->GetPosition(), muon->GetMomentum());
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(isTrackerMuon) == isTrackerMuon, "trackerMuon");
         cut(X(isPFMuon) == isPFMuon, "PFMuon");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
-
-        return muon;
     }
 
     bool FindAnalysisFinalState(analysis::finalState::bbMuTaujet& final_state)
@@ -319,21 +272,21 @@ protected:
         return true;
     }
 
-    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateTriggerWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::MuTau;
-        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        triggerWeights = config.isDYEmbeddedSample() ? CalculateTurnOnCurveData(mu.momentum,tau.momentum) :
-                                                     CalculateWeights(mu.momentum, tau.momentum);
+        const analysis::CandidatePtr& mu = higgs->GetDaughter(analysis::Candidate::Type::Muon);
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        triggerWeights = config.isDYEmbeddedSample() ? CalculateTurnOnCurveData(mu->GetMomentum(), tau->GetMomentum()) :
+                                                     CalculateWeights(mu->GetMomentum(), tau->GetMomentum());
     }
 
-    virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateIsoWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::muonISOscaleFactor;
         IsoWeights.clear();
-        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
-        const double mu_pt = mu.momentum.Pt(), mu_eta = std::abs(mu.momentum.Eta());
+        const analysis::CandidatePtr& mu = higgs->GetDaughter(analysis::Candidate::Type::Muon);
+        const double mu_pt = mu->GetMomentum().Pt(), mu_eta = std::abs(mu->GetMomentum().Eta());
         if(mu_pt < pt.at(0))
             throw std::runtime_error("No information about ISO. Muon pt is too small");
         const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
@@ -346,12 +299,12 @@ protected:
         IsoWeights.push_back(1);
     }
 
-    virtual void CalculateIdWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateIdWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::muonIDscaleFactor;
         IDweights.clear();
-        const analysis::Candidate& mu = higgs.GetDaughter(analysis::Candidate::Mu);
-        const double mu_pt = mu.momentum.Pt(), mu_eta = std::abs(mu.momentum.Eta());
+        const analysis::CandidatePtr& mu = higgs->GetDaughter(analysis::Candidate::Type::Muon);
+        const double mu_pt = mu->GetMomentum().Pt(), mu_eta = std::abs(mu->GetMomentum().Eta());
         if(mu_pt < pt.at(0))
             throw std::runtime_error("No information about ID. Muon pt is too small");
         const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
@@ -364,23 +317,24 @@ protected:
         IDweights.push_back(1);
     }
 
-    virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateFakeWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
         fakeWeights.clear();
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        double fakeJetToTauWeight = config.ApplyJetToTauFakeRate() ? CalculateJetToTauFakeWeight(tau.momentum.Pt()) : 1;
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        const double fakeJetToTauWeight = config.ApplyJetToTauFakeRate()
+                ? CalculateJetToTauFakeWeight(tau->GetMomentum().Pt()) : 1;
         // first mu, second tau
         fakeWeights.push_back(1);
         fakeWeights.push_back(fakeJetToTauWeight);
 
     }
 
-    virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateDMWeights(const analysis::CandidatePtr& higgs) override
     {
         DMweights.clear();
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& tau_leg = correctedTaus.at(tau.index);
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
         const double weight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ?
                                   cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
         // first mu, second tau
@@ -395,9 +349,9 @@ protected:
 
         BaseFlatTreeProducer::FillFlatTree(selection);
 
-        const analysis::Candidate& muon = selection.GetMuon();
-        const ntuple::Muon& ntuple_muon = event->muons().at(muon.index);
-        const analysis::Candidate& tau = selection.GetTau();
+        const analysis::CandidatePtr& muon = selection.GetMuon();
+        const ntuple::Muon& ntuple_muon = muon->GetNtupleObject<ntuple::Muon>();
+        const analysis::CandidatePtr& tau = selection.GetTau();
 
         flatTree->channel() = static_cast<int>(analysis::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
@@ -417,7 +371,7 @@ protected:
         flatTree->againstMuonMedium_1() = false;
         flatTree->againstMuonTight_1() = false;
 
-        const bool muon_matched = analysis::HasMatchWithMCParticle(muon.momentum, selection.muTau_MC.muon,
+        const bool muon_matched = analysis::HasMatchWithMCParticle(muon->GetMomentum(), selection.muTau_MC.muon,
                                                                    cuts::DeltaR_MC_Match);
         if(muon_matched) {
             const TLorentzVector& momentum = selection.muTau_MC.muon->momentum;
@@ -442,7 +396,7 @@ protected:
             flatTree->pdgId_1_MC() = particles::NONEXISTENT.RawCode();
         }
 
-        const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, selection.muTau_MC.tau_jet,
+        const bool tau_matched = analysis::HasMatchWithMCObject(tau->GetMomentum(), selection.muTau_MC.tau_jet,
                                                                 cuts::DeltaR_MC_Match);
         if(tau_matched) {
             const TLorentzVector& momentum = selection.muTau_MC.tau_jet->origin->momentum;

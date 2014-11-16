@@ -60,19 +60,11 @@
     ENTRY_1D(cuts::ObjectSelector, name) \
     /**/
 
-/*
-#define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get(&object.name, #name, selection_label), eventWeight)
+#define X(name) \
+    selectionManager.FillHistogram(object.name, #name)
 
-#define Y(name, ...) \
-    cuts::fill_histogram( name, _anaData.Get(&name, #name, selection_label), eventWeight)
-*/
-
-#define X(name, ...) \
-    cuts::fill_histogram( object.name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), eventWeight)
-
-#define Y(name, ...) \
-    cuts::fill_histogram( name, _anaData.Get((TH1D*)nullptr, #name, selection_label, ##__VA_ARGS__), eventWeight)
+#define Y(name) \
+    selectionManager.FillHistogram(name, #name)
 
 namespace analysis {
 
@@ -85,6 +77,44 @@ public:
 
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
+};
+
+class SelectionManager {
+public:
+    SelectionManager(root_ext::AnalyzerData& _anaData, const std::string& _selection_label, double _eventWeight)
+        : anaData(&_anaData), selection_label(_selection_label), eventWeight(_eventWeight) {}
+
+    template<typename ValueType>
+    ValueType FillHistogram(ValueType value, const std::string& histogram_name)
+    {
+        auto& histogram = anaData->Get(static_cast<TH1D*>(nullptr), histogram_name, selection_label);
+        return cuts::fill_histogram(value, histogram, eventWeight);
+    }
+
+private:
+    root_ext::AnalyzerData* anaData;
+    std::string selection_label;
+    double eventWeight;
+};
+
+struct SelectionResults {
+    virtual ~SelectionResults() {}
+    CandidatePtr higgs;
+    sv_fit::FitResultsWithUncertainties svfitResults;
+    kinematic_fit::FitResultsMap kinfitResults;
+    CandidatePtrVector jets;
+    CandidatePtrVector jetsPt20;
+    CandidatePtrVector bjets_all;
+    CandidatePtrVector retagged_bjets;
+    VertexPtrVector vertices;
+    ntuple::MET pfMET;
+    ntuple::MET MET_with_recoil_corrections;
+    ntuple::EventType eventType;
+
+    VertexPtr GetPrimaryVertex() const { return vertices.front(); }
+    virtual CandidatePtr GetLeg1() const = 0;
+    virtual CandidatePtr GetLeg2() const = 0;
+    virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
 };
 
 class BaseAnalyzer {
@@ -160,6 +190,7 @@ public:
 protected:
     virtual BaseAnalyzerData& GetAnaData() = 0;
     virtual RecoilCorrectionProducer& GetRecoilCorrectionProducer() = 0;
+    virtual SelectionResults& ApplyBaselineSelection() = 0;
 
     void SetPUWeight(float nPU)
     {
@@ -170,7 +201,7 @@ protected:
         PUweight = goodBin ? pu_weights->GetBinContent(bin) : config.PUreweight_defaultWeight();
     }
 
-    void CalculateFullEventWeight(const Candidate& candidate)
+    void CalculateFullEventWeight(const CandidatePtr& candidate)
     {
         CalculateTriggerWeights(candidate);
         CalculateIsoWeights(candidate);
@@ -194,11 +225,40 @@ protected:
         }
     }
 
-    virtual void CalculateTriggerWeights(const Candidate& candidate) = 0;
-    virtual void CalculateIsoWeights(const Candidate& candidate) = 0;
-    virtual void CalculateIdWeights(const Candidate& candidate) = 0;
-    virtual void CalculateDMWeights(const Candidate& candidate) = 0;
-    virtual void CalculateFakeWeights(const Candidate& candidate) = 0;
+    virtual void CalculateTriggerWeights(const CandidatePtr& candidate)
+    {
+        triggerWeights.clear();
+        triggerWeights.push_back(1);
+        triggerWeights.push_back(1);
+    }
+
+    virtual void CalculateIsoWeights(const CandidatePtr& candidate)
+    {
+        IsoWeights.clear();
+        IsoWeights.push_back(1);
+        IsoWeights.push_back(1);
+    }
+
+    virtual void CalculateIdWeights(const CandidatePtr& candidate)
+    {
+        IDweights.clear();
+        IDweights.push_back(1);
+        IDweights.push_back(1);
+    }
+
+    virtual void CalculateDMWeights(const CandidatePtr& candidate)
+    {
+        DMweights.clear();
+        DMweights.push_back(1);
+        DMweights.push_back(1);
+    }
+
+    virtual void CalculateFakeWeights(const CandidatePtr& candidate)
+    {
+        fakeWeights.clear();
+        fakeWeights.push_back(1);
+        fakeWeights.push_back(1);
+    }
 
     bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const
     {
@@ -225,157 +285,253 @@ protected:
         return firedPaths;
     }
 
-    template<typename ObjectType, typename BaseSelectorType>
-    std::vector<ObjectType> CollectObjects(const std::string& selection_label, const BaseSelectorType& base_selector,
-                                           size_t n_objects)
+    template<typename ObjectType, typename BaseSelectorType, typename NtupleObjectType,
+             typename ObjectPtrType = std::shared_ptr<const ObjectType>,
+             typename Comparitor = std::less<ObjectPtrType> >
+    std::vector<ObjectPtrType> CollectObjects(const std::string& selection_label, const BaseSelectorType& base_selector,
+                                              const std::vector<NtupleObjectType>& ntuple_objects,
+                                              Comparitor comparitor = Comparitor())
     {
         cuts::ObjectSelector& objectSelector = GetAnaData().Selection(selection_label);
-        const auto selector = [&](size_t id) -> ObjectType
-            { return base_selector(id, &objectSelector, anaDataBeforeCut, selection_label); };
+        SelectionManager selectionManager(anaDataBeforeCut, selection_label, eventWeight);
 
-        const auto selected = objectSelector.collect_objects<ObjectType>(eventWeight, n_objects,selector);
-        for(const ObjectType& candidate : selected)
-            base_selector(candidate.index, nullptr, anaDataAfterCut, selection_label);
-        GetAnaData().N_objects(selection_label).Fill(selected.size(),eventWeight);
-        GetAnaData().N_objects(selection_label + "_ntuple").Fill(n_objects,eventWeight);
+        const auto selector = [&](size_t id) -> ObjectPtrType {
+            ObjectPtrType candidate(new ObjectType(ntuple_objects.at(id)));
+            cuts::Cutter cut(&objectSelector);
+            base_selector(candidate, selectionManager, cut);
+            return candidate;
+        };
+
+        const auto selected = objectSelector.collect_objects<ObjectPtrType>(eventWeight, ntuple_objects.size(),
+                                                                            selector, comparitor);
+        SelectionManager selectionManager_afterCut(anaDataAfterCut, selection_label, eventWeight);
+        for(const auto& candidate : selected) {
+            cuts::Cutter cut(nullptr);
+            base_selector(candidate, selectionManager_afterCut, cut);
+        }
+        GetAnaData().N_objects(selection_label).Fill(selected.size(), eventWeight);
+        GetAnaData().N_objects(selection_label + "_ntuple").Fill(ntuple_objects.size(), eventWeight);
         return selected;
     }
 
-    template<typename BaseSelectorMethod>
-    CandidateVector CollectCandidateObjects(const std::string& selection_label, BaseSelectorMethod selector_method,
-                                            size_t n_objects)
+    template<typename BaseSelectorMethod, typename NtupleObjectType>
+    CandidatePtrVector CollectCandidateObjects(const std::string& selection_label, BaseSelectorMethod selector_method,
+                                               const std::vector<NtupleObjectType>& ntuple_objects)
     {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Candidate
-            { return (this->*selector_method)(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<Candidate>(selection_label, base_selector, n_objects);
+        const auto base_selector = [&](const CandidatePtr& candidate, SelectionManager& selectionManager,
+                                       cuts::Cutter& cut)
+            { (this->*selector_method)(candidate, selectionManager, cut); };
+        return CollectObjects<Candidate>(selection_label, base_selector, ntuple_objects);
     }
 
-    CandidateVector CollectMuons()
+    CandidatePtrVector CollectMuons()
     {
-        return CollectCandidateObjects("muons", &BaseAnalyzer::SelectMuon, event->muons().size());
+        return CollectCandidateObjects("muons", &BaseAnalyzer::SelectMuon, event->muons());
     }
 
-    CandidateVector CollectSignalMuons()
+    CandidatePtrVector CollectSignalMuons()
     {
-        return CollectCandidateObjects("muons", &BaseAnalyzer::SelectSignalMuon, event->muons().size());
+        return CollectCandidateObjects("muons_sgn", &BaseAnalyzer::SelectSignalMuon, event->muons());
     }
 
-    virtual Candidate SelectMuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                 const std::string& selection_label)
+    virtual void SelectMuon(const CandidatePtr& candidate, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
         throw std::runtime_error("Muon selection for signal not implemented");
     }
 
-    virtual Candidate SelectSignalMuon(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                 const std::string& selection_label)
+    virtual void SelectSignalMuon(const CandidatePtr& candidate, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
         throw std::runtime_error("Signal muon selection for signal not implemented");
     }
 
-    CandidateVector CollectBackgroundMuons()
+    CandidatePtrVector CollectBackgroundMuons()
     {
-        return CollectCandidateObjects("muons_bkg", &BaseAnalyzer::SelectBackgroundMuon, event->muons().size());
+        return CollectCandidateObjects("muons_bkg", &BaseAnalyzer::SelectBackgroundMuon, event->muons());
     }
 
-    virtual Candidate SelectBackgroundMuon(size_t id, cuts::ObjectSelector* objectSelector,
-                                           root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+    virtual void SelectBackgroundMuon(const CandidatePtr& muon, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
-        throw std::runtime_error("Muon selection for background not implemented");
+        using namespace cuts::Htautau_Summer13::muonVeto;
+        const ntuple::Muon& object = muon->GetNtupleObject<ntuple::Muon>();
+
+        cut(true, ">0 mu cand");
+        cut(X(pt) > pt, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 mu_vertex(object.vx, object.vy, object.vz);
+        const double d0_PV = Calculate_dxy(mu_vertex, primaryVertex->GetPosition(), muon->GetMomentum());
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(isGlobalMuonPromptTight) == isGlobalMuonPromptTight, "tight");
+        cut(X(isPFMuon) == isPFMuon, "PF");
+        cut(X(nMatchedStations) > nMatched_Stations, "stations");
+        cut(X(pixHits) > pixHits, "pix_hits");
+        cut(X(trackerLayersWithMeasurement) > trackerLayersWithMeasurement, "layers");
+        cut(X(pfRelIso) < pfRelIso, "pFRelIso");
     }
 
-    CandidateVector CollectTaus()
+    CandidatePtrVector CollectTaus()
     {
-        return CollectCandidateObjects("taus", &BaseAnalyzer::SelectTau, event->taus().size());
+        return CollectCandidateObjects("taus", &BaseAnalyzer::SelectTau, correctedTaus);
     }
 
-    CandidateVector CollectSignalTaus()
+    CandidatePtrVector CollectSignalTaus()
     {
-        return CollectCandidateObjects("taus", &BaseAnalyzer::SelectSignalTau, event->taus().size());
+        return CollectCandidateObjects("taus_sgn", &BaseAnalyzer::SelectSignalTau, correctedTaus);
     }
 
-    virtual Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                const std::string& selection_label)
+    virtual void SelectTau(const CandidatePtr& candidate, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
         throw std::runtime_error("Tau selection for signal not implemented");
     }
 
-    virtual Candidate SelectSignalTau(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                const std::string& selection_label)
+    virtual void SelectSignalTau(const CandidatePtr& candidate, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
         throw std::runtime_error("Signal tau selection for signal not implemented");
     }
 
-    CandidateVector CollectElectrons()
+    CandidatePtrVector CollectElectrons()
     {
-        return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectElectron, event->electrons().size());
+        return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectElectron, event->electrons());
     }
 
-    CandidateVector CollectSignalElectrons()
+    CandidatePtrVector CollectSignalElectrons()
     {
-        return CollectCandidateObjects("electrons", &BaseAnalyzer::SelectSignalElectron, event->electrons().size());
+        return CollectCandidateObjects("electrons_sgn", &BaseAnalyzer::SelectSignalElectron, event->electrons());
     }
 
-    virtual Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                     const std::string& selection_label)
-    {
-        throw std::runtime_error("Electron selection for signal not implemented");
-    }
-
-    virtual Candidate SelectSignalElectron(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                                           const std::string& selection_label)
+    virtual void SelectElectron(const CandidatePtr& candidate, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
         throw std::runtime_error("Electron selection for signal not implemented");
     }
 
-    CandidateVector CollectBackgroundElectrons()
+    virtual void SelectSignalElectron(const CandidatePtr& candidate, SelectionManager& selectionManager,
+                                      cuts::Cutter& cut)
     {
-        return CollectCandidateObjects("electrons_bkg", &BaseAnalyzer::SelectBackgroundElectron,
-                                       event->electrons().size());
+        throw std::runtime_error("Electron selection for signal not implemented");
     }
 
-    virtual Candidate SelectBackgroundElectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                               root_ext::AnalyzerData& _anaData, const std::string& selection_label)
+    CandidatePtrVector CollectBackgroundElectrons()
     {
-        throw std::runtime_error("Electron selection for background not implemented");
+        return CollectCandidateObjects("electrons_bkg", &BaseAnalyzer::SelectBackgroundElectron, event->electrons());
     }
 
-    VertexVector CollectVertices()
+    virtual void SelectBackgroundElectron(const CandidatePtr& electron, SelectionManager& selectionManager,
+                                          cuts::Cutter& cut)
     {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> Vertex
-            { return SelectVertex(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<Vertex>("vertices", base_selector, event->vertices().size());
+        using namespace cuts::Htautau_Summer13::electronVeto;
+        const ntuple::Electron& object = electron->GetNtupleObject<ntuple::Electron>();
+
+        cut(true, ">0 ele cand");
+        cut(X(pt) > pt, "pt");
+        const double eta = std::abs( X(eta) );
+        cut(eta < eta_high, "eta");
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
+        cut(Y(DeltaZ)  < dz, "dz");
+        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
+        // same as dB
+        const double d0_PV = Calculate_dxy(ele_vertex, primaryVertex->GetPosition(), electron->GetMomentum());
+        cut(std::abs( Y(d0_PV) ) < d0, "d0");
+        cut(X(pfRelIso) < pFRelIso, "pFRelIso");
+        const size_t pt_index = object.pt < ref_pt ? 0 : 1;
+        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
+        cut(X(mvaPOGNonTrig) > MVApogNonTrig[pt_index][eta_index], "mva");
+        cut(X(missingHits) < missingHits, "missingHits");
+        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
     }
 
-    Vertex SelectVertex(size_t id, cuts::ObjectSelector* objectSelector, root_ext::AnalyzerData& _anaData,
-                        const std::string& selection_label)
+    CandidatePtrVector CollectBJets(const CandidatePtrVector& looseJets, bool doReTag, bool applyCsvCut)
+    {
+        using namespace cuts::Htautau_Summer13::btag;
+        CandidatePtrVector bjets;
+        for(const CandidatePtr& looseJetCandidate : looseJets) {
+            const ntuple::Jet& looseJet = looseJetCandidate->GetNtupleObject<ntuple::Jet>();
+            if(looseJet.pt <= pt || std::abs(looseJet.eta) >= eta) continue;
+            if(doReTag && !btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, 0, 0, CSV))
+                continue;
+            else if(!doReTag && applyCsvCut && looseJet.combinedSecondaryVertexBJetTags <= CSV)
+                continue;
+
+            bjets.push_back(looseJetCandidate);
+        }
+
+        const auto bjetsSelector = [&] (const CandidatePtr& first, const CandidatePtr& second) -> bool
+        {
+            const ntuple::Jet& first_bjet = first->GetNtupleObject<ntuple::Jet>();
+            const ntuple::Jet& second_bjet = second->GetNtupleObject<ntuple::Jet>();
+
+            return first_bjet.combinedSecondaryVertexBJetTags > second_bjet.combinedSecondaryVertexBJetTags;
+        };
+
+        std::sort(bjets.begin(), bjets.end(), bjetsSelector);
+        return bjets;
+    }
+
+    CandidatePtrVector CollectLooseJets()
+    {
+        return CollectCandidateObjects("loose_jets", &BaseAnalyzer::SelectLooseJet, event->jets());
+    }
+
+    virtual void SelectLooseJet(const CandidatePtr& jet, SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+        using namespace cuts::Htautau_Summer13::jetID;
+        const ntuple::Jet& object = jet->GetNtupleObject<ntuple::Jet>();
+
+        cut(true, ">0 jet cand");
+        cut(X(pt) > pt_loose, "pt");
+        cut(std::abs( X(eta) ) < eta, "eta");
+        const bool passLooseID = passPFLooseId(object);
+        cut(Y(passLooseID) == pfLooseID, "pfLooseID");
+        const bool passPUlooseID = ntuple::JetID_MVA::PassLooseId(object.puIdBits);
+        cut(Y(passPUlooseID) == puLooseID, "puLooseID");
+    }
+
+    CandidatePtrVector CollectJets(const CandidatePtrVector& looseJets)
+    {
+        using namespace cuts::Htautau_Summer13::jetID;
+        CandidatePtrVector jets;
+        for(const CandidatePtr& looseJet : looseJets) {
+            if(looseJet->GetMomentum().Pt() > pt)
+                jets.push_back(looseJet);
+        }
+        return jets;
+    }
+
+    VertexPtrVector CollectVertices()
+    {
+        const auto base_selector = [&](const VertexPtr& vertex, SelectionManager& selectionManager,
+                                       cuts::Cutter& cut)
+            { SelectVertex(vertex, selectionManager, cut); };
+        const auto vertex_comparitor = [&](const VertexPtr& first, const VertexPtr& second) -> bool
+            { return *first < *second; };
+        return CollectObjects<Vertex>("vertices", base_selector, event->vertices(), vertex_comparitor);
+    }
+
+    void SelectVertex(const VertexPtr& vertex, SelectionManager& selectionManager, cuts::Cutter& cut)
     {
         using namespace cuts::Htautau_Summer13::vertex;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Vertex& object = event->vertices().at(id);
+        const ntuple::Vertex& object = vertex->GetNtupleObject();
 
         cut(true, ">0 vertex");
         cut(X(ndf) > ndf, "ndf");
         cut(std::abs( X(z) ) < z, "z");
         const double r_vertex = std::sqrt(object.x*object.x+object.y*object.y);
         cut(std::abs( Y(r_vertex) ) < r, "r");
-
-        return analysis::Vertex(id, object);
     }
 
-    CandidateVector FindCompatibleObjects(const CandidateVector& objects1, const CandidateVector& objects2,
+    CandidatePtrVector FindCompatibleObjects(const CandidatePtrVector& objects1, const CandidatePtrVector& objects2,
                                           double minDeltaR, Candidate::Type type, const std::string& hist_name,
                                           int expectedCharge = Candidate::UnknownCharge())
     {
-        CandidateVector result;
-        for(const Candidate& object1 : objects1) {
-            for(const Candidate& object2 : objects2) {
-                if(object2.momentum.DeltaR(object1.momentum) > minDeltaR) {
-                    const Candidate candidate(type, object1, object2);
-                    if (expectedCharge != Candidate::UnknownCharge() && candidate.charge != expectedCharge) continue;
+        CandidatePtrVector result;
+        for(const CandidatePtr& object1 : objects1) {
+            for(const CandidatePtr& object2 : objects2) {
+                if(object2->GetMomentum().DeltaR(object1->GetMomentum()) > minDeltaR) {
+                    const CandidatePtr candidate(new Candidate(type, object1, object2));
+                    if (expectedCharge != Candidate::UnknownCharge() && candidate->GetCharge() != expectedCharge)
+                        continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),eventWeight);
+                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),eventWeight);
                 }
             }
         }
@@ -384,10 +540,10 @@ protected:
     }
 
 
-    CandidateVector FindCompatibleObjects(const CandidateVector& objects, double minDeltaR, Candidate::Type type,
+    CandidatePtrVector FindCompatibleObjects(const CandidatePtrVector& objects, double minDeltaR, Candidate::Type type,
                                           const std::string& hist_name, int expectedCharge = Candidate::UnknownCharge())
     {
-        CandidateVector result;
+        CandidatePtrVector result;
         for (unsigned n = 0; n < objects.size(); ++n){
             for (unsigned k = n+1; k < objects.size(); ++k){
 //                std::cout << "first tau momentum " << objects.at(n).momentum << std::endl;
@@ -395,11 +551,12 @@ protected:
 //                std::cout << "DeltaR " << objects.at(n).momentum.DeltaR(objects.at(k).momentum) << std::endl;
 //                std::cout << "first tau charge " << objects.at(n).charge << std::endl;
 //                std::cout << "second tau charge " << objects.at(k).charge << std::endl;
-                if(objects.at(n).momentum.DeltaR(objects.at(k).momentum) > minDeltaR) {
-                    const Candidate candidate(type, objects.at(n), objects.at(k));
-                    if (expectedCharge != Candidate::UnknownCharge() && candidate.charge != expectedCharge ) continue;
+                if(objects.at(n)->GetMomentum().DeltaR(objects.at(k)->GetMomentum()) > minDeltaR) {
+                    const CandidatePtr candidate(new Candidate(type, objects.at(n), objects.at(k)));
+                    if (expectedCharge != Candidate::UnknownCharge() && candidate->GetCharge() != expectedCharge )
+                        continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate.momentum.M(),eventWeight);
+                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(), eventWeight);
                 }
             }
         }
@@ -407,15 +564,14 @@ protected:
         return result;
     }
 
-    CandidateVector FilterCompatibleObjects(const CandidateVector& objectsToFilter,
-                                            const Candidate& referenceObject,
-                                          double minDeltaR)
+    CandidatePtrVector FilterCompatibleObjects(const CandidatePtrVector& objectsToFilter,
+                                               const CandidatePtr& referenceObject, double minDeltaR)
     {
-        CandidateVector result;
-        for(const Candidate& filterObject : objectsToFilter) {
+        CandidatePtrVector result;
+        for(const CandidatePtr& filterObject : objectsToFilter) {
             bool allDaughterPassed = true;
-            for (const Candidate& daughter : referenceObject.finalStateDaughters){
-                if(filterObject.momentum.DeltaR(daughter.momentum) <= minDeltaR) {
+            for (const CandidatePtr& daughter : referenceObject->GetFinalStateDaughters()){
+                if(filterObject->GetMomentum().DeltaR(daughter->GetMomentum()) <= minDeltaR) {
                     allDaughterPassed = false;
                     break;
                 }
@@ -473,29 +629,29 @@ protected:
         return correctedMET;
     }
 
-    analysis::CandidateVector ApplyTriggerMatch(const analysis::CandidateVector& higgses,
-                                                        const std::set<std::string>& hltPaths,
-                                                        bool useStandardTriggerMatch)
+    CandidatePtrVector ApplyTriggerMatch(const CandidatePtrVector& higgses, const std::set<std::string>& hltPaths,
+                                         bool useStandardTriggerMatch)
     {
-        analysis::CandidateVector triggeredHiggses;
+        CandidatePtrVector triggeredHiggses;
         for (const auto& higgs : higgses){
-            if(!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(), hltPaths, higgs,
+            if(!useStandardTriggerMatch && HaveTriggerMatched(event->triggerObjects(), hltPaths, *higgs,
                                                                         cuts::Htautau_Summer13::DeltaR_triggerMatch))
                 triggeredHiggses.push_back(higgs);
-            if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event,hltPaths,higgs))
+            if (useStandardTriggerMatch && HaveTriggerMatched(hltPaths, *higgs))
                 triggeredHiggses.push_back(higgs);
         }
         return triggeredHiggses;
     }
 
-    ntuple::MET ApplyRecoilCorrections(const Candidate& higgs, const GenParticle* resonance,
+    ntuple::MET ApplyRecoilCorrections(const CandidatePtr& higgs, const GenParticle* resonance,
                                        const size_t njets, const ntuple::MET& correctedMET)
     {
         if (config.ApplyRecoilCorrection()){
             if(!resonance && config.ApplyRecoilCorrectionForW())
                 resonance = FindWboson();
             if(resonance)
-                return GetRecoilCorrectionProducer().ApplyCorrection(correctedMET, higgs.momentum, resonance->momentum, njets);
+                return GetRecoilCorrectionProducer().ApplyCorrection(correctedMET, higgs->GetMomentum(),
+                                                                     resonance->momentum, njets);
         }
         return correctedMET;
     }
@@ -507,9 +663,9 @@ protected:
         static const particles::ParticleCodes WDecay_electron = { particles::e, particles::nu_e };
         static const particles::ParticleCodes WDecay_muon = { particles::mu, particles::nu_mu };
 
-        const analysis::GenParticleSet Wparticles_all = genEvent.GetParticles(Wcode);
+        const GenParticleSet Wparticles_all = genEvent.GetParticles(Wcode);
 
-        analysis::GenParticleSet Wparticles;
+        GenParticleSet Wparticles;
         for(const GenParticle* w : Wparticles_all) {
             if(w->mothers.size() == 1) {
                 const GenParticle* mother = w->mothers.at(0);
@@ -527,8 +683,8 @@ protected:
         while(Wboson->daughters.size() == 1 && Wboson->daughters.front()->pdg.Code == particles::W_plus)
             Wboson = Wboson->daughters.front();
 
-        analysis::GenParticlePtrVector WProducts;
-        if(analysis::FindDecayProducts(*Wboson, WDecay_tau, WProducts,true))
+        GenParticlePtrVector WProducts;
+        if(FindDecayProducts(*Wboson, WDecay_tau, WProducts,true))
             return Wboson;
         if (!FindDecayProducts(*Wboson, WDecay_electron, WProducts,true)
                 && !FindDecayProducts(*Wboson, WDecay_muon, WProducts,true))
@@ -538,17 +694,17 @@ protected:
         return nullptr;
     }
 
-    const analysis::Candidate& SelectSemiLeptonicHiggs(const analysis::CandidateVector& higgses)
+    CandidatePtr SelectSemiLeptonicHiggs(const CandidatePtrVector& higgses)
     {
         if(!higgses.size())
             throw std::runtime_error("no available higgs candidate to select");
-        const auto higgsSelector = [&] (const analysis::Candidate& first, const analysis::Candidate& second) -> bool
+        const auto higgsSelector = [&] (const CandidatePtr& first, const CandidatePtr& second) -> bool
         {
-            const double first_Pt1 = first.daughters.at(0).momentum.Pt();
-            const double first_Pt2 = first.daughters.at(1).momentum.Pt();
+            const double first_Pt1 = first->GetDaughters().at(0)->GetMomentum().Pt();
+            const double first_Pt2 = first->GetDaughters().at(1)->GetMomentum().Pt();
             const double first_sumPt = first_Pt1 + first_Pt2;
-            const double second_Pt1 = second.daughters.at(0).momentum.Pt();
-            const double second_Pt2 = second.daughters.at(1).momentum.Pt();
+            const double second_Pt1 = second->GetDaughters().at(0)->GetMomentum().Pt();
+            const double second_Pt2 = second->GetDaughters().at(1)->GetMomentum().Pt();
             const double second_sumPt = second_Pt1 + second_Pt2;
 
             return first_sumPt < second_sumPt;
@@ -556,6 +712,231 @@ protected:
         return *std::max_element(higgses.begin(), higgses.end(), higgsSelector) ;
     }
 
+    bool FindAnalysisFinalState(finalState::bbTauTau& final_state)
+    {
+        static const particles::ParticleCodes resonanceCodes = { particles::MSSM_H, particles::MSSM_A };
+        static const particles::ParticleCodes resonanceDecay_1 = { particles::Higgs, particles::Higgs };
+        static const particles::ParticleCodes resonanceDecay_2 = { particles::Z, particles::Higgs };
+        static const particles::ParticleCodes SM_ResonanceCodes = { particles::Higgs, particles::Z,
+                                                                    particles::MSSM_H, particles::MSSM_A };
+        static const particles::ParticleCodes SM_ResonanceDecay_1 = { particles::tau, particles::tau };
+        static const particles::ParticleCodes SM_ResonanceDecay_2 = { particles::b, particles::b };
+        static const particles::ParticleCodes2D HiggsDecays = { SM_ResonanceDecay_1, SM_ResonanceDecay_2 };
+
+        genEvent.Initialize(event->genParticles());
+        final_state.Reset();
+
+        const GenParticleSet resonances = genEvent.GetParticles(resonanceCodes);
+
+        if (resonances.size() > 1)
+            throw exception("more than 1 resonance per event");
+
+        if (resonances.size() == 1) {
+            final_state.resonance = *resonances.begin();
+
+            bool doubleHiggsSignal = true;
+            GenParticlePtrVector HiggsBosons;
+            if(!FindDecayProducts(*final_state.resonance, resonanceDecay_1, HiggsBosons) ||
+                    !FindDecayProducts(*final_state.resonance, resonanceDecay_2, HiggsBosons))
+                doubleHiggsSignal = false;
+
+            if(doubleHiggsSignal) {
+                GenParticleVector2D HiggsDecayProducts;
+                GenParticleIndexVector HiggsIndexes;
+                if(!FindDecayProducts2D(HiggsBosons, HiggsDecays, HiggsDecayProducts, HiggsIndexes))
+                    throw exception("NOT HH -> bb tautau");
+
+                for(const GenParticle* tau : HiggsDecayProducts.at(0)) {
+                    const VisibleGenObject tau_products(tau);
+                    final_state.taus.push_back(tau_products);
+//                    if(tau_products.finalStateChargedHadrons.size() != 0)
+                    if(!IsLeptonicTau(*tau)){
+
+                        final_state.hadronic_taus.push_back(tau_products);
+                    }
+                }
+                for(const GenParticle* b : HiggsDecayProducts.at(1))
+                    final_state.b_jets.push_back(VisibleGenObject(b));
+
+                final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
+                final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
+                return true;
+            }
+        }
+
+        if(config.ExpectedOneNonSMResonance())
+            throw exception("Non-SM resonance not found.");
+
+        //search H->bb, H->tautau
+        const GenParticleSet SM_particles = genEvent.GetParticles(SM_ResonanceCodes);
+
+        GenParticlePtrVector SM_ResonanceToTauTau;
+        GenParticlePtrVector SM_ResonanceToBB;
+
+        for (const GenParticle* SM_particle : SM_particles){
+            GenParticlePtrVector resonanceDecayProducts;
+            if(FindDecayProducts(*SM_particle, SM_ResonanceDecay_1,resonanceDecayProducts)){
+                for(const GenParticle* tau : resonanceDecayProducts) {
+                    const VisibleGenObject tau_products(tau);
+                    final_state.taus.push_back(tau_products);
+//                    if(tau_products.finalStateChargedHadrons.size() != 0)
+                    if(!IsLeptonicTau(*tau)){
+
+                        final_state.hadronic_taus.push_back(tau_products);
+                    }
+                }
+                final_state.Higgs_TauTau = SM_particle;
+                SM_ResonanceToTauTau.push_back(SM_particle);
+            }
+            else if (FindDecayProducts(*SM_particle, SM_ResonanceDecay_2,resonanceDecayProducts)){
+                for(const GenParticle* b : resonanceDecayProducts)
+                    final_state.b_jets.push_back(VisibleGenObject(b));
+                final_state.Higgs_BB = SM_particle;
+                SM_ResonanceToBB.push_back(SM_particle);
+            }
+        }
+
+        if (SM_ResonanceToTauTau.size() > 1)
+            throw exception("more than one SM resonance to tautau per event");
+        if (SM_ResonanceToBB.size() > 1)
+            throw exception("more than one SM resonance to bb per event");
+
+        if (SM_ResonanceToTauTau.size() + SM_ResonanceToBB.size() == 0) {
+            if(config.ExpectedAtLeastOneSMResonanceToTauTauOrToBB())
+                throw exception("SM resonance to tautau or to bb not found.");
+            return false;
+        }
+
+        return true;
+    }
+
+    ntuple::EventType DoEventCategorization(const CandidatePtr& higgs)
+    {
+        using namespace cuts::Htautau_Summer13::DrellYannCategorization;
+        if(!config.DoZEventCategorization())
+            return ntuple::EventType::Unknown;
+
+        static const particles::ParticleCodes Zcode = { particles::Z };
+        static const particles::ParticleCodes ZDecay_electrons = { particles::e, particles::e };
+        static const particles::ParticleCodes ZDecay_muons = { particles::mu, particles::mu };
+        static const particles::ParticleCodes ZDecay_taus = { particles::tau, particles::tau };
+
+        static const particles::ParticleCodes light_lepton_codes = { particles::e, particles::mu };
+
+        const GenParticleSet Zparticles_all = genEvent.GetParticles(Zcode);
+
+        GenParticleSet Zparticles;
+        for(const GenParticle* z : Zparticles_all) {
+            const bool is_hard_interaction_z = z->mothers.size() == 1 && z->mothers.front()->pdg.Code == particles::Z
+                    && z->mothers.front()->status == particles::HardInteractionProduct;
+            const bool is_pp_z = z->mothers.size() == 2 && z->mothers.at(0)->pdg.Code == particles::p
+                    && z->mothers.at(1)->pdg.Code == particles::p;
+            if(is_hard_interaction_z || is_pp_z)
+                Zparticles.insert(z);
+         }
+
+        if (Zparticles.size() > 1 || Zparticles.size() == 0)
+            throw exception("not 1 Z per event");
+
+        const GenParticle* Z_mc = *Zparticles.begin();
+        while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
+            Z_mc = Z_mc->daughters.front();
+
+        const GenParticleSet light_leptons = genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
+        const CandidatePtrVector hadronic_taus = higgs->GetDaughters(Candidate::Type::Tau);
+
+        GenParticlePtrVector ZProducts;
+        const bool ztt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
+        if (!ztt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+                 && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
+            throw exception("not leptonic Z decay");
+
+
+        size_t n_hadronic_matches = 0, n_leptonic_matches = 0;
+        for(const CandidatePtr& reco_tau : hadronic_taus) {
+
+            for(const GenParticle* gen_product : ZProducts) {
+                const VisibleGenObject visible_gen_object(gen_product);
+//                 std::cout <<  "GenVisibleTau: " << visible_gen_object.visibleMomentum <<
+//                              "; NofLeptons: " << visible_gen_object.finalStateChargedLeptons.size() <<
+//                             "; GenTauOrigin: " << visible_gen_object.origin->momentum <<
+//                               "; pdg: " << visible_gen_object.origin->pdg.Code.Name() << ", status= " <<
+//                               visible_gen_object.origin->status << std::endl;
+                if(gen_product->pdg.Code != particles::tau || IsLeptonicTau(*gen_product) ||
+                        visible_gen_object.visibleMomentum.Pt() <= minimal_visible_momentum) continue;
+                if(HasMatchWithMCObject(reco_tau->GetMomentum(), &visible_gen_object, deltaR_matchGenParticle, true)) {
+                    ++n_hadronic_matches;
+                    break;
+                }
+            }
+
+            for(const GenParticle* gen_product : light_leptons) {
+                if(HasMatchWithMCParticle(reco_tau->GetMomentum(), gen_product, deltaR_matchGenParticle)) {
+                    ++n_leptonic_matches;
+                    break;
+                }
+            }
+        }
+        //genEvent.Print();
+
+        if(ztt && n_hadronic_matches == hadronic_taus.size()) return ntuple::EventType::ZTT;
+        if(n_leptonic_matches) return ztt ? ntuple::EventType::ZTT_L : ntuple::EventType::ZL;
+        return ntuple::EventType::ZJ;
+    }
+
+    bool GenFilterForZevents(const finalState::bbTauTau& final_state)
+    {
+        using namespace cuts::Htautau_Summer13::DYEmbedded;
+        if (final_state.taus.size() != 2)
+            throw exception("not 2 taus in the event at Gen Level");
+        const GenParticle* firstTau = final_state.taus.at(0).origin;
+        const GenParticle* secondTau = final_state.taus.at(1).origin;
+        if ((firstTau->momentum + secondTau->momentum).M() > invariantMassCut) return true;
+        return false;
+    }
+
+    kinematic_fit::FitResultsMap RunKinematicFit(const CandidatePtrVector& bjets, const Candidate& higgs_to_taus,
+                                                 const ntuple::MET& met, bool fit_two_bjets, bool fit_four_body)
+    {
+        using namespace kinematic_fit;
+        using namespace cuts::Htautau_Summer13;
+
+        FitResultsMap result;
+        TLorentzVector met_momentum;
+        met_momentum.SetPtEtaPhiM(met.pt, 0, met.phi, 0);
+        const TMatrix met_cov = ntuple::VectorToSignificanceMatrix(met.significanceMatrix);
+
+        for(size_t n = 0; n < bjets.size(); ++n) {
+            for(size_t k = n + 1; k < bjets.size(); ++k) {
+                const FitId id(n, k);
+                const four_body::FitInput input(bjets.at(n)->GetMomentum(), bjets.at(k)->GetMomentum(),
+                                                higgs_to_taus.GetDaughters().at(0)->GetMomentum(),
+                                                higgs_to_taus.GetDaughters().at(1)->GetMomentum(),
+                                                met_momentum, met_cov);
+                result[id] = FitWithUncertainties(input, cuts::jetCorrections::energyUncertainty,
+                                                  tauCorrections::energyUncertainty, fit_two_bjets, fit_four_body);
+
+            }
+        }
+        return result;
+    }
+
+    ntuple::MET ComputeMvaMet(const CandidatePtr& higgs, const VertexPtrVector& goodVertices)
+    {
+        CandidatePtrVector originalDaughters;
+        for(const CandidatePtr& daughter : higgs->GetDaughters()) {
+            CandidatePtr original = daughter;
+            if(daughter->GetType() == Candidate::Type::Tau) {
+                const ntuple::Tau* ntuple_tau = &daughter->GetNtupleObject<ntuple::Tau>();
+                const auto position = ntuple_tau - &(*correctedTaus.begin());
+                original = CandidatePtr(new Candidate(event->taus().at(position)));
+            }
+            originalDaughters.push_back(original);
+        }
+        CandidatePtr originalHiggs(new Candidate(higgs->GetType(), originalDaughters.at(0), originalDaughters.at(1)));
+        return mvaMetProducer.ComputeMvaMet(originalHiggs, event->pfCandidates(), event->jets(), primaryVertex,
+                                            goodVertices);
+    }
 
 protected:
     Config config;
@@ -566,11 +947,12 @@ protected:
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
     size_t maxNumberOfEvents;
     GenEvent genEvent;
-    Vertex primaryVertex;
+    VertexPtr primaryVertex;
     double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
     std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
     std::shared_ptr<TH1D> pu_weights;
     MvaMetProducer mvaMetProducer;
+    ntuple::TauVector correctedTaus;
 };
 
 } // analysis

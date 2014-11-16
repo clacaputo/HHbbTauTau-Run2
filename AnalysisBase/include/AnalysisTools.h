@@ -35,9 +35,9 @@
 #include <TLorentzVector.h>
 
 #include "Particles.h"
-#include "EventDescriptor.h"
 #include "AnalysisMath.h"
 #include "GenParticle.h"
+#include "Candidate.h"
 
 namespace analysis {
 
@@ -73,13 +73,12 @@ inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPath
     return HaveTriggerMatched(objectMatchedPaths, interestinghltPaths, n);
 }
 
-inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
-                               const std::string& interestingPath,
-                               const analysis::Candidate& candidate, double deltaR_Limit)
+inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects, const std::string& interestingPath,
+                               const Candidate& candidate, double deltaR_Limit)
 {
-    if(candidate.finalStateDaughters.size()) {
-        for(const Candidate& daughter : candidate.finalStateDaughters) {
-            if(!HaveTriggerMatched(triggerObjects, interestingPath, daughter, deltaR_Limit))
+    if(candidate.GetFinalStateDaughters().size()) {
+        for(const auto& daughter : candidate.GetFinalStateDaughters()) {
+            if(!HaveTriggerMatched(triggerObjects, interestingPath, *daughter, deltaR_Limit))
                 return false;
         }
         return true;
@@ -92,44 +91,35 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
             const std::string& objectMatchedPath = triggerObject.pathNames.at(n);
             const size_t found = objectMatchedPath.find(interestingPath);
             if (found != std::string::npos && triggerObject.pathValues.at(n) == 1 &&
-                    triggerObjectMomentum.DeltaR(candidate.momentum) < deltaR_Limit /*cuts::Htautau_Summer13::DeltaR_triggerMatch*/)
+                    triggerObjectMomentum.DeltaR(candidate.GetMomentum()) < deltaR_Limit)
                 return true;
         }
     }
     return false;
 }
 
-inline bool HaveTriggerMatched(const EventDescriptor& event,
-                               const std::string& interestingPath,
-                               const analysis::Candidate& candidate)
+inline bool HaveTriggerMatched(const std::string& interestingPath, const Candidate& candidate)
 {
-    if(candidate.finalStateDaughters.size()) {
-        for(const Candidate& daughter : candidate.finalStateDaughters) {
-            if(!HaveTriggerMatched(event, interestingPath, daughter))
+    if(candidate.GetFinalStateDaughters().size()) {
+        for(const auto& daughter : candidate.GetFinalStateDaughters()) {
+            if(!HaveTriggerMatched(interestingPath, *daughter))
                 return false;
         }
         return true;
     }
 
     std::vector<std::string> objectMatchedPaths;
-    if(candidate.type == analysis::Candidate::Tau){
-        const ntuple::Tau& tau = event.taus().at(candidate.index);
-        objectMatchedPaths = tau.matchedTriggerPaths;
-    }
-    else if (candidate.type == analysis::Candidate::Jet){
-        const ntuple::Jet& jet = event.jets().at(candidate.index);
-        objectMatchedPaths = jet.matchedTriggerPaths;
-    }
-    else if (candidate.type == analysis::Candidate::Mu){
-        const ntuple::Muon& muon = event.muons().at(candidate.index);
-        objectMatchedPaths = muon.matchedTriggerPaths;
-    }
-    else if (candidate.type == analysis::Candidate::Electron){
-        const ntuple::Electron& electron = event.electrons().at(candidate.index);
-        objectMatchedPaths = electron.matchedTriggerPaths;
-    }
+    if(candidate.GetType() == Candidate::Type::Tau)
+        objectMatchedPaths = candidate.GetNtupleObject<ntuple::Tau>().matchedTriggerPaths;
+    else if(candidate.GetType() == Candidate::Type::Jet)
+        objectMatchedPaths = candidate.GetNtupleObject<ntuple::Jet>().matchedTriggerPaths;
+    else if(candidate.GetType() == Candidate::Type::Muon)
+        objectMatchedPaths = candidate.GetNtupleObject<ntuple::Muon>().matchedTriggerPaths;
+    else if(candidate.GetType() == Candidate::Type::Electron)
+        objectMatchedPaths = candidate.GetNtupleObject<ntuple::Electron>().matchedTriggerPaths;
     else
-        throw std::runtime_error("unknow candidate to match trigger");
+        throw exception("Unknow candidate to match trigger.");
+
     for (unsigned n = 0; n < objectMatchedPaths.size(); ++n){
         const std::string& objectMatchedPath = objectMatchedPaths.at(n);
         const size_t found = objectMatchedPath.find(interestingPath);
@@ -139,8 +129,8 @@ inline bool HaveTriggerMatched(const EventDescriptor& event,
 }
 
 inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects,
-                               const std::set<std::string>& interestingPaths,
-                               const analysis::Candidate& candidate, double deltaR_Limit)
+                               const std::set<std::string>& interestingPaths, const Candidate& candidate,
+                               double deltaR_Limit)
 {
     for (const std::string& interestinPath : interestingPaths){
         if (HaveTriggerMatched(triggerObjects,interestinPath,candidate, deltaR_Limit)) return true;
@@ -148,17 +138,15 @@ inline bool HaveTriggerMatched(const ntuple::TriggerObjectVector& triggerObjects
     return false;
 }
 
-inline bool HaveTriggerMatched(const EventDescriptor& event,
-                               const std::set<std::string>& interestingPaths,
-                               const analysis::Candidate& candidate)
+inline bool HaveTriggerMatched(const std::set<std::string>& interestingPaths, const Candidate& candidate)
 {
     for (const std::string& interestinPath : interestingPaths){
-        if (HaveTriggerMatched(event,interestinPath,candidate)) return true;
+        if (HaveTriggerMatched(interestinPath, candidate)) return true;
     }
     return false;
 }
 
-inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile )
+inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile)
 {
     std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
     if(reweightFile->IsZombie()){

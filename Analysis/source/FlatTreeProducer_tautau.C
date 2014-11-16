@@ -1,5 +1,5 @@
 /*!
- * \file HtautauFlatTreeProducer.C
+ * \file FlatTreeProducer_tautau.C
  * \brief Generate flat-tree for Htautau analysis using looser selection.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
@@ -29,26 +29,26 @@
 namespace analysis {
 struct SelectionResults_tautau : public SelectionResults {
     finalState::bbTaujetTaujet tauTau_MC;
-    const Candidate& GetLeadingTau() const { return higgs.GetLeadingDaughter(Candidate::Tau); }
-    const Candidate& GetSubleadingTau() const { return higgs.GetSubleadingDaughter(Candidate::Tau); }
+    CandidatePtr GetLeadingTau() const { return higgs->GetLeadingDaughter(Candidate::Type::Tau); }
+    CandidatePtr GetSubleadingTau() const { return higgs->GetSubleadingDaughter(Candidate::Type::Tau); }
 
-    virtual const Candidate& GetLeg1() const override { return GetLeadingTau(); }
-    virtual const Candidate& GetLeg2() const override { return GetSubleadingTau(); }
+    virtual CandidatePtr GetLeg1() const override { return GetLeadingTau(); }
+    virtual CandidatePtr GetLeg2() const override { return GetSubleadingTau(); }
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return tauTau_MC; }
 };
 } // namespace analysis
 
-class HHbbtautau_FlatTreeProducer : public virtual analysis::BaseFlatTreeProducer {
+class FlatTreeProducer_tautau : public virtual analysis::BaseFlatTreeProducer {
 public:
-    typedef std::map<analysis::Candidate, analysis::CandidateVector> Higgs_JetsMap;
+    typedef std::map<analysis::CandidatePtr, analysis::CandidatePtrVector> Higgs_JetsMap;
     typedef std::vector< std::pair<std::string, bool> > TriggerPathVector;
-    typedef std::pair<analysis::Candidate, TriggerPathVector> HiggsWithTriggerPath;
-    typedef std::map<analysis::Candidate, TriggerPathVector> Higgs_TriggerPathMap;
+    typedef std::pair<analysis::CandidatePtr, TriggerPathVector> HiggsWithTriggerPath;
+    typedef std::map<analysis::CandidatePtr, TriggerPathVector> Higgs_TriggerPathMap;
 
-    HHbbtautau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
-                                const std::string& configFileName, const std::string& _prefix = "none",
-                                size_t _maxNumberOfEvents = 0,
-                                std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
+    FlatTreeProducer_tautau(const std::string& inputFileName, const std::string& outputFileName,
+                            const std::string& configFileName, const std::string& _prefix = "none",
+                            size_t _maxNumberOfEvents = 0,
+                            std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile)
     {
@@ -87,7 +87,7 @@ protected:
 
         selection.vertices = CollectVertices();
         cut(selection.vertices.size(), "vertex");
-        primaryVertex = selection.vertices.front();
+        primaryVertex = selection.GetPrimaryVertex();
 
         const auto electrons_bkg = CollectBackgroundElectrons();
         cut(!electrons_bkg.size(), "no_electron");
@@ -102,7 +102,7 @@ protected:
         cut(taus.size(), "tau_cand");
         cut(taus.size() >= 2, "at least 2 taus");
 
-        const auto higgses = FindCompatibleObjects(taus, DeltaR_betweenSignalObjects, Candidate::Higgs, "H_2tau");
+        const auto higgses = FindCompatibleObjects(taus, DeltaR_betweenSignalObjects, Candidate::Type::Higgs, "H_2tau");
 
         cut(higgses.size(), "DeltaR taus");
 
@@ -130,9 +130,7 @@ protected:
         else
             selection.pfMET = event->metPF();
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(selection.higgs, event->pfCandidates(),
-                                                                event->jets(), primaryVertex,
-                                                                selection.vertices, event->taus());
+        const ntuple::MET mvaMet = ComputeMvaMet(selection.higgs, selection.vertices);
 
         const ntuple::MET correctedMET = config.ApplyTauESCorrection()
                 ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
@@ -149,53 +147,34 @@ protected:
         return selection;
     }
 
-    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData,
-                                          const std::string& selection_label) override
+    virtual void SelectTau(const analysis::CandidatePtr& tau, analysis::SelectionManager& selectionManager,
+                           cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::TauTau;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
-
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
+        const ntuple::Tau& object = tau->GetNtupleObject<ntuple::Tau>();
 
         cut(true, ">0 tau cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
         cut(X(againstElectronLoose) > againstElectronLoose, "vs_e_loose");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) <
-            cuts::skim::TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-
-        return analysis::Candidate(analysis::Candidate::Tau, id, object);
+            cuts::skim::TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "relaxed_Iso3Hits");
     }
 
-    analysis::CandidateVector ApplyTauFullSelection(const analysis::CandidateVector& higgses)
-    {
-        using namespace analysis;
-        using namespace cuts::Htautau_Summer13::TauTau::tauID;
-        CandidateVector result;
-        for(const Candidate& higgs : higgses) {
-            const Candidate& subleading_tau = higgs.GetSubleadingDaughter(Candidate::Tau);
-            const ntuple::Tau& ntuple_subleadingTau = correctedTaus.at(subleading_tau.index);
-            if(ntuple_subleadingTau.againstElectronLooseMVA3 > againstElectronLooseMVA3)
-                result.push_back(higgs);
-        }
-        return result;
-    }
-
-    Higgs_JetsMap MatchedHiggsAndJets(const analysis::CandidateVector& higgses,
-                                            const analysis::CandidateVector& jets)
+    Higgs_JetsMap MatchedHiggsAndJets(const analysis::CandidatePtrVector& higgses,
+                                            const analysis::CandidatePtrVector& jets)
     {
         Higgs_JetsMap higgs_JetsMap;
-        for (const analysis::Candidate& higgs : higgses){
-            analysis::CandidateVector goodJets;
-            for (const analysis::Candidate& jet : jets){
-                const double deltaR_1 = jet.momentum.DeltaR(higgs.finalStateDaughters.at(0).momentum);
-                const double deltaR_2 = jet.momentum.DeltaR(higgs.finalStateDaughters.at(1).momentum);
+        for (const analysis::CandidatePtr& higgs : higgses){
+            analysis::CandidatePtrVector goodJets;
+            for (const analysis::CandidatePtr& jet : jets){
+                const double deltaR_1 = jet->GetMomentum().DeltaR(higgs->GetFinalStateDaughters().at(0)->GetMomentum());
+                const double deltaR_2 = jet->GetMomentum().DeltaR(higgs->GetFinalStateDaughters().at(1)->GetMomentum());
                 if (deltaR_1 > cuts::Htautau_Summer13::jetID::deltaR_signalObjects &&
                         deltaR_2 > cuts::Htautau_Summer13::jetID::deltaR_signalObjects)
                     goodJets.push_back(jet);
@@ -223,28 +202,28 @@ protected:
     {
         Higgs_TriggerPathMap triggeredHiggses;
         for (const auto& higgs_iter : higgs_JetsMap) {
-            const analysis::Candidate& higgs = higgs_iter.first;
-            const analysis::CandidateVector& jets = higgs_iter.second;
+            const analysis::CandidatePtr& higgs = higgs_iter.first;
+            const analysis::CandidatePtrVector& jets = higgs_iter.second;
             for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap) {
                 const std::string& interestingPath = interestingPathIter.first;
                 const bool jetTriggerRequest = interestingPathIter.second;
 
                 if(!useStandardTriggerMatch && !analysis::HaveTriggerMatched(event->triggerObjects(), interestingPath,
-                                                                    higgs, cuts::Htautau_Summer13::DeltaR_triggerMatch))
+                                                                    *higgs, cuts::Htautau_Summer13::DeltaR_triggerMatch))
                     continue;
 
-                if (useStandardTriggerMatch && !analysis::HaveTriggerMatched(*event,interestingPath,higgs))
+                if (useStandardTriggerMatch && !analysis::HaveTriggerMatched(interestingPath,*higgs))
                     continue;
 
                 bool jetMatched = false;
                 if(jetTriggerRequest) {
                     for (const auto& jet : jets){
                         if (!useStandardTriggerMatch && analysis::HaveTriggerMatched(event->triggerObjects(),
-                                                   interestingPath, jet, cuts::Htautau_Summer13::DeltaR_triggerMatch)) {
+                                                   interestingPath, *jet, cuts::Htautau_Summer13::DeltaR_triggerMatch)) {
                             jetMatched = true;
                             break;
                         }
-                        if (useStandardTriggerMatch && analysis::HaveTriggerMatched(*event, interestingPath, jet)){
+                        if (useStandardTriggerMatch && analysis::HaveTriggerMatched(interestingPath, *jet)){
                             jetMatched = true;
                             break;
                         }
@@ -267,10 +246,10 @@ protected:
         const auto higgsSelector = [&] (const Higgs_TriggerPathMap::value_type& first,
                 const Higgs_TriggerPathMap::value_type& second) -> bool
         {
-            const ntuple::Tau& first_tau1 = correctedTaus.at(first.first.daughters.at(0).index);
-            const ntuple::Tau& first_tau2 = correctedTaus.at(first.first.daughters.at(1).index);
-            const ntuple::Tau& second_tau1 = correctedTaus.at(second.first.daughters.at(0).index);
-            const ntuple::Tau& second_tau2 = correctedTaus.at(second.first.daughters.at(1).index);
+            const ntuple::Tau& first_tau1 = first.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& first_tau2 = first.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& second_tau1 = second.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& second_tau2 = second.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
             const double first_iso = std::max(first_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
                                               first_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits);
             const double second_iso = std::max(second_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
@@ -298,13 +277,13 @@ protected:
         return true;
     }
 
-    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateTriggerWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::TauTau;
         if(higgs != selectedHiggsWithTriggerPath.first)
             throw analysis::exception("Inconsistet higgs selection");
-        const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
-        const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
+        const analysis::CandidatePtr& leadTau = higgs->GetLeadingDaughter(analysis::Candidate::Type::Tau);
+        const analysis::CandidatePtr& subLeadTau = higgs->GetSubleadingDaughter(analysis::Candidate::Type::Tau);
 
         bool useDiTauJetWeight = true;
         for(const auto& path : selectedHiggsWithTriggerPath.second) {
@@ -315,20 +294,20 @@ protected:
         }
 
         if(config.isDYEmbeddedSample())
-            triggerWeights = DiTau::CalculateTurnOnCurveData(leadTau.momentum, subLeadTau.momentum);
+            triggerWeights = DiTau::CalculateTurnOnCurveData(leadTau->GetMomentum(), subLeadTau->GetMomentum());
         else if(useDiTauJetWeight)
-            triggerWeights = DiTauJet::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+            triggerWeights = DiTauJet::CalculateWeights(leadTau->GetMomentum(), subLeadTau->GetMomentum());
         else
-            triggerWeights = DiTau::CalculateWeights(leadTau.momentum, subLeadTau.momentum);
+            triggerWeights = DiTau::CalculateWeights(leadTau->GetMomentum(), subLeadTau->GetMomentum());
     }
 
-    virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateDMWeights(const analysis::CandidatePtr& higgs) override
     {
         DMweights.clear();
-        const analysis::Candidate& leadTau = higgs.GetLeadingDaughter(analysis::Candidate::Tau);
-        const analysis::Candidate& subLeadTau = higgs.GetSubleadingDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& leg1 = correctedTaus.at(leadTau.index);
-        const ntuple::Tau& leg2 = correctedTaus.at(subLeadTau.index);
+        const analysis::CandidatePtr& leadTau = higgs->GetLeadingDaughter(analysis::Candidate::Type::Tau);
+        const analysis::CandidatePtr& subLeadTau = higgs->GetSubleadingDaughter(analysis::Candidate::Type::Tau);
+        const ntuple::Tau& leg1 = leadTau->GetNtupleObject<ntuple::Tau>();
+        const ntuple::Tau& leg2 = subLeadTau->GetNtupleObject<ntuple::Tau>();
         const double leadWeight = leg1.decayMode == ntuple::tau_id::kOneProng0PiZero ?
                                   cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
         const double subLeadWeight = leg2.decayMode == ntuple::tau_id::kOneProng0PiZero ?
@@ -338,7 +317,7 @@ protected:
         DMweights.push_back(subLeadWeight);
     }
 
-    virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateFakeWeights(const analysis::CandidatePtr& /*higgs*/) override
     {
         fakeWeights.clear();
         // first leadTau, second subLeadTau
@@ -351,9 +330,9 @@ protected:
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
         static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
 
-        const analysis::Candidate& leadTau = selection.GetLeadingTau();
-        const analysis::Candidate& subLeadTau = selection.GetSubleadingTau();
-        const ntuple::Tau& ntuple_tau_leg1 = correctedTaus.at(leadTau.index);
+        const analysis::CandidatePtr& leadTau = selection.GetLeadingTau();
+        const analysis::CandidatePtr& subLeadTau = selection.GetSubleadingTau();
+        const ntuple::Tau& ntuple_tau_leg1 = leadTau->GetNtupleObject<ntuple::Tau>();
 
         BaseFlatTreeProducer::FillFlatTree(selection);
 
@@ -379,7 +358,8 @@ protected:
         flatTree->againstMuonMedium_1() = ntuple_tau_leg1.againstMuonMedium;
         flatTree->againstMuonTight_1() = ntuple_tau_leg1.againstMuonTight;
 
-        const auto leadTau_matches = analysis::FindMatchedObjects(leadTau.momentum, selection.tauTau_MC.hadronic_taus,
+        const auto leadTau_matches = analysis::FindMatchedObjects(leadTau->GetMomentum(),
+                                                                  selection.tauTau_MC.hadronic_taus,
                                                                   cuts::DeltaR_MC_Match);
         if(leadTau_matches.size() != 0) {
             const TLorentzVector& momentum = leadTau_matches.at(0).origin->momentum;
@@ -405,7 +385,7 @@ protected:
             flatTree->pdgId_1_MC() = particles::NONEXISTENT.RawCode();
         }
 
-        const auto subLeadTau_matches = analysis::FindMatchedObjects(subLeadTau.momentum,
+        const auto subLeadTau_matches = analysis::FindMatchedObjects(subLeadTau->GetMomentum(),
                                                                      selection.tauTau_MC.hadronic_taus,
                                                                      cuts::DeltaR_MC_Match);
         if(subLeadTau_matches.size() != 0) {

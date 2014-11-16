@@ -1,5 +1,5 @@
 /*!
- * \file HetauFlatTreeProducer.C
+ * \file FlatTreeProducer_etau.C
  * \brief Generate flat-tree for H->tautau->e_taujet analysis using looser selection.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
@@ -29,21 +29,21 @@
 namespace analysis {
 struct SelectionResults_etau : public SelectionResults {
     finalState::bbETaujet eTau_MC;
-    const Candidate& GetElectron() const { return higgs.GetDaughter(Candidate::Electron); }
-    const Candidate& GetTau() const { return higgs.GetDaughter(Candidate::Tau); }
+    CandidatePtr GetElectron() const { return higgs->GetDaughter(Candidate::Type::Electron); }
+    CandidatePtr GetTau() const { return higgs->GetDaughter(Candidate::Type::Tau); }
 
-    virtual const Candidate& GetLeg1() const override { return GetElectron(); }
-    virtual const Candidate& GetLeg2() const override { return GetTau(); }
+    virtual CandidatePtr GetLeg1() const override { return GetElectron(); }
+    virtual CandidatePtr GetLeg2() const override { return GetTau(); }
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return eTau_MC; }
 };
 } // namespace analysis
 
-class HHbbetau_FlatTreeProducer : public virtual analysis::BaseFlatTreeProducer {
+class FlatTreeProducer_etau : public virtual analysis::BaseFlatTreeProducer {
 public:
-    HHbbetau_FlatTreeProducer(const std::string& inputFileName, const std::string& outputFileName,
-                              const std::string& configFileName, const std::string& _prefix = "none",
-                              size_t _maxNumberOfEvents = 0,
-                              std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
+    FlatTreeProducer_etau(const std::string& inputFileName, const std::string& outputFileName,
+                          const std::string& configFileName, const std::string& _prefix = "none",
+                          size_t _maxNumberOfEvents = 0,
+                          std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile)
     {
@@ -82,10 +82,11 @@ protected:
 
         selection.vertices = CollectVertices();
         cut(selection.vertices.size(), "vertex");
-        primaryVertex = selection.vertices.front();
+        primaryVertex = selection.GetPrimaryVertex();
 
         const auto z_electrons = CollectZelectrons();
-        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,Candidate::Z, "Z_e_e", 0);
+        const auto z_electron_candidates = FindCompatibleObjects(z_electrons, ZeeVeto::deltaR,Candidate::Type::Z,
+                                                                 "Z_e_e", 0);
         cut(!z_electron_candidates.size(), "z_ee_veto");
 
         const auto muons_bkg = CollectBackgroundMuons();
@@ -112,10 +113,10 @@ protected:
         // First check OS, isolated higgs candidates
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
         auto higgses = FindCompatibleObjects(electrons, signaltaus, DeltaR_betweenSignalObjects,
-                                             Candidate::Higgs, "H_e_tau", 0);
+                                             Candidate::Type::Higgs, "H_e_tau", 0);
         if (!higgses.size())
           higgses = FindCompatibleObjects(allelectrons, alltaus, DeltaR_betweenSignalObjects,
-                                          Candidate::Higgs, "H_e_tau");
+                                          Candidate::Type::Higgs, "H_e_tau");
 
         cut(higgses.size(), "e_tau");
 
@@ -138,9 +139,7 @@ protected:
         else
             selection.pfMET = event->metPF();
 
-        const ntuple::MET mvaMet = mvaMetProducer.ComputeMvaMet(selection.higgs, event->pfCandidates(),
-                                                                event->jets(), primaryVertex,
-                                                                selection.vertices, event->taus());
+        const ntuple::MET mvaMet = ComputeMvaMet(selection.higgs, selection.vertices);
 
         const ntuple::MET correctedMET = config.ApplyTauESCorrection()
                 ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
@@ -159,75 +158,47 @@ protected:
         return selection;
     }
 
-    virtual analysis::Candidate SelectElectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                               root_ext::AnalyzerData& _anaData,
-                                               const std::string& selection_label) override
+    virtual void SelectElectron(const analysis::CandidatePtr& electron, analysis::SelectionManager& selectionManager,
+                                cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::electronID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event->electrons().at(id);
-        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
+        const ntuple::Electron& object = electron->GetNtupleObject<ntuple::Electron>();
 
         cut(true, ">0 ele cand");
         cut(X(pt) > pt, "pt");
         const double eta = std::abs( X(eta) );
         cut(eta < eta_high, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
         cut(X(missingHits) < missingHits, "missingHits");
         cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+        // same as dB
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex, primaryVertex->GetPosition(), electron->GetMomentum());
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
         cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
-        //cut(X(pfRelIso) < cuts::skim::MuTau::pFRelIso , "pFRelIso");
-
-//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
-    virtual analysis::Candidate SelectSignalElectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                               root_ext::AnalyzerData& _anaData,
-                                               const std::string& selection_label) override
+    virtual void SelectSignalElectron(const analysis::CandidatePtr& electron,
+                                      analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::electronID;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event->electrons().at(id);
-        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
+        const ntuple::Electron& object = electron->GetNtupleObject<ntuple::Electron>();
 
-        cut(true, ">0 ele cand");
-        cut(X(pt) > pt, "pt");
-        const double eta = std::abs( X(eta) );
-        cut(eta < eta_high, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-        cut(X(missingHits) < missingHits, "missingHits");
-        cut(X(hasMatchedConversion) == hasMatchedConversion, "conversion");
-        const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
-        cut(std::abs( Y(d0_PV) ) < d0, "d0");
-        const size_t eta_index = eta < scEta_min[0] ? 0 : (eta < scEta_min[1] ? 1 : 2);
-        cut(X(mvaPOGNonTrig) > MVApogNonTrig[eta_index], "mva");
+        SelectElectron(electron, selectionManager, cut);
         cut(X(pfRelIso) < pFRelIso, "pFRelIso");
-//        const bool haveTriggerMatch = analysis::HaveTriggerMatched(object.matchedTriggerPaths, trigger::hltPaths);
-//        cut(Y(haveTriggerMatch, 2, -0.5, 1.5), "triggerMatch");
-        return analysis::Candidate(analysis::Candidate::Electron, id, object);
     }
 
-    virtual analysis::Candidate SelectTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData,
-                                          const std::string& selection_label) override
+    virtual void SelectTau(const analysis::CandidatePtr& tau, analysis::SelectionManager& selectionManager,
+                           cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::tauID;
         using namespace cuts::Htautau_Summer13::customTauMVA;
-
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
+        const ntuple::Tau& object = tau->GetNtupleObject<ntuple::Tau>();
 
         cut(true, ">0 tau cand");
         cut(X(pt) > pt, "pt");
@@ -237,64 +208,45 @@ protected:
         const bool againstElectron =  ComputeAntiElectronMVA3New(object, againstElectronMVA3_customWP_id);
         cut(Y(againstElectron), "vs_e_mediumMVA");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) <
-            cuts::skim::ETau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+            cuts::skim::ETau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "relaxed_Iso3Hits");
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
-
-        const analysis::Candidate tau(analysis::Candidate::Tau, id, object);
-
-        return tau;
     }
 
-    virtual analysis::Candidate SelectSignalTau(size_t id, cuts::ObjectSelector* objectSelector,
-                                          root_ext::AnalyzerData& _anaData,
-                                          const std::string& selection_label) override
+    virtual void SelectSignalTau(const analysis::CandidatePtr& tau, analysis::SelectionManager& selectionManager,
+                                 cuts::Cutter& cut) override
     {
         using namespace cuts::Htautau_Summer13::ETau;
         using namespace cuts::Htautau_Summer13::ETau::tauID;
         using namespace cuts::Htautau_Summer13::customTauMVA;
+        const ntuple::Tau& object = tau->GetNtupleObject<ntuple::Tau>();
 
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Tau& object = correctedTaus.at(id);
-
-        cut(true, ">0 tau cand");
-        cut(X(pt) > pt, "pt");
-        cut(std::abs( X(eta) ) < eta, "eta");
-        cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
-        cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        const bool againstElectron =  ComputeAntiElectronMVA3New(object, againstElectronMVA3_customWP_id);
-        cut(Y(againstElectron), "vs_e_mediumMVA");
+        SelectTau(tau, selectionManager, cut);
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) < byCombinedIsolationDeltaBetaCorrRaw3Hits, "looseIso3Hits");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
-        cut(Y(DeltaZ)  < dz, "dz");
-
-        return analysis::Candidate(analysis::Candidate::Tau, id, object);
     }
 
-    analysis::CandidateVector CollectZelectrons()
+    analysis::CandidatePtrVector CollectZelectrons()
     {
-        const auto base_selector = [&](unsigned id, cuts::ObjectSelector* _objectSelector,
-                root_ext::AnalyzerData& _anaData, const std::string& _selection_label) -> analysis::Candidate
-            { return SelectZelectron(id, _objectSelector, _anaData, _selection_label); };
-        return CollectObjects<analysis::Candidate>("z_electrons", base_selector, event->electrons().size());
+        const auto base_selector = [&](const analysis::CandidatePtr& candidate,
+                analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+            { SelectZelectron(candidate, selectionManager, cut); };
+        return CollectObjects<analysis::Candidate>("z_electrons", base_selector, event->electrons());
     }
 
-    virtual analysis::Candidate SelectZelectron(size_t id, cuts::ObjectSelector* objectSelector,
-                                                root_ext::AnalyzerData& _anaData,
-                                                const std::string& selection_label)
+    virtual void SelectZelectron(const analysis::CandidatePtr& electron, analysis::SelectionManager& selectionManager,
+                                 cuts::Cutter& cut)
     {
         using namespace cuts::Htautau_Summer13::ETau::ZeeVeto;
-        cuts::Cutter cut(objectSelector);
-        const ntuple::Electron& object = event->electrons().at(id);
-        const analysis::Candidate electron(analysis::Candidate::Electron, id, object);
+        const ntuple::Electron& object = electron->GetNtupleObject<ntuple::Electron>();
 
         cut(true, ">0 mu cand");
         cut(X(pt) > pt, "pt");
         cut(std::abs( X(eta) ) < eta, "eta");
-        const double DeltaZ = std::abs(object.vz - primaryVertex.position.Z());
+        const double DeltaZ = std::abs(object.vz - primaryVertex->GetPosition().Z());
         cut(Y(DeltaZ)  < dz, "dz");
         const TVector3 ele_vertex(object.vx, object.vy, object.vz);
-        const double d0_PV = analysis::Calculate_dxy(ele_vertex,primaryVertex.position,electron.momentum); // same as dB
+        // same as dB
+        const double d0_PV = analysis::Calculate_dxy(ele_vertex, primaryVertex->GetPosition(), electron->GetMomentum());
         cut(std::abs( Y(d0_PV) ) < d0, "d0");
         cut(X(pfRelIso) < pfRelIso, "pFRelIso");
         const size_t eta_index = std::abs(object.eta) <= barrel_eta_high ? barrel_index : endcap_index;
@@ -302,8 +254,6 @@ protected:
         cut(X(deltaEtaTrkSC) < delta_eta[eta_index], "deltaEtaSC");
         cut(X(deltaPhiTrkSC) < delta_phi[eta_index], "deltaPhiSC");
         cut(X(eSuperClusterOverP) < HoverE[eta_index], "HoverE");
-
-        return electron;
     }
 
     bool FindAnalysisFinalState(analysis::finalState::bbETaujet& final_state)
@@ -330,21 +280,22 @@ protected:
         return true;
     }
 
-    virtual void CalculateTriggerWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateTriggerWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::ETau;
-        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        triggerWeights = config.isDYEmbeddedSample() ? CalculateTurnOnCurveData(ele.momentum, tau.momentum) :
-                                                     CalculateWeights(ele.momentum, tau.momentum);
+        const analysis::CandidatePtr& ele = higgs->GetDaughter(analysis::Candidate::Type::Electron);
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        triggerWeights = config.isDYEmbeddedSample()
+                ? CalculateTurnOnCurveData(ele->GetMomentum(), tau->GetMomentum())
+                : CalculateWeights(ele->GetMomentum(), tau->GetMomentum());
     }
 
-    virtual void CalculateIsoWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateIsoWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace cuts::Htautau_Summer13::ETau::electronISOscaleFactor;
         IsoWeights.clear();
-        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
-        const double ele_pt = ele.momentum.Pt(), ele_eta = std::abs(ele.momentum.Eta());
+        const analysis::CandidatePtr& ele = higgs->GetDaughter(analysis::Candidate::Type::Electron);
+        const double ele_pt = ele->GetMomentum().Pt(), ele_eta = std::abs(ele->GetMomentum().Eta());
         if(ele_pt < pt.at(0))
             throw std::runtime_error("No information about ISO. Electron pt is too small");
         const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
@@ -357,12 +308,12 @@ protected:
         IsoWeights.push_back(1);
     }
 
-    virtual void CalculateIdWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateIdWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace cuts::Htautau_Summer13::ETau::electronIDscaleFactor;
         IDweights.clear();
-        const analysis::Candidate& ele = higgs.GetDaughter(analysis::Candidate::Electron);
-        const double ele_pt = ele.momentum.Pt(), ele_eta = std::abs(ele.momentum.Eta());
+        const analysis::CandidatePtr& ele = higgs->GetDaughter(analysis::Candidate::Type::Electron);
+        const double ele_pt = ele->GetMomentum().Pt(), ele_eta = std::abs(ele->GetMomentum().Eta());
         if(ele_pt < pt.at(0))
             throw std::runtime_error("No information about ID. Electron pt is too small");
         const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
@@ -375,11 +326,11 @@ protected:
         IDweights.push_back(1);
     }
 
-    virtual void CalculateDMWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateDMWeights(const analysis::CandidatePtr& higgs) override
     {
         DMweights.clear();
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& tau_leg = correctedTaus.at(tau.index);
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
         const double weight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ?
                                   cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
         // first electron, second tau
@@ -387,7 +338,7 @@ protected:
         DMweights.push_back(weight);
     }
 
-    virtual void CalculateFakeWeights(const analysis::Candidate& higgs) override
+    virtual void CalculateFakeWeights(const analysis::CandidatePtr& higgs) override
     {
         using namespace cuts::Htautau_Summer13::DrellYannCategorization;
         using namespace cuts::Htautau_Summer13::electronEtoTauFakeRateWeight;
@@ -395,16 +346,17 @@ protected:
         fakeWeights.clear();
         double fakeEtoTauWeight = 1;
 
-        const analysis::Candidate& tau = higgs.GetDaughter(analysis::Candidate::Tau);
-        const ntuple::Tau& tau_leg = correctedTaus.at(tau.index);
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
         if (config.ApplyEtoTauFakeRate()){
             static const particles::ParticleCodes light_lepton_codes = { particles::e };
             const analysis::GenParticleSet light_leptons =
                     genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
-            if (analysis::FindMatchedParticles(tau.momentum,light_leptons,deltaR_matchGenParticle).size() > 0)
+            if (analysis::FindMatchedParticles(tau->GetMomentum(),light_leptons,deltaR_matchGenParticle).size() > 0)
                 fakeEtoTauWeight = CalculateEtoTauFakeWeight(tau_leg);
         }
-        double fakeJetToTauWeight = config.ApplyJetToTauFakeRate() ? CalculateJetToTauFakeWeight(tau.momentum.Pt()) : 1;
+        const double fakeJetToTauWeight = config.ApplyJetToTauFakeRate()
+                ? CalculateJetToTauFakeWeight(tau->GetMomentum().Pt()) : 1;
 
         // first e, second tau
         fakeWeights.push_back(fakeEtoTauWeight);
@@ -416,9 +368,9 @@ protected:
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
         static const float default_int_value = ntuple::DefaultIntegerFillValueForFlatTree();
 
-        const analysis::Candidate& electron = selection.GetElectron();
-        const ntuple::Electron& ntuple_electron = event->electrons().at(electron.index);
-        const analysis::Candidate& tau = selection.GetTau();
+        const analysis::CandidatePtr& electron = selection.GetElectron();
+        const ntuple::Electron& ntuple_electron = electron->GetNtupleObject<ntuple::Electron>();
+        const analysis::CandidatePtr& tau = selection.GetTau();
 
         BaseFlatTreeProducer::FillFlatTree(selection);
 
@@ -440,7 +392,8 @@ protected:
         flatTree->againstMuonMedium_1() = false;
         flatTree->againstMuonTight_1() = false;
 
-        const bool electron_matched = analysis::HasMatchWithMCParticle(electron.momentum, selection.eTau_MC.electron,
+        const bool electron_matched = analysis::HasMatchWithMCParticle(electron->GetMomentum(),
+                                                                       selection.eTau_MC.electron,
                                                                        cuts::DeltaR_MC_Match);
         if(electron_matched) {
             const TLorentzVector& momentum = selection.eTau_MC.electron->momentum;
@@ -465,7 +418,7 @@ protected:
             flatTree->pdgId_1_MC() = default_int_value;
         }
 
-        const bool tau_matched = analysis::HasMatchWithMCObject(tau.momentum, selection.eTau_MC.tau_jet,
+        const bool tau_matched = analysis::HasMatchWithMCObject(tau->GetMomentum(), selection.eTau_MC.tau_jet,
                                                                 cuts::DeltaR_MC_Match);
         if(tau_matched) {
             const TLorentzVector& momentum = selection.eTau_MC.tau_jet->origin->momentum;

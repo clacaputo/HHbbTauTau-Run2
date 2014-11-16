@@ -1,5 +1,5 @@
-    /*!
- * \file H_FlatTreeProducer.C
+/*!
+ * \file FlatTreeProducer.C
  * \brief Analyzer which recalls three ananlysis to produce flatTree for Htautau using looser selection.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
@@ -27,15 +27,16 @@
 #include "AnalysisBase/include/TreeExtractor.h"
 #include "Analysis/include/Config.h"
 
-#include "HHbbmutau_FlatTreeProducer.C"
-#include "HHbbetau_FlatTreeProducer.C"
-#include "HHbbtautau_FlatTreeProducer.C"
+#include "FlatTreeProducer_etau.C"
+#include "FlatTreeProducer_mutau.C"
+#include "FlatTreeProducer_tautau.C"
 
-class H_FlatTreeProducer {
+class FlatTreeProducer {
 public:
-    H_FlatTreeProducer(const std::string& inputFileName, const std::string& outputMuTauFile, const std::string& outputETauFile,
-                   const std::string& outputTauTauFile, const std::string& configFileName,
-                   const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
+    FlatTreeProducer(const std::string& inputFileName, const std::string& outputMuTauFile,
+                     const std::string& outputETauFile, const std::string& outputTauTauFile,
+                     const std::string& configFileName, const std::string& _prefix = "none",
+                     size_t _maxNumberOfEvents = 0)
         : config(configFileName), timer(config.ReportInterval()), maxNumberOfEvents(_maxNumberOfEvents),
           treeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth(), config.MaxTreeVersion()),
           HmutauAnalyzer(inputFileName, outputMuTauFile, configFileName, "external", _maxNumberOfEvents),
@@ -75,16 +76,16 @@ private:
     size_t maxNumberOfEvents;
     std::shared_ptr<const analysis::EventDescriptor> event;
     analysis::TreeExtractor treeExtractor;
-    HHbbmutau_FlatTreeProducer HmutauAnalyzer;
-    HHbbetau_FlatTreeProducer HetauAnalyzer;
-    HHbbtautau_FlatTreeProducer HtautauAnalyzer;
+    FlatTreeProducer_mutau HmutauAnalyzer;
+    FlatTreeProducer_etau HetauAnalyzer;
+    FlatTreeProducer_tautau HtautauAnalyzer;
     double eventWeight;
 };
 
 namespace make_tools {
 template<>
-struct Factory<H_FlatTreeProducer> {
-    static H_FlatTreeProducer* Make(int argc, char *argv[])
+struct Factory<FlatTreeProducer> {
+    static FlatTreeProducer* Make(int argc, char *argv[])
     {
         std::cout << "Command line: ";
         for(int n = 0; n < argc; ++n)
@@ -100,12 +101,13 @@ struct Factory<H_FlatTreeProducer> {
         const std::string outputTauTauFile = argv[++n];
         const std::string configFileName = argv[++n];
         if(argc <= n)
-            return new H_FlatTreeProducer(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile, configFileName);
+            return new FlatTreeProducer(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+                                        configFileName);
 
         const std::string prefix = argv[++n];
         if(argc <= n)
-            return new H_FlatTreeProducer(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
-                                      configFileName, prefix);
+            return new FlatTreeProducer(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+                                        configFileName, prefix);
 
         char c;
         size_t maxNumberOfEvents;
@@ -114,8 +116,8 @@ struct Factory<H_FlatTreeProducer> {
         if(c != '@')
             throw std::runtime_error("Bad command line format.");
 
-        return new H_FlatTreeProducer(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
-                                  configFileName, prefix, maxNumberOfEvents);
+        return new FlatTreeProducer(inputFileName, outputMuTauFile, outputETauFile, outputTauTauFile,
+                                    configFileName, prefix, maxNumberOfEvents);
     }
 };
 } // make_tools

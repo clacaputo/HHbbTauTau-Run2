@@ -61,7 +61,7 @@ public:  std::vector< type >& name() { return _##name; }
 
 #define DATA_CLASS(namespace_name, class_name, data_macro) \
     namespace namespace_name { \
-        struct class_name { data_macro() }; \
+        struct class_name : public root_ext::detail::BaseDataClass { data_macro() }; \
         typedef std::vector< class_name > class_name##Vector; \
     } \
     /**/
@@ -139,6 +139,10 @@ namespace detail {
         SmartTreeVectorPtrEntry(std::vector<DataType>& origin)
             : value(&origin) {}
         virtual void clear() { value->clear(); }
+    };
+
+    struct BaseDataClass {
+        virtual ~BaseDataClass() {}
     };
 } // detail
 

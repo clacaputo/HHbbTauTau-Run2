@@ -42,7 +42,6 @@
 
 #include "TreeProduction/interface/MET.h"
 #include "AnalysisBase/include/Candidate.h"
-#include "AnalysisBase/include/iostream_operators.h"
 
 namespace analysis {
 

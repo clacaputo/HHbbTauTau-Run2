@@ -352,7 +352,6 @@ PARTICLE(h_c_1P, 10443);
 PARTICLE(lambda_c_plus_2625, 4124);
 PARTICLE(xi_b1_minus, 15312);
 
-PARTICLE(Jet, 0);
 PARTICLE(NONEXISTENT, std::numeric_limits<int>::max());
 
 #undef PARTICLE
@@ -485,5 +484,20 @@ struct PdgParticle {
 
 typedef std::vector<particles::ParticleCode> ParticleCodes;
 typedef std::vector<ParticleCodes> ParticleCodes2D;
+
+std::ostream& operator<<(std::ostream& s, const Status& particleStatus){
+    s << particles::NameProvider<particles::Status>::Name(particleStatus);
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const ParticleCode& code){
+    s << code.Name();
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const PdgParticle& particle){
+    s << particle.Name();
+    return s;
+}
 
 } // particles

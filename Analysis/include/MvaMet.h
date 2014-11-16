@@ -31,7 +31,6 @@
 #include "METPUSubtraction/source/mvaMEtUtilities.cc"
 #include "METPUSubtraction/source/PFMETAlgorithmMVA.cc"
 
-#include "AnalysisBase/include/iostream_operators.h"
 #include "AnalysisBase/include/Candidate.h"
 #include "AnalysisBase/include/AnalysisTools.h"
 
@@ -48,13 +47,13 @@ public:
         metAlgo.initialize(inputFileNameU, inputFileNameDPhi, inputFileNameCovU1, inputFileNameCovU2);
     }
 
-    ntuple::MET ComputeMvaMet(const Candidate& signalCandidate, const ntuple::PFCandVector& pfCandidates,
-                              const ntuple::JetVector& jets, const Vertex& selectedVertex,
-                              const std::vector<Vertex>& goodVertices, const ntuple::TauVector& taus)
+    ntuple::MET ComputeMvaMet(const CandidatePtr& signalCandidate, const ntuple::PFCandVector& pfCandidates,
+                              const ntuple::JetVector& jets, const VertexPtr& selectedVertex,
+                              const VertexPtrVector& goodVertices)
     {
         const static bool debug = false;
-        const auto leptonInfo = ComputeLeptonInfo(signalCandidate, taus);
-        auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex.position);
+        const auto leptonInfo = ComputeLeptonInfo(signalCandidate);
+        auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex->GetPosition());
         const auto vertexInfo = ComputeVertexInfo(goodVertices);
         const auto jetInfo = ComputeJetInfo(jets, leptonInfo, pfCandidateInfo);
         metAlgo.setInput(leptonInfo, jetInfo, pfCandidateInfo, vertexInfo);
@@ -92,9 +91,9 @@ public:
         return mvaMET;
     }
 
-    ntuple::MET ComputePFMet(const ntuple::PFCandVector& pfCandidates, const Vertex& selectedVertex)
+    ntuple::MET ComputePFMet(const ntuple::PFCandVector& pfCandidates, const VertexPtr& selectedVertex)
     {
-        auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex.position);
+        auto pfCandidateInfo = ComputePFCandidateInfo(pfCandidates, selectedVertex->GetPosition());
         mvaMEtUtilities metUtilities;
         CommonMETData pfCandSum = metUtilities.computePFCandSum(pfCandidateInfo, 0.1, 2);
         const TVector2 vectorialMET(-pfCandSum.mex,-pfCandSum.mey);
@@ -108,19 +107,13 @@ public:
 private:
     static double DefaultDeltaZ() { return -999.; }
 
-    std::vector<mvaMEtUtilities::leptonInfo> ComputeLeptonInfo(const Candidate& signalCandidate,
-                                                               const ntuple::TauVector& taus)
+    std::vector<mvaMEtUtilities::leptonInfo> ComputeLeptonInfo(const CandidatePtr& signalCandidate)
     {
         std::vector<mvaMEtUtilities::leptonInfo> leptonInfos;
-        for(const Candidate& daughter : signalCandidate.finalStateDaughters) {
+        for(const auto& daughter : signalCandidate->GetFinalStateDaughters()) {
             mvaMEtUtilities::leptonInfo info;
-            if (daughter.type == analysis::Candidate::Tau){
-                const ntuple::Tau& tau = taus.at(daughter.index);
-                info.p4_.SetPtEtaPhiM(tau.pt,tau.eta,tau.phi,tau.mass);
-            }
-            else
-                info.p4_ = daughter.momentum;
-            info.chargedFrac_ = ComputeChargedFraction(daughter, taus);
+            info.p4_ = daughter->GetMomentum();
+            info.chargedFrac_ = ComputeChargedFraction(daughter);
             leptonInfos.push_back(info);
         }
         return leptonInfos;
@@ -146,11 +139,11 @@ private:
         return candInfos;
     }
 
-    std::vector<TVector3> ComputeVertexInfo(const std::vector<Vertex>& goodVertices)
+    std::vector<TVector3> ComputeVertexInfo(const VertexPtrVector& goodVertices)
     {
         std::vector<TVector3> vertexInfos;
-        for(const Vertex& vertex : goodVertices)
-            vertexInfos.push_back(vertex.position);
+        for(const VertexPtr& vertex : goodVertices)
+            vertexInfos.push_back(vertex->GetPosition());
         return vertexInfos;
     }
 
@@ -203,13 +196,13 @@ private:
         return jetInfos;
     }
 
-    double ComputeChargedFraction(const Candidate& candidate, const ntuple::TauVector& taus)
+    double ComputeChargedFraction(const CandidatePtr& candidate)
     {
-        if(candidate.type == Candidate::Mu || candidate.type == Candidate::Electron)
+        if(candidate->GetType() == Candidate::Type::Muon || candidate->GetType() == Candidate::Type::Electron)
             return 1.0;
-        if(candidate.type != Candidate::Tau)
-            throw std::runtime_error("Unsupported candidate type to compute charged fraction.");
-        const ntuple::Tau& tau = taus.at(candidate.index);
+        if(candidate->GetType() != Candidate::Type::Tau)
+            throw exception("Unsupported candidate type to compute charged fraction.");
+        const ntuple::Tau& tau = candidate->GetNtupleObject<ntuple::Tau>();
         double ptTotal = 0.0, ptCharged = 0.0;
         for(double pt : tau.signalChHadCand_Pt) {
             ptCharged += pt;
