@@ -301,19 +301,19 @@ protected:
         flatTree->nBjets_retagged()    = selection.retagged_bjets.size();
 
 
-        for (const Candidate& jet : selection.jets){
-            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
-            flatTree->pt_jets().push_back(jet.momentum.Pt());
-            flatTree->eta_jets().push_back(jet.momentum.Eta());
-            flatTree->phi_jets().push_back(jet.momentum.Phi());
+        for (const CandidatePtr& jet : selection.jets){
+            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();
+            flatTree->pt_jets().push_back(jet->GetMomentum().Pt());
+            flatTree->eta_jets().push_back(jet->GetMomentum().Eta());
+            flatTree->phi_jets().push_back(jet->GetMomentum().Phi());
             flatTree->ptraw_jets().push_back(ntuple_jet.pt_raw);
             flatTree->ptunc_jets().push_back(ntuple_jet.pt_raw);//to put uncertainties -> put pt_raw only to compile
             flatTree->mva_jets().push_back(ntuple_jet.puIdMVA);
             flatTree->passPU_jets().push_back(ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits));
         }
 
-        for (const Candidate& jet : selection.bjets_all) {
-            const ntuple::Jet& ntuple_jet = event->jets().at(jet.index);
+        for (const CandidatePtr& jet : selection.bjets_all) {
+            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();
 
             flatTree->pt_Bjets()      .push_back( jet->GetMomentum().Pt() );
             flatTree->eta_Bjets()     .push_back( jet->GetMomentum().Eta() );
