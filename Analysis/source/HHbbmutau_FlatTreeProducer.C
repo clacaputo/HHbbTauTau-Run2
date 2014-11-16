@@ -411,6 +411,10 @@ protected:
         flatTree->againstElectronMediumMVA_1() = false;
         flatTree->againstElectronTightMVA_1() = false;
         flatTree->againstElectronVTightMVA_1() = false;
+        flatTree->againstElectronLooseMVA_custom_1() = false;
+        flatTree->againstElectronMediumMVA_custom_1() = false;
+        flatTree->againstElectronTightMVA_custom_1() = false;
+        flatTree->againstElectronVTightMVA_custom_1() = false;
         flatTree->againstElectronLoose_1() = false;
         flatTree->againstElectronMedium_1() = false;
         flatTree->againstElectronTight_1() = false;

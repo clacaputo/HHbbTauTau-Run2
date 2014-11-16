@@ -656,14 +656,14 @@ protected:
         const ntuple::Tau& ntuple_tau_leg2 = correctedTaus.at(selection.GetLeg2().index);
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
         flatTree->iso_2()                  = ntuple_tau_leg2.byIsolationMVAraw;
-//        flatTree->againstElectronLooseMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-//                    ntuple_tau_leg2, 0);
-//        flatTree->againstElectronMediumMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-//                    ntuple_tau_leg2, 1);
-//        flatTree->againstElectronTightMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-//                    ntuple_tau_leg2, 2);
-//        flatTree->againstElectronVTightMVA_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
-//                    ntuple_tau_leg2, 3);
+        flatTree->againstElectronLooseMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 0);
+        flatTree->againstElectronMediumMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 1);
+        flatTree->againstElectronTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 2);
+        flatTree->againstElectronVTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 3);
         flatTree->againstElectronLooseMVA_2() = ntuple_tau_leg2.againstElectronLooseMVA3;
         flatTree->againstElectronMediumMVA_2() = ntuple_tau_leg2.againstElectronMediumMVA3;
         flatTree->againstElectronTightMVA_2() = ntuple_tau_leg2.againstElectronTightMVA3;

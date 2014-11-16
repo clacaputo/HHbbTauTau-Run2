@@ -70,6 +70,10 @@
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_1) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_1) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronVTightMVA_1) /* Whether tau passes very tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_custom_1) /* Whether tau passes loose MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_custom_1) /* Whether tau passes medium MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_custom_1) /* Whether tau passes tight MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_custom_1) /* Whether tau passes very tight MVA against electron custom discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_1) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_1) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_1) /* Whether tau passes tight against electron discriminator */ \
@@ -108,6 +112,10 @@
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_2) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronVTightMVA_2) /* Whether tau passes very tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_custom_2) /* Whether tau passes loose MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_custom_2) /* Whether tau passes medium MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_custom_2) /* Whether tau passes tight MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_custom_2) /* Whether tau passes very tight MVA against electron custom discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_2) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_2) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_2) /* Whether tau passes tight against electron discriminator */ \
