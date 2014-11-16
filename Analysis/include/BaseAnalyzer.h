@@ -155,14 +155,19 @@ public:
             timer->Report(n);
 //            std::cout << "event = " << _event->eventId().eventId << std::endl;
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
-            TryProcessEvent(_event, EventEnergyScale::Central);
+            ProcessEventWithEnergyUncertainties(_event);
             if(config.RunSingleEvent()) break;
-            if(config.EstimateTauEnergyUncertainties()) {
-                TryProcessEvent(_event, EventEnergyScale::TauUp);
-                TryProcessEvent(_event, EventEnergyScale::TauDown);
-            }
         }
         timer->Report(n, true);
+    }
+
+    void ProcessEventWithEnergyUncertainties(std::shared_ptr<const EventDescriptor> _event)
+    {
+        TryProcessEvent(_event, EventEnergyScale::Central);
+        if(config.EstimateTauEnergyUncertainties()) {
+            TryProcessEvent(_event, EventEnergyScale::TauUp);
+            TryProcessEvent(_event, EventEnergyScale::TauDown);
+        }
     }
 
     virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)

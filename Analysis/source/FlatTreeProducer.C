@@ -52,18 +52,9 @@ public:
             timer.Report(n);
 //            std::cout << _event->eventId().eventId << std::endl;
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
-            try {
-                HmutauAnalyzer.ProcessEvent(_event);
-                } catch(cuts::cut_failed&){}
-            try {
-                HetauAnalyzer.ProcessEvent(_event);
-            } catch(cuts::cut_failed&){}
-            try {
-                HtautauAnalyzer.ProcessEvent(_event);
-            } catch(cuts::cut_failed&){}
-            HmutauAnalyzer.GetAnaData().Selection("event").fill_selection(HmutauAnalyzer.GetEventWeight());
-            HetauAnalyzer.GetAnaData().Selection("event").fill_selection(HetauAnalyzer.GetEventWeight());
-            HtautauAnalyzer.GetAnaData().Selection("event").fill_selection(HtautauAnalyzer.GetEventWeight());
+            HmutauAnalyzer.ProcessEventWithEnergyUncertainties(_event);
+            HetauAnalyzer.ProcessEventWithEnergyUncertainties(_event);
+            HtautauAnalyzer.ProcessEventWithEnergyUncertainties(_event);
             if(config.RunSingleEvent()) break;
         }
         timer.Report(n, true);
