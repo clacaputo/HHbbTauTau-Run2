@@ -96,7 +96,7 @@ protected:
 
         const auto muons_extra = CollectBackgroundMuons();
         const bool have_bkg_muon = muons_extra.size() > 1 || muons.size() > 1 ||
-                ( muons_extra.size() == 1 && muons.size() == 1 && muons_extra.front() != muons.front() );
+                ( muons_extra.size() == 1 && muons.size() == 1 && *muons_extra.front() != *muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
         const auto allmuons = CollectMuons();

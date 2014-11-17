@@ -87,11 +87,14 @@ public:
             for (EventCategory eventCategory : eventCategories)
                 AnalyzeEvent(eventInfo, eventCategory);
         }
+        EndOfRun();
     }
 
 protected:
     virtual LightFlatAnalyzerData& GetAnaData() = 0;
     virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
+    virtual void EndOfRun() = 0;
+
 
     TFile& GetOutputFile() { return *outputFile; }
 
@@ -189,6 +192,7 @@ protected:
 private:
     std::shared_ptr<TFile> inputFile, outputFile;
     std::shared_ptr<ntuple::FlatTree> flatTree;
+
 
 protected:
     bool recalc_kinfit;

@@ -96,7 +96,7 @@ protected:
 
         const auto electrons_bkg = CollectBackgroundElectrons();
         const bool have_bkg_electron = electrons_bkg.size() > 1 || electrons.size() > 1 ||
-                ( electrons_bkg.size() == 1 && electrons.size() == 1 && electrons_bkg.front() != electrons.front() );
+                ( electrons_bkg.size() == 1 && electrons.size() == 1 && *electrons_bkg.front() != *electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
         const auto allelectrons = CollectElectrons();
