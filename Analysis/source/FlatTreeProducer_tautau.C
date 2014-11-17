@@ -317,10 +317,10 @@ protected:
                 const Higgs_TriggerPathMap::value_type& second) -> bool
         {
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
-            const ntuple::Tau& first_tau1 = first.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
-            const ntuple::Tau& first_tau2 = first.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
-            const ntuple::Tau& second_tau1 = second.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
-            const ntuple::Tau& second_tau2 = second.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& first_tau1 = first.first->GetLeadingDaughter(analysis::Candidate::Type::Tau)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& first_tau2 = first.first->GetSubleadingDaughter(analysis::Candidate::Type::Tau)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& second_tau1 = second.first->GetLeadingDaughter(analysis::Candidate::Type::Tau)->GetNtupleObject<ntuple::Tau>();
+            const ntuple::Tau& second_tau2 = second.first->GetSubleadingDaughter(analysis::Candidate::Type::Tau)->GetNtupleObject<ntuple::Tau>();
 
             const bool firstPair_pass =
                     first_tau2.againstElectronLooseMVA3 > againstElectronLooseMVA3
