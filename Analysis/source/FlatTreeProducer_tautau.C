@@ -42,21 +42,84 @@ struct SelectionResults_tautau : public SelectionResults {
 
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return tauTau_MC; }
 };
+
+class EventWeights_tautau : public EventWeights {
+public:
+    typedef std::vector< std::pair<std::string, bool> > TriggerPathVector;
+
+    EventWeights_tautau(bool is_data, bool is_embedded, bool apply_pu_weight, const std::string& pu_reweight_file_name,
+                       double _max_available_pu, double _default_pu_weight)
+        : EventWeights(is_data, is_embedded, apply_pu_weight, pu_reweight_file_name, _max_available_pu,
+                       _default_pu_weight) {}
+
+    virtual void Reset() override
+    {
+        EventWeights::Reset();
+        useDiTauJetWeight = true;
+        has_trigger_path = false;
+    }
+
+    void SetTriggerPath(const TriggerPathVector& triggerPath)
+    {
+        if(has_trigger_path)
+            throw exception("Trigger path are already set.");
+        if(!triggerPath.size())
+            throw exception("Trigger path are empty.");
+
+        useDiTauJetWeight = true;
+        for(const auto& path : triggerPath) {
+            if(!path.second) {
+                useDiTauJetWeight = false;
+                break;
+            }
+        }
+        has_trigger_path = true;
+    }
+
+protected:
+    virtual double CalculateTriggerWeight(CandidatePtr leg) override
+    {
+        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::TauTau;
+
+        if(!has_trigger_path)
+            throw exception("Trigger path are not set.");
+
+        if(IsEmbedded())
+            return DiTau::CalculateTauTurnOnCurveData(leg->GetMomentum());
+        if(useDiTauJetWeight)
+            return DiTauJet::CalculateTauWeight(leg->GetMomentum());
+        return DiTau::CalculateTauWeight(leg->GetMomentum());
+    }
+
+    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
+    {
+        const ntuple::Tau& ntuple_object = leg->GetNtupleObject<ntuple::Tau>();
+        return ntuple_object.decayMode == ntuple::tau_id::kOneProng0PiZero
+                ? cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
+    }
+
+private:
+    bool has_trigger_path;
+    bool useDiTauJetWeight;
+};
+
 } // namespace analysis
 
 class FlatTreeProducer_tautau : public virtual analysis::BaseFlatTreeProducer {
 public:
     typedef std::map<analysis::CandidatePtr, analysis::CandidatePtrVector> Higgs_JetsMap;
-    typedef std::vector< std::pair<std::string, bool> > TriggerPathVector;
-    typedef std::pair<analysis::CandidatePtr, TriggerPathVector> HiggsWithTriggerPath;
-    typedef std::map<analysis::CandidatePtr, TriggerPathVector> Higgs_TriggerPathMap;
+    typedef std::pair<analysis::CandidatePtr, analysis::EventWeights_tautau::TriggerPathVector> HiggsWithTriggerPath;
+    typedef std::map<analysis::CandidatePtr, analysis::EventWeights_tautau::TriggerPathVector> Higgs_TriggerPathMap;
 
     FlatTreeProducer_tautau(const std::string& inputFileName, const std::string& outputFileName,
                             const std::string& configFileName, const std::string& _prefix = "none",
                             size_t _maxNumberOfEvents = 0,
                             std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
-          baseAnaData(*outputFile)
+          baseAnaData(*outputFile),
+          eventWeights(!config.isMC(), config.isDYEmbeddedSample(), config.ApplyPUreweight(),
+                       config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
+                       config.PUreweight_defaultWeight())
     {
         baseAnaData.getOutputFile().cd();
         if(config.ApplyRecoilCorrection())
@@ -67,6 +130,7 @@ public:
     }
 
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return baseAnaData; }
+    virtual analysis::EventWeights& GetEventWeights() override { return eventWeights; }
     virtual analysis::RecoilCorrectionProducer& GetRecoilCorrectionProducer() override
     {
         return *recoilCorrectionProducer_tautau;
@@ -115,20 +179,19 @@ protected:
         const auto looseJets = CollectLooseJets();
         const auto jets = CollectJets(looseJets);
 
-        const Higgs_JetsMap higgs_JetsMap = MatchedHiggsAndJets(higgses, jets);
-        const Higgs_JetsMap higgs_looseJetsMap = MatchedHiggsAndJets(higgses, looseJets);
+        const auto higgs_JetsMap = MatchedHiggsAndJets(higgses, jets);
+        const auto higgs_looseJetsMap = MatchedHiggsAndJets(higgses, looseJets);
 
         const auto higgsTriggered = config.isDYEmbeddedSample()
                 ? ApplyTriggerMatchForEmbedded(higgs_JetsMap) : ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
-        selectedHiggsWithTriggerPath = SelectFullyHadronicHiggs(higgsTriggered);
+        const auto selectedHiggsWithTriggerPath = SelectFullyHadronicHiggs(higgsTriggered);
         selection.higgs = selectedHiggsWithTriggerPath.first;
         selection.eventType = DoEventCategorization(selection.higgs);
+        eventWeights.SetTriggerPath(selectedHiggsWithTriggerPath.second);
 
         cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");
-
-        CalculateFullEventWeight(selection.higgs);
 
         if (!config.isMC() || config.isDYEmbeddedSample()){
             selection.pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
@@ -197,7 +260,7 @@ protected:
         Higgs_TriggerPathMap triggeredHiggses;
         for (const auto& firedPath : firedPaths){
             for (const auto& higgs_iter : higgs_JetsMap){
-                const TriggerPathVector::value_type path(firedPath, false);
+                const analysis::EventWeights_tautau::TriggerPathVector::value_type path(firedPath, false);
                 triggeredHiggses[higgs_iter.first].push_back(path);
             }
         }
@@ -237,7 +300,8 @@ protected:
                 }
 
                 if(!jetTriggerRequest || jetMatched) {
-                    const TriggerPathVector::value_type path(interestingPath, jetTriggerRequest);
+                    const analysis::EventWeights_tautau::TriggerPathVector::value_type
+                            path(interestingPath, jetTriggerRequest);
                     triggeredHiggses[higgs].push_back(path);
                 }
             }
@@ -310,54 +374,6 @@ protected:
             final_state.subleading_tau_jet = &final_state.hadronic_taus.at(0);
         }
         return true;
-    }
-
-    virtual void CalculateTriggerWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::TauTau;
-        if(higgs != selectedHiggsWithTriggerPath.first)
-            throw analysis::exception("Inconsistet higgs selection");
-        const analysis::CandidatePtr& leadTau = higgs->GetLeadingDaughter(analysis::Candidate::Type::Tau);
-        const analysis::CandidatePtr& subLeadTau = higgs->GetSubleadingDaughter(analysis::Candidate::Type::Tau);
-
-        bool useDiTauJetWeight = true;
-        for(const auto& path : selectedHiggsWithTriggerPath.second) {
-            if(!path.second) {
-                useDiTauJetWeight = false;
-                break;
-            }
-        }
-
-        if(config.isDYEmbeddedSample())
-            triggerWeights = DiTau::CalculateTurnOnCurveData(leadTau->GetMomentum(), subLeadTau->GetMomentum());
-        else if(useDiTauJetWeight)
-            triggerWeights = DiTauJet::CalculateWeights(leadTau->GetMomentum(), subLeadTau->GetMomentum());
-        else
-            triggerWeights = DiTau::CalculateWeights(leadTau->GetMomentum(), subLeadTau->GetMomentum());
-    }
-
-    virtual void CalculateDMWeights(const analysis::CandidatePtr& higgs) override
-    {
-        DMweights.clear();
-        const analysis::CandidatePtr& leadTau = higgs->GetLeadingDaughter(analysis::Candidate::Type::Tau);
-        const analysis::CandidatePtr& subLeadTau = higgs->GetSubleadingDaughter(analysis::Candidate::Type::Tau);
-        const ntuple::Tau& leg1 = leadTau->GetNtupleObject<ntuple::Tau>();
-        const ntuple::Tau& leg2 = subLeadTau->GetNtupleObject<ntuple::Tau>();
-        const double leadWeight = leg1.decayMode == ntuple::tau_id::kOneProng0PiZero ?
-                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
-        const double subLeadWeight = leg2.decayMode == ntuple::tau_id::kOneProng0PiZero ?
-                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
-        // first leadTau, second subLeadTau
-        DMweights.push_back(leadWeight);
-        DMweights.push_back(subLeadWeight);
-    }
-
-    virtual void CalculateFakeWeights(const analysis::CandidatePtr& /*higgs*/) override
-    {
-        fakeWeights.clear();
-        // first leadTau, second subLeadTau
-        fakeWeights.push_back(1);
-        fakeWeights.push_back(1);
     }
 
     virtual void FillFlatTree(const analysis::SelectionResults& /*selection*/) override
@@ -460,8 +476,8 @@ protected:
 protected:
     analysis::BaseAnalyzerData baseAnaData;
     analysis::SelectionResults_tautau selection;
-    HiggsWithTriggerPath selectedHiggsWithTriggerPath;
     std::shared_ptr<analysis::RecoilCorrectionProducer> recoilCorrectionProducer_tautau;
+    analysis::EventWeights_tautau eventWeights;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

@@ -49,7 +49,7 @@ public:
         Reset();
     }
 
-    void Reset()
+    virtual void Reset()
     {
         eventWeight = 1;
         PUweight = 1;
@@ -104,7 +104,7 @@ public:
     void SetEmbeddedWeight(double _embeddedWeight)
     {
         if(has_embedded_weight)
-            throw exception("Embedded weight is already calculated.");
+            throw exception("Embedded weight is already set.");
         if(!is_embedded)
             throw exception("Embedded weight should not be applied.");
 
@@ -157,11 +157,11 @@ public:
     double GetFakeWeight(size_t leg_id) const { return GetWeight(fakeWeights, leg_id); }
 
 protected:
-    virtual double CalculateTriggerWeight(size_t leg_id, CandidatePtr leg) { return 1; }
-    virtual double CalculateIsoWeight(size_t leg_id, CandidatePtr leg) { return 1; }
-    virtual double CalculateIdWeight(size_t leg_id, CandidatePtr leg) { return 1; }
-    virtual double CalculateDecayModeWeight(size_t leg_id, CandidatePtr leg) { return 1; }
-    virtual double CalculateFakeWeight(size_t leg_id, CandidatePtr leg) { return 1; }
+    virtual double CalculateTriggerWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateIsoWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateIdWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateDecayModeWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateFakeWeight(CandidatePtr leg) { return 1; }
 
 private:
     static std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName)
@@ -191,7 +191,7 @@ private:
         for(size_t n = 0; n < SelectionResults::NumberOfLegs; ++n) {
             const size_t leg_id = GetLegId(n);
             const CandidatePtr leg = selection.GetLeg(leg_id);
-            container.at(n) = (this->*method)(leg_id, leg);
+            container.at(n) = (this->*method)(leg);
             eventWeight *= container.at(n);
         }
     }

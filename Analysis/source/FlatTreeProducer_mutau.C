@@ -50,7 +50,7 @@ public:
           applyJetToTauFakeRate(_applyJetToTauFakeRate) {}
 
 protected:
-    virtual double CalculateTriggerWeight(size_t leg_id, CandidatePtr leg) override
+    virtual double CalculateTriggerWeight(CandidatePtr leg) override
     {
         using namespace analysis::Htautau_Summer13::trigger;
         using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::MuTau;
@@ -69,7 +69,7 @@ protected:
         return trigger_functions.at(key)(leg->GetMomentum());
     }
 
-    virtual double CalculateIsoWeight(size_t leg_id, CandidatePtr leg) override
+    virtual double CalculateIsoWeight(CandidatePtr leg) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::muonISOscaleFactor;
 
@@ -88,7 +88,7 @@ protected:
         return scaleFactors.at(pt_bin).at(eta_bin);
     }
 
-    virtual double CalculateIdWeight(size_t leg_id, CandidatePtr leg) override
+    virtual double CalculateIdWeight(CandidatePtr leg) override
     {
         using namespace cuts::Htautau_Summer13::MuTau::muonIDscaleFactor;
 
@@ -107,7 +107,7 @@ protected:
         return scaleFactors.at(pt_bin).at(eta_bin);
     }
 
-    virtual double CalculateDecayModeWeight(size_t leg_id, CandidatePtr leg) override
+    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
@@ -120,7 +120,7 @@ protected:
         return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
     }
 
-    virtual double CalculateFakeWeight(size_t leg_id, CandidatePtr leg) override
+    virtual double CalculateFakeWeight(CandidatePtr leg) override
     {
         using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
 
