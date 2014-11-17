@@ -301,4 +301,6 @@ Analysis/config/dyjets_old.cfg
 Analysis/source/SyncTreeProducer.C
 Analysis/config/Wjets_old.cfg
 Analysis/include/JetEnergyUncertainty.h
+Analysis/include/SelectionResults.h
+Analysis/include/EventWeights.h
 Analysis/config/TT_embedded.cfg

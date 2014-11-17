@@ -218,4 +218,20 @@ private:
     const ntuple::Vertex* ntupleObject;
 };
 
+namespace detail {
+const std::map<Candidate::Type, std::string> CandidateTypeNameMap = {
+    { Candidate::Type::Electron, "electron" }, { Candidate::Type::Muon, "muon" }, { Candidate::Type::Tau, "tau" },
+    { Candidate::Type::Jet, "jet" }, { Candidate::Type::Z, "Z" }, { Candidate::Type::Higgs, "Higgs" }
+};
+} // namespace detail
+
+// enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
+
+std::ostream& operator<< (std::ostream& s, const Candidate::Type& t)
+{
+    s << detail::CandidateTypeNameMap.at(t);
+    return s;
+}
+
+
 } // analysis

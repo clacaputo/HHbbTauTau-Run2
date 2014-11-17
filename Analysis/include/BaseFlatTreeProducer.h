@@ -51,19 +51,19 @@ public:
             flatTree->Write();
     }
 
-    virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event) override
+    virtual void ProcessEvent() override
     {
         using namespace analysis;
 
-        BaseAnalyzer::ProcessEvent(_event);
-
         SelectionResults& selection = ApplyBaselineSelection();
-
         selection.svfitResults = sv_fit::CombinedFit(*selection.higgs, selection.MET_with_recoil_corrections,
                                                      true, true);
-
         selection.kinfitResults = RunKinematicFit(selection.bjets_all, *selection.higgs,
                                                   selection.MET_with_recoil_corrections);
+
+        if(config.isMC())
+            GetEventWeights().CalculateSelectionDependentWeights(selection);
+
         FillFlatTree(selection);
     }
 
@@ -88,17 +88,17 @@ protected:
         }
 
         // Weights
-        flatTree->puweight()        = PUweight;
-        flatTree->trigweight_1()    = triggerWeights.at(0);
-        flatTree->trigweight_2()    = triggerWeights.at(1);
-        flatTree->idweight_1()      = IDweights.at(0);
-        flatTree->idweight_2()      = IDweights.at(1);
-        flatTree->isoweight_1()     = IsoWeights.at(0);
-        flatTree->isoweight_2()     = IsoWeights.at(1);
-        flatTree->fakeweight_1()     = fakeWeights.at(0); // e -> tau fake rate
-        flatTree->fakeweight_2()     = fakeWeights.at(1); // jet -> tau fake rate - default
-        flatTree->weight()          = eventWeight;
-        flatTree->embeddedWeight()  = config.isDYEmbeddedSample() ? event->genEvent().embeddedWeight : 1.;
+        flatTree->puweight() = GetEventWeights().GetPileUpWeight();
+        flatTree->trigweight_1() = GetEventWeights().GetTriggerWeight(1);
+        flatTree->trigweight_2() = GetEventWeights().GetTriggerWeight(2);
+        flatTree->idweight_1() = GetEventWeights().GetIdWeight(1);
+        flatTree->idweight_2() = GetEventWeights().GetIdWeight(2);
+        flatTree->isoweight_1() = GetEventWeights().GetIsoWeight(1);
+        flatTree->isoweight_2() = GetEventWeights().GetIsoWeight(2);
+        flatTree->fakeweight_1() = GetEventWeights().GetFakeWeight(1); // e -> tau fake rate
+        flatTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // jet -> tau fake rate - default
+        flatTree->weight() = GetEventWeights().GetFullWeight();
+        flatTree->embeddedWeight() = GetEventWeights().GetEmbeddedWeight();
 
         // HTT candidate
         flatTree->mvis() = selection.higgs->GetMomentum().M();
@@ -113,8 +113,8 @@ protected:
         flatTree->phi_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
                 ? selection.svfitResults.fit_mc.momentum.Phi() : default_value;
 
-        flatTree->DeltaR_leptons() = selection.GetLeg1()->GetMomentum().DeltaR(selection.GetLeg2()->GetMomentum()) ;
-        flatTree->pt_tt()          = (selection.GetLeg1()->GetMomentum() + selection.GetLeg2()->GetMomentum()).Pt();
+        flatTree->DeltaR_leptons() = selection.GetLeg(1)->GetMomentum().DeltaR(selection.GetLeg(2)->GetMomentum()) ;
+        flatTree->pt_tt()          = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
 
         // Kinematic fit
         flatTree->kinfit_bb_tt_mass() = selection.kinfitResults.mass;
@@ -178,7 +178,7 @@ protected:
         // MET
         const TLorentzVector MET_momentum = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,
                                                                        selection.MET_with_recoil_corrections.phi, 0);
-        flatTree->pt_tt_MET() = (selection.GetLeg1()->GetMomentum() + selection.GetLeg2()->GetMomentum()
+        flatTree->pt_tt_MET() = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()
                                  + MET_momentum).Pt();
 
         flatTree->met() = selection.pfMET.pt;
@@ -202,31 +202,31 @@ protected:
         flatTree->mvacov11() = metMVAcov[1][1];
 
         // Leg 1, lepton
-        flatTree->pt_1()     = selection.GetLeg1()->GetMomentum().Pt();
-        flatTree->phi_1()    = selection.GetLeg1()->GetMomentum().Phi();
-        flatTree->eta_1()    = selection.GetLeg1()->GetMomentum().Eta();
-        flatTree->m_1()      = selection.GetLeg1()->GetMomentum().M();
-        flatTree->energy_1() = selection.GetLeg1()->GetMomentum().E();
-        flatTree->q_1()      = selection.GetLeg1()->GetCharge();
-        flatTree->mt_1()     = Calculate_MT(selection.GetLeg1()->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
-        flatTree->d0_1()     = Calculate_dxy(selection.GetLeg1()->GetVertexPosition(), primaryVertex->GetPosition(),
-                                             selection.GetLeg1()->GetMomentum());
-        flatTree->dZ_1()     = selection.GetLeg1()->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+        flatTree->pt_1()     = selection.GetLeg(1)->GetMomentum().Pt();
+        flatTree->phi_1()    = selection.GetLeg(1)->GetMomentum().Phi();
+        flatTree->eta_1()    = selection.GetLeg(1)->GetMomentum().Eta();
+        flatTree->m_1()      = selection.GetLeg(1)->GetMomentum().M();
+        flatTree->energy_1() = selection.GetLeg(1)->GetMomentum().E();
+        flatTree->q_1()      = selection.GetLeg(1)->GetCharge();
+        flatTree->mt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
+        flatTree->d0_1()     = Calculate_dxy(selection.GetLeg(1)->GetVertexPosition(), primaryVertex->GetPosition(),
+                                             selection.GetLeg(1)->GetMomentum());
+        flatTree->dZ_1()     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
 
         // Leg 2, tau
-        flatTree->pt_2()     = selection.GetLeg2()->GetMomentum().Pt();
-        flatTree->phi_2()    = selection.GetLeg2()->GetMomentum().Phi();
-        flatTree->eta_2()    = selection.GetLeg2()->GetMomentum().Eta();
-        flatTree->m_2()      = selection.GetLeg2()->GetMomentum().M();
-        flatTree->energy_2() = selection.GetLeg2()->GetMomentum().E();
-        flatTree->q_2()      = selection.GetLeg2()->GetCharge();
-        flatTree->mt_2()     = Calculate_MT(selection.GetLeg2()->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
-        flatTree->d0_2()     = Calculate_dxy(selection.GetLeg2()->GetVertexPosition(), primaryVertex->GetPosition(),
-                                             selection.GetLeg2()->GetMomentum());
-        flatTree->dZ_2()     = selection.GetLeg2()->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+        flatTree->pt_2()     = selection.GetLeg(2)->GetMomentum().Pt();
+        flatTree->phi_2()    = selection.GetLeg(2)->GetMomentum().Phi();
+        flatTree->eta_2()    = selection.GetLeg(2)->GetMomentum().Eta();
+        flatTree->m_2()      = selection.GetLeg(2)->GetMomentum().M();
+        flatTree->energy_2() = selection.GetLeg(2)->GetMomentum().E();
+        flatTree->q_2()      = selection.GetLeg(2)->GetCharge();
+        flatTree->mt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
+        flatTree->d0_2()     = Calculate_dxy(selection.GetLeg(2)->GetVertexPosition(), primaryVertex->GetPosition(),
+                                             selection.GetLeg(2)->GetMomentum());
+        flatTree->dZ_2()     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
 
         // RM: for the three channels, mt, et, tt this leg is always a tau
-        const ntuple::Tau& ntuple_tau_leg2 = selection.GetLeg2()->GetNtupleObject<ntuple::Tau>();
+        const ntuple::Tau& ntuple_tau_leg2 = selection.GetLeg(2)->GetNtupleObject<ntuple::Tau>();
         flatTree->decayMode_2()                                = ntuple_tau_leg2.decayMode;
         flatTree->iso_2()                  = ntuple_tau_leg2.byIsolationMVAraw;
         flatTree->againstElectronLooseMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(

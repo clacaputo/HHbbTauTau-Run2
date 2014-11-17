@@ -36,11 +36,9 @@
 #include <iostream>
 
 #include "AnalysisBase/include/TreeExtractor.h"
-#include "AnalysisBase/include/AnalyzerData.h"
 #include "AnalysisBase/include/CutTools.h"
 #include "AnalysisBase/include/GenParticle.h"
 #include "AnalysisBase/include/MCfinalState.h"
-#include "AnalysisBase/include/Candidate.h"
 #include "AnalysisBase/include/RunReport.h"
 #include "AnalysisBase/include/Tools.h"
 #include "AnalysisBase/include/AnalysisTools.h"
@@ -53,24 +51,12 @@
 #include "custom_cuts.h"
 #include "MvaMet.h"
 #include "RecoilCorrection.h"
-#include "SVfit.h"
-#include "KinFit.h"
 #include "JetEnergyUncertainty.h"
-
-#define SELECTION_ENTRY(name) \
-    ENTRY_1D(cuts::ObjectSelector, name) \
-    /**/
-
-#define X(name) \
-    selectionManager.FillHistogram(object.name, #name)
-
-#define Y(name) \
-    selectionManager.FillHistogram(name, #name)
+#include "EventWeights.h"
 
 namespace analysis {
 
 class BaseAnalyzerData : public root_ext::AnalyzerData {
-
 public:
     BaseAnalyzerData(TFile& outputFile) : AnalyzerData(outputFile) {}
 
@@ -78,44 +64,6 @@ public:
 
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
-};
-
-class SelectionManager {
-public:
-    SelectionManager(root_ext::AnalyzerData& _anaData, const std::string& _selection_label, double _eventWeight)
-        : anaData(&_anaData), selection_label(_selection_label), eventWeight(_eventWeight) {}
-
-    template<typename ValueType>
-    ValueType FillHistogram(ValueType value, const std::string& histogram_name)
-    {
-        auto& histogram = anaData->Get(static_cast<TH1D*>(nullptr), histogram_name, selection_label);
-        return cuts::fill_histogram(value, histogram, eventWeight);
-    }
-
-private:
-    root_ext::AnalyzerData* anaData;
-    std::string selection_label;
-    double eventWeight;
-};
-
-struct SelectionResults {
-    virtual ~SelectionResults() {}
-    CandidatePtr higgs;
-    sv_fit::CombinedFitResults svfitResults;
-    kinematic_fit::four_body::FitResults kinfitResults;
-    CandidatePtrVector jets;
-    CandidatePtrVector jetsPt20;
-    CandidatePtrVector bjets_all;
-    CandidatePtrVector retagged_bjets;
-    VertexPtrVector vertices;
-    ntuple::MET pfMET;
-    ntuple::MET MET_with_recoil_corrections;
-    ntuple::EventType eventType;
-
-    VertexPtr GetPrimaryVertex() const { return vertices.front(); }
-    virtual CandidatePtr GetLeg1() const = 0;
-    virtual CandidatePtr GetLeg2() const = 0;
-    virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
 };
 
 class BaseAnalyzer {
@@ -127,7 +75,6 @@ public:
           anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
           anaDataFinalSelection(*outputFile, "final_selection"),
           maxNumberOfEvents(_maxNumberOfEvents),
-          eventWeight(1), PUweight(1), triggerWeight(1), IDweight(1), IsoWeight(1),
           mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
     {
@@ -139,9 +86,6 @@ public:
 
         }
         TH1::SetDefaultSumw2();
-        if(config.ApplyPUreweight()){
-            pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
-        }
         if(config.EstimateJetEnergyUncertainties()) {
             jetEnergyUncertaintyCorrector = std::shared_ptr<JetEnergyUncertaintyCorrector>(
                         new JetEnergyUncertaintyCorrector(config.JetEnergyUncertainties_inputFile(),
@@ -180,11 +124,6 @@ public:
         }
     }
 
-    double GetEventWeight() const
-    {
-        return eventWeight;
-    }
-
 private:
     void TryProcessEvent(std::shared_ptr<const EventDescriptor> _event, EventEnergyScale energyScale)
     {
@@ -207,104 +146,29 @@ private:
             jetEnergyUncertaintyCorrector->ApplyCorrection(scaledJets, scale_up);
         }
 
+        event = _event;
+        GetAnaData().getOutputFile().cd();
+        GetEventWeights().Reset();
+        if(config.ApplyPUreweight())
+            GetEventWeights().CalculatePuWeight(event->eventInfo());
+        if(config.isDYEmbeddedSample())
+            GetEventWeights().SetEmbeddedWeight(event->genEvent().embeddedWeight);
+
         try {
-            ProcessEvent(_event);
+            ProcessEvent();
         } catch(cuts::cut_failed&){}
-        GetAnaData().Selection("event").fill_selection(eventWeight);
+        GetAnaData().Selection("event").fill_selection(GetEventWeights().GetPartialWeight());
     }
 
 protected:
     virtual BaseAnalyzerData& GetAnaData() = 0;
     virtual RecoilCorrectionProducer& GetRecoilCorrectionProducer() = 0;
     virtual SelectionResults& ApplyBaselineSelection() = 0;
+    virtual EventWeights& GetEventWeights() = 0;
+    virtual void ProcessEvent() = 0;
 
     const ntuple::TauVector& GetNtupleTaus() const { return scaledTaus; }
     const ntuple::JetVector& GetNtupleJets() const { return scaledJets; }
-
-    virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)
-    {
-        event = _event;
-        GetAnaData().getOutputFile().cd();
-        eventWeight = 1;
-        if (pu_weights){
-            const ntuple::Event& eventInfo = event->eventInfo();
-            const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
-            if(bxIndex >= eventInfo.bunchCrossing.size())
-                throw std::runtime_error("in-time BX not found");
-            //SetPUWeight(eventInfo.nPU.at(bxIndex));
-            SetPUWeight(eventInfo.trueNInt.at(bxIndex));
-        }
-        eventWeight *= PUweight;
-        if (config.isDYEmbeddedSample()) eventWeight *= event->genEvent().embeddedWeight;
-    }
-
-    void SetPUWeight(float nPU)
-    {
-        if (!pu_weights) return;
-        const Int_t bin = pu_weights->FindBin(nPU);
-        const Int_t maxBin = pu_weights->FindBin(config.PUreweight_maxAvailablePU());
-        const bool goodBin = bin >= 1 && bin <= maxBin;
-        PUweight = goodBin ? pu_weights->GetBinContent(bin) : config.PUreweight_defaultWeight();
-    }
-
-    void CalculateFullEventWeight(const CandidatePtr& candidate)
-    {
-        CalculateTriggerWeights(candidate);
-        CalculateIsoWeights(candidate);
-        CalculateIdWeights(candidate);
-        CalculateDMWeights(candidate);
-        CalculateFakeWeights(candidate);
-        for (double weight : triggerWeights){
-            eventWeight *= weight;
-        }
-        for (double weight : IsoWeights){
-            eventWeight *= weight;
-        }
-        for (double weight : IDweights){
-            eventWeight *= weight;
-        }
-        for (double weight : DMweights){
-            eventWeight *= weight;
-        }
-        for (double weight : fakeWeights){
-            eventWeight *= weight;
-        }
-    }
-
-    virtual void CalculateTriggerWeights(const CandidatePtr& candidate)
-    {
-        triggerWeights.clear();
-        triggerWeights.push_back(1);
-        triggerWeights.push_back(1);
-    }
-
-    virtual void CalculateIsoWeights(const CandidatePtr& candidate)
-    {
-        IsoWeights.clear();
-        IsoWeights.push_back(1);
-        IsoWeights.push_back(1);
-    }
-
-    virtual void CalculateIdWeights(const CandidatePtr& candidate)
-    {
-        IDweights.clear();
-        IDweights.push_back(1);
-        IDweights.push_back(1);
-    }
-
-    virtual void CalculateDMWeights(const CandidatePtr& candidate)
-    {
-        DMweights.clear();
-        DMweights.push_back(1);
-        DMweights.push_back(1);
-    }
-
-    virtual void CalculateFakeWeights(const CandidatePtr& candidate)
-    {
-        fakeWeights.clear();
-        fakeWeights.push_back(1);
-        fakeWeights.push_back(1);
-    }
 
     bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const
     {
@@ -339,7 +203,7 @@ protected:
                                               Comparitor comparitor = Comparitor())
     {
         cuts::ObjectSelector& objectSelector = GetAnaData().Selection(selection_label);
-        SelectionManager selectionManager(anaDataBeforeCut, selection_label, eventWeight);
+        SelectionManager selectionManager(anaDataBeforeCut, selection_label, GetEventWeights().GetPartialWeight());
 
         const auto selector = [&](size_t id) -> ObjectPtrType {
             ObjectPtrType candidate(new ObjectType(ntuple_objects.at(id)));
@@ -348,15 +212,18 @@ protected:
             return candidate;
         };
 
-        const auto selected = objectSelector.collect_objects<ObjectPtrType>(eventWeight, ntuple_objects.size(),
-                                                                            selector, comparitor);
-        SelectionManager selectionManager_afterCut(anaDataAfterCut, selection_label, eventWeight);
+        const auto selected = objectSelector.collect_objects<ObjectPtrType>(GetEventWeights().GetPartialWeight(),
+                                                                            ntuple_objects.size(), selector,
+                                                                            comparitor);
+        SelectionManager selectionManager_afterCut(anaDataAfterCut, selection_label,
+                                                   GetEventWeights().GetPartialWeight());
         for(const auto& candidate : selected) {
             cuts::Cutter cut(nullptr);
             base_selector(candidate, selectionManager_afterCut, cut);
         }
-        GetAnaData().N_objects(selection_label).Fill(selected.size(), eventWeight);
-        GetAnaData().N_objects(selection_label + "_ntuple").Fill(ntuple_objects.size(), eventWeight);
+        GetAnaData().N_objects(selection_label).Fill(selected.size(), GetEventWeights().GetPartialWeight());
+        GetAnaData().N_objects(selection_label + "_ntuple").Fill(ntuple_objects.size(),
+                                                                 GetEventWeights().GetPartialWeight());
         return selected;
     }
 
@@ -587,11 +454,12 @@ protected:
                     if (expectedCharge != Candidate::UnknownCharge() && candidate->GetCharge() != expectedCharge)
                         continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),eventWeight);
+                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),
+                                                      GetEventWeights().GetPartialWeight());
                 }
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size(),eventWeight);
+        GetAnaData().N_objects(hist_name).Fill(result.size(), GetEventWeights().GetPartialWeight());
         return result;
     }
 
@@ -612,11 +480,12 @@ protected:
                     if (expectedCharge != Candidate::UnknownCharge() && candidate->GetCharge() != expectedCharge )
                         continue;
                     result.push_back(candidate);
-                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(), eventWeight);
+                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),
+                                                      GetEventWeights().GetPartialWeight());
                 }
             }
         }
-        GetAnaData().N_objects(hist_name).Fill(result.size(),eventWeight);
+        GetAnaData().N_objects(hist_name).Fill(result.size(), GetEventWeights().GetPartialWeight());
         return result;
     }
 
@@ -997,9 +866,6 @@ protected:
     size_t maxNumberOfEvents;
     GenEvent genEvent;
     VertexPtr primaryVertex;
-    double eventWeight, PUweight, triggerWeight, IDweight, IsoWeight;
-    std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
-    std::shared_ptr<TH1D> pu_weights;
     MvaMetProducer mvaMetProducer;
     ntuple::TauVector correctedTaus;
     EventEnergyScale eventEnergyScale;
