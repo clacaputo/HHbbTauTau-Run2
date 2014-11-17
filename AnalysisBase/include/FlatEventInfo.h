@@ -76,7 +76,7 @@ struct FlatEventInfo {
     TLorentzVector MET, Htt, Htt_MET, Hbb, resonance;
     TMatrixD MET_covariance;
     bool recalculate_mass_KinFit;
-    analysis::kinematic_fit::FitResultsWithUncertainties fitResults;
+    analysis::kinematic_fit::four_body::FitResults fitResults;
     double mva_BDT, mva_BDTD, mva_BDTMitFisher;
 
     FlatEventInfo(const ntuple::Flat& _event, const BjetPair& _selected_bjets, bool _recalculate_mass_KinFit)
@@ -112,9 +112,8 @@ struct FlatEventInfo {
                                                           lepton_momentums.at(0), lepton_momentums.at(1),
                                                           MET, MET_covariance);
 
-                fitResults = FitWithUncertainties(four_body_input,cuts::jetCorrections::energyUncertainty,
-                                             cuts::Htautau_Summer13::tauCorrections::energyUncertainty,false,true);
-                if (fitResults.fit_bb_tt.convergence == 0){
+                fitResults = Fit(four_body_input);
+                if (fitResults.convergence == 0){
                     std::cout << "kin fit has convergence = 0! event = " << event->evt << std::endl;
                 }
             }

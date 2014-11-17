@@ -407,6 +407,16 @@ protected:
             if(looseJet->GetMomentum().Pt() > pt)
                 jets.push_back(looseJet);
         }
+
+        const auto jetsSelector = [&] (const CandidatePtr& first_jet, const CandidatePtr& second_jet) -> bool
+        {
+            const double first_pt = first_jet->GetMomentum().Pt();
+            const double second_pt = second_jet->GetMomentum().Pt();
+            return first_pt > second_pt;
+        };
+
+        std::sort(jets.begin(), jets.end(), jetsSelector);
+
         return jets;
     }
 

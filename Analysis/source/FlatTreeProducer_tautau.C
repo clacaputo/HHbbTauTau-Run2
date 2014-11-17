@@ -25,6 +25,7 @@
  */
 
 #include "Analysis/include/BaseFlatTreeProducer.h"
+#include "AnalysisBase/include/exception.h"
 
 namespace analysis {
 struct SelectionResults_tautau : public SelectionResults {
@@ -255,11 +256,29 @@ protected:
             const ntuple::Tau& first_tau2 = first.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
             const ntuple::Tau& second_tau1 = second.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
             const ntuple::Tau& second_tau2 = second.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
+
+            if (first_tau2.againstElectronLooseMVA3 > 0.5 && second_tau2.againstElectronLooseMVA3 <= 0.5)
+                return true;
+            if (first_tau2.againstElectronLooseMVA3 <= 0.5 && second_tau2.againstElectronLooseMVA3 > 0.5)
+                return false;
+
+            //if againstElectron on the 2nd leg fails check iso
             const double first_iso = std::max(first_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
                                               first_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits);
             const double second_iso = std::max(second_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits,
                                                second_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits);
-            return first_iso < second_iso;
+            if (first_iso < second_iso) return true;
+            if (first_iso > second_iso) return false;
+
+            //if isolation requirement fails check sumPt like Semileptonic channell
+            const double first_sumPt = first_tau1.pt + first_tau2.pt;
+            const double second_sumPt = second_tau1.pt + second_tau2.pt;
+
+            if (first_sumPt > second_sumPt) return true;
+            if (first_sumPt < second_sumPt) return false;
+
+            throw analysis::exception("not found a good criteria for best tau pair");
+
         };
         return *std::min_element(higgses.begin(), higgses.end(), higgsSelector);
     }

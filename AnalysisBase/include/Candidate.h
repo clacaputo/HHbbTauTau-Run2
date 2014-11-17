@@ -167,6 +167,23 @@ public:
         return subleadingDaughter;
     }
 
+    bool operator != (const Candidate& other) const
+    {
+        if (!daughters.size() && !other.daughters.size()) return ntupleObject != other.ntupleObject;
+        if (daughters.size() != other.daughters.size()) return true;
+        for (size_t n = 0; n < daughters.size(); ++n){
+            CandidatePtr daughter = daughters.at(n);
+            CandidatePtr other_daughter = other.daughters.at(n);
+            if (*daughter != *other_daughter) return true;
+        }
+        return false;
+    }
+
+    bool operator == (const Candidate& other) const
+    {
+        return !(*this != other);
+    }
+
 private:
     std::pair<size_t, size_t> GetPtOrderedDaughterIndexes() const
     {
