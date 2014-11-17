@@ -55,6 +55,7 @@
 #include "RecoilCorrection.h"
 #include "SVfit.h"
 #include "KinFit.h"
+#include "JetEnergyUncertainty.h"
 
 #define SELECTION_ENTRY(name) \
     ENTRY_1D(cuts::ObjectSelector, name) \
@@ -141,6 +142,11 @@ public:
         if(config.ApplyPUreweight()){
             pu_weights = LoadPUWeights(config.PUreweight_fileName(), outputFile);
         }
+        if(config.EstimateJetEnergyUncertainties()) {
+            jetEnergyUncertaintyCorrector = std::shared_ptr<JetEnergyUncertaintyCorrector>(
+                        new JetEnergyUncertaintyCorrector(config.JetEnergyUncertainties_inputFile(),
+                                                          config.JetEnergyUncertainties_inputSection()));
+        }
     }
 
     virtual ~BaseAnalyzer() {}
@@ -168,23 +174,10 @@ public:
             TryProcessEvent(_event, EventEnergyScale::TauUp);
             TryProcessEvent(_event, EventEnergyScale::TauDown);
         }
-    }
-
-    virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)
-    {
-        event = _event;
-        GetAnaData().getOutputFile().cd();
-        eventWeight = 1;
-        if (pu_weights){
-            const ntuple::Event& eventInfo = event->eventInfo();
-            const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
-            if(bxIndex >= eventInfo.bunchCrossing.size())
-                throw std::runtime_error("in-time BX not found");
-            //SetPUWeight(eventInfo.nPU.at(bxIndex));
-            SetPUWeight(eventInfo.trueNInt.at(bxIndex));
+        if(config.EstimateJetEnergyUncertainties()) {
+            TryProcessEvent(_event, EventEnergyScale::JetUp);
+            TryProcessEvent(_event, EventEnergyScale::JetDown);
         }
-        eventWeight *= PUweight;
-        if (config.isDYEmbeddedSample()) eventWeight *= event->genEvent().embeddedWeight;
     }
 
     double GetEventWeight() const
@@ -209,6 +202,9 @@ private:
                 tau.phi = scaled_momentum.Phi();
                 tau.mass = scaled_momentum.M();
             }
+        } else if(energyScale == EventEnergyScale::JetUp || energyScale == EventEnergyScale::JetDown) {
+            const bool scale_up = energyScale == EventEnergyScale::JetUp;
+            jetEnergyUncertaintyCorrector->ApplyCorrection(scaledJets, scale_up);
         }
 
         try {
@@ -224,6 +220,23 @@ protected:
 
     const ntuple::TauVector& GetNtupleTaus() const { return scaledTaus; }
     const ntuple::JetVector& GetNtupleJets() const { return scaledJets; }
+
+    virtual void ProcessEvent(std::shared_ptr<const EventDescriptor> _event)
+    {
+        event = _event;
+        GetAnaData().getOutputFile().cd();
+        eventWeight = 1;
+        if (pu_weights){
+            const ntuple::Event& eventInfo = event->eventInfo();
+            const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
+            if(bxIndex >= eventInfo.bunchCrossing.size())
+                throw std::runtime_error("in-time BX not found");
+            //SetPUWeight(eventInfo.nPU.at(bxIndex));
+            SetPUWeight(eventInfo.trueNInt.at(bxIndex));
+        }
+        eventWeight *= PUweight;
+        if (config.isDYEmbeddedSample()) eventWeight *= event->genEvent().embeddedWeight;
+    }
 
     void SetPUWeight(float nPU)
     {
@@ -980,6 +993,7 @@ protected:
     MvaMetProducer mvaMetProducer;
     ntuple::TauVector correctedTaus;
     EventEnergyScale eventEnergyScale;
+    std::shared_ptr<JetEnergyUncertaintyCorrector> jetEnergyUncertaintyCorrector;
 
 private:
     ntuple::TauVector scaledTaus;

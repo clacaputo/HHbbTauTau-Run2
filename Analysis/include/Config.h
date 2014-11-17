@@ -52,6 +52,8 @@ public:
 
     ANA_CONFIG_PARAMETER(bool, EstimateTauEnergyUncertainties, false)
     ANA_CONFIG_PARAMETER(bool, EstimateJetEnergyUncertainties, false)
+    ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputFile, "")
+    ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputSection, "")
 
     ANA_CONFIG_PARAMETER(bool, ApplyPUreweight, false)
     ANA_CONFIG_PARAMETER(std::string, PUreweight_fileName, "")
