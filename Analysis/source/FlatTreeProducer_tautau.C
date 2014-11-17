@@ -252,14 +252,25 @@ protected:
         const auto higgsSelector = [&] (const Higgs_TriggerPathMap::value_type& first,
                 const Higgs_TriggerPathMap::value_type& second) -> bool
         {
+            using namespace cuts::Htautau_Summer13::TauTau::tauID;
             const ntuple::Tau& first_tau1 = first.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
             const ntuple::Tau& first_tau2 = first.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
             const ntuple::Tau& second_tau1 = second.first->GetDaughters().at(0)->GetNtupleObject<ntuple::Tau>();
             const ntuple::Tau& second_tau2 = second.first->GetDaughters().at(1)->GetNtupleObject<ntuple::Tau>();
 
-            if (first_tau2.againstElectronLooseMVA3 > 0.5 && second_tau2.againstElectronLooseMVA3 <= 0.5)
+            const bool firstPair_pass =
+                    first_tau2.againstElectronLooseMVA3 > againstElectronLooseMVA3
+                    && first_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits < byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    && first_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits < byCombinedIsolationDeltaBetaCorrRaw3Hits;
+
+            const bool secondPair_pass =
+                    second_tau2.againstElectronLooseMVA3 > againstElectronLooseMVA3
+                    && second_tau1.byCombinedIsolationDeltaBetaCorrRaw3Hits < byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    && second_tau2.byCombinedIsolationDeltaBetaCorrRaw3Hits < byCombinedIsolationDeltaBetaCorrRaw3Hits;
+
+            if (firstPair_pass && !secondPair_pass)
                 return true;
-            if (first_tau2.againstElectronLooseMVA3 <= 0.5 && second_tau2.againstElectronLooseMVA3 > 0.5)
+            if (!firstPair_pass && secondPair_pass)
                 return false;
 
             //if againstElectron on the 2nd leg fails check iso
