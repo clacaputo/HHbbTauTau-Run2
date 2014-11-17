@@ -32,10 +32,110 @@ struct SelectionResults_mutau : public SelectionResults {
     CandidatePtr GetMuon() const { return higgs->GetDaughter(Candidate::Type::Muon); }
     CandidatePtr GetTau() const { return higgs->GetDaughter(Candidate::Type::Tau); }
 
-    virtual CandidatePtr GetLeg1() const override { return GetMuon(); }
-    virtual CandidatePtr GetLeg2() const override { return GetTau(); }
+    virtual CandidatePtr GetLeg(size_t leg_id) const override
+    {
+        if(leg_id == 1) return GetMuon();
+        if(leg_id == 2) return GetTau();
+        throw exception("Bad leg id = ") << leg_id;
+    }
+
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return muTau_MC; }
 };
+
+class EventWeights_mutau : public EventWeights {
+public:
+    EventWeights_mutau(bool is_data, bool is_embedded, bool apply_pu_weight, const std::string& pu_reweight_file_name,
+                       double _max_available_pu, double _default_pu_weight, bool _applyJetToTauFakeRate)
+        : EventWeights(is_data, is_embedded, apply_pu_weight, pu_reweight_file_name, _max_available_pu, _default_pu_weight),
+          applyJetToTauFakeRate(_applyJetToTauFakeRate) {}
+
+protected:
+    virtual double CalculateTriggerWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace analysis::Htautau_Summer13::trigger;
+        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::MuTau;
+        typedef std::pair<bool, Candidate::Type> Key;
+
+        static const std::map<Key, TriggerFunction> trigger_functions = {
+            { { false, Candidate::Type::Muon }, &CalculateMuonWeight },
+            { { false, Candidate::Type::Tau }, &CalculateTauWeight },
+            { { true, Candidate::Type::Muon }, &CalculateMuonTurnOnCurveData },
+            { { true, Candidate::Type::Tau }, &CalculateTauTurnOnCurveData }
+        };
+
+        const Key key(IsEmbedded(), leg->GetType());
+        if(!trigger_functions.count(key))
+            throw exception("Bad leg type ") << leg->GetType();
+        return trigger_functions.at(key)(leg->GetMomentum());
+    }
+
+    virtual double CalculateIsoWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau::muonISOscaleFactor;
+
+        if(leg->GetType() == Candidate::Type::Tau)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Muon)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        const double mu_pt = leg->GetMomentum().Pt(), mu_eta = std::abs(leg->GetMomentum().Eta());
+        if(mu_pt < pt.at(0))
+            throw exception("No information about ISO. Muon pt is too small");
+        const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
+        if(mu_eta >= eta.at(2))
+            throw exception("No information about ISO. Muon eta is too big");
+        const size_t eta_bin = mu_eta < eta.at(0) ? 0 : ( mu_eta < eta.at(1) ? 1 : 2 );
+        return scaleFactors.at(pt_bin).at(eta_bin);
+    }
+
+    virtual double CalculateIdWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau::muonIDscaleFactor;
+
+        if(leg->GetType() == Candidate::Type::Tau)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Muon)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        const double mu_pt = leg->GetMomentum().Pt(), mu_eta = std::abs(leg->GetMomentum().Eta());
+        if(mu_pt < pt.at(0))
+            throw std::runtime_error("No information about ID. Muon pt is too small");
+        const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
+        if(mu_eta >= eta.at(2))
+            throw std::runtime_error("No information about ID. Muon eta is too big");
+        const size_t eta_bin = mu_eta < eta.at(0) ? 0 : ( mu_eta < eta.at(1) ? 1 : 2 );
+        return scaleFactors.at(pt_bin).at(eta_bin);
+    }
+
+    virtual double CalculateDecayModeWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::tauCorrections;
+
+        if(leg->GetType() == Candidate::Type::Muon)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Tau)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
+        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
+    }
+
+    virtual double CalculateFakeWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
+
+        if(leg->GetType() == Candidate::Type::Muon)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Tau)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        return applyJetToTauFakeRate ? CalculateJetToTauFakeWeight(leg->GetMomentum().Pt()) : 1;
+    }
+
+private:
+    bool applyJetToTauFakeRate;
+};
+
 } // namespace analysis
 
 class FlatTreeProducer_mutau : public virtual analysis::BaseFlatTreeProducer {
@@ -45,7 +145,10 @@ public:
                            size_t _maxNumberOfEvents = 0,
                            std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
-          baseAnaData(*outputFile)
+          baseAnaData(*outputFile),
+          eventWeights(!config.isMC(), config.isDYEmbeddedSample(), config.ApplyPUreweight(),
+                       config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
+                       config.PUreweight_defaultWeight(), config.ApplyJetToTauFakeRate())
     {
         baseAnaData.getOutputFile().cd();
         if(config.ApplyRecoilCorrection())
@@ -56,6 +159,7 @@ public:
     }
 
     virtual analysis::BaseAnalyzerData& GetAnaData() override { return baseAnaData; }
+    virtual analysis::EventWeights& GetEventWeights() override { return eventWeights; }
     virtual analysis::RecoilCorrectionProducer& GetRecoilCorrectionProducer() override
     {
         return *recoilCorrectionProducer_mutau;
@@ -130,17 +234,13 @@ protected:
 
         cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");
 
-        CalculateFullEventWeight(selection.higgs);
-
         if (!config.isMC() || config.isDYEmbeddedSample()){
             selection.pfMET = mvaMetProducer.ComputePFMet(event->pfCandidates(), primaryVertex);
         }
         else
             selection.pfMET = event->metPF();
 
-
         const ntuple::MET mvaMet = ComputeMvaMet(selection.higgs, selection.vertices);
-
         const ntuple::MET correctedMET = config.ApplyTauESCorrection()
                 ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
 
@@ -272,76 +372,6 @@ protected:
         return true;
     }
 
-    virtual void CalculateTriggerWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::MuTau;
-        const analysis::CandidatePtr& mu = higgs->GetDaughter(analysis::Candidate::Type::Muon);
-        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
-        triggerWeights = config.isDYEmbeddedSample() ? CalculateTurnOnCurveData(mu->GetMomentum(), tau->GetMomentum()) :
-                                                     CalculateWeights(mu->GetMomentum(), tau->GetMomentum());
-    }
-
-    virtual void CalculateIsoWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace cuts::Htautau_Summer13::MuTau::muonISOscaleFactor;
-        IsoWeights.clear();
-        const analysis::CandidatePtr& mu = higgs->GetDaughter(analysis::Candidate::Type::Muon);
-        const double mu_pt = mu->GetMomentum().Pt(), mu_eta = std::abs(mu->GetMomentum().Eta());
-        if(mu_pt < pt.at(0))
-            throw std::runtime_error("No information about ISO. Muon pt is too small");
-        const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
-        if(mu_eta >= eta.at(2))
-            throw std::runtime_error("No information about ISO. Muon eta is too big");
-        const size_t eta_bin = mu_eta < eta.at(0) ? 0 : ( mu_eta < eta.at(1) ? 1 : 2 );
-        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
-        // first mu, second tau
-        IsoWeights.push_back(scale);
-        IsoWeights.push_back(1);
-    }
-
-    virtual void CalculateIdWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace cuts::Htautau_Summer13::MuTau::muonIDscaleFactor;
-        IDweights.clear();
-        const analysis::CandidatePtr& mu = higgs->GetDaughter(analysis::Candidate::Type::Muon);
-        const double mu_pt = mu->GetMomentum().Pt(), mu_eta = std::abs(mu->GetMomentum().Eta());
-        if(mu_pt < pt.at(0))
-            throw std::runtime_error("No information about ID. Muon pt is too small");
-        const size_t pt_bin = mu_pt < pt.at(1) ? 0 : 1;
-        if(mu_eta >= eta.at(2))
-            throw std::runtime_error("No information about ID. Muon eta is too big");
-        const size_t eta_bin = mu_eta < eta.at(0) ? 0 : ( mu_eta < eta.at(1) ? 1 : 2 );
-        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
-        // first mu, second tau
-        IDweights.push_back(scale);
-        IDweights.push_back(1);
-    }
-
-    virtual void CalculateFakeWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
-        fakeWeights.clear();
-        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
-        const double fakeJetToTauWeight = config.ApplyJetToTauFakeRate()
-                ? CalculateJetToTauFakeWeight(tau->GetMomentum().Pt()) : 1;
-        // first mu, second tau
-        fakeWeights.push_back(1);
-        fakeWeights.push_back(fakeJetToTauWeight);
-
-    }
-
-    virtual void CalculateDMWeights(const analysis::CandidatePtr& higgs) override
-    {
-        DMweights.clear();
-        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
-        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
-        const double weight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ?
-                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
-        // first mu, second tau
-        DMweights.push_back(1);
-        DMweights.push_back(weight);
-    }
-
     virtual void FillFlatTree(const analysis::SelectionResults& /*selection*/) override
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
@@ -436,6 +466,7 @@ protected:
     analysis::BaseAnalyzerData baseAnaData;
     analysis::SelectionResults_mutau selection;
     std::shared_ptr<analysis::RecoilCorrectionProducer> recoilCorrectionProducer_mutau;
+    analysis::EventWeights_mutau eventWeights;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"

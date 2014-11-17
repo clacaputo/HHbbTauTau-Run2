@@ -32,8 +32,13 @@ struct SelectionResults_tautau : public SelectionResults {
     CandidatePtr GetLeadingTau() const { return higgs->GetLeadingDaughter(Candidate::Type::Tau); }
     CandidatePtr GetSubleadingTau() const { return higgs->GetSubleadingDaughter(Candidate::Type::Tau); }
 
-    virtual CandidatePtr GetLeg1() const override { return GetLeadingTau(); }
-    virtual CandidatePtr GetLeg2() const override { return GetSubleadingTau(); }
+    virtual CandidatePtr GetLeg(size_t leg_id) const override
+    {
+        if(leg_id == 1) return GetLeadingTau();
+        if(leg_id == 2) return GetSubleadingTau();
+        throw exception("Bad leg id = ") << leg_id;
+    }
+
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return tauTau_MC; }
 };
 } // namespace analysis

@@ -146,34 +146,4 @@ inline bool HaveTriggerMatched(const std::set<std::string>& interestingPaths, co
     return false;
 }
 
-inline std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName, std::shared_ptr<TFile> outputFile)
-{
-    std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
-    if(reweightFile->IsZombie()){
-        std::ostringstream ss;
-        ss << "reweight file " << reweightFileName << " not found." ;
-        throw std::runtime_error(ss.str());
-    }
-    TObject* originalWeights = reweightFile->Get("weights");
-    if (!originalWeights)
-        throw std::runtime_error("histograms with weights not found");
-    if(outputFile)
-        outputFile->cd();
-    return std::shared_ptr<TH1D>(static_cast<TH1D*>(originalWeights->Clone("PUweights")));
-}
-
-template<typename CandidateCollection>
-inline bool AllCandidatesHaveSameCharge(const CandidateCollection& candidates)
-{
-    if(candidates.size() < 2) return true;
-    auto cand_iter = candidates.begin();
-    int charge = cand_iter->charge;
-    ++cand_iter;
-    for(; cand_iter != candidates.end(); ++cand_iter) {
-        if(charge != cand_iter->charge)
-            return false;
-    }
-    return true;
-}
-
 } // analysis
