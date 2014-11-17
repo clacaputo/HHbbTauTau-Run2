@@ -41,6 +41,126 @@ struct SelectionResults_etau : public SelectionResults {
 
     virtual const finalState::bbTauTau& GetFinalStateMC() const override { return eTau_MC; }
 };
+
+class EventWeights_etau : public EventWeights {
+public:
+    EventWeights_etau(bool is_data, bool is_embedded, bool apply_pu_weight, const std::string& pu_reweight_file_name,
+                       double _max_available_pu, double _default_pu_weight, bool _applyJetToTauFakeRate)
+        : EventWeights(is_data, is_embedded, apply_pu_weight, pu_reweight_file_name, _max_available_pu, _default_pu_weight),
+          applyJetToTauFakeRate(_applyJetToTauFakeRate) {}
+
+protected:
+    virtual double CalculateTriggerWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace analysis::Htautau_Summer13::trigger;
+        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::ETau;
+        typedef std::pair<bool, Candidate::Type> Key;
+
+        static const std::map<Key, TriggerFunction> trigger_functions = {
+            { { false, Candidate::Type::Electron }, &CalculateElectronWeight },
+            { { false, Candidate::Type::Tau }, &CalculateTauWeight },
+            { { true, Candidate::Type::Electron }, &CalculateElectronTurnOnCurveData },
+            { { true, Candidate::Type::Tau }, &CalculateTauTurnOnCurveData }
+        };
+
+        const Key key(IsEmbedded(), leg->GetType());
+        if(!trigger_functions.count(key))
+            throw exception("Bad leg type ") << leg->GetType();
+        return trigger_functions.at(key)(leg->GetMomentum());
+    }
+
+    virtual double CalculateIsoWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::ETau::electronISOscaleFactor;
+
+        if(leg->GetType() == Candidate::Type::Tau)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Electron)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        const double ele_pt = leg->GetMomentum().Pt(), ele_eta = std::abs(leg->GetMomentum().Eta());
+        if(ele_pt < pt.at(0))
+            throw exception("No information about ISO. Ele pt is too small");
+        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
+        if(ele_eta >= eta.at(1))
+            throw exception("No information about ISO. Ele eta is too big");
+        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
+        return scaleFactors.at(pt_bin).at(eta_bin);
+    }
+
+    virtual double CalculateIdWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::MuTau::electronIDscaleFactor;
+
+        if(leg->GetType() == Candidate::Type::Tau)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Electron)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        const double ele_pt = leg->GetMomentum().Pt(), ele_eta = std::abs(leg->GetMomentum().Eta());
+        if(ele_pt < pt.at(0))
+            throw std::runtime_error("No information about ID. Ele pt is too small");
+        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
+        if(ele_eta >= eta.at(1))
+            throw std::runtime_error("No information about ID. Electron eta is too big");
+        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
+        return scaleFactors.at(pt_bin).at(eta_bin);
+    }
+
+    virtual double CalculateDecayModeWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::tauCorrections;
+
+        if(leg->GetType() == Candidate::Type::Muon)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Tau)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
+        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
+    }
+
+    virtual double CalculateFakeWeight(size_t leg_id, CandidatePtr leg) override
+    {
+        using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
+
+        if(leg->GetType() == Candidate::Type::Electron)
+            return 1;
+        if(leg->GetType() != Candidate::Type::Tau)
+            throw exception("Bad leg type ") << leg->GetType();
+
+        return applyJetToTauFakeRate ? CalculateJetToTauFakeWeight(leg->GetMomentum().Pt()) : 1;
+    }
+
+    virtual void CalculateFakeWeights(const analysis::CandidatePtr& higgs) override
+    {
+        using namespace cuts::Htautau_Summer13::DrellYannCategorization;
+        using namespace cuts::Htautau_Summer13::electronEtoTauFakeRateWeight;
+        using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
+        fakeWeights.clear();
+        double fakeEtoTauWeight = 1;
+
+        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
+        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
+        if (config.ApplyEtoTauFakeRate()){
+            static const particles::ParticleCodes light_lepton_codes = { particles::e };
+            const analysis::GenParticleSet light_leptons =
+                    genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
+            if (analysis::FindMatchedParticles(tau->GetMomentum(),light_leptons,deltaR_matchGenParticle).size() > 0)
+                fakeEtoTauWeight = CalculateEtoTauFakeWeight(tau_leg);
+        }
+        const double fakeJetToTauWeight = config.ApplyJetToTauFakeRate()
+                ? CalculateJetToTauFakeWeight(tau->GetMomentum().Pt()) : 1;
+
+        // first e, second tau
+        fakeWeights.push_back(fakeEtoTauWeight);
+        fakeWeights.push_back(fakeJetToTauWeight);
+    }
+
+private:
+    bool applyJetToTauFakeRate;
+};
+
 } // namespace analysis
 
 class FlatTreeProducer_etau : public virtual analysis::BaseFlatTreeProducer {
@@ -285,89 +405,6 @@ protected:
         return true;
     }
 
-    virtual void CalculateTriggerWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace analysis::Htautau_Summer13::trigger::Run2012ABCD::ETau;
-        const analysis::CandidatePtr& ele = higgs->GetDaughter(analysis::Candidate::Type::Electron);
-        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
-        triggerWeights = config.isDYEmbeddedSample()
-                ? CalculateTurnOnCurveData(ele->GetMomentum(), tau->GetMomentum())
-                : CalculateWeights(ele->GetMomentum(), tau->GetMomentum());
-    }
-
-    virtual void CalculateIsoWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace cuts::Htautau_Summer13::ETau::electronISOscaleFactor;
-        IsoWeights.clear();
-        const analysis::CandidatePtr& ele = higgs->GetDaughter(analysis::Candidate::Type::Electron);
-        const double ele_pt = ele->GetMomentum().Pt(), ele_eta = std::abs(ele->GetMomentum().Eta());
-        if(ele_pt < pt.at(0))
-            throw std::runtime_error("No information about ISO. Electron pt is too small");
-        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
-        if(ele_eta >= eta.at(1))
-            throw std::runtime_error("No information about ISO. Electron eta is too big");
-        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
-        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
-        // first ele, second tau
-        IsoWeights.push_back(scale);
-        IsoWeights.push_back(1);
-    }
-
-    virtual void CalculateIdWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace cuts::Htautau_Summer13::ETau::electronIDscaleFactor;
-        IDweights.clear();
-        const analysis::CandidatePtr& ele = higgs->GetDaughter(analysis::Candidate::Type::Electron);
-        const double ele_pt = ele->GetMomentum().Pt(), ele_eta = std::abs(ele->GetMomentum().Eta());
-        if(ele_pt < pt.at(0))
-            throw std::runtime_error("No information about ID. Electron pt is too small");
-        const size_t pt_bin = ele_pt < pt.at(1) ? 0 : 1;
-        if(ele_eta >= eta.at(1))
-            throw std::runtime_error("No information about ID. Electron eta is too big");
-        const size_t eta_bin = ele_eta < eta.at(0) ? 0 : 1;
-        const double scale = scaleFactors.at(pt_bin).at(eta_bin);
-        // first ele, second tau
-        IDweights.push_back(scale);
-        IDweights.push_back(1);
-    }
-
-    virtual void CalculateDMWeights(const analysis::CandidatePtr& higgs) override
-    {
-        DMweights.clear();
-        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
-        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
-        const double weight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ?
-                                  cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
-        // first electron, second tau
-        DMweights.push_back(1);
-        DMweights.push_back(weight);
-    }
-
-    virtual void CalculateFakeWeights(const analysis::CandidatePtr& higgs) override
-    {
-        using namespace cuts::Htautau_Summer13::DrellYannCategorization;
-        using namespace cuts::Htautau_Summer13::electronEtoTauFakeRateWeight;
-        using namespace cuts::Htautau_Summer13::jetToTauFakeRateWeight;
-        fakeWeights.clear();
-        double fakeEtoTauWeight = 1;
-
-        const analysis::CandidatePtr& tau = higgs->GetDaughter(analysis::Candidate::Type::Tau);
-        const ntuple::Tau& tau_leg = tau->GetNtupleObject<ntuple::Tau>();
-        if (config.ApplyEtoTauFakeRate()){
-            static const particles::ParticleCodes light_lepton_codes = { particles::e };
-            const analysis::GenParticleSet light_leptons =
-                    genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
-            if (analysis::FindMatchedParticles(tau->GetMomentum(),light_leptons,deltaR_matchGenParticle).size() > 0)
-                fakeEtoTauWeight = CalculateEtoTauFakeWeight(tau_leg);
-        }
-        const double fakeJetToTauWeight = config.ApplyJetToTauFakeRate()
-                ? CalculateJetToTauFakeWeight(tau->GetMomentum().Pt()) : 1;
-
-        // first e, second tau
-        fakeWeights.push_back(fakeEtoTauWeight);
-        fakeWeights.push_back(fakeJetToTauWeight);
-    }
-
     virtual void FillFlatTree(const analysis::SelectionResults& /*selection*/) override
     {
         static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
@@ -463,6 +500,7 @@ protected:
     analysis::BaseAnalyzerData baseAnaData;
     analysis::SelectionResults_etau selection;
     std::shared_ptr<analysis::RecoilCorrectionProducer> recoilCorrectionProducer_etau;
+    analysis::EventWeights_etau eventWeights;
 };
 
 #include "METPUSubtraction/interface/GBRProjectDict.cxx"
