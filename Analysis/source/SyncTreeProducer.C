@@ -63,7 +63,7 @@ protected:
         if (category != EventCategory::Inclusive) return;
         ++inclusive;
         if (!PassSyncTreeSelection(eventInfo)) return;
-        std::cout << "passed!!" << std::endl;
+
         ++passed;
         const ntuple::Flat& event = *eventInfo.event;
         const analysis::EventId eventId(event.run,event.lumi,event.evt);
