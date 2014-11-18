@@ -34,6 +34,7 @@
 #include "TLorentzVector.h"
 
 #include "exception.h"
+#include "Tools.h"
 
 namespace analysis {
 
@@ -57,6 +58,8 @@ const std::map<EventEnergyScale, std::string> EventEnergyScaleNameMap = {
 };
 
 } // namespace detail
+
+const std::set<EventEnergyScale> AllEventEnergyScales = tools::collect_map_keys(detail::EventEnergyScaleNameMap);
 
 std::ostream& operator<< (std::ostream& s, const Channel& c)
 {
