@@ -77,13 +77,16 @@ struct FlatEventInfo {
     TMatrixD MET_covariance;
     bool recalculate_mass_KinFit;
     analysis::kinematic_fit::four_body::FitResults fitResults;
+    analysis::EventEnergyScale eventEnergyScale;
     double mva_BDT, mva_BDTD, mva_BDTMitFisher;
+
 
     FlatEventInfo(const ntuple::Flat& _event, const BjetPair& _selected_bjets, bool _recalculate_mass_KinFit)
         : event(&_event), eventType(static_cast<ntuple::EventType>(_event.eventType)),
           channel(static_cast<analysis::Channel>(_event.channel)),
           lepton_momentums(2), bjet_momentums(_event.pt_Bjets.size()), selected_bjets(_selected_bjets),
           has_bjet_pair(false), MET_covariance(2, 2), recalculate_mass_KinFit(_recalculate_mass_KinFit),
+          eventEnergyScale(static_cast<analysis::EventEnergyScale>(_event.eventEnergyScale)),
           mva_BDT(-1), mva_BDTD(-1), mva_BDTMitFisher(-1)
     {
         lepton_momentums.at(0).SetPtEtaPhiM(event->pt_1, event->eta_1, event->phi_1, event->m_1);

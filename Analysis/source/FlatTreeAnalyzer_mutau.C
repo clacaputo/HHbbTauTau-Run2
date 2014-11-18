@@ -92,4 +92,11 @@ protected:
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
     }
+
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory /*eventCategory*/,
+                                                            const std::string& /*hist_name*/) override
+    {
+        static const analysis::PhysicalValue sf(1.06, 0.001);
+        return sf;
+    }
 };

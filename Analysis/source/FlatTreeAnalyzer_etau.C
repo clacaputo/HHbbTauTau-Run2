@@ -78,4 +78,12 @@ protected:
         else if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
         else return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
     }
+
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory /*eventCategory*/,
+                                                            const std::string& /*hist_name*/) override
+    {
+        static const analysis::PhysicalValue sf(1.06, 0.001);
+        return sf;
+    }
+
 };
