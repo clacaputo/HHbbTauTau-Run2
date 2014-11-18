@@ -182,7 +182,7 @@ public:
                           std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile),
-          eventWeights(!config.isMC(), config.isDYEmbeddedSample(), config.ApplyPUreweight(),
+          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(),
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight(), config.ApplyJetToTauFakeRate(), config.ApplyEtoTauFakeRate())
     {

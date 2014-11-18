@@ -47,6 +47,7 @@ public:
     ANA_CONFIG_PARAMETER(bool, RequireSpecificFinalState, false)
     ANA_CONFIG_PARAMETER(bool, DoZEventCategorization, false)
     ANA_CONFIG_PARAMETER(bool, isDYEmbeddedSample, false)
+    ANA_CONFIG_PARAMETER(bool, isTTEmbeddedSample, false)
     ANA_CONFIG_PARAMETER(bool, ApplyEtoTauFakeRate, false)
     ANA_CONFIG_PARAMETER(bool, ApplyJetToTauFakeRate, false)
 
@@ -84,6 +85,8 @@ public:
                 || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB()
                 || DoZEventCategorization() || ApplyEtoTauFakeRate();
     }
+
+    bool IsEmbeddedSample() { return isDYEmbeddedSample() || isTTEmbeddedSample(); }
 
 };
 

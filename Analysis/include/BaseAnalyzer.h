@@ -151,7 +151,7 @@ private:
         GetEventWeights().Reset();
         if(config.ApplyPUreweight())
             GetEventWeights().CalculatePuWeight(event->eventInfo());
-        if(config.isDYEmbeddedSample())
+        if(config.IsEmbeddedSample())
             GetEventWeights().SetEmbeddedWeight(event->genEvent().embeddedWeight);
 
         try {
