@@ -41,6 +41,7 @@ public:
         : BaseAnalyzer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents),
           flatTree(_flatTree), writeFlatTree(!flatTree)
     {
+        outputFile->cd();
         if(!flatTree)
             flatTree = std::shared_ptr<ntuple::FlatTree>(new ntuple::FlatTree("flatTree"));
     }
