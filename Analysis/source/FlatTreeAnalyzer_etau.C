@@ -34,11 +34,12 @@ class FlatAnalyzerData_etau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY(mt_1, 50, 0, 50)
 
-    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true) override
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
+                      analysis::EventEnergyScale eventEnergyScale) override
     {
-        FlatAnalyzerData::Fill(eventInfo, weight, fill_all, doESvariation);
+        FlatAnalyzerData::Fill(eventInfo, weight, fill_all, eventEnergyScale);
         if(!fill_all) return;
-
+        if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);
     }
@@ -78,4 +79,12 @@ protected:
         else if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
         else return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
     }
+
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory /*eventCategory*/,
+                                                            const std::string& /*hist_name*/) override
+    {
+        static const analysis::PhysicalValue sf(1.06, 0.001);
+        return sf;
+    }
+
 };

@@ -59,9 +59,12 @@ namespace analysis {
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
 static const std::vector<double> mass_bins_2j2t = { 0,20,40,60,80,100,120,140,160,180,200,250,300,350};
-static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
-                                                    300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
-                                                    650, 700, 750, 800, 850, 900, 950, 1000 };
+//static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
+//                                                    300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
+//                                                    650, 700, 750, 800, 850, 900, 950, 1000 };
+
+static const std::vector<double> mass_ttbb_bins = { 200,250,270,290,310,330,350,370,390,410,430,450,500,550,
+                                                    600,650,700,750,800,850,900,950,1000 };
 
 static const std::vector<double> mass_bins_slice_2fette = { 
       0,	10,      20,	 30,	 40,	 50,	 60,	 70,	 80,	 90,	100,	110,	120,	130,
@@ -159,17 +162,25 @@ public:
             Get((TH1D*)nullptr, hist_name, eventEnergyScale, binning);
     }
 
-    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true)
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, EventEnergyScale eventEnergyScale)
     {
         const ntuple::Flat& event = *eventInfo.event;
         double mass_tautau = event.m_sv_MC;
-        double mass_tautau_up = event.m_sv_up_MC;
-        double mass_tautau_down = event.m_sv_down_MC;
-        m_sv().Fill(mass_tautau, weight);
+        m_sv(eventEnergyScale).Fill(mass_tautau, weight);
         if(!fill_all) return;
+        const double m_ttbb_kinFit = eventInfo.fitResults.mass;
+        m_ttbb_kinfit(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+        if (eventInfo.fitResults.has_valid_mass)
+            m_ttbb_kinfit_only(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+        if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
+                eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
+            m_ttbb_kinfit_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+            if (eventInfo.fitResults.has_valid_mass)
+                m_ttbb_kinfit_only_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+        }
+        FillSlice(m_bb_slice(eventEnergyScale), mass_tautau, eventInfo.Hbb.M(), weight);
 
-        m_sv_up().Fill(doESvariation ? mass_tautau_up : mass_tautau, weight);
-        m_sv_down().Fill(doESvariation ? mass_tautau_down : mass_tautau, weight);
+        if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
 
         pt_1().Fill(event.pt_1, weight);
         eta_1().Fill(event.eta_1, weight);
@@ -203,43 +214,20 @@ public:
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
         pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
 
-        const double m_ttbb_kinFit = eventInfo.fitResults.fit_bb_tt.mass;
-        const double m_ttbb_kinFit_up = eventInfo.fitResults.fit_bb_tt_up.mass;
-        const double m_ttbb_kinFit_down = eventInfo.fitResults.fit_bb_tt_down.mass;
-        m_ttbb_kinfit().Fill(m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_up().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-        if (eventInfo.fitResults.fit_bb_tt.has_valid_mass)
-            m_ttbb_kinfit_only().Fill(m_ttbb_kinFit, weight);
-        if (eventInfo.fitResults.fit_bb_tt_up.has_valid_mass)
-            m_ttbb_kinfit_only_up().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-        if (eventInfo.fitResults.fit_bb_tt_down.has_valid_mass)
-            m_ttbb_kinfit_only_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-
-        if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
-                eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
-            m_ttbb_kinfit_massCut().Fill(m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-            if (eventInfo.fitResults.fit_bb_tt.has_valid_mass)
-                m_ttbb_kinfit_only_massCut().Fill(m_ttbb_kinFit, weight);
-            if (eventInfo.fitResults.fit_bb_tt_up.has_valid_mass)
-                m_ttbb_kinfit_only_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-            if (eventInfo.fitResults.fit_bb_tt_down.has_valid_mass)
-                m_ttbb_kinfit_only_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-        }
-
-        convergence().Fill(eventInfo.fitResults.fit_bb_tt.convergence,weight);
-        chi2().Fill(eventInfo.fitResults.fit_bb_tt.chi2,weight);
-        fit_probability().Fill(eventInfo.fitResults.fit_bb_tt.fit_probability,weight);
-        pull_balance().Fill(eventInfo.fitResults.fit_bb_tt.pull_balance,weight);
-        pull_balance_1().Fill(eventInfo.fitResults.fit_bb_tt.pull_balance_1,weight);
-        pull_balance_2().Fill(eventInfo.fitResults.fit_bb_tt.pull_balance_2,weight);
+        convergence().Fill(eventInfo.fitResults.convergence,weight);
+        chi2().Fill(eventInfo.fitResults.chi2,weight);
+        fit_probability().Fill(eventInfo.fitResults.fit_probability,weight);
+        pull_balance().Fill(eventInfo.fitResults.pull_balance,weight);
+        pull_balance_1().Fill(eventInfo.fitResults.pull_balance_1,weight);
+        pull_balance_2().Fill(eventInfo.fitResults.pull_balance_2,weight);
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+    }
 
-        FillSlice(m_bb_slice(), mass_tautau, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_up(), doESvariation ? mass_tautau_up : mass_tautau, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_down(), doESvariation ? mass_tautau_down : mass_tautau, eventInfo.Hbb.M(), weight);
+    void FillAll(const FlatEventInfo& eventInfo, double weight, bool fill_all)
+    {
+        for (EventEnergyScale energyScale : AllEventEnergyScales){
+            Fill(eventInfo, weight, fill_all, energyScale);
+        }
     }
 
 private:
@@ -570,7 +558,6 @@ protected:
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  cuts::Htautau_Summer13::btag::CSVT);
             const bool fill_all = EssentialEventRegions().count(eventRegion);
-            const bool doESvariation = !dataCategory.IsData();
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1),fill_all);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
@@ -592,9 +579,11 @@ protected:
 
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
-
-                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
-                                                                               fill_all, doESvariation);
+                if (dataCategory.IsData())
+                    GetAnaData(eventCategory, dataCategory.name, eventRegion).FillAll(eventInfo,corrected_weight,fill_all);
+                else
+                    GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
+                                                                               fill_all,eventInfo.eventEnergyScale);
             }
         }
     }
@@ -617,7 +606,7 @@ protected:
             const bool fill_all = EssentialEventRegions().count(eventRegion);
             auto& anaData = GetAnaData(EventCategory::TwoJets_TwoBtag, name, eventRegion);
             anaData.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
-            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all);
+            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all, eventInfo.eventEnergyScale);
         }
     }
 
@@ -784,19 +773,21 @@ protected:
                     const std::string full_datacard_name = FullDataCardName(dataCategory->datacard, eventEnergyScale);
                     hist->Scale(dataCategory->limits_sf);
                     hist->Write(full_datacard_name.c_str());
-                }
 
-                if(dataCategory->datacard == "ZL") {
-                    const std::string name_syst_prefix = dataCategory->datacard + "_CMS_htt_" + dataCategory->datacard
-                            + "Scale_" + channel_name + "_8TeV";
-                    const std::string name_syst_up = name_syst_prefix + "Up";
-                    const std::string name_syst_down = name_syst_prefix + "Down";
-                    std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
-                    hist_syst_up->Scale(1.02);
-                    hist_syst_up->Write(name_syst_up.c_str());
-                    std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
-                    hist_syst_down->Scale(0.98);
-                    hist_syst_down->Write(name_syst_down.c_str());
+                    if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "ZL") {
+                        std::string channel_name = ChannelName();
+                        std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
+                        const std::string name_syst_prefix = dataCategory->datacard + "_CMS_htt_" + dataCategory->datacard
+                                + "Scale_" + channel_name + "_8TeV";
+                        const std::string name_syst_up = name_syst_prefix + "Up";
+                        const std::string name_syst_down = name_syst_prefix + "Down";
+                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                        hist_syst_up->Scale(1.02);
+                        hist_syst_up->Write(name_syst_up.c_str());
+                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
+                        hist_syst_down->Scale(0.98);
+                        hist_syst_down->Write(name_syst_down.c_str());
+                    }
                 }
             }
         }
@@ -847,7 +838,6 @@ private:
             { { 200, 400 } },
             { { 100, 150 }, { 450, 500 }, { 800, 850 }, { 1150, 1200 }, { 1500, 1550 } }
         };
-
 
         static const std::map<std::string, size_t> histogramsToBlind = {
             { "m_sv", 1 }, { "m_vis", 1 }, { "m_bb", 1 }, { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },{ "m_ttbb_kinfit", 2 },
