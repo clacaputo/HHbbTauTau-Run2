@@ -49,17 +49,22 @@ public:
 
     void ApplyCorrection(ntuple::Jet& jet, bool scale_up)
     {
-        jetCorrector.setJetPt(jet.pt);
-        jetCorrector.setJetEta(jet.eta);
-        const double uncertainty = jetCorrector.getUncertainty(scale_up);
-        const double sign = scale_up ? +1 : -1;
-        const double sf = 1.0 + sign * uncertainty;
-        const TLorentzVector original_momentum = MakeLorentzVectorPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
-        const TLorentzVector corrected_momentum = original_momentum * sf;
-        jet.pt = corrected_momentum.Pt();
-        jet.eta = corrected_momentum.Eta();
-        jet.phi = corrected_momentum.Phi();
-        jet.mass = corrected_momentum.M();
+        try {
+            jetCorrector.setJetPt(jet.pt);
+            jetCorrector.setJetEta(jet.eta);
+            const double uncertainty = jetCorrector.getUncertainty(scale_up);
+            const double sign = scale_up ? +1 : -1;
+            const double sf = 1.0 + sign * uncertainty;
+            const TLorentzVector original_momentum = MakeLorentzVectorPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
+            const TLorentzVector corrected_momentum = original_momentum * sf;
+            jet.pt = corrected_momentum.Pt();
+            jet.eta = corrected_momentum.Eta();
+            jet.phi = corrected_momentum.Phi();
+            jet.mass = corrected_momentum.M();
+        } catch(cms::Exception&) {
+            std::cerr << "WARNING: Jet uncertainty is not calculated for jet with pt = " << jet.pt
+                      << ", eta = " << jet.eta << std::endl;
+        }
     }
 
     void ApplyCorrection(ntuple::JetVector& jets, bool scale_up)
