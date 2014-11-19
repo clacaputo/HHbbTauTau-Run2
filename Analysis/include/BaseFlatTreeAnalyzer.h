@@ -59,10 +59,11 @@ namespace analysis {
 static const std::vector<double> mass_bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
                                                160, 170, 180, 190, 200, 225, 250, 275, 300, 325, 350 };
 static const std::vector<double> mass_bins_2j2t = { 0,20,40,60,80,100,120,140,160,180,200,250,300,350};
-static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
-                                                    300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
-                                                    650, 700, 750, 800, 850, 900, 950, 1000 };
-//static const std::vector<double> mass_ttbb_bins = { 0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 500, 600, 700, 800, 900, 1000 };
+//static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
+//                                                    300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
+//                                                    650, 700, 750, 800, 850, 900, 950, 1000 };
+
+static const std::vector<double> mass_ttbb_bins = { 200,250,270,290,310,330,350,370,390,410,430,450,500,550,600,650,700 };
 
 static const std::vector<double> mass_bins_slice_2fette = { 
       0,	10,      20,	 30,	 40,	 50,	 60,	 70,	 80,	 90,	100,	110,	120,	130,
@@ -150,17 +151,38 @@ public:
     TH1D_ENTRY(pull_balance_2, 100, -10, 10)
     TH1D_ENTRY(MET, 20, 0, 100)
 
-    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, bool doESvariation = true)
+    static std::string FullHistogramName(const std::string& hist_name, EventEnergyScale eventEnergyScale)
+    {
+        std::ostringstream ss;
+        ss << hist_name << "_" << eventEnergyScale;
+        return ss.str();
+    }
+
+    void CreateHistogramsWithCustomBinning(const std::string& hist_name, const std::vector<double>& binning)
+    {
+        for(EventEnergyScale eventEnergyScale : AllEventEnergyScales)
+            Get((TH1D*)nullptr, hist_name, eventEnergyScale, binning);
+    }
+
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, EventEnergyScale eventEnergyScale)
     {
         const ntuple::Flat& event = *eventInfo.event;
         double mass_tautau = event.m_sv_MC;
-        double mass_tautau_up = event.m_sv_up_MC;
-        double mass_tautau_down = event.m_sv_down_MC;
-        m_sv().Fill(mass_tautau, weight);
+        m_sv(eventEnergyScale).Fill(mass_tautau, weight);
         if(!fill_all) return;
+        const double m_ttbb_kinFit = eventInfo.fitResults.mass;
+        m_ttbb_kinfit(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+        if (eventInfo.fitResults.has_valid_mass)
+            m_ttbb_kinfit_only(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+        if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
+                eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
+            m_ttbb_kinfit_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+            if (eventInfo.fitResults.has_valid_mass)
+                m_ttbb_kinfit_only_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
+        }
+        FillSlice(m_bb_slice(eventEnergyScale), mass_tautau, eventInfo.Hbb.M(), weight);
 
-        m_sv_up().Fill(doESvariation ? mass_tautau_up : mass_tautau, weight);
-        m_sv_down().Fill(doESvariation ? mass_tautau_down : mass_tautau, weight);
+        if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
 
         pt_1().Fill(event.pt_1, weight);
         eta_1().Fill(event.eta_1, weight);
@@ -200,43 +222,20 @@ public:
         m_ttbb().Fill(eventInfo.resonance.M(), weight);
         pt_H_hh().Fill(eventInfo.resonance.Pt(), weight);
 
-        const double m_ttbb_kinFit = eventInfo.fitResults.fit_bb_tt.mass;
-        const double m_ttbb_kinFit_up = eventInfo.fitResults.fit_bb_tt_up.mass;
-        const double m_ttbb_kinFit_down = eventInfo.fitResults.fit_bb_tt_down.mass;
-        m_ttbb_kinfit().Fill(m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_up().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-        m_ttbb_kinfit_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-        if (eventInfo.fitResults.fit_bb_tt.has_valid_mass)
-            m_ttbb_kinfit_only().Fill(m_ttbb_kinFit, weight);
-        if (eventInfo.fitResults.fit_bb_tt_up.has_valid_mass)
-            m_ttbb_kinfit_only_up().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-        if (eventInfo.fitResults.fit_bb_tt_down.has_valid_mass)
-            m_ttbb_kinfit_only_down().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-
-        if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
-                eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
-            m_ttbb_kinfit_massCut().Fill(m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-            m_ttbb_kinfit_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-            if (eventInfo.fitResults.fit_bb_tt.has_valid_mass)
-                m_ttbb_kinfit_only_massCut().Fill(m_ttbb_kinFit, weight);
-            if (eventInfo.fitResults.fit_bb_tt_up.has_valid_mass)
-                m_ttbb_kinfit_only_up_massCut().Fill(doESvariation ? m_ttbb_kinFit_up : m_ttbb_kinFit, weight);
-            if (eventInfo.fitResults.fit_bb_tt_down.has_valid_mass)
-                m_ttbb_kinfit_only_down_massCut().Fill(doESvariation ? m_ttbb_kinFit_down : m_ttbb_kinFit, weight);
-        }
-
-        convergence().Fill(eventInfo.fitResults.fit_bb_tt.convergence,weight);
-        chi2().Fill(eventInfo.fitResults.fit_bb_tt.chi2,weight);
-        fit_probability().Fill(eventInfo.fitResults.fit_bb_tt.fit_probability,weight);
-        pull_balance().Fill(eventInfo.fitResults.fit_bb_tt.pull_balance,weight);
-        pull_balance_1().Fill(eventInfo.fitResults.fit_bb_tt.pull_balance_1,weight);
-        pull_balance_2().Fill(eventInfo.fitResults.fit_bb_tt.pull_balance_2,weight);
+        convergence().Fill(eventInfo.fitResults.convergence,weight);
+        chi2().Fill(eventInfo.fitResults.chi2,weight);
+        fit_probability().Fill(eventInfo.fitResults.fit_probability,weight);
+        pull_balance().Fill(eventInfo.fitResults.pull_balance,weight);
+        pull_balance_1().Fill(eventInfo.fitResults.pull_balance_1,weight);
+        pull_balance_2().Fill(eventInfo.fitResults.pull_balance_2,weight);
 //        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
+    }
 
-        FillSlice(m_bb_slice(), mass_tautau, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_up(), doESvariation ? mass_tautau_up : mass_tautau, eventInfo.Hbb.M(), weight);
-        FillSlice(m_bb_slice_down(), doESvariation ? mass_tautau_down : mass_tautau, eventInfo.Hbb.M(), weight);
+    void FillAll(const FlatEventInfo& eventInfo, double weight, bool fill_all)
+    {
+        for (EventEnergyScale energyScale : AllEventEnergyScales){
+            Fill(eventInfo, weight, fill_all, energyScale);
+        }
     }
 
 private:
@@ -309,9 +308,8 @@ public:
             if(!dataCategory->sources_sf.size()) continue;
             std::cout << *dataCategory << std::endl;
             for (const EventRegion& eventRegion : AllEventRegions){
-                GetAnaData(EventCategory::TwoJets_TwoBtag,dataCategory->name,eventRegion).Get((TH1D*)nullptr,"m_sv","",mass_bins_2j2t);
-                GetAnaData(EventCategory::TwoJets_TwoBtag,dataCategory->name,eventRegion).Get((TH1D*)nullptr,"m_sv_up","",mass_bins_2j2t);
-                GetAnaData(EventCategory::TwoJets_TwoBtag,dataCategory->name,eventRegion).Get((TH1D*)nullptr,"m_sv_down","",mass_bins_2j2t);
+                auto& anaData = GetAnaData(EventCategory::TwoJets_TwoBtag, dataCategory->name, eventRegion);
+                anaData.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
             }
             for(const auto& source_entry : dataCategory->sources_sf) {
                 const std::string fullFileName = inputPath + "/" + source_entry.first;
@@ -371,25 +369,19 @@ public:
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", mass_ttbb_bins);
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_slice("emptyDatacard_slice", mass_bins_slice_5fette_fb);
 
-        ProduceFileForLimitsCalculation("m_sv", "m_sv_up", "m_sv_down", false, emptyDatacard_mSV);
+        ProduceFileForLimitsCalculation("m_sv", false, emptyDatacard_mSV);
 
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit", "m_ttbb_kinfit_up", "m_ttbb_kinfit_down", false,
-                                        emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", "m_ttbb_kinfit_only_up", "m_ttbb_kinfit_only_down", false,
-                                        emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", "m_ttbb_kinfit_up_massCut", "m_ttbb_kinfit_down_massCut", false,
-                                        emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", "m_ttbb_kinfit_only_up_massCut", "m_ttbb_kinfit_only_down_massCut", false,
-                                        emptyDatacard_mttbb);
-
-        ProduceFileForLimitsCalculation("m_bb_slice", "m_bb_slice_up", "m_bb_slice_down", false,
-                                        emptyDatacard_slice);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit", false, emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", false, emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", false, emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", false, emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_bb_slice", false, emptyDatacard_slice);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        PrintStackedPlots(false,false);
-        PrintStackedPlots(true,false);
-        PrintStackedPlots(false,true);
-        PrintStackedPlots(true,true);
+        PrintStackedPlots(false, false);
+        PrintStackedPlots(true, false);
+        PrintStackedPlots(false, true);
+        PrintStackedPlots(true, true);
     }
 
 protected:
@@ -597,14 +589,10 @@ protected:
             const EventRegion eventRegion = DetermineEventRegion(event);
             if(eventRegion == EventRegion::Unknown) continue;
 
-            const EventCategoryVector eventCategories           = DetermineEventCategories(event.csv_Bjets,
-                                                                                           cuts::Htautau_Summer13::btag::CSVL,
-                                                                                           cuts::Htautau_Summer13::btag::CSVM,
-                                                                                           cuts::Htautau_Summer13::btag::CSVT);
-
-            //const bool fill_all = EssentialEventRegions().count(eventRegion);
-            const bool fill_all = true;
-            const bool doESvariation = !dataCategory.IsData();
+            const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
+                                                                                 cuts::Htautau_Summer13::btag::CSVM,
+                                                                                 cuts::Htautau_Summer13::btag::CSVT);
+            const bool fill_all = EssentialEventRegions().count(eventRegion);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1),fill_all);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
@@ -626,9 +614,11 @@ protected:
 
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
-
-                GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
-                                                                               fill_all, doESvariation);
+                if (dataCategory.IsData())
+                    GetAnaData(eventCategory, dataCategory.name, eventRegion).FillAll(eventInfo,corrected_weight,fill_all);
+                else
+                    GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
+                                                                               fill_all,eventInfo.eventEnergyScale);
             }
 
         }
@@ -650,10 +640,9 @@ protected:
         if(type_category_map.count(eventInfo.eventType)) {
             const std::string& name = type_category_map.at(eventInfo.eventType);
             const bool fill_all = EssentialEventRegions().count(eventRegion);
-            GetAnaData(EventCategory::TwoJets_TwoBtag,name,eventRegion).Get((TH1D*)nullptr,"m_sv","",mass_bins_2j2t);
-            GetAnaData(EventCategory::TwoJets_TwoBtag,name,eventRegion).Get((TH1D*)nullptr,"m_sv_up","",mass_bins_2j2t);
-            GetAnaData(EventCategory::TwoJets_TwoBtag,name,eventRegion).Get((TH1D*)nullptr,"m_sv_down","",mass_bins_2j2t);
-            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all);
+            auto& anaData = GetAnaData(EventCategory::TwoJets_TwoBtag, name, eventRegion);
+            anaData.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
+            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all, eventInfo.eventEnergyScale);
         }
     }
 
@@ -755,8 +744,31 @@ protected:
         }
     }
 
-    void ProduceFileForLimitsCalculation(const std::string& hist_name, const std::string& hist_name_up,
-                                         const std::string& hist_name_down, bool include_one_jet_categories,
+    std::string FullDataCardName(const std::string& datacard_name, EventEnergyScale eventEnergyScale) const
+    {
+        if(eventEnergyScale == EventEnergyScale::Central)
+            return datacard_name;
+
+        std::string channel_name = ChannelName();
+        std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
+        std::ostringstream full_name;
+        full_name << datacard_name << "_CMS_scale_";
+        if(eventEnergyScale == EventEnergyScale::TauUp || eventEnergyScale == EventEnergyScale::TauDown)
+            full_name << "t_" << channel_name;
+        else if(eventEnergyScale == EventEnergyScale::JetUp || eventEnergyScale == EventEnergyScale::JetDown)
+            full_name << "j";
+        else
+            throw exception("Unsupported event energy scale ") << eventEnergyScale;
+        full_name << "_8TeV";
+        if(eventEnergyScale == EventEnergyScale::TauUp || eventEnergyScale == EventEnergyScale::JetUp)
+            full_name << "Up";
+        else
+            full_name << "Down";
+        return full_name.str();
+    }
+
+
+    void ProduceFileForLimitsCalculation(const std::string& hist_name, bool include_one_jet_categories,
                                          const root_ext::SmartHistogram<TH1D>& emptyDatacard)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
@@ -769,9 +781,6 @@ protected:
         static const std::map<std::string, std::string> channelNameForFolder = {
             { "eTau", "eleTau" }, { "muTau", "muTau" }, { "tauTau", "tauTau" }
         };
-
-        std::string channel_name = ChannelName();
-        std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
 
         const std::string file_name = outputFileName + "_" + hist_name + ".root";
         std::shared_ptr<TFile> outputFile(new TFile(file_name.c_str(), "RECREATE"));
@@ -786,63 +795,36 @@ protected:
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
-                std::shared_ptr<TH1D> hist;
-                if(auto hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name))
-                    hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
-                else {
-                    std::cerr << "Warning - Datacard histogram '" << hist_name << "' not found for data category '"
-                              << dataCategory->name << "' for eventCategory '"
-                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
+                for(const EventEnergyScale& eventEnergyScale : AllEventEnergyScales) {
+                    const std::string full_hist_name = FlatAnalyzerData::FullHistogramName(hist_name, eventEnergyScale);
+                    std::shared_ptr<TH1D> hist;
+                    if(auto hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, full_hist_name))
+                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+                    else {
+                        std::cerr << "Warning - Datacard histogram '" << full_hist_name
+                                  << "' not found for data category '" << dataCategory->name << "' for eventCategory '"
+                                  << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
 
-                    hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
-                }
+                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
+                    }
+                    const std::string full_datacard_name = FullDataCardName(dataCategory->datacard, eventEnergyScale);
+                    hist->Scale(dataCategory->limits_sf);
+                    hist->Write(full_datacard_name.c_str());
 
-                hist->Scale(dataCategory->limits_sf);
-                hist->Write(dataCategory->datacard.c_str());
-                const std::string namePrefix = dataCategory->datacard + "_CMS_scale_t_" + channel_name + "_8TeV";
-                const std::string nameDown = namePrefix + "Down";
-                const std::string nameUp = namePrefix + "Up";
-
-                std::shared_ptr<TH1D> hist_up;
-                if(auto hist_up_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_up))
-                    hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_up_orig->Clone()));
-                else {
-                    std::cerr << "Warning - Datacard histogram '" << hist_name_up << "' not found for data category '"
-                              << dataCategory->name << "' for eventCategory '"
-                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
-
-                    hist_up = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
-                }
-
-                hist_up->Scale(dataCategory->limits_sf);
-                hist_up->Write(nameUp.c_str());
-
-
-                std::shared_ptr<TH1D> hist_down;
-                if(auto hist_down_orig = GetSignalHistogram(eventCategory, dataCategory->name, hist_name_down))
-                    hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_down_orig->Clone()));
-                else {
-                    std::cerr << "Warning - Datacard histogram '" << hist_name_down << "' not found for data category '"
-                              << dataCategory->name << "' for eventCategory '"
-                              << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
-
-                    hist_down = std::shared_ptr<TH1D>(static_cast<TH1D*>(emptyDatacard.Clone()));
-                }
-
-                hist_down->Scale(dataCategory->limits_sf);
-                hist_down->Write(nameDown.c_str());
-
-                if(dataCategory->datacard == "ZL") {
-                    const std::string name_syst_prefix = dataCategory->datacard + "_CMS_htt_" + dataCategory->datacard
-                            + "Scale_" + channel_name + "_8TeV";
-                    const std::string name_syst_up = name_syst_prefix + "Up";
-                    const std::string name_syst_down = name_syst_prefix + "Down";
-                    std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
-                    hist_syst_up->Scale(1.02);
-                    hist_syst_up->Write(name_syst_up.c_str());
-                    std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
-                    hist_syst_down->Scale(0.98);
-                    hist_syst_down->Write(name_syst_down.c_str());
+                    if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "ZL") {
+                        std::string channel_name = ChannelName();
+                        std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
+                        const std::string name_syst_prefix = dataCategory->datacard + "_CMS_htt_" + dataCategory->datacard
+                                + "Scale_" + channel_name + "_8TeV";
+                        const std::string name_syst_up = name_syst_prefix + "Up";
+                        const std::string name_syst_down = name_syst_prefix + "Down";
+                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                        hist_syst_up->Scale(1.02);
+                        hist_syst_up->Write(name_syst_up.c_str());
+                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
+                        hist_syst_down->Scale(0.98);
+                        hist_syst_down->Write(name_syst_down.c_str());
+                    }
                 }
             }
         }
@@ -895,19 +877,26 @@ private:
             { { 100, 150 }, { 450, 500 }, { 800, 850 }, { 1150, 1200 }, { 1500, 1550 } }
         };
 
-
         static const std::map<std::string, size_t> histogramsToBlind = {
-            { "m_sv", 1 }, { "m_sv_up", 1 }, { "m_sv_down", 1 }, { "m_vis", 1 }, { "m_bb", 1 },
-            { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },
-            { "m_ttbb_kinfit", 2 }, { "m_ttbb_kinfit_up", 2 }, { "m_ttbb_kinfit_down", 2 },
-            { "m_ttbb_kinfit_only", 2 }, { "m_ttbb_kinfit_only_up", 2 }, { "m_ttbb_kinfit_only_down", 2 },
-            { "m_ttbb_kinfit_massCut", 2 }, { "m_ttbb_kinfit_up_massCut", 2 }, { "m_ttbb_kinfit_down_massCut", 2 },
-            { "m_ttbb_kinfit_only_massCut", 2 }, { "m_ttbb_kinfit_only_up_massCut", 2 }, { "m_ttbb_kinfit_only_down_massCut", 2 },
-            { "m_bb_slice", 3 }, { "m_bb_slice_up", 3 }, { "m_bb_slice_down", 3 }
+            { "m_sv", 1 }, { "m_vis", 1 }, { "m_bb", 1 }, { "m_ttbb", 2 }, { "m_ttbb_nomet", 2 },{ "m_ttbb_kinfit", 2 },
+            { "m_ttbb_kinfit_only", 2 }, { "m_ttbb_kinfit_massCut", 2 }, { "m_ttbb_kinfit_only_massCut", 2 },
+            { "m_bb_slice", 3 }
         };
 
-        if(!histogramsToBlind.count(hist_name)) return blindingRegions.at(0);
-        const size_t regionId = histogramsToBlind.at(hist_name);
+        const auto findRegionId = [&]() -> size_t {
+            if(histogramsToBlind.count(hist_name))
+                return histogramsToBlind.at(hist_name);
+            for(EventEnergyScale eventEnergyScale : AllEventEnergyScales) {
+                for(const auto& entry : histogramsToBlind) {
+                    const auto full_hist_name = FlatAnalyzerData::FullHistogramName(entry.first, eventEnergyScale);
+                    if(full_hist_name == hist_name)
+                        return entry.second;
+                }
+            }
+            return 0;
+        };
+
+        const size_t regionId = findRegionId();
         if(regionId >= blindingRegions.size())
             throw analysis::exception("Bad blinding region index = ") << regionId;
         return blindingRegions.at(regionId);

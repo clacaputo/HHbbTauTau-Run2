@@ -19,7 +19,7 @@ class PSTools {
 	static void wait(TPad* c1);
 	static void next(TPad* c1);
 
-	static TCanvas* Pcanvas (int flag=0);
+//	static TCanvas* Pcanvas (int flag=0);
 	static void Platex (Float_t x , Float_t y , Float_t size);
 	static void Pstyle();
 	static void Pprint(const char* filename, TCanvas* c1);

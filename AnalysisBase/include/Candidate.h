@@ -32,73 +32,151 @@
 
 #include "EventDescriptor.h"
 #include "Particles.h"
+#include "exception.h"
+#include "AnalysisMath.h"
 
 namespace analysis {
 
 class Candidate;
-
-typedef std::vector<Candidate> CandidateVector;
-
-class Vertex;
-typedef std::vector<Vertex> VertexVector;
-
+typedef std::shared_ptr<const Candidate> CandidatePtr;
+typedef std::vector<CandidatePtr> CandidatePtrVector;
 
 class Candidate {
 public:
-    enum Type { Unknown, Mu, Electron, Tau, Jet, Bjet, Z, Higgs, Resonance };
-    static const std::map<Type,particles::ParticleCode>& typeToPdgMap(){
-        static const std::map<Type,particles::ParticleCode> map = {{Type::Mu, particles::mu},
-                                                                      {Type::Electron, particles::e},
-                                                                      {Type::Tau, particles::tau},
-                                                                      {Type::Jet, particles::Jet}};
-        return map;
-    }
-    Type type;
-    size_t index;
-    TLorentzVector momentum;
-    CandidateVector daughters;
-    CandidateVector finalStateDaughters;
-    int charge;
-    TVector3 vertexPosition;
-
+    enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
     static int UnknownCharge() { return std::numeric_limits<int>::max(); }
 
-    Candidate() : type(Unknown), index(0), charge(UnknownCharge()){}
+private:
+    static Type TypeFromNtupleObject(const root_ext::detail::BaseDataClass& ntupleObject)
+    {
+        static const std::map<size_t, Type> ntupleTypes = {
+            { typeid(ntuple::Electron).hash_code(), Type::Electron }, { typeid(ntuple::Muon).hash_code(), Type::Muon },
+            { typeid(ntuple::Tau).hash_code(), Type::Tau }, { typeid(ntuple::Jet).hash_code(), Type::Jet }
+        };
 
+        const std::type_info& objectType = typeid(ntupleObject);
+        if(!ntupleTypes.count(objectType.hash_code()))
+            throw exception("Unknown n-tuple type '") << objectType.name() << "'.";
+        return ntupleTypes.at(objectType.hash_code());
+    }
+
+    Type type;
+    int charge;
+    TLorentzVector momentum;
+    bool has_vertexPosition;
+    TVector3 vertexPosition;
+
+    CandidatePtrVector daughters;
+    CandidatePtrVector finalStateDaughters;
+    const root_ext::detail::BaseDataClass* ntupleObject;
+
+public:
     template<typename NtupleObject>
-    Candidate(Type _type, size_t _index, const NtupleObject& ntupleObject) :
-        type(_type), index(_index), charge(ntupleObject.charge),
-        vertexPosition(ntupleObject.vx, ntupleObject.vy, ntupleObject.vz) {
-        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
-    }
+    explicit Candidate(const NtupleObject& _ntupleObject) :
+        type(TypeFromNtupleObject(_ntupleObject)), charge(_ntupleObject.charge),
+        momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt, _ntupleObject.eta, _ntupleObject.phi, _ntupleObject.mass)),
+        has_vertexPosition(true), vertexPosition(_ntupleObject.vx, _ntupleObject.vy, _ntupleObject.vz),
+        ntupleObject(&_ntupleObject) {}
 
-    Candidate(Type _type, size_t _index, const ntuple::Jet& ntupleObject) :
-        type(_type), index(_index), charge(UnknownCharge()) {
-        momentum.SetPtEtaPhiM(ntupleObject.pt, ntupleObject.eta, ntupleObject.phi, ntupleObject.mass);
-    }
+    explicit Candidate(const ntuple::Jet& _ntupleObject) :
+        type(TypeFromNtupleObject(_ntupleObject)), charge(UnknownCharge()),
+        momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt, _ntupleObject.eta, _ntupleObject.phi, _ntupleObject.mass)),
+        has_vertexPosition(false), ntupleObject(&_ntupleObject) {}
 
-    Candidate(Type _type, const Candidate& daughter1, const Candidate& daughter2) : type(_type),
-        index(std::numeric_limits<size_t>::max()) {
+    Candidate(Type _type, const CandidatePtr& daughter1, const CandidatePtr& daughter2)
+        : type(_type), has_vertexPosition(false), ntupleObject(nullptr)
+    {
+        if(!daughter1 || !daughter2)
+            throw exception("Candidate daughters can't be nullptr.");
+        if(daughter1 == daughter2)
+            throw exception("Can't create composit candidate use identical daughters.");
+
         daughters.push_back(daughter1);
         daughters.push_back(daughter2);
-        momentum = daughter1.momentum + daughter2.momentum;
-        if (daughter1.charge == UnknownCharge() || daughter2.charge == UnknownCharge())
+        momentum = daughter1->momentum + daughter2->momentum;
+        if (daughter1->charge == UnknownCharge() || daughter2->charge == UnknownCharge())
             charge = UnknownCharge();
-        else charge = daughter1.charge + daughter2.charge;
-        for(const Candidate& daughter : daughters) {
-            if(daughter.finalStateDaughters.size()) {
-                for(const Candidate& finalStateDaughter : daughter.finalStateDaughters)
-                    finalStateDaughters.push_back(finalStateDaughter);
-            } else
+        else charge = daughter1->charge + daughter2->charge;
+        for(const auto& daughter : daughters) {
+            if(!daughter->finalStateDaughters.size())
                 finalStateDaughters.push_back(daughter);
+            for(const auto& finalStateDaughter : daughter->finalStateDaughters)
+                finalStateDaughters.push_back(finalStateDaughter);
         }
     }
 
-    bool operator < (const Candidate& other) const
+    Type GetType() const { return type; }
+    int GetCharge() const { return charge; }
+    const TLorentzVector& GetMomentum() const { return momentum; }
+    bool HasVertexPosition() const { return has_vertexPosition; }
+    const TVector3& GetVertexPosition() const
     {
-        if(index == std::numeric_limits<size_t>::max() || other.index == std::numeric_limits<size_t>::max())
-            return momentum.Pt() > other.momentum.Pt();
-        return index < other.index;
+        if(!HasVertexPosition())
+            throw exception("Vertex position is not defined.");
+        return vertexPosition;
+    }
+
+    template<typename NtupleObject>
+    const NtupleObject& GetNtupleObject() const
+    {
+        if(!ntupleObject)
+            throw exception("Candidate is not associated with antuple object.");
+        const NtupleObject* casted = dynamic_cast<const NtupleObject*>(ntupleObject);
+        if(!casted)
+            throw exception("Bad ntuple object type '") << typeid(NtupleObject).name() << "'. Expected '"
+                                                        << typeid(ntupleObject).name() << "'.";
+        return *casted;
+    }
+
+    const CandidatePtrVector& GetDaughters() const { return daughters; }
+    const CandidatePtrVector& GetFinalStateDaughters() const { return finalStateDaughters; }
+
+    CandidatePtr GetDaughter(Type daughterType) const
+    {
+        const auto selected_daughters = GetDaughters(daughterType);
+        if(!selected_daughters.size())
+            throw exception("Daughter with specified type not found.");
+        if(selected_daughters.size() > 1)
+            throw exception("More than one daughter with specified type are found.");
+        return selected_daughters.front();
+    }
+
+    CandidatePtrVector GetDaughters(Type daughterType) const
+    {
+        CandidatePtrVector result;
+        for(const auto& daughter : daughters) {
+            if(daughter->type == daughterType)
+                result.push_back(daughter);
+        }
+        return result;
+    }
+
+    const CandidatePtr& GetLeadingDaughter(Type expectedDaughterType) const
+    {
+        const auto& leadingDaughter = daughters.at(GetPtOrderedDaughterIndexes().first);
+        if(leadingDaughter->type != expectedDaughterType)
+            throw exception("Unexpected leading daughter type.");
+        return leadingDaughter;
+    }
+
+    const CandidatePtr& GetSubleadingDaughter(Type expectedDaughterType) const
+    {
+        const auto& subleadingDaughter = daughters.at(GetPtOrderedDaughterIndexes().second);
+        if(subleadingDaughter->type != expectedDaughterType)
+            throw exception("Unexpected subleading daughter type.");
+        return subleadingDaughter;
+    }
+
+    bool operator != (const Candidate& other) const
+    {
+        if (!daughters.size() && !other.daughters.size()) return ntupleObject != other.ntupleObject;
+        if (daughters.size() != other.daughters.size()) return true;
+        for (size_t n = 0; n < daughters.size(); ++n){
+            CandidatePtr daughter = daughters.at(n);
+            CandidatePtr other_daughter = other.daughters.at(n);
+            if (*daughter != *other_daughter) return true;
+        }
+        return false;
     }
 
     bool operator == (const Candidate& other) const
@@ -106,90 +184,54 @@ public:
         return !(*this != other);
     }
 
-    bool operator != (const Candidate& other) const
-    {
-        if(type != other.type || index != other.index || charge != other.charge ||
-                daughters.size() != other.daughters.size()) return true;
-        for (unsigned n = 0; n < daughters.size(); ++n){
-            if (daughters.at(n) != other.daughters.at(n)) return true;
-        }
-        return false;
-    }
-
-    const Candidate& GetDaughter(Type daughterType) const
-    {
-        for(const Candidate& daughter : daughters) {
-            if(daughter.type == daughterType)
-                return daughter;
-        }
-        throw std::runtime_error("daughter with specified type not found.");
-    }
-
-    CandidateVector GetDaughters(Type daughterType) const
-    {
-        CandidateVector result;
-        for(const Candidate& daughter : daughters) {
-            if(daughter.type == daughterType)
-                result.push_back(daughter);
-        }
-        return result;
-    }
-
-    const Candidate& GetLeadingDaughter(Type expectedDaughterType = Unknown) const
+private:
+    std::pair<size_t, size_t> GetPtOrderedDaughterIndexes() const
     {
         if(!daughters.size())
-            throw std::runtime_error("candidate has no daughters");
-        if(daughters.size() != 2)
-            throw std::runtime_error("candidate has too many daughters");
-        const Candidate& leadingDaughter = daughters.at(0).momentum.Pt() > daughters.at(1).momentum.Pt()
-                                         ? daughters.at(0) : daughters.at(1);
-        if(expectedDaughterType != Unknown && leadingDaughter.type != expectedDaughterType)
-            throw std::runtime_error("unexpected leading daughter type");
-        return leadingDaughter;
-    }
-
-    const Candidate& GetSubleadingDaughter(Type expectedDaughterType = Unknown) const
-    {
-        if(!daughters.size())
-            throw std::runtime_error("candidate has no daughters");
-        if(daughters.size() != 2)
-            throw std::runtime_error("candidate has too many daughters");
-        const Candidate& subleadingDaughter = daughters.at(0).momentum.Pt() > daughters.at(1).momentum.Pt()
-                                         ? daughters.at(1) : daughters.at(0);
-        if(expectedDaughterType != Unknown && subleadingDaughter.type != expectedDaughterType)
-            throw std::runtime_error("unexpected subleading daughter type");
-        return subleadingDaughter;
-    }
-
-    const particles::ParticleCode& GetPdgId() const
-    {
-        return typeToPdgMap().at(type);
+            throw exception("Candidate has no daughters.");
+        return daughters.at(0)->momentum.Pt() >= daughters.at(1)->momentum.Pt()
+                ? std::pair<size_t, size_t>(0, 1) : std::pair<size_t, size_t>(1, 0);
     }
 };
 
-class Vertex{
-public:
+class Vertex;
+typedef std::shared_ptr<const Vertex> VertexPtr;
+typedef std::vector<VertexPtr> VertexPtrVector;
 
-    TVector3 position;
-    size_t index;
+class Vertex {
+public:
+    Vertex(const ntuple::Vertex& _ntupleObject)
+        : sumPtSquared(_ntupleObject.sumPtSquared), ndf(_ntupleObject.ndf),
+          position(_ntupleObject.x, _ntupleObject.y, _ntupleObject.z), ntupleObject(&_ntupleObject) {}
+
+    bool operator< (const Vertex& other) const { return ntupleObject < other.ntupleObject; }
+
+    double GetSumPtSquared() const { return sumPtSquared; }
+    unsigned GetNdf() const { return ndf; }
+    const TVector3& GetPosition() const { return position; }
+    const ntuple::Vertex& GetNtupleObject() const { return *ntupleObject; }
+
+private:
     double sumPtSquared;
     unsigned ndf;
-
-    Vertex() : index(0), sumPtSquared(0), ndf(0) {}
-
-    template <typename NtupleObject>
-    Vertex(size_t _index, const NtupleObject& ntupleObject) : index(_index), sumPtSquared(ntupleObject.sumPtSquared),
-        ndf(ntupleObject.ndf)
-    {
-       position = TVector3(ntupleObject.x,ntupleObject.y,ntupleObject.z);
-    }
-
-    bool operator < (const Vertex& other) const
-    {
-        return index < other.index;
-//        return sumPtSquared < other.sumPtSquared;
-    }
-
+    TVector3 position;
+    const ntuple::Vertex* ntupleObject;
 };
+
+namespace detail {
+const std::map<Candidate::Type, std::string> CandidateTypeNameMap = {
+    { Candidate::Type::Electron, "electron" }, { Candidate::Type::Muon, "muon" }, { Candidate::Type::Tau, "tau" },
+    { Candidate::Type::Jet, "jet" }, { Candidate::Type::Z, "Z" }, { Candidate::Type::Higgs, "Higgs" }
+};
+} // namespace detail
+
+// enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
+
+std::ostream& operator<< (std::ostream& s, const Candidate::Type& t)
+{
+    s << detail::CandidateTypeNameMap.at(t);
+    return s;
+}
+
 
 } // analysis

@@ -34,6 +34,7 @@
     SIMPLE_VAR(Int_t, lumi) /* Lumi */ \
     SIMPLE_VAR(Int_t, evt) /* Event */ \
     SIMPLE_VAR(Int_t, channel) /* Analysis channel as defined in analysis::Channel */ \
+    SIMPLE_VAR(Int_t, eventEnergyScale) /* identifier of the applied energy scale */ \
     SIMPLE_VAR(Int_t, eventType) /* event type category */ \
     \
     \
@@ -65,13 +66,20 @@
     /* First lepton - hadronic tau specific */ \
     SIMPLE_VAR(Int_t, decayMode_1) /* tau decay mode as defined in ntuple::tau_id::hadronicDecayMode */ \
     SIMPLE_VAR(Float_t, byCombinedIsolationDeltaBetaCorrRaw3Hits_1) /* tau raw isolation value */ \
+    SIMPLE_VAR(Float_t, iso_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Bool_t, againstElectronLooseMVA_1) /* Whether tau passes loose MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_1) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_1) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronVTightMVA_1) /* Whether tau passes very tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_custom_1) /* Whether tau passes loose MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_custom_1) /* Whether tau passes medium MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_custom_1) /* Whether tau passes tight MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_custom_1) /* Whether tau passes very tight MVA against electron custom discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_1) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_1) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_1) /* Whether tau passes tight against electron discriminator */ \
+    SIMPLE_VAR(Float_t, againstElectronMVA3raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, byIsolationMVA2raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Bool_t, againstMuonLoose_1) /* Whether tau passes loose against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonMedium_1) /* Whether tau passes medium against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonTight_1) /* Whether tau passes tight against muon discriminator */ \
@@ -87,6 +95,7 @@
     SIMPLE_VAR(Float_t, mt_2) /* mT of second lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, d0_2) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_2) /* dZ with respect to primary vertex */ \
+    SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     /* Gen particle quantities of second signal lepton matched with the truth */ \
     SIMPLE_VAR(Int_t, pdgId_2_MC) /* PDG ID or particles::NONEXISTENT, if there is no matched genParticle. */ \
     SIMPLE_VAR(Float_t, pt_2_MC) /* pT */ \
@@ -104,9 +113,15 @@
     SIMPLE_VAR(Bool_t, againstElectronMediumMVA_2) /* Whether tau passes medium MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTightMVA_2) /* Whether tau passes tight MVA against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronVTightMVA_2) /* Whether tau passes very tight MVA against electron discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronLooseMVA_custom_2) /* Whether tau passes loose MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronMediumMVA_custom_2) /* Whether tau passes medium MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronTightMVA_custom_2) /* Whether tau passes tight MVA against electron custom discriminator */ \
+    SIMPLE_VAR(Bool_t, againstElectronVTightMVA_custom_2) /* Whether tau passes very tight MVA against electron custom discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronLoose_2) /* Whether tau passes loose against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronMedium_2) /* Whether tau passes medium against electron discriminator */ \
     SIMPLE_VAR(Bool_t, againstElectronTight_2) /* Whether tau passes tight against electron discriminator */ \
+    SIMPLE_VAR(Float_t, againstElectronMVA3raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, byIsolationMVA2raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Bool_t, againstMuonLoose_2) /* Whether tau passes loose against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonMedium_2) /* Whether tau passes medium against muon discriminator */ \
     SIMPLE_VAR(Bool_t, againstMuonTight_2) /* Whether tau passes tight against muon discriminator */ \
@@ -116,30 +131,19 @@
     SIMPLE_VAR(Float_t, DeltaR_leptons) /* DeltaR between two legs of H_tautau candidate */ \
     SIMPLE_VAR(Float_t, mvis) /* Visible mass of H_tautau */ \
     SIMPLE_VAR(Float_t, m_sv_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS */ \
-    SIMPLE_VAR(Float_t, m_sv_up_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled up by 3% */ \
-    SIMPLE_VAR(Float_t, m_sv_down_vegas) /* Mass of H_tautau corrected by svFit using integration method VEGAS when TauES is scaled down by 3% */ \
     SIMPLE_VAR(Float_t, m_sv_MC) /* Mass of H_tautau corrected by svFit using integration method MC */ \
     SIMPLE_VAR(Float_t, pt_sv_MC) /* Pt of H_tautau corrected by svFit using integration method MC */ \
-    SIMPLE_VAR(Float_t, m_sv_up_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
-    SIMPLE_VAR(Float_t, pt_sv_up_MC) /* Pt of H_tautau corrected by svFit using integration method MC when TauES is scaled up by 3% */ \
-    SIMPLE_VAR(Float_t, m_sv_down_MC) /* Mass of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
-    SIMPLE_VAR(Float_t, pt_sv_down_MC) /* Pt of H_tautau corrected by svFit using integration method MC when TauES is scaled down by 3% */ \
+    SIMPLE_VAR(Float_t, eta_sv_MC) /* Eta of H_tautau corrected by svFit using integration method MC */ \
+    SIMPLE_VAR(Float_t, phi_sv_MC) /* Phi of H_tautau corrected by svFit using integration method MC */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pt of two legs of H_tautau without MVAMET */ \
     SIMPLE_VAR(Float_t, pt_tt_MET) /* pt of two legs of H_tautau with MVAMET */ \
     \
     \
     /* Kinematic fit variables */ \
-    VECTOR_VAR(Float_t, kinfit_bb_tt_mass) /* Four body mass calculated using kinematic fit for each bjet combination */ \
-    VECTOR_VAR(Int_t, kinfit_bb_tt_convergence) /* Convergence of four body kinematic fit for each bjet combination */ \
-    VECTOR_VAR(Float_t, kinfit_bb_tt_chi2) /* Chi-square of four body kinematic fit for each bjet combination */ \
-    VECTOR_VAR(Float_t, kinfit_bb_tt_pull_balance) /* Pull balance of four body kinematic fit for each bjet combination */ \
-    /*SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_down)*/ /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled down by their uncertainties */ \
-    /*SIMPLE_VAR(Float_t, m_kinfit_bb_down_tt_up)*/ /* Four body mass calculated using kinematic fit when BjetES scaled down and TauES scaled up by their uncertainties */ \
-    /*SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_down)*/ /* Four body mass calculated using kinematic fit when BjetES scaled up and TauES scaled down by their uncertainties */ \
-    /*SIMPLE_VAR(Float_t, m_kinfit_bb_up_tt_up)*/ /* Four body mass calculated using kinematic fit when BjetES and TauES are both scaled up by their uncertainties */ \
-    VECTOR_VAR(Float_t, kinfit_bb_sv_mass) /* Four body mass calculated combining information of two body kinematic fit for b-jets and svFit for taus for each bjet combination */ \
-    VECTOR_VAR(Int_t, kinfit_bb_convergence) /* Convergence of two body kinematic fit for each bjet combination */ \
-    VECTOR_VAR(Float_t, kinfit_bb_chi2) /* Chi-square of two body kinematic fit for each bjet combination */ \
+    SIMPLE_VAR(Float_t, kinfit_bb_tt_mass) /* Four body mass calculated using kinematic fit */ \
+    SIMPLE_VAR(Int_t, kinfit_bb_tt_convergence) /* Convergence of four body kinematic fit */ \
+    SIMPLE_VAR(Float_t, kinfit_bb_tt_chi2) /* Chi-square of four body kinematic fit */ \
+    SIMPLE_VAR(Float_t, kinfit_bb_tt_pull_balance) /* Pull balance of four body kinematic fit */ \
     \
     \
     /* Met related variables */ \
@@ -181,8 +185,17 @@
     /* Jets info */ \
     SIMPLE_VAR(Int_t, njets) /* number of jets passing jet id ( pt > 30 ) */ \
     SIMPLE_VAR(Int_t, njetspt20) /* number of jets passing jet id ( pt > 20 ) */ \
+    /* All jets pt > 30 sorted in pt after applying Jet energy corrections (excluding hadronic Tau) */ \
+    VECTOR_VAR(Float_t, pt_jets) /* Jets Pt after corrections */ \
+    VECTOR_VAR(Float_t, eta_jets) /* Jets Eta */ \
+    VECTOR_VAR(Float_t, phi_jets) /* Jets Phi */ \
+    VECTOR_VAR(Float_t, ptraw_jets) /* Jets Raw Pt (before corrections) */ \
+    VECTOR_VAR(Float_t, ptunc_jets) /* Jet Unc (relative to Jet corrected pT) */ \
+    VECTOR_VAR(Float_t, mva_jets) /* Jet MVA id value */ \
+    VECTOR_VAR(Bool_t, passPU_jets) /* Whether Jet pass PU Id Loose WP */ \
     /* b-jets info */ \
-    SIMPLE_VAR(Int_t, nBjets) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
+    SIMPLE_VAR(Int_t, nBjets) /* number of btags not passing btag id (medium CSV WP) ( pt > 20 ) without re-tag applied */ \
+    SIMPLE_VAR(Int_t, nBjets_retagged) /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) with re-tag applied */ \
     /* All b-jets passing jet id ( pt > 20 ) sorted by CSV without re-tag applied */ \
     VECTOR_VAR(Float_t, pt_Bjets) /* pt of b-jets */ \
     VECTOR_VAR(Float_t, eta_Bjets) /* eta of b-jets */ \
@@ -212,6 +225,8 @@
     SIMPLE_VAR(Float_t, idweight_2) /* ID weight for the second leg */ \
     SIMPLE_VAR(Float_t, isoweight_1) /* Isolation weight for the first leg */ \
     SIMPLE_VAR(Float_t, isoweight_2) /* Isolation weight for the second leg */ \
+    SIMPLE_VAR(Float_t, fakeweight_1) /* fake rate weight for the first leg (only e->tau)*/ \
+    SIMPLE_VAR(Float_t, fakeweight_2) /* fake rate weight for the second leg */ \
     SIMPLE_VAR(Float_t, decayModeWeight_1) /* decay mode weight for the first leg */ \
     SIMPLE_VAR(Float_t, decayModeWeight_2) /* decay mode weight for the second leg */ \
     SIMPLE_VAR(Float_t, embeddedWeight) /* Weight for embedded events */ \

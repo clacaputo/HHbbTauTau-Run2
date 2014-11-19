@@ -100,8 +100,9 @@ public:
         }
     }
 
-    template<typename ObjectType, typename Selector>
-    std::vector<ObjectType> collect_objects(double weight, size_t n_objects, const Selector& selector)
+    template<typename ObjectType, typename Selector, typename Comparitor>
+    std::vector<ObjectType> collect_objects(double weight, size_t n_objects, const Selector& selector,
+                                            const Comparitor& comparitor)
     {
         std::vector<ObjectType> selected;
         for (size_t n = 0; n < n_objects; ++n) {
@@ -112,7 +113,7 @@ public:
         }
 
         fill_selection(weight);
-        std::sort(selected.begin(), selected.end());
+        std::sort(selected.begin(), selected.end(), comparitor);
 
         return selected;
     }
@@ -138,7 +139,7 @@ protected:
 
 class Cutter {
 public:
-    Cutter(ObjectSelector* _objectSelector)
+    explicit Cutter(ObjectSelector* _objectSelector)
         : objectSelector(_objectSelector), param_id(0) {}
 
     bool Enabled() const { return objectSelector != nullptr; }

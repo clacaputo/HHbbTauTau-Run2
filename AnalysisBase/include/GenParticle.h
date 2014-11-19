@@ -33,7 +33,6 @@
 #include "TreeProduction/interface/GenParticle.h"
 
 #include "Particles.h"
-#include "iostream_operators.h"
 #include "exception.h"
 
 namespace analysis {

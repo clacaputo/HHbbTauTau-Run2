@@ -1,0 +1,215 @@
+/*!
+ * \file EventWeights.h
+ * \brief Definition of the class to calculate and store different event weights.
+ * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \date 2014-11-17 created
+ *
+ * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
+ *                Maria Teresa Grippo <grippomariateresa@gmail.com>
+ *
+ * This file is part of X->HH->bbTauTau.
+ *
+ * X->HH->bbTauTau is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * X->HH->bbTauTau is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "SelectionResults.h"
+#include "AnalysisBase/include/Tools.h"
+
+namespace analysis {
+
+class EventWeights {
+public:
+    EventWeights(bool _is_data, bool _is_embedded, bool _apply_pu_weight, const std::string& pu_reweight_file_name,
+                 double _max_available_pu, double _default_pu_weight)
+        : is_data(_is_data), is_embedded(_is_embedded), apply_pu_weight(_apply_pu_weight),
+          max_available_pu(_max_available_pu), default_pu_weight(_default_pu_weight)
+    {
+        if(is_data && apply_pu_weight)
+            throw exception("Inconsistend event weight configuration: requested to apply PU weight for data sample.");
+        if(is_embedded && apply_pu_weight)
+            throw exception("Inconsistend event weight configuration: requested to apply PU weight for embedded sample.");
+        if(is_data && is_embedded)
+            throw exception("Inconsistend event weight configuration: sample is data and embedded at the same time.");
+        if(apply_pu_weight)
+            pu_weights = LoadPUWeights(pu_reweight_file_name);
+        Reset();
+    }
+
+    virtual void Reset()
+    {
+        eventWeight = 1;
+        PUweight = 1;
+        embeddedWeight = 1;
+        triggerWeights.assign(SelectionResults::NumberOfLegs, 1);
+        IDweights.assign(SelectionResults::NumberOfLegs, 1);
+        IsoWeights.assign(SelectionResults::NumberOfLegs, 1);
+        DMweights.assign(SelectionResults::NumberOfLegs, 1);
+        fakeWeights.assign(SelectionResults::NumberOfLegs, 1);
+        has_pu_weight = false;
+        has_selection_dependent_weights = false;
+        has_embedded_weight = false;
+    }
+
+    void CalculatePuWeight(const ntuple::Event& eventInfo)
+    {
+        if(has_pu_weight)
+            throw exception("PU weight is already calculated.");
+        if(!apply_pu_weight)
+            throw exception("PU weight should not be applied.");
+
+        const size_t bxIndex = tools::find_index(eventInfo.bunchCrossing, 0);
+        if(bxIndex >= eventInfo.bunchCrossing.size())
+            throw std::runtime_error("in-time BX not found");
+
+        const double nPU = eventInfo.trueNInt.at(bxIndex);
+        const Int_t bin = pu_weights->FindBin(nPU);
+        const Int_t maxBin = pu_weights->FindBin(max_available_pu);
+        const bool goodBin = bin >= 1 && bin <= maxBin;
+        PUweight = goodBin ? pu_weights->GetBinContent(bin) : default_pu_weight;
+
+        eventWeight *= PUweight;
+        has_pu_weight = true;
+    }
+
+    void CalculateSelectionDependentWeights(const SelectionResults& selection)
+    {
+        if(has_selection_dependent_weights)
+            throw exception("Selection dependent weights are already calculated.");
+        if(is_data)
+            throw exception("Selection dependent weights should not be applied");
+
+        CalculateWeight(&EventWeights::CalculateTriggerWeight, triggerWeights, selection);
+        CalculateWeight(&EventWeights::CalculateIsoWeight, IsoWeights, selection);
+        CalculateWeight(&EventWeights::CalculateIdWeight, IDweights, selection);
+        CalculateWeight(&EventWeights::CalculateDecayModeWeight, DMweights, selection);
+        CalculateWeight(&EventWeights::CalculateFakeWeight, fakeWeights, selection);
+
+        has_selection_dependent_weights = true;
+    }
+
+    void SetEmbeddedWeight(double _embeddedWeight)
+    {
+        if(has_embedded_weight)
+            throw exception("Embedded weight is already set.");
+        if(!is_embedded)
+            throw exception("Embedded weight should not be applied.");
+
+        embeddedWeight = _embeddedWeight;
+        eventWeight *= embeddedWeight;
+        has_embedded_weight = true;
+    }
+
+    bool HasPileUpWeight() const { return !apply_pu_weight || has_pu_weight; }
+    bool HasEmbeddedWeight() const { return !is_embedded || has_embedded_weight; }
+    bool HasPartialWeight() const { return HasPileUpWeight() && HasEmbeddedWeight(); }
+    bool HasSelectionDependentWeights() const { return is_data || has_selection_dependent_weights; }
+    bool HasFullWeight() const { return HasPartialWeight() && HasSelectionDependentWeights(); }
+
+    bool IsData() const { return is_data; }
+    bool IsEmbedded() const { return is_embedded; }
+
+    double GetFullWeight() const
+    {
+        if(!HasFullWeight())
+            throw exception("Full weight is not calculated yet.");
+        return eventWeight;
+    }
+
+    double GetPartialWeight() const
+    {
+        if(!HasPartialWeight())
+            throw exception("Partial weight is not calculated yet.");
+        return eventWeight;
+    }
+
+    double GetPileUpWeight() const
+    {
+        if(!HasPileUpWeight())
+            throw exception("Pile-up weight is not calculated yet.");
+        return PUweight;
+    }
+
+    double GetEmbeddedWeight() const
+    {
+        if(!HasEmbeddedWeight())
+            throw exception("Embedded weight is not calculated yet.");
+        return embeddedWeight;
+    }
+
+    double GetTriggerWeight(size_t leg_id) const { return GetWeight(triggerWeights, leg_id); }
+    double GetIsoWeight(size_t leg_id) const { return GetWeight(IsoWeights, leg_id); }
+    double GetIdWeight(size_t leg_id) const { return GetWeight(IDweights, leg_id); }
+    double GetDecayModeWeight(size_t leg_id) const { return GetWeight(DMweights, leg_id); }
+    double GetFakeWeight(size_t leg_id) const { return GetWeight(fakeWeights, leg_id); }
+
+protected:
+    virtual double CalculateTriggerWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateIsoWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateIdWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateDecayModeWeight(CandidatePtr leg) { return 1; }
+    virtual double CalculateFakeWeight(CandidatePtr leg) { return 1; }
+
+private:
+    static std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName)
+    {
+        std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
+        if(reweightFile->IsZombie())
+            throw exception("reweight file ") << reweightFileName << " not found.";
+        TObject* originalWeights = reweightFile->Get("weights");
+        if (!originalWeights)
+            throw exception("histograms with weights not found");
+        std::shared_ptr<TH1D> weights_clone(static_cast<TH1D*>(originalWeights->Clone("PUweights")));
+        weights_clone->SetDirectory(nullptr);
+        return weights_clone;
+    }
+
+    static size_t GetLegId(size_t index) { return index + 1; }
+    static size_t GetIndex(size_t leg_id)
+    {
+        if(leg_id == 0 || leg_id > SelectionResults::NumberOfLegs)
+            throw exception("Invalid leg id = ") << leg_id;
+        return leg_id - 1;
+    }
+
+    template<typename CalcMethod>
+    void CalculateWeight(CalcMethod method, std::vector<double>& container, const SelectionResults& selection)
+    {
+        for(size_t n = 0; n < SelectionResults::NumberOfLegs; ++n) {
+            const size_t leg_id = GetLegId(n);
+            const CandidatePtr leg = selection.GetLeg(leg_id);
+            container.at(n) = (this->*method)(leg);
+            eventWeight *= container.at(n);
+        }
+    }
+
+    double GetWeight(const std::vector<double>& container, size_t leg_id) const
+    {
+        if(!HasSelectionDependentWeights())
+            throw exception("Selection dependent weights are not calculated yet.");
+        return container.at(GetIndex(leg_id));
+    }
+
+private:
+    bool is_data, is_embedded, apply_pu_weight;
+    double max_available_pu, default_pu_weight;
+    std::shared_ptr<TH1D> pu_weights;
+    bool has_pu_weight, has_selection_dependent_weights, has_embedded_weight;
+    double eventWeight, PUweight, embeddedWeight;
+    std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
+};
+
+} // namespace analysis

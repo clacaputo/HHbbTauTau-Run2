@@ -50,8 +50,9 @@ HHKinFitMaster::doFullFit()
       advancedfitter.SetPrintLevel(0);
       advancedfitter.SetLogLevel(0);
       advancedfitter.SetAdvancedBalance(m_advancedBalance);
+      advancedfitter.SetMaxLoops(10000);
       advancedfitter.Fit();
-      
+
       Double_t chi2_full = advancedfitter.GetChi2();
       Double_t prob_full = TMath::Prob(chi2_full,2);
       Double_t mH_full   = advancedfitter.GetFittedMH();

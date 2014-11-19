@@ -87,32 +87,49 @@ public:
             for (EventCategory eventCategory : eventCategories)
                 AnalyzeEvent(eventInfo, eventCategory);
         }
+        EndOfRun();
     }
 
 protected:
     virtual LightFlatAnalyzerData& GetAnaData() = 0;
     virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
+    virtual void EndOfRun() = 0;
+
 
     TFile& GetOutputFile() { return *outputFile; }
 
-    bool PassSelection(const FlatEventInfo& eventInfo, EventCategory /*category*/) const
+
+    bool PassSyncTreeSelection(const FlatEventInfo& eventInfo) const
     {
-        using namespace cuts::Htautau_Summer13;
+        using analysis::EventRegion;
         const ntuple::Flat& event = *eventInfo.event;
-        if(eventInfo.channel == Channel::MuTau)
-            return event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < MuTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    && event.againstMuonTight_2
-                    && event.mt_1 < MuTau::muonID::mt
-                    && event.pfRelIso_1 < MuTau::muonID::pFRelIso
-                    && event.q_1 * event.q_2 == -1;
+        if (eventInfo.channel == Channel::MuTau){
+            using namespace cuts::Htautau_Summer13::MuTau;
 
-        if(eventInfo.channel == Channel::TauTau)
-            return event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < TauTau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    && event.againstElectronLooseMVA_2
-                    && event.q_1 * event.q_2 == -1;
+            if(!event.againstMuonTight_2
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || event.pfRelIso_1 >= muonID::pFRelIso || event.q_1 * event.q_2 == +1)
+                return false;
+            return true;
+        }
+        if (eventInfo.channel == Channel::ETau){
+            using namespace cuts::Htautau_Summer13::ETau;
 
-        throw exception("Channel '") << eventInfo.channel << "' is not supported.";
+            if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || event.pfRelIso_1 >= electronID::pFRelIso || event.q_1 * event.q_2 == +1)
+                return false;
+            return true;
+        }
+        if (eventInfo.channel == Channel::TauTau){
+            using namespace cuts::Htautau_Summer13::TauTau::tauID;
+
+            if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+                        || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits)
+                return false;
+            return true;
+        }
+        throw analysis::exception("unsupported channel ") << eventInfo.channel;
     }
 
     analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo) const
@@ -175,6 +192,7 @@ protected:
 private:
     std::shared_ptr<TFile> inputFile, outputFile;
     std::shared_ptr<ntuple::FlatTree> flatTree;
+
 
 protected:
     bool recalc_kinfit;

@@ -47,6 +47,14 @@ public:
     ANA_CONFIG_PARAMETER(bool, RequireSpecificFinalState, false)
     ANA_CONFIG_PARAMETER(bool, DoZEventCategorization, false)
     ANA_CONFIG_PARAMETER(bool, isDYEmbeddedSample, false)
+    ANA_CONFIG_PARAMETER(bool, isTTEmbeddedSample, false)
+    ANA_CONFIG_PARAMETER(bool, ApplyEtoTauFakeRate, false)
+    ANA_CONFIG_PARAMETER(bool, ApplyJetToTauFakeRate, false)
+
+    ANA_CONFIG_PARAMETER(bool, EstimateTauEnergyUncertainties, false)
+    ANA_CONFIG_PARAMETER(bool, EstimateJetEnergyUncertainties, false)
+    ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputFile, "")
+    ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputSection, "")
 
     ANA_CONFIG_PARAMETER(bool, ApplyPUreweight, false)
     ANA_CONFIG_PARAMETER(std::string, PUreweight_fileName, "")
@@ -59,16 +67,26 @@ public:
     ANA_CONFIG_PARAMETER(std::string, MvaMet_inputFileNameCovU1, "")
     ANA_CONFIG_PARAMETER(std::string, MvaMet_inputFileNameCovU2, "")
 
-    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileCorrectTo, "")
-    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmData, "")
-    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmMC, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileCorrectTo_MuTau, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmData_MuTau, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmMC_MuTau, "")
+
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileCorrectTo_ETau, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmData_ETau, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmMC_ETau, "")
+
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileCorrectTo_TauTau, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmData_TauTau, "")
+    ANA_CONFIG_PARAMETER(std::string, RecoilCorrection_fileZmmMC_TauTau, "")
 
     bool extractMCtruth()
     {
         return ApplyTauESCorrection() || ApplyRecoilCorrection() || RequireSpecificFinalState()
                 || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB()
-                || DoZEventCategorization();
+                || DoZEventCategorization() || ApplyEtoTauFakeRate() || IsEmbeddedSample();
     }
+
+    bool IsEmbeddedSample() { return isDYEmbeddedSample() || isTTEmbeddedSample(); }
 
 };
 

@@ -31,7 +31,6 @@
 #include <map>
 
 #include <TMath.h>
-
 #include "AnalysisBase/include/AnalysisMath.h"
 #include "AnalysisBase/include/Tools.h"
 #include "AnalysisBase/include/exception.h"
@@ -237,9 +236,8 @@ namespace TauTau {
                                                      // for new tauID
         const double byMediumCombinedIsolationDeltaBetaCorr3Hits = 0.5;
                                                      // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1; // not equivalent to the medium working point (1.5)
-                                                     // custom value used for QCD estimation
-                                                     // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1; // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+                //https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/RecoTauTag/Configuration/python/HPSPFTaus_cff.py#L183
 
         namespace BackgroundEstimation {
             const double Isolation_upperLimit = 4; // < upper value of isolation for QCD data driven estimation
@@ -365,6 +363,32 @@ namespace tauCorrections {
         }
         return 1.0;
     }
+}
+
+namespace jetToTauFakeRateWeight {
+
+    inline double CalculateJetToTauFakeWeight(double tauPt)
+    {
+        const double tau_pt = tauPt < 200 ? tauPt : 200 ;
+        return (1.15743)-(0.00736136*tau_pt)+(4.3699e-05*tau_pt*tau_pt)-(1.188e-07*tau_pt*tau_pt*tau_pt);
+    }
+}
+
+// twiki HiggsToTauTauWorkingSummer2013
+namespace electronEtoTauFakeRateWeight {
+
+    inline double CalculateEtoTauFakeWeight(const ntuple::Tau& tau_leg)
+    {
+        static const double eta = 1.5 ;
+        static const std::map<ntuple::tau_id::hadronicDecayMode, std::vector<double>> decayModeMap= {
+        { ntuple::tau_id::kOneProng0PiZero, {1.37 , 1.11} }, { ntuple::tau_id::kOneProng0PiZero, {2.18 , 0.47} } };
+
+        if (!decayModeMap.count(ntuple::tau_id::ConvertToHadronicDecayMode(tau_leg.decayMode)))
+            return 1;
+        const size_t eta_bin = std::abs(tau_leg.eta) < eta ? 0 : 1;
+        return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_leg.decayMode)).at(eta_bin);
+    }
+
 }
 
 namespace DrellYannCategorization {

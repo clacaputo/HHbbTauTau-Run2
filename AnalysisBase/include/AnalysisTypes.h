@@ -31,21 +31,35 @@
 #include <map>
 #include <cmath>
 
+#include "TLorentzVector.h"
+
 #include "exception.h"
+#include "Tools.h"
 
 namespace analysis {
 
 enum class Channel { ETau = 0, MuTau = 1, TauTau = 2 };
 
+enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4 };
+
 namespace detail {
-std::map<Channel, std::string> ChannelNameMap = {
+const std::map<Channel, std::string> ChannelNameMap = {
     { Channel::ETau, "eTau" }, { Channel::MuTau, "muTau" }, { Channel::TauTau, "tauTau" }
 };
 
-std::map<Channel, std::string> ChannelNameMapLatex = {
+const std::map<Channel, std::string> ChannelNameMapLatex = {
     { Channel::ETau, "e#tau" }, { Channel::MuTau, "#mu#tau" }, { Channel::TauTau, "#tau#tau" }
 };
+
+const std::map<EventEnergyScale, std::string> EventEnergyScaleNameMap = {
+    { EventEnergyScale::Central, "Central" },
+    { EventEnergyScale::TauUp, "TauUp" }, { EventEnergyScale::TauDown, "TauDown" },
+    { EventEnergyScale::JetUp, "JetUp" }, { EventEnergyScale::JetDown, "JetDown" },
+};
+
 } // namespace detail
+
+const std::set<EventEnergyScale> AllEventEnergyScales = tools::collect_map_keys(detail::EventEnergyScaleNameMap);
 
 std::ostream& operator<< (std::ostream& s, const Channel& c)
 {
@@ -66,6 +80,12 @@ std::istream& operator>> (std::istream& s, Channel& c)
     throw exception("Unknown channel name '") << name << "'.";
 }
 
+std::ostream& operator<< (std::ostream& s, const EventEnergyScale& es)
+{
+    s << detail::EventEnergyScaleNameMap.at(es);
+    return s;
+}
+
 template<typename T>
 T sqr(const T& x) { return x * x; }
 
@@ -83,7 +103,7 @@ struct PhysicalValueErrorSeparator<wchar_t> {
     static std::wstring Get() { return L" \u00B1 "; }
 };
 
-}
+} // namespace detail
 
 struct PhysicalValue {
 
@@ -97,62 +117,60 @@ struct PhysicalValue {
             throw exception("Negative error = ") << error << ".";
     }
 
-    PhysicalValue operator+(const PhysicalValue& other) const
-    {
-        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
-        return PhysicalValue(value + other.value, new_error);
-    }
-
     PhysicalValue& operator+=(const PhysicalValue& other)
     {
-        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
-        value = value + other.value;
-        error = new_error;
+        value += other.value;
+        error = std::sqrt(sqr(error) + sqr(other.error));
+        return *this;
+    }
+
+    PhysicalValue operator+(const PhysicalValue& other) const
+    {
+        PhysicalValue result(*this);
+        result += other;
+        return result;
+    }
+
+    PhysicalValue& operator-=(const PhysicalValue& other)
+    {
+        value -= other.value;
+        error = std::sqrt(sqr(error) + sqr(other.error));
         return *this;
     }
 
     PhysicalValue operator-(const PhysicalValue& other) const
     {
-        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
-        return PhysicalValue(value - other.value, new_error);
+        PhysicalValue result(*this);
+        result -= other;
+        return result;
     }
 
-    PhysicalValue& operator-=(const PhysicalValue& other)
+    PhysicalValue& operator*=(const PhysicalValue& other)
     {
-        const double new_error = std::sqrt(sqr(error) + sqr(other.error));
-        value = value - other.value;
-        error = new_error;
+        value *= other.value;
+        error = std::sqrt(sqr(other.value * error) + sqr(value * other.error));
         return *this;
     }
 
     PhysicalValue operator*(const PhysicalValue& other) const
     {
-        const double new_error = std::sqrt(sqr(other.value * error) + sqr(value * other.error));
-        return PhysicalValue(value * other.value, new_error);
+        PhysicalValue result(*this);
+        result *= other;
+        return result;
     }
 
-    PhysicalValue& operator*=(const PhysicalValue& other)
+    PhysicalValue& operator/=(const PhysicalValue& other)
     {
-        const double new_error = std::sqrt(sqr(other.value * error) + sqr(value * other.error));
-        value = value * other.value;
-        error = new_error;
+        value /= other.value;
+        error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value))) / std::abs(other.value);
         return *this;
     }
 
     PhysicalValue operator/(const PhysicalValue& other) const
     {
-        const double new_error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value)))
-                / std::abs(other.value);
-        return PhysicalValue(value / other.value, new_error);
-    }
-
-    PhysicalValue& operator/=(const PhysicalValue& other)
-    {
-        const double new_error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value)))
-                / std::abs(other.value);
-        value = value / other.value;
-        error = new_error;
-        return *this;
+        PhysicalValue result(*this);
+        result /= other;
+        return result;
     }
 
     bool operator<(const PhysicalValue& other) const { return value < other.value; }
@@ -160,8 +178,8 @@ struct PhysicalValue {
     bool IsCompatible(const PhysicalValue& other) const
     {
         const double delta = std::abs(value - other.value);
-        const double max_error = std::max(error, other.error);
-        return delta < max_error;
+        const double error_sum = error + other.error;
+        return delta < error_sum;
     }
 
     template<typename char_type>
@@ -182,8 +200,6 @@ struct PhysicalValue {
     }
 };
 
-typedef std::pair<PhysicalValue, PhysicalValue> PhysicalValuePair;
-
 std::ostream& operator<<(std::ostream& s, const PhysicalValue& v)
 {
     s << v.ToString<char>(true);
@@ -197,3 +213,13 @@ std::wostream& operator<<(std::wostream& s, const PhysicalValue& v)
 }
 
 } // namespace analysis
+
+std::ostream& operator<<(std::ostream& s, const TVector3& v){
+    s << "(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const TLorentzVector& v){
+    s << "(pt=" << v.Pt() << ", eta=" << v.Eta() << ", phi=" << v.Phi() << ", E=" << v.E() << ")";
+    return s;
+}

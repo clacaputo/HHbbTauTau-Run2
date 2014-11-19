@@ -18,7 +18,7 @@
 PSTools::PSTools(int size)
 {
   gROOT->Reset();
-  Pcanvas(size);
+//  Pcanvas(size);
   Pstyle();
   //  Platex (0.3, 0.7, 0.05); 
 }
@@ -79,26 +79,26 @@ PSTools::next(TPad* c1)
   return;
 }
 
-TCanvas*
-PSTools::Pcanvas(int flag)
-{
-  TCanvas *c1;
-  // Create a new canvas.
-  if (flag == 0)
-    c1 = new TCanvas("c1", "Canvas c1", 1280, 600);          // im Buero
-  else if (flag == 1)
-    c1 = new TCanvas("c1", "Canvas c1", 0, 0, 1150, 850);    // zu Hause
-  else if (flag == 2)
-    c1 = new TCanvas("c1", "Canvas c1", 380, 0, 900, 500);    // Laptop
-  else
-      throw std::runtime_error("unsupported flag to create TCanvas");
-  //  c1->SetFillColor(42);
-  //  c1->GetFrame()->SetFillColor(11);
-  //  c1->GetFrame()->SetBorderSize(6);
-  //  c1->GetFrame()->SetBorderMode(-1);
-  c1->Divide(2, 2);
-  return c1;
-}
+//TCanvas*
+//PSTools::Pcanvas(int flag)
+//{
+//  TCanvas *c1;
+//  // Create a new canvas.
+//  if (flag == 0)
+//    c1 = new TCanvas("c1", "Canvas c1", 1280, 600);          // im Buero
+//  else if (flag == 1)
+//    c1 = new TCanvas("c1", "Canvas c1", 0, 0, 1150, 850);    // zu Hause
+//  else if (flag == 2)
+//    c1 = new TCanvas("c1", "Canvas c1", 380, 0, 900, 500);    // Laptop
+//  else
+//      throw std::runtime_error("unsupported flag to create TCanvas");
+//  //  c1->SetFillColor(42);
+//  //  c1->GetFrame()->SetFillColor(11);
+//  //  c1->GetFrame()->SetBorderSize(6);
+//  //  c1->GetFrame()->SetBorderMode(-1);
+//  c1->Divide(2, 2);
+//  return c1;
+//}
 
 void
 PSTools::Platex(Float_t x, Float_t y, Float_t size)

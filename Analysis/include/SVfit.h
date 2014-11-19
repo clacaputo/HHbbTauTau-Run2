@@ -62,14 +62,9 @@ struct FitResults {
     FitResults() : has_valid_mass(false), mass(default_value), has_valid_momentum(false) {}
 };
 
-struct FitResultsWithUncertainties {
+struct CombinedFitResults {
     FitResults fit_vegas;
-    FitResults fit_vegas_down;
-    FitResults fit_vegas_up;
-
     FitResults fit_mc;
-    FitResults fit_mc_down;
-    FitResults fit_mc_up;
 };
 
 inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate, const ntuple::MET& met,
@@ -78,9 +73,9 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
     static const bool debug = false;
     FitResults result;
 
-    if(higgsCandidate.type != Candidate::Higgs)
+    if(higgsCandidate.GetType() != Candidate::Type::Higgs)
         throw std::runtime_error("Invalid candidate type for SVfit");
-    if (higgsCandidate.finalStateDaughters.size() != 2)
+    if (higgsCandidate.GetFinalStateDaughters().size() != 2)
         throw std::runtime_error("Invalid candidate type for SVfit - it doesn't have 2 daughters");
 
     // setup the MET coordinates and significance
@@ -89,18 +84,18 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
 
     // setup measure tau lepton vectors
     std::vector<NSVfitStandalone::MeasuredTauLepton> measuredTauLeptons;
-    for (const Candidate& daughter : higgsCandidate.finalStateDaughters){
-        NSVfitStandalone::LorentzVector lepton(daughter.momentum.Px(), daughter.momentum.Py(),
-                                              daughter.momentum.Pz(), daughter.momentum.E());
+    for (const auto& daughter : higgsCandidate.GetFinalStateDaughters()){
+        NSVfitStandalone::LorentzVector lepton(daughter->GetMomentum().Px(), daughter->GetMomentum().Py(),
+                                              daughter->GetMomentum().Pz(), daughter->GetMomentum().E());
         NSVfitStandalone::kDecayType decayType;
-        if (daughter.type == Candidate::Electron || daughter.type == Candidate::Mu)
+        if (daughter->GetType() == Candidate::Type::Electron || daughter->GetType() == Candidate::Type::Muon)
             decayType = NSVfitStandalone::kLepDecay;
-        else if (daughter.type == Candidate::Tau){
+        else if (daughter->GetType() == Candidate::Type::Tau){
             decayType = NSVfitStandalone::kHadDecay;
             lepton *= tauESfactor;
         }
         else
-            throw std::runtime_error("final state daughters are not compatible with a leptonic or hadronic tau decay");
+            throw exception("final state daughters are not compatible with a leptonic or hadronic tau decay");
         measuredTauLeptons.push_back(NSVfitStandalone::MeasuredTauLepton(decayType, lepton));
     }
 
@@ -125,10 +120,10 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
         std::cerr << "Can't fit with " << fitAlgorithm << std::endl;
 
     if(debug) {
-        std::cout << "Original mass = " << higgsCandidate.momentum.M()
-                  << "\nOriginal momentum = " << higgsCandidate.momentum
-                  << "\nFirst daughter momentum = " << higgsCandidate.daughters.at(0).momentum
-                  << "\nSecond daughter momentum = " << higgsCandidate.daughters.at(1).momentum
+        std::cout << "Original mass = " << higgsCandidate.GetMomentum().M()
+                  << "\nOriginal momentum = " << higgsCandidate.GetMomentum()
+                  << "\nFirst daughter momentum = " << higgsCandidate.GetDaughters().at(0)->GetMomentum()
+                  << "\nSecond daughter momentum = " << higgsCandidate.GetDaughters().at(1)->GetMomentum()
                   << "\nSVfit algorithm = " << fitAlgorithm;
         if(result.has_valid_mass)
             std::cout << "\nSVfit mass = " << result.mass;
@@ -140,21 +135,14 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
     return result;
 }
 
-inline FitResultsWithUncertainties FitWithUncertainties(const Candidate& higgsCandidate, const ntuple::MET& met,
-                                                        double tau_energy_uncertainty, bool fitWithVegas,
-                                                        bool fitWithMarkovChain)
+CombinedFitResults CombinedFit(const Candidate& higgsCandidate, const ntuple::MET& met, bool fitWithVegas,
+                               bool fitWithMarkovChain)
 {
-    FitResultsWithUncertainties result;
-    if(fitWithVegas) {
+    CombinedFitResults result;
+    if(fitWithVegas)
         result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1.);
-        result.fit_vegas_up = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 + tau_energy_uncertainty);
-        result.fit_vegas_down = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1 - tau_energy_uncertainty);
-    }
-    if(fitWithMarkovChain) {
+    if(fitWithMarkovChain)
         result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1.);
-        result.fit_mc_up = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 + tau_energy_uncertainty);
-        result.fit_mc_down = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1 - tau_energy_uncertainty);
-    }
     return result;
 }
 

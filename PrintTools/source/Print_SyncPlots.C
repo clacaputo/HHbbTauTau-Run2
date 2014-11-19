@@ -143,7 +143,7 @@ public:
         if (channel == "etau" || channel == "mutau")
             drawHistos("isoweight_1", 100, 0.90, 1.);
         //drawHistos("isoweight_2", 100, 0.90, 1.);
-        //drawHistos("fakeweight", 25, 0.5, 1.5);
+        drawHistos("fakeweight", 25, 0.5, 1.5);
 
 //        drawHistos("effweight", 30, .8, 1.1);
         drawHistos("weight", 30, .8, 1.1);
