@@ -83,7 +83,7 @@ public:
     {
         return ApplyTauESCorrection() || ApplyRecoilCorrection() || RequireSpecificFinalState()
                 || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB()
-                || DoZEventCategorization() || ApplyEtoTauFakeRate();
+                || DoZEventCategorization() || ApplyEtoTauFakeRate() || IsEmbeddedSample();
     }
 
     bool IsEmbeddedSample() { return isDYEmbeddedSample() || isTTEmbeddedSample(); }
