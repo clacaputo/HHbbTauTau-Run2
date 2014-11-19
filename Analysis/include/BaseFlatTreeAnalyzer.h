@@ -590,9 +590,11 @@ protected:
             if(eventRegion == EventRegion::Unknown) continue;
 
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
+                                                                                 cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  cuts::Htautau_Summer13::btag::CSVT);
-            const bool fill_all = EssentialEventRegions().count(eventRegion);
+            //const bool fill_all = EssentialEventRegions().count(eventRegion);
+            const bool fill_all = true;
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1),fill_all);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
