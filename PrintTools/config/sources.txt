@@ -524,10 +524,14 @@ subcategory: ZJ
 
 [ZTT_MC]
 type: ZTT_MC
+type: BACKGROUND
+draw: false
 title: Z #rightarrow tautau(MC)
 
 [ZTT_L]
 type: ZTT_L
+type: BACKGROUND
+draw: false
 title: Z #rightarrow tautau(leptonic)
 
 [ZTT]
@@ -536,17 +540,9 @@ type: ZTT
 type: LIMITS
 title: Z #rightarrow tautau
 datacard: ZTT
-
-[DYJets]
-type: BACKGROUND
-type: COMPOSIT
-#title: Z #rightarrow ll
-title: Z #rightarrow #tau#tau
 draw: true
 color: yellow_custom
-#subcategory: ZL
-#subcategory: ZJ
-subcategory: ZTT
+isCategoryToSubtract: false
 
 [DYJets_ll]
 type: BACKGROUND
