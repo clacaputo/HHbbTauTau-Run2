@@ -79,6 +79,7 @@ struct DataCategory {
     double limits_sf;
     bool draw;
     unsigned draw_sf;
+    bool isCategoryToSubtract;
 
     std::set<DataCategoryType> types;
     std::set<Channel> channels;
@@ -86,7 +87,7 @@ struct DataCategory {
     DataSourceScaleFactorMap sources_sf;
 
     DataCategory()
-        : color(kBlack), limits_sf(1.0), draw(false), draw_sf(1) {}
+        : color(kBlack), limits_sf(1.0), draw(false), draw_sf(1), isCategoryToSubtract(true) {}
 
     bool IsSignal() const { return types.count(DataCategoryType::Signal); }
     bool IsBackground() const { return types.count(DataCategoryType::Background); }
@@ -230,6 +231,8 @@ private:
             ss >> category.draw_sf;
         } else if(param_name == "draw") {
             ss >> category.draw;
+        } else if(param_name == "isCategoryToSubtract") {
+            ss >> category.isCategoryToSubtract;
         } else if(param_name == "channel") {
             Channel channel_id;
             ss >> channel_id;

@@ -842,7 +842,7 @@ protected:
                       << " for data category '" << current_category << "'.\n"
                       << "Initial integral: " << Integral(histogram, false) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
-            if(category->IsComposit() || category->name == current_category) continue;
+            if(category->IsComposit() || category->name == current_category || !category->isCategoryToSubtract ) continue;
 
             if(verbose)
                 std::cout << "Sample '" << category->name << "': ";
