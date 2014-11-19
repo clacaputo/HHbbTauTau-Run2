@@ -611,16 +611,36 @@ draw: true
 color: pink_custom
 
 
+[TT_hadr]
+type: BACKGROUND
+type: TT_hadr
+title: t#bar{t}_hadr
+file: tt_hadr.root 0.0719
+
+
+[TT_lept]
+type: BACKGROUND
+type: TT_lept
+title: t#bar{t}_lept
+file: tt_lept.root 0.0430
+
+[TT_semi]
+type: BACKGROUND
+type: TT_semi
+title: t#bar{t}_semi
+file: tt_semi.root 0.0862
+
 [TTbar]
 type: BACKGROUND
 type: LIMITS
+type: COMPOSIT
 title: t#bar{t}
 datacard: TT
 draw: true
 color: violet_custom
-file: tt_hadr.root 0.0719
-file: tt_lept.root 0.0430
-file: tt_semi.root 0.0862
+subcategory: TT_hadr
+subcategory: TT_lept
+subcategory: TT_semi
 
 
 [SMhiggs ALL]
@@ -653,6 +673,24 @@ channel: tauTau
 title: Embedded Z #rightarrow #tau #tau
 file: DY_Embedded_TauTau.root 1
 
+[TT_EMBEDDED MuTau]
+type: TT_EMBEDDED
+channel: muTau
+title: Embedded t#bar{t}
+file: TT_Embedded_MuTau.root 1
+
+[TT_EMBEDDED ETau]
+type: TT_EMBEDDED
+channel: eTau
+title: Embedded t#bar{t}
+file: TT_Embedded_ETau.root 1
+
+[TT_EMBEDDED TauTau]
+type: TT_EMBEDDED
+channel: tauTau
+title: Embedded t#bar{t}
+file: TT_Embedded_TauTau.root 1
+
 [AllBkg]
 type: COMPOSIT
 title: All background
@@ -666,4 +704,6 @@ subcategory: QCD
 subcategory: ZL
 subcategory: ZJ
 subcategory: ZTT
-subcategory: TTbar
+subcategory: TT_hadr
+subcategory: TT_lept
+subcategory: TT_semi
