@@ -355,67 +355,41 @@ std::ostream& operator<<(std::ostream& s, const EventRegion& eventRegion) {
 }
 
 
-EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, double CSVL, double CSVM, double CSVT)
+EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, Int_t nBjets_retagged, double CSVL,
+                                             double CSVM)
 {
     EventCategoryVector categories;
     categories.push_back(EventCategory::Inclusive);
 
-    typedef std::pair<size_t, size_t> Key;
-
-    static const std::map< Key, EventCategory> mediumCategories_map {
-        { { 1, 0 }, EventCategory::OneJet_ZeroBtag }, { { 1, 1 }, EventCategory::OneJet_OneBtag },
-        { { 2, 0 }, EventCategory::TwoJets_ZeroBtag }, { { 2, 1 }, EventCategory::TwoJets_OneBtag },
-        { { 2, 2 }, EventCategory::TwoJets_TwoBtag }
+    static const std::map< size_t, EventCategory> mediumCategories_map {
+        {  0 , EventCategory::TwoJets_ZeroBtag }, { 1 , EventCategory::TwoJets_OneBtag },
+        {  2 , EventCategory::TwoJets_TwoBtag }
     };
 
-    static const std::map< Key, EventCategory> looseCategories_map {
-        { { 2, 0 }, EventCategory::TwoJets_ZeroLooseBtag }, { { 2, 1 }, EventCategory::TwoJets_OneLooseBtag },
-        { { 2, 2 }, EventCategory::TwoJets_TwoLooseBtag }
+    static const std::map< size_t, EventCategory> looseCategories_map {
+        { 0 , EventCategory::TwoJets_ZeroLooseBtag }, { 1, EventCategory::TwoJets_OneLooseBtag },
+        { 2 , EventCategory::TwoJets_TwoLooseBtag }
     };
 
-    const size_t n_jets = std::min<size_t>(csv_Bjets.size(), 2);
-    size_t n_mediumBtag = 0;
-    if(n_jets == 1 && csv_Bjets.at(0) > CSVT) ++n_mediumBtag;
-    if(n_jets == 2 && csv_Bjets.at(0) > CSVM) ++n_mediumBtag;
-    if(n_jets == 2 && csv_Bjets.at(1) > CSVM) ++n_mediumBtag;
+    if (csv_Bjets.size() >= 2){
+        categories.push_back(EventCategory::TwoJets_Inclusive);
+        const size_t n_bjets_retagged = std::min<size_t>(nBjets_retagged, 2);
+        size_t n_mediumBtag = 0;
+        if(n_bjets_retagged == 1 && csv_Bjets.at(0) > CSVM) ++n_mediumBtag;
+        if(n_bjets_retagged == 2 && csv_Bjets.at(1) > CSVM) ++n_mediumBtag;
 
-    const Key key_medium(n_jets, n_mediumBtag);
-    if(mediumCategories_map.count(key_medium))
-        categories.push_back(mediumCategories_map.at(key_medium));
+        if(mediumCategories_map.count(n_mediumBtag))
+            categories.push_back(mediumCategories_map.at(n_mediumBtag));
 
-    size_t n_looseBtag = 0;
-    if(n_jets == 2 && csv_Bjets.at(0) > CSVL) ++n_looseBtag;
-    if(n_jets == 2 && csv_Bjets.at(1) > CSVL) ++n_looseBtag;
+        size_t n_looseBtag = 0;
+        if(csv_Bjets.at(0) > CSVL) ++n_looseBtag;
+        if(csv_Bjets.at(1) > CSVL) ++n_looseBtag;
 
-    const Key key_loose(n_jets, n_looseBtag);
-    if(looseCategories_map.count(key_loose))
-        categories.push_back(looseCategories_map.at(key_loose));
+        if(looseCategories_map.count(n_looseBtag))
+            categories.push_back(looseCategories_map.at(n_looseBtag));
+    }
 
     return categories;
 }
-/*-----------*/
-//EventCategoryVector DetermineLooseEventCategories(const std::vector<float>& csv_Bjets, double CSVL)
-//{
-//    EventCategoryVector categories;
-//    categories.push_back(EventCategory::Inclusive);
-
-//    typedef std::pair<size_t, size_t> Key;
-
-//    static const std::map< Key, EventCategory> categories_map {
-//        { { 2, 0 }, EventCategory::TwoJets_ZeroLooseBtag }, { { 2, 1 }, EventCategory::TwoJets_OneLooseBtag },
-//        { { 2, 2 }, EventCategory::TwoJets_TwoLooseBtag }
-//    };
-
-//    const size_t n_jets = std::min<size_t>(csv_Bjets.size(), 2);
-//    size_t n_btag = 0;
-//    if(n_jets == 2 && csv_Bjets.at(0) > CSVL) ++n_btag;
-//    if(n_jets == 2 && csv_Bjets.at(1) > CSVL) ++n_btag;
-
-//    const Key key(n_jets, n_btag);
-//    if(categories_map.count(key))
-//        categories.push_back(categories_map.at(key));
-
-//    return categories;
-//}
 
 } // namespace analysis
