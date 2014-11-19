@@ -274,29 +274,28 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     return s;
 }
 
-enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_NotIsolated = 2, SS_Isolated = 3, SS_NotIsolated = 4,
-                         OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_NotIso_HighMt = 7, SS_NotIso_HighMt = 8,
-                         OS_Isolated_LooseBtag = 9, OS_NotIsolated_LooseBtag = 10, SS_Isolated_LooseBtag = 11, SS_NotIsolated_LooseBtag = 12 };
-enum class EventCategory { Inclusive = 0, OneJet_ZeroBtag = 1, OneJet_OneBtag = 2, TwoJets_ZeroBtag = 3,
-                           TwoJets_OneBtag = 4, TwoJets_TwoBtag = 5, TwoJets_ZeroLooseBtag = 6, TwoJets_OneLooseBtag = 7,
-                           TwoJets_TwoLooseBtag = 8 };
+enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_AntiIsolated = 2, SS_Isolated = 3, SS_AntiIsolated = 4,
+                         OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_AntiIso_HighMt = 7, SS_AntiIso_HighMt = 8 };
+
+enum class EventCategory { Inclusive = 0, TwoJets_Inclusive = 1, TwoJets_ZeroBtag = 2, TwoJets_OneBtag = 3,
+                           TwoJets_TwoBtag = 4, TwoJets_ZeroLooseBtag = 5, TwoJets_OneLooseBtag = 6,
+                           TwoJets_TwoLooseBtag = 7 };
 
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
-          { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0btag" },
-            { EventCategory::OneJet_OneBtag, "1jet1btag" }, { EventCategory::TwoJets_ZeroBtag, "2jets0btag" },
-          { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" },
-          { EventCategory::TwoJets_ZeroLooseBtag, "2jets0Loosebtag"}, { EventCategory::TwoJets_OneLooseBtag, "2jets1Loosebtag"},
-            { EventCategory::TwoJets_TwoLooseBtag, "2jets2Loosebtag" }};
+          { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::TwoJets_Inclusive, "2jets" },
+            { EventCategory::TwoJets_ZeroBtag, "2jets0btag" }, { EventCategory::TwoJets_OneBtag, "2jets1btag"},
+            { EventCategory::TwoJets_TwoBtag, "2jets2btag" },
+            { EventCategory::TwoJets_ZeroLooseBtag, "2jets0Loosebtag" },
+            { EventCategory::TwoJets_OneLooseBtag, "2jets1Loosebtag" },
+            { EventCategory::TwoJets_TwoLooseBtag, "2jets2Loosebtag" } };
 
 static const std::map<EventRegion, std::string> eventRegionNamesMap =
           { { EventRegion::Unknown, "Unknown"}, { EventRegion::OS_Isolated, "OS_Isolated"},
-            { EventRegion::OS_NotIsolated, "OS_NotIsolated"}, { EventRegion::SS_Isolated, "SS_Isolated"},
-            { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_Iso_HighMt, "OS_Iso_HighMt"},
-            { EventRegion::SS_Iso_HighMt, "SS_Iso_HighMt"} , { EventRegion::OS_NotIso_HighMt, "OS_NotIso_HighMt"},
-            { EventRegion::SS_NotIso_HighMt, "SS_NotIso_HighMt"}, { EventRegion::OS_Isolated_LooseBtag, "OS_Isolated_LooseBtag"},
-            { EventRegion::OS_NotIsolated_LooseBtag, "OS_NotIsolated_LooseBtag"},{ EventRegion::SS_Isolated_LooseBtag, "SS_Isolated_LooseBtag"},
-            { EventRegion::SS_NotIsolated_LooseBtag, "SS_NotIsolated_LooseBtag"} };
+            { EventRegion::OS_AntiIsolated, "OS_AntiIsolated"}, { EventRegion::SS_Isolated, "SS_Isolated"},
+            { EventRegion::SS_AntiIsolated, "SS_AntiIsolated"}, { EventRegion::OS_Iso_HighMt, "OS_Iso_HighMt"},
+            { EventRegion::SS_Iso_HighMt, "SS_Iso_HighMt"} , { EventRegion::OS_AntiIso_HighMt, "OS_AntiIso_HighMt"},
+            { EventRegion::SS_AntiIso_HighMt, "SS_AntiIso_HighMt"} };
 } // namespace detail
 
 typedef std::vector<EventCategory> EventCategoryVector;
@@ -304,37 +303,32 @@ typedef std::set<EventCategory> EventCategorySet;
 typedef std::map<EventCategory, EventCategory> EventCategoryMap;
 
 static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
-static const EventCategorySet OneJetEventCategories = { EventCategory::OneJet_ZeroBtag, EventCategory::OneJet_OneBtag };
-static const EventCategorySet TwoJetsEventCategories =
-        { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
-/*--------*/
-static const EventCategorySet TwoJetsEventCategories_LooseBjets =
-        { EventCategory::TwoJets_ZeroLooseBtag, EventCategory::TwoJets_OneLooseBtag, EventCategory::TwoJets_TwoLooseBtag };
 
-static const EventCategoryMap Medium_Loose_CategoryMap = {{EventCategory::TwoJets_ZeroBtag,EventCategory::TwoJets_ZeroLooseBtag},
-                                                          {EventCategory::TwoJets_OneBtag,EventCategory::TwoJets_OneLooseBtag},
-                                                          {EventCategory::TwoJets_TwoBtag,EventCategory::TwoJets_TwoLooseBtag}};
+static const EventCategoryMap MediumToLoose_EventCategoryMap =
+        { { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_ZeroLooseBtag },
+          { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_OneLooseBtag },
+          { EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_TwoLooseBtag } };
+
+static const EventCategorySet TwoJetsEventCategories_MediumBjets =
+                                                                tools::collect_map_keys(MediumToLoose_EventCategoryMap);
+
+static const EventCategorySet TwoJetsEventCategories_LooseBjets =
+                                                              tools::collect_map_values(MediumToLoose_EventCategoryMap);
 
 typedef std::set<EventRegion> EventRegionSet;
 typedef std::map<EventRegion, EventRegion> EventRegionMap;
-static const EventRegionMap HighMt_LowMt_RegionMap = { {EventRegion::OS_Iso_HighMt, EventRegion::OS_Isolated},
-                                                     {EventRegion::SS_Iso_HighMt, EventRegion::SS_Isolated},
-                                                       {EventRegion::OS_NotIso_HighMt, EventRegion::OS_NotIsolated},
-                                                       {EventRegion::SS_NotIso_HighMt, EventRegion::SS_NotIsolated} };
 
-static const EventRegionMap MediumBtag_LooseBtag_RegionMap = {{EventRegion::OS_Isolated, EventRegion::OS_Isolated_LooseBtag},
-                                                              {EventRegion::SS_Isolated, EventRegion::SS_Isolated_LooseBtag},
-                                                                {EventRegion::OS_NotIsolated, EventRegion::OS_NotIsolated_LooseBtag},
-                                                                {EventRegion::SS_NotIsolated, EventRegion::SS_NotIsolated_LooseBtag}};
+static const EventRegionMap HighMt_LowMt_RegionMap =
+        { { EventRegion::OS_Iso_HighMt, EventRegion::OS_Isolated },
+          { EventRegion::SS_Iso_HighMt, EventRegion::SS_Isolated },
+          { EventRegion::OS_AntiIso_HighMt, EventRegion::OS_AntiIsolated },
+          { EventRegion::SS_AntiIso_HighMt, EventRegion::SS_AntiIsolated } };
 
-static const EventRegionSet HighMtRegions = {EventRegion::OS_Iso_HighMt, EventRegion::SS_Iso_HighMt,
-                                             EventRegion::OS_NotIso_HighMt, EventRegion::SS_NotIso_HighMt};
+static const EventRegionSet HighMtRegions = { EventRegion::OS_Iso_HighMt, EventRegion::SS_Iso_HighMt,
+                                              EventRegion::OS_AntiIso_HighMt, EventRegion::SS_AntiIso_HighMt };
 
-static const EventRegionSet QcdRegions = {EventRegion::OS_Isolated, EventRegion::SS_Isolated,
-                                             EventRegion::OS_NotIsolated, EventRegion::SS_NotIsolated};
-
-static const EventRegionSet LooseBtagRegions = {EventRegion::OS_Isolated_LooseBtag, EventRegion::SS_Isolated_LooseBtag,
-                                             EventRegion::OS_NotIsolated_LooseBtag, EventRegion::SS_NotIsolated_LooseBtag};
+static const EventRegionSet QcdRegions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated,
+                                           EventRegion::OS_AntiIsolated, EventRegion::SS_AntiIsolated};
 
 static const EventRegionSet AllEventRegions = tools::collect_map_keys(detail::eventRegionNamesMap);
 
@@ -353,7 +347,6 @@ std::ostream& operator<<(std::ostream& s, const EventRegion& eventRegion) {
     s << detail::eventRegionNamesMap.at(eventRegion);
     return s;
 }
-
 
 EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, double CSVL, double CSVM, double CSVT)
 {

@@ -29,6 +29,9 @@
 class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY(mt_1, 20, 0, 200)
+    TH1D_ENTRY(iso_tau1, 100, 0, 10)
+    TH1D_ENTRY(iso_tau2, 100, 0, 10)
+    TH1D_ENTRY(H_tt_charge, 8, -4, 4)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
                       analysis::EventEnergyScale eventEnergyScale) override
@@ -38,6 +41,10 @@ public:
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);
+        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
+        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
+        int diTau_charge = event.q_1*event.q_2;
+        H_tt_charge().Fill(diTau_charge,weight);
     }
 };
 
@@ -60,7 +67,7 @@ protected:
     virtual const analysis::EventRegionSet& EssentialEventRegions() override
     {
         static const analysis::EventRegionSet regions = { analysis::EventRegion::OS_Isolated,
-                                                analysis::EventRegion::OS_NotIsolated };
+                                                          analysis::EventRegion::OS_AntiIsolated };
         return regions;
     }
 
@@ -81,129 +88,63 @@ protected:
                          event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
 
         if(iso) return os ? EventRegion::OS_Isolated : EventRegion::SS_Isolated;
-        return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
+        return os ? EventRegion::OS_AntiIsolated : EventRegion::SS_AntiIsolated;
     }
 
     virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory eventCategory,
                                                             const std::string& hist_name) override
     {
-        return CalculateQCDScaleFactor(eventCategory, hist_name, analysis::EventRegion::SS_Isolated,
-                                       analysis::EventRegion::SS_NotIsolated);
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        const auto iso_antiIso_sf = CalculateQCDScaleFactor(hist_name, refEventCategory, refEventCategory,
+                                                            analysis::EventRegion::SS_Isolated,
+                                                            analysis::EventRegion::SS_AntiIsolated);
+        if(refEventCategory == eventCategory)
+            return iso_antiIso_sf;
+
+        const auto medium_loose_sf = CalculateQCDScaleFactor(hist_name, eventCategory, refEventCategory,
+                                                             analysis::EventRegion::SS_AntiIsolated,
+                                                             analysis::EventRegion::SS_AntiIsolated);
+        return iso_antiIso_sf * medium_loose_sf;
     }
 
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory eventCategory, const std::string& hist_name,
-                                                  analysis::EventRegion num_eventRegion, analysis::EventRegion den_eventRegion) override
-    {
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-        std::cout<<"Ciao2"<<std::endl;
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        const analysis::EventCategory loose_category = analysis::Medium_Loose_CategoryMap.at(eventCategory);
-
-        auto hist_data_SS_AIso_Medium = GetHistogram(eventCategory, data.name, den_eventRegion, hist_name);
-        auto hist_data_SS_Iso_Loose   = GetHistogram(loose_category, data.name, num_eventRegion, hist_name);
-        auto hist_data_SS_AIso_Loose  = GetHistogram(loose_category, data.name, den_eventRegion, hist_name);
-
-        if(!hist_data_SS_AIso_Medium || !hist_data_SS_Iso_Loose || !hist_data_SS_AIso_Loose)
-            throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
-
-        TH1D& hist_SS_AIso_Medium = CloneHistogram(eventCategory, qcd.name, den_eventRegion, *hist_data_SS_AIso_Medium);
-        TH1D& hist_SS_Iso_Loose = CloneHistogram(loose_category, qcd.name, num_eventRegion, *hist_data_SS_Iso_Loose);
-        TH1D& hist_SS_AIso_Loose = CloneHistogram(loose_category, qcd.name, den_eventRegion, *hist_data_SS_AIso_Loose);
-
-        SubtractBackgroundHistograms(hist_SS_AIso_Medium, eventCategory, den_eventRegion, qcd.name, true);
-        SubtractBackgroundHistograms(hist_SS_Iso_Loose, loose_category, num_eventRegion, qcd.name, true);
-        SubtractBackgroundHistograms(hist_SS_AIso_Loose, loose_category, den_eventRegion, qcd.name, true);
-
-        const analysis::PhysicalValue n_SS_AIso_Medium = analysis::Integral(hist_SS_AIso_Medium, false);
-        const analysis::PhysicalValue n_SS_Iso_Loose   = analysis::Integral(hist_SS_Iso_Loose, false);
-        const analysis::PhysicalValue n_SS_AIso_Loose  = analysis::Integral(hist_SS_AIso_Loose, false);
-        if(n_SS_AIso_Medium.value < 0 || n_SS_Iso_Loose.value < 0 || n_SS_AIso_Loose.value < 0)
-            throw analysis::exception("Negative number of estimated events in QCD SF estimation for ") << eventCategory;
-
-        const analysis::PhysicalValue bTagEff = n_SS_AIso_Medium/n_SS_AIso_Loose;
-        const analysis::PhysicalValue isoEff_looseRegion = n_SS_Iso_Loose/n_SS_AIso_Loose;
-        std::cout<<" BTag Eff = " << bTagEff << "isoEff = " << isoEff_looseRegion <<std::endl;
-
-        return bTagEff*isoEff_looseRegion;
-    }
-
-    virtual void EstimateQCD(analysis::EventCategory eventCategory, const std::string& hist_name,
+    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& scale_factor) override
     {
-        return EstimateQCD(eventCategory,hist_name,scale_factor,
-                                                 analysis::EventRegion::OS_NotIsolated);
-    }
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-    virtual void EstimateQCD(analysis::EventCategory eventCategory, const std::string& hist_name,
-                             const analysis::PhysicalValue& scale_factor, analysis::EventRegion shapeRegion) override
-    {
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        const analysis::EventCategory loose_category = analysis::Medium_Loose_CategoryMap.at(eventCategory);
-
-        auto hist_shape_data = GetHistogram(loose_category, data.name, shapeRegion, hist_name);
-        if(!hist_shape_data) return;
-
-        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
-        SubtractBackgroundHistograms(histogram, loose_category, shapeRegion, qcd.name);
-        histogram.Scale(scale_factor.value);
-
+        return EstimateQCD(hist_name, eventCategory, refEventCategory, analysis::EventRegion::OS_AntiIsolated,
+                           scale_factor);
     }
 
     virtual PhysicalValueMap CalculateWjetsScaleFactors(analysis::EventCategory eventCategory,
-                                                                   const std::string& hist_name) override
+                                                        const std::string& hist_name) override
     {
+        static const analysis::PhysicalValue one(1, 0.001);
 
         PhysicalValueMap valueMap;
 
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
-        std::cout<<"Event Category ------>>>>>>>  "<<eventCategory<<std::endl;
-        if(analysis::TwoJetsEventCategories_LooseBjets.count(eventCategory)) {
-             static const analysis::PhysicalValue v(1, 0.001);
-             for (analysis::EventRegion eventRegion : analysis::QcdRegions){
-                 const analysis::EventRegion loose_eventRegion = analysis::MediumBtag_LooseBtag_RegionMap.at(eventRegion);
-                  valueMap[loose_eventRegion] = v;
-                }
-        } else {
 
-             const analysis::EventCategory loose_category = analysis::Medium_Loose_CategoryMap.at(eventCategory);
-             for (analysis::EventRegion eventRegion : analysis::QcdRegions){
-                 //analysis::PhysicalValue region_SF(0,0);
-                 TH1D* hist_loose=nullptr;
-                 TH1D* hist_medium=nullptr;
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-                 const analysis::EventRegion loose_eventRegion = analysis::MediumBtag_LooseBtag_RegionMap.at(eventRegion);
-                 for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
-
-                     auto loose_hist_mc = GetHistogram(loose_category, wjets_category->name, eventRegion, hist_name);
-                     auto medium_hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion, hist_name);
-                     std::cout<<"loose_hist_mc ----> "<<loose_hist_mc<<" medium_hist_mc ----> "<<medium_hist_mc<<std::endl;
-                     if (!loose_hist_mc && !medium_hist_mc) continue;
-                     if (!hist_loose && !hist_medium) {
-
-                        hist_loose  = &CloneHistogram(loose_category, wjets_category->name, loose_eventRegion, *loose_hist_mc);
-                        hist_medium = &CloneHistogram(eventCategory, wjets_category->name, loose_eventRegion, *medium_hist_mc);
-                     } else{
-                         hist_loose->Add(loose_hist_mc);
-                         hist_medium->Add(medium_hist_mc);
-                     }
-                     std::cout<<"Event Region:  "<<eventRegion<<"WJets Category:   "<<wjets_category->name<<"  Integral Loose:  "<<analysis::Integral(*hist_loose,false)
-                             <<" Integral Medium: "<<analysis::Integral(*hist_medium,false)<<std::endl;
-                     //region_SF = region_SF + analysis::Integral(hist_loose,false)/analysis::Integral(hist_medium,false);
-                 }
-                valueMap[eventRegion] = analysis::Integral(*hist_medium,false)/analysis::Integral(*hist_loose,false);
-             }
-         }
+        for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
+            analysis::PhysicalValue sf = one;
+            if(eventCategory |= refEventCategory) {
+                const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
+                const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion, hist_name, wjets_mc_categories);
+                sf = n_medium / n_ref;
+            }
+            valueMap[eventRegion] = sf;
+        }
 
         return valueMap;
     }
-
 };
