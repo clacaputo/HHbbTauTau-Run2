@@ -275,31 +275,45 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
 }
 
 enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_NotIsolated = 2, SS_Isolated = 3, SS_NotIsolated = 4,
-                         OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_NotIso_HighMt = 7, SS_NotIso_HighMt = 8 };
+                         OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_NotIso_HighMt = 7, SS_NotIso_HighMt = 8,
+                         OS_Isolated_LooseBtag = 9, OS_NotIsolated_LooseBtag = 10, SS_Isolated_LooseBtag = 11, SS_NotIsolated_LooseBtag = 12 };
 enum class EventCategory { Inclusive = 0, OneJet_ZeroBtag = 1, OneJet_OneBtag = 2, TwoJets_ZeroBtag = 3,
-                           TwoJets_OneBtag = 4, TwoJets_TwoBtag = 5 };
+                           TwoJets_OneBtag = 4, TwoJets_TwoBtag = 5, TwoJets_ZeroLooseBtag = 6, TwoJets_OneLooseBtag = 7,
+                           TwoJets_TwoLooseBtag = 8 };
 
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
           { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0btag" },
             { EventCategory::OneJet_OneBtag, "1jet1btag" }, { EventCategory::TwoJets_ZeroBtag, "2jets0btag" },
-          { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" } };
+          { EventCategory::TwoJets_OneBtag, "2jets1btag"}, { EventCategory::TwoJets_TwoBtag, "2jets2btag" },
+          { EventCategory::TwoJets_ZeroLooseBtag, "2jets0Loosebtag"}, { EventCategory::TwoJets_OneLooseBtag, "2jets1Loosebtag"},
+            { EventCategory::TwoJets_TwoLooseBtag, "2jets2Loosebtag" }};
 
 static const std::map<EventRegion, std::string> eventRegionNamesMap =
           { { EventRegion::Unknown, "Unknown"}, { EventRegion::OS_Isolated, "OS_Isolated"},
             { EventRegion::OS_NotIsolated, "OS_NotIsolated"}, { EventRegion::SS_Isolated, "SS_Isolated"},
             { EventRegion::SS_NotIsolated, "SS_NotIsolated"}, { EventRegion::OS_Iso_HighMt, "OS_Iso_HighMt"},
             { EventRegion::SS_Iso_HighMt, "SS_Iso_HighMt"} , { EventRegion::OS_NotIso_HighMt, "OS_NotIso_HighMt"},
-            { EventRegion::SS_NotIso_HighMt, "SS_NotIso_HighMt"} };
+            { EventRegion::SS_NotIso_HighMt, "SS_NotIso_HighMt"}, { EventRegion::OS_Isolated_LooseBtag, "OS_Isolated_LooseBtag"},
+            { EventRegion::OS_NotIsolated_LooseBtag, "OS_NotIsolated_LooseBtag"},{ EventRegion::SS_Isolated_LooseBtag, "SS_Isolated_LooseBtag"},
+            { EventRegion::SS_NotIsolated_LooseBtag, "SS_NotIsolated_LooseBtag"} };
 } // namespace detail
 
 typedef std::vector<EventCategory> EventCategoryVector;
 typedef std::set<EventCategory> EventCategorySet;
+typedef std::map<EventCategory, EventCategory> EventCategoryMap;
 
 static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
 static const EventCategorySet OneJetEventCategories = { EventCategory::OneJet_ZeroBtag, EventCategory::OneJet_OneBtag };
 static const EventCategorySet TwoJetsEventCategories =
         { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag };
+/*--------*/
+static const EventCategorySet TwoJetsEventCategories_LooseBjets =
+        { EventCategory::TwoJets_ZeroLooseBtag, EventCategory::TwoJets_OneLooseBtag, EventCategory::TwoJets_TwoLooseBtag };
+
+static const EventCategoryMap Medium_Loose_CategoryMap = {{EventCategory::TwoJets_ZeroBtag,EventCategory::TwoJets_ZeroLooseBtag},
+                                                          {EventCategory::TwoJets_OneBtag,EventCategory::TwoJets_OneLooseBtag},
+                                                          {EventCategory::TwoJets_TwoBtag,EventCategory::TwoJets_TwoLooseBtag}};
 
 typedef std::set<EventRegion> EventRegionSet;
 typedef std::map<EventRegion, EventRegion> EventRegionMap;
@@ -307,11 +321,20 @@ static const EventRegionMap HighMt_LowMt_RegionMap = { {EventRegion::OS_Iso_High
                                                      {EventRegion::SS_Iso_HighMt, EventRegion::SS_Isolated},
                                                        {EventRegion::OS_NotIso_HighMt, EventRegion::OS_NotIsolated},
                                                        {EventRegion::SS_NotIso_HighMt, EventRegion::SS_NotIsolated} };
+
+static const EventRegionMap MediumBtag_LooseBtag_RegionMap = {{EventRegion::OS_Isolated, EventRegion::OS_Isolated_LooseBtag},
+                                                              {EventRegion::SS_Isolated, EventRegion::SS_Isolated_LooseBtag},
+                                                                {EventRegion::OS_NotIsolated, EventRegion::OS_NotIsolated_LooseBtag},
+                                                                {EventRegion::SS_NotIsolated, EventRegion::SS_NotIsolated_LooseBtag}};
+
 static const EventRegionSet HighMtRegions = {EventRegion::OS_Iso_HighMt, EventRegion::SS_Iso_HighMt,
                                              EventRegion::OS_NotIso_HighMt, EventRegion::SS_NotIso_HighMt};
 
 static const EventRegionSet QcdRegions = {EventRegion::OS_Isolated, EventRegion::SS_Isolated,
                                              EventRegion::OS_NotIsolated, EventRegion::SS_NotIsolated};
+
+static const EventRegionSet LooseBtagRegions = {EventRegion::OS_Isolated_LooseBtag, EventRegion::SS_Isolated_LooseBtag,
+                                             EventRegion::OS_NotIsolated_LooseBtag, EventRegion::SS_NotIsolated_LooseBtag};
 
 static const EventRegionSet AllEventRegions = tools::collect_map_keys(detail::eventRegionNamesMap);
 
@@ -332,30 +355,67 @@ std::ostream& operator<<(std::ostream& s, const EventRegion& eventRegion) {
 }
 
 
-EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, double CSVM, double CSVT)
+EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, double CSVL, double CSVM, double CSVT)
 {
     EventCategoryVector categories;
     categories.push_back(EventCategory::Inclusive);
 
     typedef std::pair<size_t, size_t> Key;
 
-    static const std::map< Key, EventCategory> categories_map {
+    static const std::map< Key, EventCategory> mediumCategories_map {
         { { 1, 0 }, EventCategory::OneJet_ZeroBtag }, { { 1, 1 }, EventCategory::OneJet_OneBtag },
         { { 2, 0 }, EventCategory::TwoJets_ZeroBtag }, { { 2, 1 }, EventCategory::TwoJets_OneBtag },
         { { 2, 2 }, EventCategory::TwoJets_TwoBtag }
     };
 
-    const size_t n_jets = std::min<size_t>(csv_Bjets.size(), 2);
-    size_t n_btag = 0;
-    if(n_jets == 1 && csv_Bjets.at(0) > CSVT) ++n_btag;
-    if(n_jets == 2 && csv_Bjets.at(0) > CSVM) ++n_btag;
-    if(n_jets == 2 && csv_Bjets.at(1) > CSVM) ++n_btag;
+    static const std::map< Key, EventCategory> looseCategories_map {
+        { { 2, 0 }, EventCategory::TwoJets_ZeroLooseBtag }, { { 2, 1 }, EventCategory::TwoJets_OneLooseBtag },
+        { { 2, 2 }, EventCategory::TwoJets_TwoLooseBtag }
+    };
 
-    const Key key(n_jets, n_btag);
-    if(categories_map.count(key))
-        categories.push_back(categories_map.at(key));
+    const size_t n_jets = std::min<size_t>(csv_Bjets.size(), 2);
+    size_t n_mediumBtag = 0;
+    if(n_jets == 1 && csv_Bjets.at(0) > CSVT) ++n_mediumBtag;
+    if(n_jets == 2 && csv_Bjets.at(0) > CSVM) ++n_mediumBtag;
+    if(n_jets == 2 && csv_Bjets.at(1) > CSVM) ++n_mediumBtag;
+
+    const Key key_medium(n_jets, n_mediumBtag);
+    if(mediumCategories_map.count(key_medium))
+        categories.push_back(mediumCategories_map.at(key_medium));
+
+    size_t n_looseBtag = 0;
+    if(n_jets == 2 && csv_Bjets.at(0) > CSVL) ++n_looseBtag;
+    if(n_jets == 2 && csv_Bjets.at(1) > CSVL) ++n_looseBtag;
+
+    const Key key_loose(n_jets, n_looseBtag);
+    if(looseCategories_map.count(key_loose))
+        categories.push_back(looseCategories_map.at(key_loose));
 
     return categories;
 }
+/*-----------*/
+//EventCategoryVector DetermineLooseEventCategories(const std::vector<float>& csv_Bjets, double CSVL)
+//{
+//    EventCategoryVector categories;
+//    categories.push_back(EventCategory::Inclusive);
+
+//    typedef std::pair<size_t, size_t> Key;
+
+//    static const std::map< Key, EventCategory> categories_map {
+//        { { 2, 0 }, EventCategory::TwoJets_ZeroLooseBtag }, { { 2, 1 }, EventCategory::TwoJets_OneLooseBtag },
+//        { { 2, 2 }, EventCategory::TwoJets_TwoLooseBtag }
+//    };
+
+//    const size_t n_jets = std::min<size_t>(csv_Bjets.size(), 2);
+//    size_t n_btag = 0;
+//    if(n_jets == 2 && csv_Bjets.at(0) > CSVL) ++n_btag;
+//    if(n_jets == 2 && csv_Bjets.at(1) > CSVL) ++n_btag;
+
+//    const Key key(n_jets, n_btag);
+//    if(categories_map.count(key))
+//        categories.push_back(categories_map.at(key));
+
+//    return categories;
+//}
 
 } // namespace analysis

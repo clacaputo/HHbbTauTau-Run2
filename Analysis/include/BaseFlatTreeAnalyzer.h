@@ -62,6 +62,7 @@ static const std::vector<double> mass_bins_2j2t = { 0,20,40,60,80,100,120,140,16
 static const std::vector<double> mass_ttbb_bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280,
                                                     300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 550, 600,
                                                     650, 700, 750, 800, 850, 900, 950, 1000 };
+//static const std::vector<double> mass_ttbb_bins = { 0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 500, 600, 700, 800, 900, 1000 };
 
 static const std::vector<double> mass_bins_slice_2fette = { 
       0,	10,      20,	 30,	 40,	 50,	 60,	 70,	 80,	 90,	100,	110,	120,	130,
@@ -97,6 +98,8 @@ public:
     TH1D_ENTRY(eta_1, 25, -2.5, 2.5)
     TH1D_ENTRY(pt_2, 20, 0, 200)
     TH1D_ENTRY(eta_2, 25, -2.5, 2.5)
+    TH1D_ENTRY(iso_tau1, 100, 0, 10)
+    TH1D_ENTRY(iso_tau2, 100, 0, 10)
     TH1D_ENTRY(pt_b1, 20, 0, 200)
     TH1D_ENTRY(eta_b1, 25, -2.5, 2.5)
     TH1D_ENTRY(csv_b1, 25, 0, 1)
@@ -104,6 +107,7 @@ public:
     TH1D_ENTRY(eta_b2, 25, -2.5, 2.5)
     TH1D_ENTRY(csv_b2, 25, 0, 1)
     TH1D_ENTRY(pt_H_tt, 20, 0, 300)
+    TH1D_ENTRY(H_tt_charge, 8, -4, 4)
     TH1D_ENTRY(pt_H_bb, 20, 0, 300)
     TH1D_ENTRY(pt_H_hh, 20, 0, 300)
     TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
@@ -165,6 +169,12 @@ public:
         DeltaPhi_tt().Fill(std::abs(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1))), weight);
         DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
         pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
+
+        int diTau_charge = event.q_1*event.q_2;
+        H_tt_charge().Fill(diTau_charge,weight);
+        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
+        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
+
         m_vis().Fill(eventInfo.Htt.M(),weight);
         pt_H_tt_MET().Fill(eventInfo.Htt_MET.Pt(), weight);
         DeltaPhi_tt_MET().Fill(std::abs(eventInfo.Htt.DeltaPhi(eventInfo.MET)), weight);
@@ -259,8 +269,18 @@ public:
     {
         static EventCategorySet categories;
         if(!categories.size()) {
-            categories.insert(EventCategory::Inclusive);
+            //categories.insert(EventCategory::Inclusive);
             categories.insert(TwoJetsEventCategories.begin(), TwoJetsEventCategories.end());
+        }
+        return categories;
+    }
+
+    static const EventCategorySet& EventLooseCategoriesToProcess()
+    {
+        static EventCategorySet categories;
+        if(!categories.size()) {
+            categories.insert(EventCategory::Inclusive);
+            categories.insert(TwoJetsEventCategories_LooseBjets.begin(), TwoJetsEventCategories_LooseBjets.end());
         }
         return categories;
     }
@@ -309,9 +329,12 @@ public:
         std::cout << "Embedded SF = " << embeddedSF << std::endl;
 
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
-        for (EventCategory eventCategory : EventCategoriesToProcess()) {
 
+        for (EventCategory eventCategory : EventCategoriesToProcess()) {
+            std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
             CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,true);
+
+            std::cout<<"ScaleFactors for W - - - - - - - -"<<std::endl;
 
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             for (EventRegion eventRegion : QcdRegions){
@@ -319,8 +342,10 @@ public:
                              wjets_scale_factors.at(eventRegion) << std::endl;
             }
 
+            std::cout<<"Estimate for W - - - - - - - -"<<std::endl;
             EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
 
+            std::cout<<"ScaleFactor for QCD - - - - - - - -"<<std::endl;
             const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
             //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
@@ -382,9 +407,11 @@ protected:
     {
         using analysis::EventRegion;
         using analysis::DataCategoryType;
+        std::cout<<"Ciao1"<<std::endl;
 
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+
 
         auto hist_num_data = GetHistogram(eventCategory, data.name, num_eventRegion, hist_name);
         auto hist_den_data = GetHistogram(eventCategory, data.name, den_eventRegion, hist_name);
@@ -402,6 +429,8 @@ protected:
 
         const PhysicalValue n_num = Integral(hist_num, false);
         const PhysicalValue n_den = Integral(hist_den, false);
+//        const PhysicalValue n_num(1,1);
+//        const PhysicalValue n_den(1,1);
         if(n_num.value < 0 || n_den.value < 0)
             throw exception("Negative number of estimated events in QCD SF estimation for ") << eventCategory;
         return n_num / n_den;
@@ -428,6 +457,7 @@ protected:
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
         SubtractBackgroundHistograms(histogram, eventCategory, shapeRegion, qcd.name);
         histogram.Scale(scale_factor.value);
+
     }
 
     virtual PhysicalValueMap CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name)
@@ -484,18 +514,25 @@ protected:
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
+        const analysis::EventCategory loose_category = analysis::Medium_Loose_CategoryMap.at(eventCategory);
+
         for(EventRegion eventRegion : QcdRegions) {
             if(!scale_factor_map.count(eventRegion))
                 throw exception("W-jet SF not found for ") << eventRegion;
 
             const PhysicalValue& scale_factor = scale_factor_map.at(eventRegion);
             TH1D* hist = nullptr;
+            TH1D* hist_loose = nullptr;
             for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
-                if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion, hist_name)) {
-                    if (!hist)
+                if(auto hist_mc = GetHistogram(loose_category, wjets_category->name, eventRegion, hist_name)) {
+                    if (!hist){
                         hist = &CloneHistogram(eventCategory, wjets.name, eventRegion, *hist_mc);
-                    else
+                        hist_loose = &CloneHistogram(loose_category, wjets.name, eventRegion, *hist_mc);
+                    }
+                    else{
                         hist->Add(hist_mc);
+                        hist_loose->Add(hist_mc);
+                    }
                 }
             }
             if (hist)
@@ -560,10 +597,13 @@ protected:
             const EventRegion eventRegion = DetermineEventRegion(event);
             if(eventRegion == EventRegion::Unknown) continue;
 
-            const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
-                                                                                 cuts::Htautau_Summer13::btag::CSVM,
-                                                                                 cuts::Htautau_Summer13::btag::CSVT);
-            const bool fill_all = EssentialEventRegions().count(eventRegion);
+            const EventCategoryVector eventCategories           = DetermineEventCategories(event.csv_Bjets,
+                                                                                           cuts::Htautau_Summer13::btag::CSVL,
+                                                                                           cuts::Htautau_Summer13::btag::CSVM,
+                                                                                           cuts::Htautau_Summer13::btag::CSVT);
+
+            //const bool fill_all = EssentialEventRegions().count(eventRegion);
+            const bool fill_all = true;
             const bool doESvariation = !dataCategory.IsData();
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1),fill_all);
 
@@ -575,7 +615,7 @@ protected:
             }
 
             for(auto eventCategory : eventCategories) {
-                if (!EventCategoriesToProcess().count(eventCategory)) continue;
+                if (!EventCategoriesToProcess().count(eventCategory) && !EventLooseCategoriesToProcess().count(eventCategory)) continue;
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
 
@@ -590,6 +630,7 @@ protected:
                 GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
                                                                                fill_all, doESvariation);
             }
+
         }
     }
 
@@ -721,7 +762,8 @@ protected:
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::OneJet_ZeroBtag, "1jet0tag" },
             { EventCategory::OneJet_OneBtag, "1jet1tag" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
-            { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" }
+            { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" },
+            { EventCategory::TwoJets_OneLooseBtag, "2jetLoose1tag" }, { EventCategory::TwoJets_TwoLooseBtag, "2jetLoose2tag" }
         };
 
         static const std::map<std::string, std::string> channelNameForFolder = {
@@ -812,6 +854,7 @@ protected:
     {
         if(verbose)
             std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
+                      << " for Event category '" << eventCategory << "'.\n"
                       << " for data category '" << current_category << "'.\n"
                       << "Initial integral: " << Integral(histogram, false) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {

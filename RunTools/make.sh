@@ -88,7 +88,7 @@ int main()
 
 g++ -std=c++0x -Wall $COMPILE_FLAGS \
         -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
-        $( root-config --libs ) -lMathMore -lGenVector -lTMVA -L$BOOST_BASE/lib -lboost_thread \
+        $( root-config --libs ) -lMathMore -lGenVector -lTMVA -L$BOOST_BASE/lib  \
         -o $EXE_NAME $CODE_OUT
 
 RESULT=$?
