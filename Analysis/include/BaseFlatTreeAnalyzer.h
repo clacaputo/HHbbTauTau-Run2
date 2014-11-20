@@ -295,14 +295,16 @@ public:
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
         const auto embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
+        const auto TTembeddedSF = CalculateTTEmbeddedScaleFactor(ReferenceHistogramName());
 //        const double embeddedSF = 1;
-        std::cout << "Embedded SF = " << embeddedSF << std::endl;
+        std::cout << "Embedded SF = " << embeddedSF << ", TTembedded SF = " << TTembeddedSF << std::endl;
 
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
 
         for (EventCategory eventCategory : EventCategoriesToProcess()) {
-            std::cout << "Histrogram for ZTT - - - - - - - -" << std::endl;
-            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF, true);
+            std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
+            RescaleHistogramForTTembedded(eventCategory, ReferenceHistogramName(), TTembeddedSF);
+            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,true);
 
             std::cout<<"ScaleFactors for W - - - - - - - -"<<std::endl;
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
@@ -321,6 +323,7 @@ public:
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
+                    RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
                     CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
@@ -605,6 +608,37 @@ protected:
         }
     }
 
+    PhysicalValue CalculateTTEmbeddedScaleFactor(const std::string& hist_name)
+    {
+        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
+        const analysis::DataCategory& TT_lept_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_lept);
+
+        TH1D* hist_embedded = GetSignalHistogram(EventCategory::Inclusive, TTembedded.name, hist_name);
+        TH1D* hist_tt = GetSignalHistogram(EventCategory::Inclusive, TT_lept_MC.name, hist_name);
+        if(!hist_embedded || !hist_tt )
+            throw std::runtime_error("TTembedded or tt_lept_MC hist not found");
+
+        const PhysicalValue n_tt = Integral(*hist_tt, false);
+        const PhysicalValue n_embedded = Integral(*hist_embedded, false);
+        return n_tt / n_embedded;
+    }
+
+    void RescaleHistogramForTTembedded(EventCategory eventCategory, const std::string& hist_name,
+                               const PhysicalValue& scale_factor)
+    {
+        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
+        const double embedded_scaleFactor = scale_factor.value;
+
+        for(EventRegion eventRegion : AllEventRegions) {
+            auto embedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
+            if(!embedded_hist)
+                throw std::runtime_error("TTembedded hist not found");
+            TH1D* hist = static_cast<TH1D*>(embedded_hist->Clone());
+            hist->Scale(embedded_scaleFactor);
+        }
+    }
+
+
     PhysicalValue CalculateEmbeddedScaleFactor(const std::string& hist_name)
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
@@ -629,11 +663,13 @@ protected:
         const double embedded_scaleFactor = useEmbedded ? scale_factor.value : 1;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
         const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
+        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
 
         for(EventRegion eventRegion : AllEventRegions) {
 
             auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
             auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name);
+            auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
 
             if (embedded_hist){
                 TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
@@ -641,6 +677,8 @@ protected:
                 if (ztt_l_hist){
                     ztt_hist.Add(ztt_l_hist);
                 }
+                if (TTembedded_hist)
+                    ztt_hist.Add(TTembedded_hist, -1);
             }
             if (!embedded_hist && ztt_l_hist){
                 CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
