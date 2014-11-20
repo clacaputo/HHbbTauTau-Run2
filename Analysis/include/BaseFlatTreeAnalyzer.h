@@ -309,22 +309,29 @@ public:
 //        const double embeddedSF = 1;
         std::cout << "Embedded SF = " << embeddedSF << std::endl;
 
+        std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
+        for (EventCategory eventCategory : EventCategoriesToProcess()){
+            for (const auto& hist : histograms) {
+                //RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
+                CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
+            }
+        }
+
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
-
-        for (EventCategory eventCategory : EventCategoriesToProcess()) {
-            std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
-            //RescaleHistogramForTTembedded(eventCategory, ReferenceHistogramName(), TTembeddedSF);
-            CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,true);
-
+        for (EventCategory eventCategory : EventCategoriesToProcess()){
             std::cout<<"ScaleFactors for W - - - - - - - -"<<std::endl;
             const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
             for (EventRegion eventRegion : QcdRegions){
                 std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
                              wjets_scale_factors.at(eventRegion) << std::endl;
             }
-
             std::cout<<"Estimate for W - - - - - - - -"<<std::endl;
-            EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
+            for (const auto& hist : histograms) {
+                EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+            }
+        }
+
+        for (EventCategory eventCategory : EventCategoriesToProcess()) {
 
             std::cout<<"ScaleFactor for QCD - - - - - - - -"<<std::endl;
             const auto qcd_scale_factor = CalculateQCDScaleFactor(ReferenceHistogramName(), eventCategory);
@@ -332,15 +339,9 @@ public:
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
             for (const auto& hist : histograms) {
-                if(hist.name != ReferenceHistogramName()) {
-                    //RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
-                    CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
-                    EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
-                }
                 EstimateQCD(hist.name, eventCategory, qcd_scale_factor);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
-
             std::cout << std::endl;
         }
 

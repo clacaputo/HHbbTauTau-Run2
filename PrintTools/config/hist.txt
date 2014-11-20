@@ -8,7 +8,7 @@ m_ttbb_kinfit_only_Central m_ttbb_kinfit_only M_{#tau#taubb}[GeV] Events false 1
 m_ttbb_kinfit_massCut_Central m_ttbb_kinfit_massCut M_{#tau#taubb}[GeV] Events false 1.1
 m_ttbb_kinfit_only_massCut_Central m_ttbb_kinfit_only_massCut M_{#tau#taubb}[GeV] Events false 1.1
 m_bb_slice_Central m_bb_slice 2DM_{sv}[GeV] Events false 1.1
-convergence convergence Fit_convergence Events true 45
+convergence convergence Fit_convergence Events false 45
 chi2 chi2 #chi^{2} Events false 1.1
 fit_probability fit_probability Fit_probability Events false 1.1
 pull_balance pull_balance pull_balance Events false 2
