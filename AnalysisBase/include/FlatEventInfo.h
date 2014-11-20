@@ -119,6 +119,12 @@ struct FlatEventInfo {
                 if (fitResults.convergence == 0){
                     std::cout << "kin fit has convergence = 0! event = " << event->evt << std::endl;
                 }
+            } else {
+                fitResults.convergence = event->kinfit_bb_tt_convergence;
+                fitResults.chi2 = event->kinfit_bb_tt_chi2;
+                fitResults.pull_balance = event->kinfit_bb_tt_pull_balance;
+                fitResults.has_valid_mass = event->kinfit_bb_tt_convergence > 0;
+                fitResults.mass = event->kinfit_bb_tt_mass;
             }
 
         }
