@@ -317,6 +317,9 @@ static const EventCategoryMap MediumToLoose_EventCategoryMap =
           { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_OneLooseBtag },
           { EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_TwoLooseBtag } };
 
+static const EventCategorySet TwoJets_OneTwoTag_LooseBjets = {EventCategory::TwoJets_OneLooseBtag,
+                                                             EventCategory::TwoJets_TwoLooseBtag};
+
 static const EventCategorySet TwoJetsEventCategories_MediumBjets =
                                                                 tools::collect_map_keys(MediumToLoose_EventCategoryMap);
 

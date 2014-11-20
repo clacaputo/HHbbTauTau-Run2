@@ -294,15 +294,15 @@ public:
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
         const auto embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
-        const auto TTembeddedSF = CalculateTTEmbeddedScaleFactor(ReferenceHistogramName());
+        //const auto TTembeddedSF = CalculateTTEmbeddedScaleFactor(ReferenceHistogramName());
 //        const double embeddedSF = 1;
-        std::cout << "Embedded SF = " << embeddedSF << ", TTembedded SF = " << TTembeddedSF << std::endl;
+        std::cout << "Embedded SF = " << embeddedSF << std::endl;
 
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
 
         for (EventCategory eventCategory : EventCategoriesToProcess()) {
             std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
-            RescaleHistogramForTTembedded(eventCategory, ReferenceHistogramName(), TTembeddedSF);
+            //RescaleHistogramForTTembedded(eventCategory, ReferenceHistogramName(), TTembeddedSF);
             CreateHistogramForZTT(eventCategory, ReferenceHistogramName(), embeddedSF,true);
 
             std::cout<<"ScaleFactors for W - - - - - - - -"<<std::endl;
@@ -322,7 +322,7 @@ public:
 
             for (const auto& hist : histograms) {
                 if(hist.name != ReferenceHistogramName()) {
-                    RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
+                    //RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
                     CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
@@ -420,8 +420,8 @@ protected:
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
-        const EventCategory shapeEventCategory = MediumToLoose_EventCategoryMap.count(eventCategory)
-                ? MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+        const EventCategory shapeEventCategory = analysis::TwoJets_OneTwoTag_LooseBjets.count(eventCategory)
+                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
 
         for(EventRegion eventRegion : QcdRegions) {
             if(!scale_factor_map.count(eventRegion))
@@ -777,6 +777,7 @@ protected:
     void SubtractBackgroundHistograms(TH1D& histogram, EventCategory eventCategory, EventRegion eventRegion,
                                       const std::string& current_category, bool verbose = false)
     {
+        static const double correction_factor = 0.0000001;
         if(verbose)
             std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
                       << " for Event category '" << eventCategory << "'.\n"
@@ -795,8 +796,12 @@ protected:
                 std::cout << "not found.\n";
         }
 
+        const PhysicalValue original_Integral = Integral(histogram, false);
         if(verbose)
-            std::cout << "Integral after bkg subtraction: " << Integral(histogram, false) << ".\n" << std::endl;
+            std::cout << "Integral after bkg subtraction: " << original_Integral.value << ".\n" << std::endl;
+        if (original_Integral.value < 0)
+            throw exception("Integral after bkg subtraction is negative.");
+
         for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
             if (histogram.GetBinContent(n) >= 0) continue;
             const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
@@ -805,8 +810,14 @@ protected:
                       << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
                       << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
                       << "].\n";
-//            histogram.SetBinContent(n,0);
+            const double error = correction_factor - histogram.GetBinContent(n);
+            const double new_error = std::sqrt(error*error + histogram.GetBinError(n)*histogram.GetBinError(n));
+            histogram.SetBinContent(n,correction_factor);
+            histogram.SetBinError(n,new_error);
         }
+        const PhysicalValue new_Integral = Integral(histogram, false);
+        const PhysicalValue correctionSF = original_Integral/new_Integral;
+        histogram.Scale(correctionSF.value);
     }
 
     PhysicalValue CalculateFullIntegral(analysis::EventCategory eventCategory, analysis::EventRegion eventRegion,

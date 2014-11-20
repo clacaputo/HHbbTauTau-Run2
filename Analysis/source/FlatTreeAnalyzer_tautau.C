@@ -96,7 +96,7 @@ protected:
                                                             analysis::EventCategory eventCategory) override
     {
         analysis::EventCategory refEventCategory = eventCategory;
-        if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
+        if(analysis::TwoJets_OneTwoTag_LooseBjets.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         const auto iso_antiIso_sf = CalculateQCDScaleFactorEx(hist_name, refEventCategory, refEventCategory,
@@ -115,7 +115,7 @@ protected:
                              const analysis::PhysicalValue& scale_factor) override
     {
         analysis::EventCategory refEventCategory = eventCategory;
-        if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
+        if(analysis::TwoJets_OneTwoTag_LooseBjets.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         return EstimateQCDEx(hist_name, eventCategory, refEventCategory, analysis::EventRegion::OS_AntiIsolated,
@@ -133,7 +133,7 @@ protected:
                 dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
 
         analysis::EventCategory refEventCategory = eventCategory;
-        if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
+        if(analysis::TwoJets_OneTwoTag_LooseBjets.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
