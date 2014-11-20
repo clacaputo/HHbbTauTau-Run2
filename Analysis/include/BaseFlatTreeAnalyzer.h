@@ -252,9 +252,16 @@ public:
     typedef std::map<EventCategory, AnaDataForEventCategory> FullAnaData;
     typedef std::map<EventRegion, PhysicalValue> PhysicalValueMap;
 
-    static const std::string ReferenceHistogramName() { return "m_sv"; }
+    static const std::string ReferenceHistogramName() { return "m_sv_Central"; }
 
     static const EventCategorySet& EventCategoriesToProcess() { return AllEventCategories; }
+
+
+    virtual const EventCategorySet & CategoriesToRelax()
+    {
+        static const EventCategorySet categories= {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
+        return categories;
+    }
 
     virtual const EventRegionSet& EssentialEventRegions()
     {
@@ -373,7 +380,6 @@ protected:
     {
         const DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
         auto hist_num_data = GetHistogram(num_eventCategory, data.name, num_eventRegion, hist_name);
         auto hist_den_data = GetHistogram(den_eventCategory, data.name, den_eventRegion, hist_name);
 
@@ -420,7 +426,7 @@ protected:
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
-        const EventCategory shapeEventCategory = analysis::TwoJets_OneTwoTag_LooseBjets.count(eventCategory)
+        const EventCategory shapeEventCategory = CategoriesToRelax().count(eventCategory)
                 ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
 
         for(EventRegion eventRegion : QcdRegions) {
@@ -595,8 +601,10 @@ protected:
 
         TH1D* hist_embedded = GetSignalHistogram(EventCategory::Inclusive, embedded.name, hist_name);
         TH1D* hist_ztautau = GetSignalHistogram(EventCategory::Inclusive, ZTT_MC.name, hist_name);
-        if(!hist_embedded || !hist_ztautau )
-            throw std::runtime_error("embedded or ztt hist not found");
+        if(!hist_embedded)
+            throw exception("embedded hist not found");
+        if(!hist_ztautau )
+            throw exception("ztt hist not found");
 
         const PhysicalValue n_ztautau = Integral(*hist_ztautau, false);
         const PhysicalValue n_embedded = Integral(*hist_embedded, false);
@@ -834,8 +842,8 @@ protected:
         }
 
         if(!hist_found)
-            throw exception("No histogram with name '") << hist_name << "' was found in the given data category set"
-                                                        << " to calculate full integral.";
+            throw exception("No histogram with name '") << hist_name << "' was found in the given data category set and eventCategory:"
+                                                        << eventCategory << " to calculate full integral.";
 
         return integral;
     }
