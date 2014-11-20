@@ -165,6 +165,8 @@ public:
         double mass_tautau = event.m_sv_MC;
         m_sv(eventEnergyScale).Fill(mass_tautau, weight);
         if(!fill_all) return;
+        m_ttbb(eventEnergyScale).Fill(eventInfo.resonance.M(), weight);
+        m_vis(eventEnergyScale).Fill(eventInfo.Htt.M(), weight);
         const double m_ttbb_kinFit = eventInfo.fitResults.mass;
         m_ttbb_kinfit(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
         if (eventInfo.fitResults.has_valid_mass)
@@ -288,6 +290,8 @@ public:
             for (const EventRegion& eventRegion : AllEventRegions){
                 auto& anaData = GetAnaData(EventCategory::TwoJets_TwoBtag, dataCategory->name, eventRegion);
                 anaData.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
+                auto& anaData_loose = GetAnaData(EventCategory::TwoJets_TwoLooseBtag, dataCategory->name, eventRegion);
+                anaData_loose.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
             }
             for(const auto& source_entry : dataCategory->sources_sf) {
                 const std::string fullFileName = inputPath + "/" + source_entry.first;
@@ -567,6 +571,8 @@ protected:
             const bool fill_all = EssentialEventRegions().count(eventRegion);
             auto& anaData = GetAnaData(EventCategory::TwoJets_TwoBtag, name, eventRegion);
             anaData.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
+            auto& anaData_loose = GetAnaData(EventCategory::TwoJets_TwoLooseBtag, name, eventRegion);
+            anaData_loose.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
             GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all, eventInfo.eventEnergyScale);
         }
     }
@@ -627,13 +633,13 @@ protected:
         const double embedded_scaleFactor = useEmbedded ? scale_factor.value : 1;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
         const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
+//        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
 
         for(EventRegion eventRegion : AllEventRegions) {
 
             auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
             auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name);
-            auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
+//            auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
 
             if (embedded_hist){
                 TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
@@ -641,8 +647,8 @@ protected:
                 if (ztt_l_hist){
                     ztt_hist.Add(ztt_l_hist);
                 }
-                if (TTembedded_hist)
-                    ztt_hist.Add(TTembedded_hist, -1);
+//                if (TTembedded_hist)
+//                    ztt_hist.Add(TTembedded_hist, -1);
             }
             if (!embedded_hist && ztt_l_hist){
                 CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
@@ -898,11 +904,12 @@ private:
         std::wofstream of(outputFileName + "_" + name_suffix + ".csv");
 
         for(const HistogramDescriptor& hist : histograms) {
-            if (hist.name != "m_sv") continue;
-            PrintTables(of, sep, hist, false,false);
-            PrintTables(of, sep, hist, true, false);
+            if (hist.name != ReferenceHistogramName() && hist.name != "m_ttbb_kinfit_only_Central" &&
+                    hist.name != "m_ttbb_kinfit_only_massCut_Central" ) continue;
+            //PrintTables(of, sep, hist, false,false);
+            //PrintTables(of, sep, hist, true, false);
             PrintTables(of, sep, hist, false,true);
-            PrintTables(of, sep, hist, true, true);
+            //PrintTables(of, sep, hist, true, true);
         }
         of.flush();
         of.close();
