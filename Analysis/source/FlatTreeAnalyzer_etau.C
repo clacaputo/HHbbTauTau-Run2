@@ -61,7 +61,8 @@ protected:
         return std::shared_ptr<FlatAnalyzerData_etau>(new FlatAnalyzerData_etau());
     }
 
-    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
+    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
+                                                       analysis::EventCategory /*eventCategory*/) override
     {
         using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::ETau;

@@ -358,7 +358,7 @@ public:
 
 protected:
     virtual Channel ChannelId() const = 0;
-    virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
+    virtual EventRegion DetermineEventRegion(const ntuple::Flat& event, EventCategory eventCategory) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
     virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory) = 0;
@@ -496,15 +496,11 @@ protected:
             tree->GetEntry(current_entry);
             const ntuple::Flat& event = tree->data;
 
-            const EventRegion eventRegion = DetermineEventRegion(event);
-            if(eventRegion == EventRegion::Unknown) continue;
-
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  cuts::Htautau_Summer13::btag::CSVT);
-            const bool fill_all = EssentialEventRegions().count(eventRegion);
-            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), fill_all);
+            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
             if(std::isnan(event.weight)) {
@@ -515,6 +511,11 @@ protected:
 
             for(auto eventCategory : eventCategories) {
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
+                const EventRegion eventRegion = DetermineEventRegion(event, eventCategory);
+                if(eventRegion == EventRegion::Unknown) continue;
+                const bool fill_all = EssentialEventRegions().count(eventRegion);
+
+
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
 
