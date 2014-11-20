@@ -269,7 +269,6 @@ public:
           dataCategoryCollection(source_cfg, signal_list, channel_id)
     {
         TH1::SetDefaultSumw2();
-
         histograms = HistogramDescriptor::ReadFromFile(hist_cfg);
     }
 
@@ -362,11 +361,11 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory)
-    {
-        return CalculateQCDScaleFactorEx(hist_name, eventCategory, eventCategory, EventRegion::OS_AntiIsolated,
-                                         EventRegion::SS_AntiIsolated);
-    }
+    virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory) = 0;
+    virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
+                             const PhysicalValue& scale_factor) = 0;
+    virtual PhysicalValueMap CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name) = 0;
+
 
     virtual PhysicalValue CalculateQCDScaleFactorEx(const std::string& hist_name,
                                                     EventCategory num_eventCategory, EventCategory den_eventCategory,
@@ -400,12 +399,6 @@ protected:
         return n_num / n_den;
     }
 
-    virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
-                             const PhysicalValue& scale_factor)
-    {
-        return EstimateQCDEx(hist_name, eventCategory, eventCategory, EventRegion::SS_Isolated, scale_factor);
-    }
-
     virtual void EstimateQCDEx(const std::string& hist_name, EventCategory eventCategory, EventCategory shapeCategory,
                                EventRegion shapeRegion, const PhysicalValue& scale_factor)
     {
@@ -418,50 +411,6 @@ protected:
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
         SubtractBackgroundHistograms(histogram, shapeCategory, shapeRegion, qcd.name);
         histogram.Scale(scale_factor.value);
-    }
-
-    virtual PhysicalValueMap CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name)
-    {
-        PhysicalValueMap valueMap;
-        using analysis::EventRegion;
-        using analysis::DataCategoryType;
-
-        const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
-        const analysis::DataCategoryPtrSet& wjets_mc_categories =
-                dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        for (const auto& eventRegion : HighMt_LowMt_RegionMap){            
-            auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
-            if(!hist_data)
-                throw exception("Unable to find data histograms for Wjet scale factors estimation");
-            TH1D& hist_HighMt = CloneHistogram(eventCategory, wjets.name, eventRegion.first, *hist_data);
-            SubtractBackgroundHistograms(hist_HighMt, eventCategory, eventRegion.first, wjets.name, true);
-            const PhysicalValue n_HighMt = Integral(hist_HighMt, false);
-
-            PhysicalValue n_HighMt_mc;
-            bool hist_mc_found = false;
-            for(const analysis::DataCategory* wjets_category : wjets_mc_categories){
-                if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion.first, hist_name)) {
-                    hist_mc_found = true;
-                    n_HighMt_mc += Integral(*hist_mc, false);
-                }
-            }
-            try {
-                if (!hist_mc_found)
-                    throw exception("Unable to find mc histograms for Wjet scale factors estimation.");
-                if(n_HighMt.value < 0)
-                    throw exception("Negative number of estimated events in Wjets SF estimation for ")
-                            << eventCategory << " " << eventRegion.second << ".";
-                valueMap[eventRegion.second] = n_HighMt / n_HighMt_mc;
-            } catch(exception& ex) {
-                static const PhysicalValue defaultValue(1, 0.0001);
-                std::cerr << ex.message() << " Using default value " << defaultValue << "." << std::endl;
-                valueMap[eventRegion.second] = defaultValue;
-            }
-        }
-
-        return valueMap;
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
@@ -637,7 +586,6 @@ protected:
             hist->Scale(embedded_scaleFactor);
         }
     }
-
 
     PhysicalValue CalculateEmbeddedScaleFactor(const std::string& hist_name)
     {

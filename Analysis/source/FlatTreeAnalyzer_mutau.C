@@ -28,7 +28,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Analysis/include/BaseFlatTreeAnalyzer.h"
+#include "Analysis/include/SemileptonicFlatTreeAnalyzer.h"
 
 class FlatAnalyzerData_mutau : public analysis::FlatAnalyzerData {
 public:
@@ -45,11 +45,11 @@ public:
     }
 };
 
-class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
+class FlatTreeAnalyzer_mutau : public analysis::SemileptonicFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& signal_list)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
+         : SemileptonicFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
     {
     }
 
@@ -92,12 +92,5 @@ protected:
             return true;
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
-    }
-
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory /*eventCategory*/,
-                                                            const std::string& /*hist_name*/) override
-    {
-        static const analysis::PhysicalValue sf(1.06, 0.001);
-        return sf;
     }
 };

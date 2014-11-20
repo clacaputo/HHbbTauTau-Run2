@@ -304,3 +304,4 @@ Analysis/include/JetEnergyUncertainty.h
 Analysis/include/SelectionResults.h
 Analysis/include/EventWeights.h
 Analysis/config/TT_embedded.cfg
+Analysis/include/SemileptonicFlatTreeAnalyzer.h
