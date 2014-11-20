@@ -91,22 +91,22 @@ protected:
         return os ? EventRegion::OS_AntiIsolated : EventRegion::SS_AntiIsolated;
     }
 
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory eventCategory,
-                                                            const std::string& hist_name) override
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
+                                                            analysis::EventCategory eventCategory) override
     {
         analysis::EventCategory refEventCategory = eventCategory;
         if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        const auto iso_antiIso_sf = CalculateQCDScaleFactor(hist_name, refEventCategory, refEventCategory,
-                                                            analysis::EventRegion::SS_Isolated,
-                                                            analysis::EventRegion::SS_AntiIsolated);
+        const auto iso_antiIso_sf = CalculateQCDScaleFactorEx(hist_name, refEventCategory, refEventCategory,
+                                                              analysis::EventRegion::SS_Isolated,
+                                                              analysis::EventRegion::SS_AntiIsolated);
         if(refEventCategory == eventCategory)
             return iso_antiIso_sf;
 
-        const auto medium_loose_sf = CalculateQCDScaleFactor(hist_name, eventCategory, refEventCategory,
-                                                             analysis::EventRegion::SS_AntiIsolated,
-                                                             analysis::EventRegion::SS_AntiIsolated);
+        const auto medium_loose_sf = CalculateQCDScaleFactorEx(hist_name, eventCategory, refEventCategory,
+                                                               analysis::EventRegion::SS_AntiIsolated,
+                                                               analysis::EventRegion::SS_AntiIsolated);
         return iso_antiIso_sf * medium_loose_sf;
     }
 
@@ -117,8 +117,8 @@ protected:
         if(analysis::MediumToLoose_EventCategoryMap.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        return EstimateQCD(hist_name, eventCategory, refEventCategory, analysis::EventRegion::OS_AntiIsolated,
-                           scale_factor);
+        return EstimateQCDEx(hist_name, eventCategory, refEventCategory, analysis::EventRegion::OS_AntiIsolated,
+                             scale_factor);
     }
 
     virtual PhysicalValueMap CalculateWjetsScaleFactors(analysis::EventCategory eventCategory,
@@ -137,7 +137,7 @@ protected:
 
         for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
             analysis::PhysicalValue sf = one;
-            if(eventCategory |= refEventCategory) {
+            if(eventCategory != refEventCategory) {
                 const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
                 const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion, hist_name, wjets_mc_categories);
                 sf = n_medium / n_ref;

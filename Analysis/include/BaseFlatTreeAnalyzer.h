@@ -254,7 +254,7 @@ public:
 
     static const std::string ReferenceHistogramName() { return "m_sv"; }
 
-    static const EventCategorySet& EventCategoriesToProcess() { return AllEventCategories(); }
+    static const EventCategorySet& EventCategoriesToProcess() { return AllEventCategories; }
 
     virtual const EventRegionSet& EssentialEventRegions()
     {
@@ -315,7 +315,7 @@ public:
             EstimateWjets(eventCategory, ReferenceHistogramName(), wjets_scale_factors);
 
             std::cout<<"ScaleFactor for QCD - - - - - - - -"<<std::endl;
-            const auto qcd_scale_factor = CalculateQCDScaleFactor(eventCategory, ReferenceHistogramName());
+            const auto qcd_scale_factor = CalculateQCDScaleFactor(ReferenceHistogramName(), eventCategory);
             //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
@@ -324,7 +324,7 @@ public:
                     CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
                     EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
                 }
-                EstimateQCD(eventCategory, hist.name, qcd_scale_factor);
+                EstimateQCD(hist.name, eventCategory, qcd_scale_factor);
                 ProcessCompositDataCategories(eventCategory, hist.name);
             }
 
@@ -340,13 +340,12 @@ public:
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_mttbb("emptyDatacard_mttbb", mass_ttbb_bins);
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_slice("emptyDatacard_slice", mass_bins_slice_5fette_fb);
 
-        ProduceFileForLimitsCalculation("m_sv", false, emptyDatacard_mSV);
-
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit", false, emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", false, emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", false, emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", false, emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_bb_slice", false, emptyDatacard_slice);
+        ProduceFileForLimitsCalculation("m_sv", emptyDatacard_mSV);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit", emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", emptyDatacard_mttbb);
+        ProduceFileForLimitsCalculation("m_bb_slice", emptyDatacard_slice);
 
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(false, false);
@@ -362,13 +361,13 @@ protected:
 
     virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory)
     {
-        return CalculateQCDScaleFactor(hist_name, eventCategory, eventCategory, EventRegion::OS_AntiIsolated,
-                                       EventRegion::SS_AntiIsolated);
+        return CalculateQCDScaleFactorEx(hist_name, eventCategory, eventCategory, EventRegion::OS_AntiIsolated,
+                                         EventRegion::SS_AntiIsolated);
     }
 
-    virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
-                                                  EventCategory num_eventCategory, EventCategory den_eventCategory,
-                                                  EventRegion num_eventRegion, EventRegion den_eventRegion)
+    virtual PhysicalValue CalculateQCDScaleFactorEx(const std::string& hist_name,
+                                                    EventCategory num_eventCategory, EventCategory den_eventCategory,
+                                                    EventRegion num_eventRegion, EventRegion den_eventRegion)
     {
         const DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
@@ -385,27 +384,27 @@ protected:
             SubtractBackgroundHistograms(*hist_num, num_eventCategory, num_eventRegion, qcd.name, true);
         }
 
-        TH1D* hist_den = GetHistogram(eventCategory, qcd.name, den_eventRegion, *hist_den_data);
+        TH1D* hist_den = GetHistogram(den_eventCategory, qcd.name, den_eventRegion, hist_name);
         if(!hist_den) {
-            hist_den = &CloneHistogram(eventCategory, qcd.name, den_eventRegion, *hist_den_data);
-            SubtractBackgroundHistograms(hist_den, den_eventCategory, den_eventRegion, qcd.name, true);
+            hist_den = &CloneHistogram(den_eventCategory, qcd.name, den_eventRegion, *hist_den_data);
+            SubtractBackgroundHistograms(*hist_den, den_eventCategory, den_eventRegion, qcd.name, true);
         }
 
         const PhysicalValue n_num = Integral(*hist_num, false);
         const PhysicalValue n_den = Integral(*hist_den, false);
         if(n_num.value < 0 || n_den.value < 0)
-            throw exception("Negative number of estimated events in QCD SF estimation for ") << eventCategory;
+            throw exception("Negative number of estimated events in QCD SF estimation for ") << num_eventCategory;
         return n_num / n_den;
     }
 
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
                              const PhysicalValue& scale_factor)
     {
-        return EstimateQCD(hist_name, eventCategory, eventCategory, EventRegion::SS_Isolated, scale_factor);
+        return EstimateQCDEx(hist_name, eventCategory, eventCategory, EventRegion::SS_Isolated, scale_factor);
     }
 
-    virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory, EventCategory shapeCategory,
-                             EventRegion shapeRegion, const PhysicalValue& scale_factor)
+    virtual void EstimateQCDEx(const std::string& hist_name, EventCategory eventCategory, EventCategory shapeCategory,
+                               EventRegion shapeRegion, const PhysicalValue& scale_factor)
     {
         const DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
         const DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
