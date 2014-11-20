@@ -383,8 +383,15 @@ protected:
         auto hist_num_data = GetHistogram(num_eventCategory, data.name, num_eventRegion, hist_name);
         auto hist_den_data = GetHistogram(den_eventCategory, data.name, den_eventRegion, hist_name);
 
-        if(!hist_num_data || !hist_den_data)
-            throw analysis::exception("Unable to find histograms for QCD scale factor estimation");
+        if(!hist_num_data)
+            throw analysis::exception("Unable to find num histograms for QCD scale factor estimation for ")
+                << hist_name << ", num_eventCategory: " << num_eventCategory << ", num_eventRegion: " <<
+                   num_eventRegion;
+
+        if(!hist_den_data)
+            throw analysis::exception("Unable to find den histograms for QCD scale factor estimation for ")
+                << hist_name << ", den_eventCategory: " << den_eventCategory << ", den_eventRegion: " <<
+                   den_eventRegion;
 
         TH1D* hist_num = GetHistogram(num_eventCategory, qcd.name, num_eventRegion, hist_name);
         if(!hist_num) {
@@ -842,8 +849,10 @@ protected:
         }
 
         if(!hist_found)
-            throw exception("No histogram with name '") << hist_name << "' was found in the given data category set and eventCategory:"
-                                                        << eventCategory << " to calculate full integral.";
+            throw exception("No histogram with name '") << hist_name <<
+                                                           "' was found in the given data category set, eventCategory: "
+                                                        << eventCategory << " and eventRegion: " << eventRegion <<
+                                                           "to calculate full integral.";
 
         return integral;
     }

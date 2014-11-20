@@ -77,7 +77,7 @@ protected:
         using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
-        if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+        if(!event.againstElectronLooseMVA_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
                 || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
@@ -102,12 +102,14 @@ protected:
         const auto iso_antiIso_sf = CalculateQCDScaleFactorEx(hist_name, refEventCategory, refEventCategory,
                                                               analysis::EventRegion::SS_Isolated,
                                                               analysis::EventRegion::SS_AntiIsolated);
+        std::cout << "iso_antiIso_sf: " << iso_antiIso_sf << "\n";
         if(refEventCategory == eventCategory)
             return iso_antiIso_sf;
 
         const auto medium_loose_sf = CalculateQCDScaleFactorEx(hist_name, eventCategory, refEventCategory,
                                                                analysis::EventRegion::SS_AntiIsolated,
                                                                analysis::EventRegion::SS_AntiIsolated);
+        std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
         return iso_antiIso_sf * medium_loose_sf;
     }
 
@@ -139,9 +141,13 @@ protected:
         for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
             analysis::PhysicalValue sf = one;
             if(eventCategory != refEventCategory) {
-                const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
-                const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion, hist_name, wjets_mc_categories);
-                sf = n_medium / n_ref;
+                try {
+                    const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
+                    const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion, hist_name, wjets_mc_categories);
+                    sf = n_medium / n_ref;
+                } catch(analysis::exception& ex) {
+                    std::cerr << ex.message() << " Using default value " << one << "." << std::endl;
+                }
             }
             valueMap[eventRegion] = sf;
         }

@@ -375,10 +375,13 @@ EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets
 
     if (csv_Bjets.size() >= 2){
         categories.push_back(EventCategory::TwoJets_Inclusive);
-        const size_t n_bjets_retagged = std::min<size_t>(nBjets_retagged, 2);
+        //const size_t n_bjets_retagged = std::min<size_t>(nBjets_retagged, 2);
+        size_t n_mediumBtag = 0;
+        if(csv_Bjets.at(0) > CSVM) ++n_mediumBtag;
+        if(csv_Bjets.at(1) > CSVM) ++n_mediumBtag;
 
-        if(mediumCategories_map.count(n_bjets_retagged))
-            categories.push_back(mediumCategories_map.at(n_bjets_retagged));
+        if(mediumCategories_map.count(n_mediumBtag))
+            categories.push_back(mediumCategories_map.at(n_mediumBtag));
 
         size_t n_looseBtag = 0;
         if(csv_Bjets.at(0) > CSVL) ++n_looseBtag;
