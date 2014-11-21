@@ -165,15 +165,12 @@ public:
         double mass_tautau = event.m_sv_MC;
         m_sv(eventEnergyScale).Fill(mass_tautau, weight);
         if(!fill_all) return;
-        m_ttbb(eventEnergyScale).Fill(eventInfo.resonance.M(), weight);
-        m_vis(eventEnergyScale).Fill(eventInfo.Htt.M(), weight);
+
         const double m_ttbb_kinFit = eventInfo.fitResults.mass;
-        m_ttbb_kinfit(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
         if (eventInfo.fitResults.has_valid_mass)
             m_ttbb_kinfit_only(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
         if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
                 eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
-            m_ttbb_kinfit_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
             if (eventInfo.fitResults.has_valid_mass)
                 m_ttbb_kinfit_only_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
         }
@@ -262,6 +259,7 @@ public:
     virtual const EventCategorySet & CategoriesToRelax()
     {
         static const EventCategorySet categories= {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
+        //static const EventCategorySet categories;
         return categories;
     }
 
@@ -355,9 +353,9 @@ public:
         static const root_ext::SmartHistogram<TH1D> emptyDatacard_slice("emptyDatacard_slice", mass_bins_slice_5fette_fb);
 
         ProduceFileForLimitsCalculation("m_sv", emptyDatacard_mSV);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit", emptyDatacard_mttbb);
+        //ProduceFileForLimitsCalculation("m_ttbb_kinfit", emptyDatacard_mttbb);
         ProduceFileForLimitsCalculation("m_ttbb_kinfit_only", emptyDatacard_mttbb);
-        ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", emptyDatacard_mttbb);
+        //ProduceFileForLimitsCalculation("m_ttbb_kinfit_massCut", emptyDatacard_mttbb);
         ProduceFileForLimitsCalculation("m_ttbb_kinfit_only_massCut", emptyDatacard_mttbb);
         ProduceFileForLimitsCalculation("m_bb_slice", emptyDatacard_slice);
 
@@ -741,7 +739,10 @@ protected:
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
-            { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" }
+            { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" },
+            { EventCategory::TwoJets_ZeroLooseBtag, "2jetloose0tag" },
+            { EventCategory::TwoJets_OneLooseBtag, "2jetloose1tag" },
+            { EventCategory::TwoJets_TwoLooseBtag, "2jetloose2tag" }
         };
 
         static const std::map<std::string, std::string> channelNameForFolder = {
@@ -766,7 +767,7 @@ protected:
                     if(auto hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, full_hist_name))
                         hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
                     else {
-                        std::cerr << "Warning - Datacard histogram '" << full_hist_name
+                        std::cout << "Warning - Datacard histogram '" << full_hist_name
                                   << "' not found for data category '" << dataCategory->name << "' for eventCategory '"
                                   << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
 
