@@ -823,7 +823,9 @@ protected:
         if(verbose)
             std::cout << "Integral after bkg subtraction: " << original_Integral.value << ".\n" << std::endl;
         if (original_Integral.value < 0)
-            throw exception("Integral after bkg subtraction is negative.");
+            throw exception("Integral after bkg subtraction is negative for histogram '")
+                << histogram.GetName() << "' in event category " << eventCategory << " for event region " << eventRegion
+                << ".";
 
         for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
             if (histogram.GetBinContent(n) >= 0) continue;
