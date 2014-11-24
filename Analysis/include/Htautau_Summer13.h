@@ -388,7 +388,7 @@ namespace electronEtoTauFakeRateWeight {
 namespace WjetsBackgroundEstimation {
     const double HighMtRegion = 70; // > For W-jets data driven estimation
     const double HighMtRegion_low = 60; // > For W-jets data driven estimation in 2jet2tag for ltau channels
-    const double HighMtRegion_high = 1200; // < For W-jets data driven estimation in 2jet2tag for ltau channels
+    const double HighMtRegion_high = 120; // < For W-jets data driven estimation in 2jet2tag for ltau channels
 }
 
 namespace DrellYannCategorization {

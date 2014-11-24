@@ -311,7 +311,7 @@ public:
         for (EventCategory eventCategory : EventCategoriesToProcess()){
             for (const auto& hist : histograms) {
                 //RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
-                CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, false);
+                CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
             }
         }
 
