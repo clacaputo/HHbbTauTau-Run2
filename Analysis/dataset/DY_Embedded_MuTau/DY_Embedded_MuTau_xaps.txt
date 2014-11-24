@@ -1,0 +1,3 @@
+/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012C/TREE/Tree_423_1_87d.root
+/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012C/TREE/Tree_360_1_j31.root
+/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012C/TREE/Tree_148_1_z8N.root

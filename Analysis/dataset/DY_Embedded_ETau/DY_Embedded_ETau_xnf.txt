@@ -1,6 +1,5 @@
-/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_429_1_EGy.root
-/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_683_1_1ry.root
-/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_228_1_pvl.root
-/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_125_1_IYW.root
-/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_67_1_tKY.root
-/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_232_1_w63.root
+/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_368_1_TGL.root
+/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_411_1_e51.root
+/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_466_1_JmR.root
+/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_330_1_Uhr.root
+/store/user/kandroso/DYToTauTau_Embedded/ETau/Run2012D/TREE/Tree_420_1_b8c.root

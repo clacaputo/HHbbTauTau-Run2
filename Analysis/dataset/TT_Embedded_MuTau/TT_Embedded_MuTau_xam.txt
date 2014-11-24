@@ -1,8 +1,2 @@
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_81_1_p3S.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_55_1_PFW.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_134_1_Vja.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_116_1_88B.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_117_1_MEY.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_64_1_R29.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_129_1_nIi.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_74_1_rmu.root
+/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_27_2_kjE.root
+/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_82_1_r5M.root

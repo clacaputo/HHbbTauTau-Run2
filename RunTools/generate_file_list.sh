@@ -58,7 +58,7 @@ echo "Number of files per job: $N_SPLIT"
 if [ $N_JOBS -eq 1 ] ; then
 	mv "$TMP_OUT_FILE" "${OUT_FILE_NAME}.txt"
 else
-	split -l $N_SPLIT $TMP_OUT_FILE
+	split -a 3 -l $N_SPLIT $TMP_OUT_FILE
 	find . -maxdepth 1 -type f -name "x*" -printf "%f ${OUT_FILE_NAME}_%f.txt\n" | xargs -n 2 mv
 fi
 

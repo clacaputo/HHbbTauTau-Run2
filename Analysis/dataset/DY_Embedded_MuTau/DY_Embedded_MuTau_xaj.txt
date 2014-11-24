@@ -1,6 +1,0 @@
-/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012A/TREE/Tree_116_1_UpQ.root
-/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012A/TREE/Tree_5_1_Fhm.root
-/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012A/TREE/Tree_89_1_DOi.root
-/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012A/TREE/Tree_21_1_bo8.root
-/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012A/TREE/Tree_98_1_Olc.root
-/store/user/kandroso/DYToTauTau_Embedded/MuTau/Run2012A/TREE/Tree_34_1_gsd.root
