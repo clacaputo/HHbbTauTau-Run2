@@ -119,9 +119,6 @@ namespace MuTau {
         const bool haveOppositeCharge = true; // =
     }
 
-    namespace BackgroundEstimation {
-        const double HighMtRegion = 70; // > For W-jets data driven estimation
-    }
 }
 
 namespace ETau {
@@ -204,9 +201,6 @@ namespace ETau {
         const double dZ_vtx[] = { 0.2, 0.2 }; // <
     }
 
-    namespace BackgroundEstimation {
-        const double HighMtRegion = 70; // > For W-jets data driven estimation
-    }
 }
 
 namespace TauTau {
@@ -389,6 +383,12 @@ namespace electronEtoTauFakeRateWeight {
         return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_leg.decayMode)).at(eta_bin);
     }
 
+}
+
+namespace WjetsBackgroundEstimation {
+    const double HighMtRegion = 70; // > For W-jets data driven estimation
+    const double HighMtRegion_low = 60; // > For W-jets data driven estimation in 2jet2tag for ltau channels
+    const double HighMtRegion_high = 1200; // < For W-jets data driven estimation in 2jet2tag for ltau channels
 }
 
 namespace DrellYannCategorization {

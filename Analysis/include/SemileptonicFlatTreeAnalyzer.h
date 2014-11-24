@@ -40,6 +40,16 @@ public:
     }
 
 protected:
+    bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory)
+    {
+        using namespace cuts::Htautau_Summer13;
+        if (eventCategory == analysis::EventCategory::TwoJets_TwoBtag)
+            return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion_low &&
+                    event.mt_1 < WjetsBackgroundEstimation::HighMtRegion_high;
+        else
+            return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
+    }
+
     virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory) override
     {
         static const PhysicalValue sf(1.06, 0.001);
@@ -56,6 +66,7 @@ protected:
                                                         const std::string& hist_name) override
     {
         PhysicalValueMap valueMap;
+        static const analysis::PhysicalValue one(1, 0.001);
         using analysis::EventRegion;
         using analysis::DataCategoryType;
 
@@ -63,6 +74,9 @@ protected:
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(CategoriesToRelax().count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         for (const auto& eventRegion : HighMt_LowMt_RegionMap){
             auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
@@ -74,6 +88,7 @@ protected:
 
             PhysicalValue n_HighMt_mc;
             bool hist_mc_found = false;
+            PhysicalValue ratio_HighToLowMt;
             for(const analysis::DataCategory* wjets_category : wjets_mc_categories){
                 if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion.first, hist_name)) {
                     hist_mc_found = true;
@@ -86,12 +101,26 @@ protected:
                 if(n_HighMt.value < 0)
                     throw exception("Negative number of estimated events in Wjets SF estimation for ")
                             << eventCategory << " " << eventRegion.second << ".";
-                valueMap[eventRegion.second] = n_HighMt / n_HighMt_mc;
+                ratio_HighToLowMt = n_HighMt / n_HighMt_mc;
+                //valueMap[eventRegion.second] = n_HighMt / n_HighMt_mc;
             } catch(exception& ex) {
                 static const PhysicalValue defaultValue(1, 0.0001);
                 std::cerr << ex.message() << " Using default value " << defaultValue << "." << std::endl;
-                valueMap[eventRegion.second] = defaultValue;
+                //valueMap[eventRegion.second] = defaultValue;
+                ratio_HighToLowMt = defaultValue;
             }
+
+            analysis::PhysicalValue sf_MediumToLow = one;
+            if(eventCategory != refEventCategory) {
+                try {
+                    const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion.first, hist_name, wjets_mc_categories);
+                    const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion.first, hist_name, wjets_mc_categories);
+                    sf_MediumToLow = n_medium / n_ref;
+                } catch(analysis::exception& ex) {
+                    std::cerr << ex.message() << " Using default value " << one << "." << std::endl;
+                }
+            }
+            valueMap[eventRegion.second] = ratio_HighToLowMt*sf_MediumToLow;
         }
 
         return valueMap;
