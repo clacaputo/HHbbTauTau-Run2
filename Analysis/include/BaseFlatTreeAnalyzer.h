@@ -513,9 +513,9 @@ protected:
             const ntuple::Flat& event = tree->data;
 
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
+                                                                                 event.nBjets_retagged,
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
-                                                                                 cuts::Htautau_Summer13::btag::CSVM,
-                                                                                 cuts::Htautau_Summer13::btag::CSVT);
+                                                                                 cuts::Htautau_Summer13::btag::CSVM);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;

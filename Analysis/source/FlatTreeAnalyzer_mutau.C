@@ -62,14 +62,14 @@ protected:
     }
 
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
-                                                       analysis::EventCategory /*eventCategory*/) override
+                                                       analysis::EventCategory eventCategory) override
     {
         using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::MuTau;
 
         if(!event.againstMuonTight_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) /*|| event.pt_2 <= 30*/ )
+                || (event.mt_1 >= muonID::mt && !IsHighMtRegion(event,eventCategory)) /*|| event.pt_2 <= 30*/ )
             return EventRegion::Unknown;
 
         const bool os = event.q_1 * event.q_2 == -1;
