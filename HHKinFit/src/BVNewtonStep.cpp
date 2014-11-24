@@ -219,7 +219,7 @@ TGraph
 BVNewtonStep::getGraphTestedPoints(){
   TGraph gr(m_testedPoints.size());
   gr.SetName("TestedPoints");
-  for (int i=0; i<m_testedPoints.size(); i++){
+  for (size_t i=0; i<m_testedPoints.size(); i++){
     gr.SetPoint(i,m_testedPoints[i][0],m_testedPoints[i][1]);
   }
   return(gr);

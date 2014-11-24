@@ -28,7 +28,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Analysis/include/BaseFlatTreeAnalyzer.h"
+#include "Analysis/include/SemileptonicFlatTreeAnalyzer.h"
 
 class FlatAnalyzerData_mutau : public analysis::FlatAnalyzerData {
 public:
@@ -45,11 +45,11 @@ public:
     }
 };
 
-class FlatTreeAnalyzer_mutau : public analysis::BaseFlatTreeAnalyzer {
+class FlatTreeAnalyzer_mutau : public analysis::SemileptonicFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& signal_list)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
+         : SemileptonicFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
     {
     }
 
@@ -61,7 +61,8 @@ protected:
         return std::shared_ptr<FlatAnalyzerData_mutau>(new FlatAnalyzerData_mutau());
     }
 
-    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
+    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
+                                                       analysis::EventCategory /*eventCategory*/) override
     {
         using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::MuTau;
@@ -77,8 +78,8 @@ protected:
 
         if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
         else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-        else if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
-        else return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
+        else if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+        else return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
     }
 
     virtual bool PassMvaCut(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory eventCategory) override
@@ -92,12 +93,5 @@ protected:
             return true;
 
         return eventInfo.mva_BDT > mva_BDT_cuts.at(eventCategory);
-    }
-
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory /*eventCategory*/,
-                                                            const std::string& /*hist_name*/) override
-    {
-        static const analysis::PhysicalValue sf(1.06, 0.001);
-        return sf;
     }
 };

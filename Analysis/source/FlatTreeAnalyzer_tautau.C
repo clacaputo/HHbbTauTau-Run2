@@ -29,6 +29,9 @@
 class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY(mt_1, 20, 0, 200)
+    TH1D_ENTRY(iso_tau1, 100, 0, 10)
+    TH1D_ENTRY(iso_tau2, 100, 0, 10)
+    TH1D_ENTRY(H_tt_charge, 8, -4, 4)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
                       analysis::EventEnergyScale eventEnergyScale) override
@@ -38,6 +41,10 @@ public:
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);
+        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
+        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
+        int diTau_charge = event.q_1*event.q_2;
+        H_tt_charge().Fill(diTau_charge,weight);
     }
 };
 
@@ -60,16 +67,17 @@ protected:
     virtual const analysis::EventRegionSet& EssentialEventRegions() override
     {
         static const analysis::EventRegionSet regions = { analysis::EventRegion::OS_Isolated,
-                                                analysis::EventRegion::OS_NotIsolated };
+                                                          analysis::EventRegion::OS_AntiIsolated };
         return regions;
     }
 
-    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event) override
+    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
+                                                       analysis::EventCategory /*eventCategory*/) override
     {
         using analysis::EventRegion;
         using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
-        if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+        if(!event.againstElectronLooseMVA_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
                 || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
@@ -81,32 +89,69 @@ protected:
                          event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
 
         if(iso) return os ? EventRegion::OS_Isolated : EventRegion::SS_Isolated;
-        return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
+        return os ? EventRegion::OS_AntiIsolated : EventRegion::SS_AntiIsolated;
     }
 
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(analysis::EventCategory eventCategory,
-                                                            const std::string& hist_name) override
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
+                                                            analysis::EventCategory eventCategory) override
     {
-        return BaseFlatTreeAnalyzer::CalculateQCDScaleFactor(eventCategory, hist_name, analysis::EventRegion::SS_Isolated,
-                                       analysis::EventRegion::SS_NotIsolated);
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(CategoriesToRelax().count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        const auto iso_antiIso_sf = CalculateQCDScaleFactorEx(hist_name, refEventCategory, refEventCategory,
+                                                              analysis::EventRegion::SS_Isolated,
+                                                              analysis::EventRegion::SS_AntiIsolated);
+        std::cout << "iso_antiIso_sf: " << iso_antiIso_sf << "\n";
+        if(refEventCategory == eventCategory)
+            return iso_antiIso_sf;
+
+        const auto medium_loose_sf = CalculateQCDScaleFactorEx(hist_name, eventCategory, refEventCategory,
+                                                               analysis::EventRegion::SS_AntiIsolated,
+                                                               analysis::EventRegion::SS_AntiIsolated);
+        std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
+        return iso_antiIso_sf * medium_loose_sf;
     }
 
-    virtual void EstimateQCD(analysis::EventCategory eventCategory, const std::string& hist_name,
+    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& scale_factor) override
     {
-        return BaseFlatTreeAnalyzer::EstimateQCD(eventCategory,hist_name,scale_factor,
-                                                 analysis::EventRegion::OS_NotIsolated);
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(CategoriesToRelax().count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        return EstimateQCDEx(hist_name, eventCategory, refEventCategory, analysis::EventRegion::OS_AntiIsolated,
+                             scale_factor);
     }
 
-    virtual PhysicalValueMap CalculateWjetsScaleFactors(analysis::EventCategory /*eventCategory*/,
-                                                                   const std::string& /*hist_name*/) override
+    virtual PhysicalValueMap CalculateWjetsScaleFactors(analysis::EventCategory eventCategory,
+                                                        const std::string& hist_name) override
     {
+        static const analysis::PhysicalValue one(1, 0.001);
+
         PhysicalValueMap valueMap;
-        static const analysis::PhysicalValue v(1, 0.001);
-        for (analysis::EventRegion eventRegion : analysis::QcdRegions){
-            valueMap[eventRegion] = v;
+
+        const analysis::DataCategoryPtrSet& wjets_mc_categories =
+                dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
+
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(CategoriesToRelax().count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
+            analysis::PhysicalValue sf = one;
+            if(eventCategory != refEventCategory) {
+                try {
+                    const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
+                    const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion, hist_name, wjets_mc_categories);
+                    sf = n_medium / n_ref;
+                } catch(analysis::exception& ex) {
+                    std::cerr << ex.message() << " Using default value " << one << "." << std::endl;
+                }
+            }
+            valueMap[eventRegion] = sf;
         }
+
         return valueMap;
     }
-
 };

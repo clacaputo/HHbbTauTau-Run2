@@ -82,7 +82,8 @@ public:
         for(Long64_t current_entry = 0; current_entry < flatTree->GetEntries(); ++current_entry) {
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
-            const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets, CSVM, CSVT);
+            const EventCategoryVector eventCategories =
+                    DetermineEventCategories(event.csv_Bjets, event.nBjets_retagged, CSVM, CSVT);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), recalc_kinfit);
             for (EventCategory eventCategory : eventCategories)
                 AnalyzeEvent(eventInfo, eventCategory);
@@ -150,8 +151,8 @@ protected:
 
             if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
             if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-            if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
-            if(!iso && !os) return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
+            if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+            if(!iso && !os) return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
         if (eventInfo.channel == Channel::ETau){
             using namespace cuts::Htautau_Summer13::ETau;
@@ -166,8 +167,8 @@ protected:
 
             if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
             if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-            if(!iso && os) return low_mt ? EventRegion::OS_NotIsolated : EventRegion::OS_NotIso_HighMt;
-            if(!iso && !os) return low_mt ? EventRegion::SS_NotIsolated : EventRegion::SS_NotIso_HighMt;
+            if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+            if(!iso && !os) return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
         if (eventInfo.channel == Channel::TauTau){
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
@@ -184,7 +185,7 @@ protected:
                              event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
 
             if(iso) return os ? EventRegion::OS_Isolated : EventRegion::SS_Isolated;
-            return os ? EventRegion::OS_NotIsolated : EventRegion::SS_NotIsolated;
+            return os ? EventRegion::OS_AntiIsolated : EventRegion::SS_AntiIsolated;
         }
         throw analysis::exception("unsupported channel ") << eventInfo.channel;
     }
