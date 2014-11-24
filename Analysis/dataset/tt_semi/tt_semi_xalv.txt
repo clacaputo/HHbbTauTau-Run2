@@ -1,0 +1,3 @@
+/store/user/kandroso/TTJets_SemiLeptMGDecays/TREE/Tree_1012_1_1VM.root
+/store/user/kandroso/TTJets_SemiLeptMGDecays/TREE/Tree_2092_1_iTr.root
+/store/user/kandroso/TTJets_SemiLeptMGDecays/TREE/Tree_2493_1_b07.root
