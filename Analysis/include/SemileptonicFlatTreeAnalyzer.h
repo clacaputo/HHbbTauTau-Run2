@@ -42,7 +42,7 @@ public:
 protected:
     bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory)
     {
-        using namespace cuts::Htautau_Summer13;
+        using namespace cuts;
         if (eventCategory == analysis::EventCategory::TwoJets_TwoBtag)
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion_low &&
                     event.mt_1 < WjetsBackgroundEstimation::HighMtRegion_high;

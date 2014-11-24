@@ -36,6 +36,12 @@ namespace massWindow{
     const double m_bb_high = 150;
 }
 
+namespace WjetsBackgroundEstimation {
+    const double HighMtRegion = 70; // > For W-jets data driven estimation
+    const double HighMtRegion_low = 60; // > For W-jets data driven estimation in 2jet2tag for ltau channels
+    const double HighMtRegion_high = 120; // < For W-jets data driven estimation in 2jet2tag for ltau channels
+}
+
 namespace jetCorrections {
     const double energyUncertainty = 0.05;
 }

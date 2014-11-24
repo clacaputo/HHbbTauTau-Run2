@@ -385,12 +385,6 @@ namespace electronEtoTauFakeRateWeight {
 
 }
 
-namespace WjetsBackgroundEstimation {
-    const double HighMtRegion = 70; // > For W-jets data driven estimation
-    const double HighMtRegion_low = 60; // > For W-jets data driven estimation in 2jet2tag for ltau channels
-    const double HighMtRegion_high = 120; // < For W-jets data driven estimation in 2jet2tag for ltau channels
-}
-
 namespace DrellYannCategorization {
     const double minimal_genParticle_pt = 8; // > GeV
     const double deltaR_matchGenParticle = 0.5; // < twiki HiggsToTauTauWorkingSummer2013#E_MU_TAU_channel
