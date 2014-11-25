@@ -716,7 +716,7 @@ protected:
                     final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
                     final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
                 }
-                else if (FindDecayProducts(HiggsBosons.at(1),SM_ResonanceDecay_1,Higgs_ToTauTau_Product)){
+                else if (FindDecayProducts(*HiggsBosons.at(1),SM_ResonanceDecay_1,Higgs_ToTauTau_Product)){
                     final_state.Higgs_TauTau = HiggsBosons.at(1);
                 }
                 else
