@@ -338,3 +338,5 @@ HHKinFit/include/HHTauInputKinFit.h
 HHKinFit/include/HHTauInputKinFitMaster.h
 HHKinFit/include/HHV4Vector.h
 HHKinFit/include/PSMath.h
+RunTools/src/Scan.C
+RunTools/scan_trees.sh
