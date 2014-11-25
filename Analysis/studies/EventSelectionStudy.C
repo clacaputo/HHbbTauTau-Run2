@@ -46,11 +46,13 @@ protected:
     virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category) override
     {
         using analysis::EventCategory;
-        if(!PassSelection(eventInfo, category)) return;
-        if (!analysis::TwoJetsEventCategories.count(category)) return;
+        if(DetermineEventRegion(eventInfo,category) != analysis::EventRegion::OS_Isolated) return;
+        if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
 
-        if(category == EventCategory::TwoJets_ZeroBtag &&
-                (eventInfo.eventType == ntuple::EventType::ZTT || eventInfo.eventType == ntuple::EventType::ZTT_L))
+        if(eventInfo.eventEnergyScale == analysis::EventEnergyScale::Central &&
+                category == EventCategory::TwoJets_ZeroBtag &&
+//                (eventInfo.eventType == ntuple::EventType::ZTT || eventInfo.eventType == ntuple::EventType::ZTT_L))
+                (eventInfo.eventType == ntuple::EventType::ZL))
             std::cout << eventInfo.event->evt << std::endl;
     }
 

@@ -49,6 +49,7 @@
 #include "AnalysisBase/include/exception.h"
 #include "AnalysisBase/include/Particles.h"
 #include "PrintTools/include/RootPrintToPdf.h"
+#include "Analysis/include/SemileptonicFlatTreeAnalyzer.h"
 //#include "KinFit.h"
 
 #include "MVASelections/include/MvaReader.h"
@@ -94,13 +95,22 @@ public:
 protected:
     virtual LightFlatAnalyzerData& GetAnaData() = 0;
     virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
-    virtual void EndOfRun() = 0;
+    virtual void EndOfRun(){}
 
+
+    bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory) const
+    {
+        using namespace cuts;
+        if (eventCategory == analysis::EventCategory::TwoJets_TwoBtag)
+            return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion_low &&
+                    event.mt_1 < WjetsBackgroundEstimation::HighMtRegion_high;
+        else
+            return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
+    }
 
     TFile& GetOutputFile() { return *outputFile; }
 
-
-    bool PassSyncTreeSelection(const FlatEventInfo& eventInfo) const
+    analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo, analysis::EventCategory category) const
     {
         using analysis::EventRegion;
         const ntuple::Flat& event = *eventInfo.event;
@@ -109,40 +119,7 @@ protected:
 
             if(!event.againstMuonTight_2
                     || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || event.pfRelIso_1 >= muonID::pFRelIso || event.q_1 * event.q_2 == +1)
-                return false;
-            return true;
-        }
-        if (eventInfo.channel == Channel::ETau){
-            using namespace cuts::Htautau_Summer13::ETau;
-
-            if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || event.pfRelIso_1 >= electronID::pFRelIso || event.q_1 * event.q_2 == +1)
-                return false;
-            return true;
-        }
-        if (eventInfo.channel == Channel::TauTau){
-            using namespace cuts::Htautau_Summer13::TauTau::tauID;
-
-            if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
-                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
-                        || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits)
-                return false;
-            return true;
-        }
-        throw analysis::exception("unsupported channel ") << eventInfo.channel;
-    }
-
-    analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo) const
-    {
-        using analysis::EventRegion;
-        const ntuple::Flat& event = *eventInfo.event;
-        if (eventInfo.channel == Channel::MuTau){
-            using namespace cuts::Htautau_Summer13::MuTau;
-
-            if(!event.againstMuonTight_2
-                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || (event.mt_1 >= muonID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                    || (event.mt_1 >= muonID::mt && !IsHighMtRegion(event,category)))
                 return EventRegion::Unknown;
 
             const bool os = event.q_1 * event.q_2 == -1;
@@ -150,15 +127,15 @@ protected:
             const bool low_mt = event.mt_1 < muonID::mt;
 
             if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
-            if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-            if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
-            if(!iso && !os) return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
+            else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+            else if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+            else return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
         if (eventInfo.channel == Channel::ETau){
             using namespace cuts::Htautau_Summer13::ETau;
 
             if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || (event.mt_1 >= electronID::mt && event.mt_1 <= BackgroundEstimation::HighMtRegion) )
+                    || (event.mt_1 >= electronID::mt && !IsHighMtRegion(event,category)))
                 return EventRegion::Unknown;
 
             const bool os = event.q_1 * event.q_2 == -1;
@@ -166,14 +143,14 @@ protected:
             const bool low_mt = event.mt_1 < electronID::mt;
 
             if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
-            if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-            if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
-            if(!iso && !os) return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
+            else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+            else if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+            else return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
         if (eventInfo.channel == Channel::TauTau){
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
-            if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+            if(!event.againstElectronLooseMVA_2
                     || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
                     || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
                     || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits

@@ -43,6 +43,7 @@
 #include "AnalysisBase/include/Tools.h"
 #include "AnalysisBase/include/AnalysisTools.h"
 #include "AnalysisBase/include/AnalysisTypes.h"
+#include "AnalysisBase/include/FlatTree.h"
 
 #include "Htautau_Summer13.h"
 #include "Htautau_TriggerEfficiency.h"
@@ -53,6 +54,7 @@
 #include "RecoilCorrection.h"
 #include "JetEnergyUncertainty.h"
 #include "EventWeights.h"
+
 
 namespace analysis {
 
@@ -574,6 +576,11 @@ protected:
         if (config.ApplyRecoilCorrection()){
             if(!resonance && config.ApplyRecoilCorrectionForW())
                 resonance = FindWboson();
+            if(!resonance && config.ApplyRecoilCorrectionForZ()){
+                GenParticlePtrVector ZProducts;
+                bool ztt;
+                resonance = FindZboson(ZProducts,ztt);
+            }
             if(resonance)
                 return GetRecoilCorrectionProducer().ApplyCorrection(correctedMET, higgs->GetMomentum(),
                                                                      resonance->momentum, njets);
@@ -609,14 +616,46 @@ protected:
             Wboson = Wboson->daughters.front();
 
         GenParticlePtrVector WProducts;
-        if(FindDecayProducts(*Wboson, WDecay_tau, WProducts,true))
+        if(FindDecayProducts(*Wboson, WDecay_tau, WProducts,true) ||
+                FindDecayProducts(*Wboson, WDecay_electron, WProducts,true) ||
+                FindDecayProducts(*Wboson, WDecay_muon, WProducts,true))
             return Wboson;
-        if (!FindDecayProducts(*Wboson, WDecay_electron, WProducts,true)
-                && !FindDecayProducts(*Wboson, WDecay_muon, WProducts,true))
-            throw exception("not leptonic W decay");
 
+        throw exception("not leptonic W decay");
 
-        return nullptr;
+    }
+
+    const GenParticle* FindZboson(GenParticlePtrVector& ZProducts, bool& ztt)
+    {
+        static const particles::ParticleCodes Zcode = { particles::Z };
+        static const particles::ParticleCodes ZDecay_electrons = { particles::e, particles::e };
+        static const particles::ParticleCodes ZDecay_muons = { particles::mu, particles::mu };
+        static const particles::ParticleCodes ZDecay_taus = { particles::tau, particles::tau };
+
+        const GenParticleSet Zparticles_all = genEvent.GetParticles(Zcode);
+
+        GenParticleSet Zparticles;
+        for(const GenParticle* z : Zparticles_all) {
+            const bool is_hard_interaction_z = z->mothers.size() == 1 && z->mothers.front()->pdg.Code == particles::Z
+                    && z->mothers.front()->status == particles::HardInteractionProduct;
+            const bool is_pp_z = z->mothers.size() == 2 && z->mothers.at(0)->pdg.Code == particles::p
+                    && z->mothers.at(1)->pdg.Code == particles::p;
+            if(is_hard_interaction_z || is_pp_z)
+                Zparticles.insert(z);
+         }
+
+        if (Zparticles.size() > 1 || Zparticles.size() == 0)
+            throw exception("not 1 Z per event");
+
+        const GenParticle* Z_mc = *Zparticles.begin();
+        while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
+            Z_mc = Z_mc->daughters.front();
+
+        ztt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
+        if (ztt || FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
+                 || FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
+            return Z_mc;
+        throw exception("not leptonic Z decay");
     }
 
     CandidatePtr SelectSemiLeptonicHiggs(const CandidatePtrVector& higgses)
@@ -668,10 +707,22 @@ protected:
             if(doubleHiggsSignal) {
                 GenParticleVector2D HiggsDecayProducts;
                 GenParticleIndexVector HiggsIndexes;
-                if(!FindDecayProducts2D(HiggsBosons, HiggsDecays, HiggsDecayProducts, HiggsIndexes))
-                    throw exception("NOT HH -> bb tautau");
+                GenParticlePtrVector Higgs_ToTauTau_Product;
+                GenParticlePtrVector Higgs_ToBB_Product;
+                const bool HH_bbtautau = FindDecayProducts2D(HiggsBosons, HiggsDecays, HiggsDecayProducts, HiggsIndexes);
+                if(HH_bbtautau){
+                    Higgs_ToTauTau_Product = HiggsDecayProducts.at(0);
+                    Higgs_ToBB_Product = HiggsDecayProducts.at(1);
+                    final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
+                    final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
+                }
+                else if (FindDecayProducts(HiggsBosons.at(1),SM_ResonanceDecay_1,Higgs_ToTauTau_Product)){
+                    final_state.Higgs_TauTau = HiggsBosons.at(1);
+                }
+                else
+                    throw exception("Nor HH-> bb tautau Nor A->Zh->lltautau");
 
-                for(const GenParticle* tau : HiggsDecayProducts.at(0)) {
+                for(const GenParticle* tau : Higgs_ToTauTau_Product) {
                     const VisibleGenObject tau_products(tau);
                     final_state.taus.push_back(tau_products);
 //                    if(tau_products.finalStateChargedHadrons.size() != 0)
@@ -680,12 +731,10 @@ protected:
                         final_state.hadronic_taus.push_back(tau_products);
                     }
                 }
-                for(const GenParticle* b : HiggsDecayProducts.at(1))
+                for(const GenParticle* b : Higgs_ToBB_Product)
                     final_state.b_jets.push_back(VisibleGenObject(b));
 
-                final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
-                final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
-                return true;
+                return HH_bbtautau;
             }
         }
 
@@ -741,41 +790,14 @@ protected:
         if(!config.DoZEventCategorization())
             return ntuple::EventType::Unknown;
 
-        static const particles::ParticleCodes Zcode = { particles::Z };
-        static const particles::ParticleCodes ZDecay_electrons = { particles::e, particles::e };
-        static const particles::ParticleCodes ZDecay_muons = { particles::mu, particles::mu };
-        static const particles::ParticleCodes ZDecay_taus = { particles::tau, particles::tau };
+        GenParticlePtrVector ZProducts;
+        bool ztt;
+        FindZboson(ZProducts,ztt);
 
         static const particles::ParticleCodes light_lepton_codes = { particles::e, particles::mu };
 
-        const GenParticleSet Zparticles_all = genEvent.GetParticles(Zcode);
-
-        GenParticleSet Zparticles;
-        for(const GenParticle* z : Zparticles_all) {
-            const bool is_hard_interaction_z = z->mothers.size() == 1 && z->mothers.front()->pdg.Code == particles::Z
-                    && z->mothers.front()->status == particles::HardInteractionProduct;
-            const bool is_pp_z = z->mothers.size() == 2 && z->mothers.at(0)->pdg.Code == particles::p
-                    && z->mothers.at(1)->pdg.Code == particles::p;
-            if(is_hard_interaction_z || is_pp_z)
-                Zparticles.insert(z);
-         }
-
-        if (Zparticles.size() > 1 || Zparticles.size() == 0)
-            throw exception("not 1 Z per event");
-
-        const GenParticle* Z_mc = *Zparticles.begin();
-        while(Z_mc->daughters.size() == 1 && Z_mc->daughters.front()->pdg.Code == particles::Z)
-            Z_mc = Z_mc->daughters.front();
-
         const GenParticleSet light_leptons = genEvent.GetParticles(light_lepton_codes, minimal_genParticle_pt);
         const CandidatePtrVector hadronic_taus = higgs->GetDaughters(Candidate::Type::Tau);
-
-        GenParticlePtrVector ZProducts;
-        const bool ztt = FindDecayProducts(*Z_mc, ZDecay_taus, ZProducts, true);
-        if (!ztt && !FindDecayProducts(*Z_mc, ZDecay_electrons, ZProducts, true)
-                 && !FindDecayProducts(*Z_mc, ZDecay_muons, ZProducts, true))
-            throw exception("not leptonic Z decay");
-
 
         size_t n_hadronic_matches = 0, n_leptonic_matches = 0;
         for(const CandidatePtr& reco_tau : hadronic_taus) {
