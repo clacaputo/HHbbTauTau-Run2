@@ -1,0 +1,4 @@
+/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_361_1_FBI.root
+/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_182_1_M3M.root
+/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_440_1_1dI.root
+/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_2452_1_87e.root

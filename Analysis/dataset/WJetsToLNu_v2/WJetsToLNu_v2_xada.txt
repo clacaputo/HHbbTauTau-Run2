@@ -1,0 +1,12 @@
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_3195_1_4ul.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_3571_1_ZxO.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_2578_1_aY4.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_4694_1_CBO.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_471_1_BDW.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_3183_1_htk.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_2585_1_EkJ.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_1764_1_BE9.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_1155_1_rBU.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_3964_1_t8w.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_257_1_EiT.root
+/store/user/kandroso/WJetsToLNu_v2/TREE/Tree_428_1_PKm.root
