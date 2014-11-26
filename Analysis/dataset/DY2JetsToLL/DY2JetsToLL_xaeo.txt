@@ -1,0 +1,4 @@
+/store/user/kandroso/DY2JetsToLL/TREE/Tree_761_1_weX.root
+/store/user/kandroso/DY2JetsToLL/TREE/Tree_1299_1_UHN.root
+/store/user/kandroso/DY2JetsToLL/TREE/Tree_1370_1_0Cf.root
+/store/user/kandroso/DY2JetsToLL/TREE/Tree_1327_1_oiu.root

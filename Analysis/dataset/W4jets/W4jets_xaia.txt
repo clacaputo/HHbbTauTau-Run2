@@ -1,0 +1,3 @@
+/store/user/kandroso/W4JetsToLNu_V7A/TREE/Tree_401_1_Cbo.root
+/store/user/kandroso/W4JetsToLNu_V7A/TREE/Tree_715_1_Ja5.root
+/store/user/kandroso/W4JetsToLNu_V7A/TREE/Tree_871_1_obE.root
