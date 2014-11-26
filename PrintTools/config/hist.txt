@@ -32,8 +32,8 @@ pt_1 pt_1 P_{T}(leading#tau_{h})[GeV] Events false 1.1
 eta_1 eta_1 #eta(leading#tau_{h}) Events false 2
 pt_2 pt_2 P_{T}(subleading#tau_{h})[GeV] Events false 1
 eta_2 eta_2 #eta(subleading#tau_{h}) Events false 2
-iso_tau1 iso_tau1 Iso#tau_{1} Events false 1
-iso_tau2 iso_tau2 Iso#tau_{2} Events false 1
+#iso_tau1 iso_tau1 Iso#tau_{1} Events false 1
+#iso_tau2 iso_tau2 Iso#tau_{2} Events false 1
 pt_b1 pt_b1 P_{T}[GeV](leading_jet) Events false 1.1
 eta_b1 eta_b1 #eta(leading_jet)  Events false 2
 csv_b1 csv_b1 CSV(leading_jet)  Events false 1.1
@@ -41,7 +41,7 @@ pt_b2 pt_b2 P_{T}[GeV](subleading_jet)  Events false 1.1
 eta_b2 eta_b2 #eta(subleading_jet)  Events false 2
 csv_b2 csv_b2 CSV(subleading_jet)  Events false 1.1
 pt_H_tt pt_H_tt P_{T}[GeV] Events false 1.1
-H_tt_charge H_tt_charge H_{#tau#tau} Charge false 1.1
+#H_tt_charge H_tt_charge H_{#tau#tau} Charge false 1.1
 pt_H_bb pt_H_bb P_{T}[GeV] Events false 1.1
 pt_H_hh pt_H_hh P_{T}[GeV] Events false 1.1
 DeltaPhi_tt DeltaPhi_tt #Delta#Phi_{#tau#tau}[rad] Events false 1.3
@@ -50,9 +50,9 @@ DeltaPhi_hh DeltaPhi_hh #Delta#Phi_{#tau#taubb}[rad] Events false 1.5
 DeltaR_tt DeltaR_tt #DeltaR_{#tau#tau} Events false 1.1
 DeltaR_bb DeltaR_bb #DeltaR_{bb}[rad] Events false 1.7
 DeltaR_hh DeltaR_hh #DeltaR_{#tau#taubb}[rad] Events false 1.5
-MVA_BDT MVA_BDT BDT_{output} Events false 1.1
-MVA_BDTD MVA_BDTD BDTD_{output} Events false 1.1
-MVA_BDTMitFisher MVA_BDTMitFisher BDTMitFisher_{output} Events false 1.1
+#MVA_BDT MVA_BDT BDT_{output} Events false 1.1
+#MVA_BDTD MVA_BDTD BDTD_{output} Events false 1.1
+#MVA_BDTMitFisher MVA_BDTMitFisher BDTMitFisher_{output} Events false 1.1
 DeltaPhi_bb_MET DeltaPhi_bb_MET #Delta#Phi_{bb,MET}[rad] Events false 1.5
 DeltaPhi_tt_MET DeltaPhi_tt_MET #Delta#Phi_{#tau#tau,MET}[rad] Events false 1.5
 mt_1 mt_1 M_{T}[GeV] Events false 1.1

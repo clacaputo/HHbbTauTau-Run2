@@ -29,22 +29,22 @@
 class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY(mt_1, 20, 0, 200)
-    TH1D_ENTRY(iso_tau1, 100, 0, 10)
-    TH1D_ENTRY(iso_tau2, 100, 0, 10)
-    TH1D_ENTRY(H_tt_charge, 8, -4, 4)
+    //TH1D_ENTRY(iso_tau1, 100, 0, 10)
+    //TH1D_ENTRY(iso_tau2, 100, 0, 10)
+    //TH1D_ENTRY(H_tt_charge, 8, -4, 4)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
                       analysis::EventEnergyScale eventEnergyScale) override
     {
         FlatAnalyzerData::Fill(eventInfo, weight, fill_all, eventEnergyScale);
-        if(!fill_all) return;
+//        if(!fill_all) return;
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);
-        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
-        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
-        int diTau_charge = event.q_1*event.q_2;
-        H_tt_charge().Fill(diTau_charge,weight);
+//        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
+//        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
+//        int diTau_charge = event.q_1*event.q_2;
+//        H_tt_charge().Fill(diTau_charge,weight);
     }
 };
 
@@ -95,63 +95,97 @@ protected:
     virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
                                                             analysis::EventCategory eventCategory) override
     {
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
+                                                   analysis::EventCategory::TwoJets_TwoBtag};
         analysis::EventCategory refEventCategory = eventCategory;
-        if(CategoriesToRelax().count(eventCategory))
+        if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        const auto iso_antiIso_sf = CalculateQCDScaleFactorEx(hist_name, refEventCategory, refEventCategory,
-                                                              analysis::EventRegion::SS_Isolated,
-                                                              analysis::EventRegion::SS_AntiIsolated);
+        const analysis::PhysicalValue yield_OSAntiIso =
+                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::OS_AntiIsolated);
+
+        const analysis::PhysicalValue yield_SSIso =
+                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
+
+        const analysis::PhysicalValue yield_SSAntiIso =
+                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+
+        const auto iso_antiIso_sf = yield_SSIso/yield_SSAntiIso;
         std::cout << "iso_antiIso_sf: " << iso_antiIso_sf << "\n";
         if(refEventCategory == eventCategory)
-            return iso_antiIso_sf;
+            return yield_OSAntiIso*iso_antiIso_sf;
 
-        const auto medium_loose_sf = CalculateQCDScaleFactorEx(hist_name, eventCategory, refEventCategory,
-                                                               analysis::EventRegion::SS_AntiIsolated,
-                                                               analysis::EventRegion::SS_AntiIsolated);
+        const analysis::PhysicalValue yield_SSAntiIso_Medium =
+                CalculateYield(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+        const analysis::PhysicalValue yield_SSAntiIso_Loose =
+                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+        const auto medium_loose_sf = yield_SSAntiIso_Medium/yield_SSAntiIso_Loose;
         std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
-        return iso_antiIso_sf * medium_loose_sf;
+
+        return yield_OSAntiIso*iso_antiIso_sf * medium_loose_sf;
+    }
+
+    analysis::PhysicalValue CalculateYield(const std::string& hist_name,analysis::EventCategory eventCategory,
+                                                   analysis::EventRegion eventRegion)
+    {
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        const analysis::PhysicalValue bkg_yield =
+                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name);
+
+        auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
+        if(!hist_data)
+            throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
+        const analysis::PhysicalValue yield = analysis::Integral(*hist_data, true) - bkg_yield;
+        if(yield.value < 0)
+            throw analysis::exception("Negative number of estimated events in Wjets SF estimation for ")
+                    << eventCategory << " " << analysis::EventRegion::OS_AntiIsolated << ".";
+        return yield;
     }
 
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& scale_factor) override
     {
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
+                                                             analysis::EventCategory::TwoJets_TwoBtag};
         analysis::EventCategory refEventCategory = eventCategory;
-        if(CategoriesToRelax().count(eventCategory))
+        if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        return EstimateQCDEx(hist_name, eventCategory, refEventCategory, analysis::EventRegion::OS_AntiIsolated,
-                             scale_factor);
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        auto hist_shape_data = GetHistogram(refEventCategory, data.name, analysis::EventRegion::OS_AntiIsolated, hist_name);
+        if(!hist_shape_data) return;
+
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
+        SubtractBackgroundHistograms(histogram, refEventCategory, analysis::EventRegion::OS_AntiIsolated, qcd.name,true);
+        analysis::RenormalizeHistogram(histogram,scale_factor,true);
+
     }
 
-    virtual PhysicalValueMap CalculateWjetsScaleFactors(analysis::EventCategory eventCategory,
+    virtual PhysicalValueMap CalculateWjetsYields(analysis::EventCategory eventCategory,
                                                         const std::string& hist_name) override
     {
-        static const analysis::PhysicalValue one(1, 0.001);
-
         PhysicalValueMap valueMap;
 
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
 
-        analysis::EventCategory refEventCategory = eventCategory;
-        if(CategoriesToRelax().count(eventCategory))
-            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
-
         for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
-            analysis::PhysicalValue sf = one;
-            if(eventCategory != refEventCategory) {
-                try {
-                    const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
-                    const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion, hist_name, wjets_mc_categories);
-                    sf = n_medium / n_ref;
-                } catch(analysis::exception& ex) {
-                    std::cerr << ex.message() << " Using default value " << one << "." << std::endl;
-                }
+            analysis::PhysicalValue yield;
+            try {
+                yield = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
+            } catch(analysis::exception& ex) {
+                std::cerr << ex.message() << " considering yield equal 0." << std::endl;
             }
-            valueMap[eventRegion] = sf;
+            valueMap[eventRegion] = yield;
         }
-
         return valueMap;
     }
+
 };
