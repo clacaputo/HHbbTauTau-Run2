@@ -393,7 +393,7 @@ protected:
 
 
 
-
+// start remove
     virtual PhysicalValue CalculateQCDScaleFactorEx(const std::string& hist_name,
                                                     EventCategory num_eventCategory, EventCategory den_eventCategory,
                                                     EventRegion num_eventRegion, EventRegion den_eventRegion)
@@ -444,6 +444,25 @@ protected:
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
         SubtractBackgroundHistograms(histogram, shapeCategory, shapeRegion, qcd.name,true);
         histogram.Scale(scale_factor.value);
+    }
+    // end remove
+    analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
+                                                   analysis::EventRegion eventRegion)
+    {
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        const analysis::PhysicalValue bkg_yield =
+                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name);
+
+        auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
+        if(!hist_data)
+            throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
+        const analysis::PhysicalValue yield = analysis::Integral(*hist_data, true) - bkg_yield;
+        if(yield.value < 0)
+            throw analysis::exception("Negative number of estimated events in Wjets SF estimation for ")
+                    << eventCategory << " " << analysis::EventRegion::OS_AntiIsolated << ".";
+        return yield;
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,

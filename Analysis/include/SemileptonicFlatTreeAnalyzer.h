@@ -56,12 +56,56 @@ protected:
         return sf;
     }
 
-    virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
-                             const PhysicalValue& scale_factor) override
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
+                                                            analysis::EventCategory eventCategory) override
     {
-        return EstimateQCDEx(hist_name, eventCategory, eventCategory, EventRegion::SS_Isolated, scale_factor);
+        static const PhysicalValue sf(1.06, 0.001);
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_TwoBtag};
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(categories.count(eventCategory))
+            //refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+            refEventCategory = analysis::EventCategory::TwoJets_Inclusive;
+
+        const analysis::PhysicalValue yield_SSIso =
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
+
+        std::cout << "yield_ssIso: " << yield_SSIso << "\n";
+        if(refEventCategory == eventCategory)
+            return sf*yield_SSIso;
+
+        const analysis::PhysicalValue yield_SSAntiIso_Medium =
+                CalculateYieldsForQCD(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+        const analysis::PhysicalValue yield_SSAntiIso_Loose =
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+        const auto medium_loose_sf = yield_SSAntiIso_Medium/yield_SSAntiIso_Loose;
+        std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
+
+        return sf*yield_SSIso * medium_loose_sf;
     }
 
+
+    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
+                             const analysis::PhysicalValue& scale_factor) override
+    {
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
+                                                             analysis::EventCategory::TwoJets_TwoBtag};
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(categories.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        auto hist_shape_data = GetHistogram(refEventCategory, data.name, analysis::EventRegion::SS_AntiIsolated, hist_name);
+        if(!hist_shape_data) return;
+
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
+        //here is missing subtraction for inclusive part
+        analysis::RenormalizeHistogram(histogram,scale_factor,true);
+
+    }
 
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory,
                                                         const std::string& hist_name) override

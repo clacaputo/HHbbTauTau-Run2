@@ -102,13 +102,13 @@ protected:
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         const analysis::PhysicalValue yield_OSAntiIso =
-                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::OS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::OS_AntiIsolated);
 
         const analysis::PhysicalValue yield_SSIso =
-                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
 
         const analysis::PhysicalValue yield_SSAntiIso =
-                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
 
 
         const auto iso_antiIso_sf = yield_SSIso/yield_SSAntiIso;
@@ -117,10 +117,10 @@ protected:
             return yield_OSAntiIso*iso_antiIso_sf;
 
         const analysis::PhysicalValue yield_SSAntiIso_Medium =
-                CalculateYield(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
 
         const analysis::PhysicalValue yield_SSAntiIso_Loose =
-                CalculateYield(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
 
         const auto medium_loose_sf = yield_SSAntiIso_Medium/yield_SSAntiIso_Loose;
         std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
@@ -128,24 +128,7 @@ protected:
         return yield_OSAntiIso*iso_antiIso_sf * medium_loose_sf;
     }
 
-    analysis::PhysicalValue CalculateYield(const std::string& hist_name,analysis::EventCategory eventCategory,
-                                                   analysis::EventRegion eventRegion)
-    {
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
 
-        const analysis::PhysicalValue bkg_yield =
-                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name);
-
-        auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
-        if(!hist_data)
-            throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
-        const analysis::PhysicalValue yield = analysis::Integral(*hist_data, true) - bkg_yield;
-        if(yield.value < 0)
-            throw analysis::exception("Negative number of estimated events in Wjets SF estimation for ")
-                    << eventCategory << " " << analysis::EventRegion::OS_AntiIsolated << ".";
-        return yield;
-    }
 
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& scale_factor) override
