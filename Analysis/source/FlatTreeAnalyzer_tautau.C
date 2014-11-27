@@ -157,7 +157,7 @@ protected:
         for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
             analysis::PhysicalValue yield;
             try {
-                yield = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
+                yield = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories,true);
             } catch(analysis::exception& ex) {
                 std::cerr << ex.message() << " considering yield equal 0." << std::endl;
             }
