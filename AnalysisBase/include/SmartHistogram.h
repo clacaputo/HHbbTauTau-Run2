@@ -195,11 +195,30 @@ template<>
 class SmartHistogram<TH1D> : public TH1D, public AbstractHistogram {
 public:
     SmartHistogram(const std::string& name, size_t nbins, double low, double high)
-        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name) {}
+        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), use_log_y(false),
+          max_y_sf(1) {}
 
-    SmartHistogram(const std::string& name, std::vector<double> bins)
-        : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name) {}
+    SmartHistogram(const std::string& name, const std::vector<double>& bins)
+        : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
+          use_log_y(false), max_y_sf(1) {}
 
+    SmartHistogram(const std::string& name, size_t nbins, double low, double high, const std::string& x_axis_title,
+                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf)
+        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), use_log_y(_use_log_y),
+          max_y_sf(_max_y_sf)
+    {
+        SetXTitle(x_axis_title.c_str());
+        SetYTitle(y_axis_title.c_str());
+    }
+
+    SmartHistogram(const std::string& name, const std::vector<double>& bins, const std::string& x_axis_title,
+                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf)
+        : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
+          use_log_y(_use_log_y), max_y_sf(_max_y_sf)
+    {
+        SetXTitle(x_axis_title.c_str());
+        SetYTitle(y_axis_title.c_str());
+    }
 
     virtual void WriteRootObject()
     {
@@ -210,6 +229,15 @@ public:
     {
         this->SetDirectory(nullptr);
     }
+
+    bool UseLogY() const { return use_log_y; }
+    double MaxYDrawScaleFactor() const { return max_y_sf; }
+    std::string GetXTitle() const { return GetXaxis()->GetTitle(); }
+    std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
+
+private:
+    bool use_log_y;
+    double max_y_sf;
 };
 
 template<>

@@ -37,65 +37,23 @@
 #include "RootPrintSource.h"
 #include "TdrStyle.h"
 
+#include "AnalysisBase/include/SmartHistogram.h"
+
 namespace analysis {
-
-struct HistogramDescriptor;
-typedef std::vector<HistogramDescriptor> HistogramDescriptorVector;
-
-struct HistogramDescriptor {
-    std::string name;
-    std::string title;
-    std::string Xaxis_title;
-    std::string Yaxis_title;
-    bool useLogY;
-    double max_Y;
-
-    static HistogramDescriptorVector ReadFromFile(const std::string& config_name)
-    {
-        HistogramDescriptorVector histograms;
-        std::ifstream cfg(config_name);
-        while (cfg.good()) {
-            std::string cfgLine;
-            std::getline(cfg, cfgLine);
-            if (!cfgLine.size() || cfgLine.at(0) == '#') continue;
-            std::istringstream ss(cfgLine);
-            HistogramDescriptor hist;
-            ss >> hist.name;
-            ss >> hist.title;
-            ss >> hist.Xaxis_title;
-            ss >> hist.Yaxis_title;
-            ss >> std::boolalpha >> hist.useLogY;
-            ss >> hist.max_Y;
-            histograms.push_back(hist);
-        }
-        return histograms;
-    }
-};
-
-inline std::ostream& operator<<(std::ostream& s, const HistogramDescriptor& hist) {
-    s << "Name: " << hist.name << ", Title: " << hist.title << ", useLog: " << hist.useLogY  ;
-    return s;
-}
 
 class StackedPlotDescriptor {
 public:
-    typedef std::shared_ptr<TH1D> hist_ptr;
+    typedef root_ext::SmartHistogram<TH1D> Histogram;
+    typedef std::shared_ptr<Histogram> hist_ptr;
     typedef std::vector<hist_ptr> hist_ptr_vector;
 
-    StackedPlotDescriptor(const analysis::HistogramDescriptor& _hist_descriptor, const std::string& page_title,
-                          bool draw_title, const std::string& channelNameLatex, bool _draw_ratio)
-        : hist_descriptor(_hist_descriptor),
-          data_histogram(nullptr),
-//          stack(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str())),
-//          legend(new TLegend (0.6, 0.55, 0.85, 0.90)),
-          text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")),
-          channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")), channelName(channelNameLatex), draw_ratio(_draw_ratio)
+    StackedPlotDescriptor(const std::string& page_title, bool draw_title, const std::string& channelNameLatex,
+                          bool _draw_ratio)
+        : text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")), channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")),
+          channelName(channelNameLatex), draw_ratio(_draw_ratio)
     {
-        page.side.use_log_scaleY = hist_descriptor.useLogY;
         page.side.fit_range_x = false;
         page.title = page_title;
-        page.side.axis_titleX = hist_descriptor.Xaxis_title;
-        page.side.axis_titleY = hist_descriptor.Yaxis_title;
         page.layout.has_title = draw_title;
         if (draw_ratio){
             if (page.layout.has_title) {
@@ -146,7 +104,7 @@ public:
 
     const std::string& GetTitle() const { return page.title; }
 
-    void AddBackgroundHistogram(TH1D* original_histogram, const std::string& legend_title, Color_t color)
+    void AddBackgroundHistogram(const Histogram& original_histogram, const std::string& legend_title, Color_t color)
     {
         hist_ptr histogram = PrepareHistogram(original_histogram);
         histogram->SetFillColor(color);
@@ -154,12 +112,13 @@ public:
         //stack->Add(histogram.get());
         legend->AddEntry(histogram.get(), legend_title.c_str(), "f");
         if(!sum_backgound_histogram)
-            sum_backgound_histogram = hist_ptr( static_cast<TH1D*>(histogram->Clone()) );
+            sum_backgound_histogram = hist_ptr(new Histogram(*histogram));
         else
             sum_backgound_histogram->Add(histogram.get());
     }
 
-    void AddSignalHistogram(TH1D* original_signal, const std::string& legend_title, Color_t color, unsigned scale_factor)
+    void AddSignalHistogram(const Histogram& original_signal, const std::string& legend_title, Color_t color,
+                            unsigned scale_factor)
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
         //histogram->SetLineColor(color);
@@ -175,7 +134,7 @@ public:
         legend->AddEntry(histogram.get(), ss.str().c_str(), "F");
     }
 
-    void AddDataHistogram(TH1D* original_data, const std::string& legend_title,
+    void AddDataHistogram(const Histogram& original_data, const std::string& legend_title,
                           bool blind, const std::vector< std::pair<double, double> >& blind_regions)
     {
         if(data_histogram)
@@ -212,20 +171,23 @@ public:
 
 
         if (background_histograms.size()){
-            stack = std::shared_ptr<THStack>(new THStack(hist_descriptor.name.c_str(), hist_descriptor.title.c_str()));
+            const auto& bkg_hist = background_histograms.front();
+            stack = std::shared_ptr<THStack>(new THStack(bkg_hist->GetName(), bkg_hist->GetTitle()));
             for (auto iter = background_histograms.rbegin(); iter != background_histograms.rend(); ++iter){
                 stack->Add(iter->get());
             }
             stack->Draw("HIST");
+            Double_t maxY = stack->GetMaximum();
             if (data_histogram){
                 const Int_t maxBin = data_histogram->GetMaximumBin();
                 const Double_t maxData = data_histogram->GetBinContent(maxBin) + data_histogram->GetBinError(maxBin);
-                Double_t maxY = std::max(stack->GetMaximum(), maxData);
-                for (const hist_ptr& signal : signal_histograms){
-                    maxY = std::max(maxY,signal->GetMaximum());
-                }
-                stack->SetMaximum(maxY*hist_descriptor.max_Y);
+                maxY = std::max(maxY, maxData);
             }
+
+            for (const hist_ptr& signal : signal_histograms)
+                maxY = std::max(maxY,signal->GetMaximum());
+
+            stack->SetMaximum(maxY * bkg_hist->MaxYDrawScaleFactor());
 
             const Double_t minY = page.side.use_log_scaleY ? 1 : 0;
             stack->SetMinimum(minY);
@@ -271,7 +233,7 @@ public:
             ratio_pad->cd();
 
 
-            ratio_histogram = hist_ptr(static_cast<TH1D*>(data_histogram->Clone()));
+            ratio_histogram = hist_ptr(new Histogram(*data_histogram));
             ratio_histogram->Divide(sum_backgound_histogram.get());
 
             ratio_histogram->GetYaxis()->SetRangeUser(0.75,1.3);
@@ -312,17 +274,16 @@ public:
         canvas.cd();
         if (data_histogram && draw_ratio)
             ratio_pad->Draw();
-
-
     }
 
 private:
-    static hist_ptr PrepareHistogram(TH1D* original_histogram)
+    hist_ptr PrepareHistogram(const Histogram& original_histogram)
     {
-        hist_ptr histogram( static_cast<TH1D*>(original_histogram->Clone()) );
+        hist_ptr histogram(new Histogram(original_histogram));
         histogram->SetLineColor(root_ext::colorMapName.at("black"));
         histogram->SetLineWidth(1.);
         ReweightWithBinWidth(histogram);
+        UpdateDrawInfo(histogram);
         return histogram;
     }
 
@@ -350,8 +311,14 @@ private:
         }
     }
 
+    void UpdateDrawInfo(hist_ptr hist)
+    {
+        page.side.use_log_scaleY = hist->UseLogY();
+        page.side.axis_titleX = hist->GetXTitle();
+        page.side.axis_titleY = hist->GetYTitle();
+    }
+
 private:
-    analysis::HistogramDescriptor hist_descriptor;
     root_ext::SingleSidedPage page;
     hist_ptr data_histogram;
     hist_ptr sum_backgound_histogram;

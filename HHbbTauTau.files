@@ -103,9 +103,7 @@ PatProduction/python/skimFilter.py
 PatProduction/python/treeProduction.py
 PatProduction/src/classes.h
 PatProduction/src/classes_def.xml
-PrintTools/config/hist.txt
-PrintTools/config/signal.txt
-PrintTools/config/sources.txt
+Analysis/config/sources.cfg
 PrintTools/include/RootPrintSource.h
 PrintTools/include/RootPrintToPdf.h
 PrintTools/include/RootPrintTools.h

@@ -32,10 +32,9 @@ namespace analysis {
 
 class SemileptonicFlatTreeAnalyzer : public BaseFlatTreeAnalyzer {
 public:
-    SemileptonicFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg,
-                                 const std::string& _inputPath, const std::string& outputFileName,
-                                 Channel channel_id, const std::string& signal_list)
-         : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, channel_id, signal_list)
+    SemileptonicFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
+                                 const std::string& _outputFileName)
+         : BaseFlatTreeAnalyzer(_dataCategoryCollection, _inputPath, _outputFileName)
     {
     }
 

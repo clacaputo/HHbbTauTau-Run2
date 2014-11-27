@@ -93,58 +93,43 @@ static const std::vector<double> mass_bins_slice_5fette_fb = {
 
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
-    TH1D_ENTRY(pt_1, 20, 0, 200)
-    TH1D_ENTRY(eta_1, 25, -2.5, 2.5)
-    TH1D_ENTRY(pt_2, 20, 0, 200)
-    TH1D_ENTRY(eta_2, 25, -2.5, 2.5)
-    TH1D_ENTRY(pt_b1, 20, 0, 200)
-    TH1D_ENTRY(eta_b1, 25, -2.5, 2.5)
-    TH1D_ENTRY(csv_b1, 25, 0, 1)
-    TH1D_ENTRY(pt_b2, 20, 0, 200)
-    TH1D_ENTRY(eta_b2, 25, -2.5, 2.5)
-    TH1D_ENTRY(csv_b2, 25, 0, 1)
-    TH1D_ENTRY(pt_H_tt, 20, 0, 300)
-    TH1D_ENTRY(pt_H_bb, 20, 0, 300)
-    TH1D_ENTRY(pt_H_hh, 20, 0, 300)
-    TH1D_ENTRY_CUSTOM(m_sv, mass_bins)
-    TH1D_ENTRY_CUSTOM(m_sv_up, mass_bins)
-    TH1D_ENTRY_CUSTOM(m_sv_down, mass_bins)
-    TH1D_ENTRY_CUSTOM(m_vis, mass_bins)
-    TH1D_ENTRY(m_bb, 30, 0, 600)
-    TH1D_ENTRY_CUSTOM(m_ttbb, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_up, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_down, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_massCut, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_up_massCut, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_down_massCut, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_massCut, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_up_massCut, mass_ttbb_bins)
-    TH1D_ENTRY_CUSTOM(m_ttbb_kinfit_only_down_massCut, mass_ttbb_bins)
-    TH1D_ENTRY(DeltaPhi_tt, 22, 0., 3.3)
-    TH1D_ENTRY(DeltaPhi_bb, 22, 0., 3.3)
-    TH1D_ENTRY(DeltaPhi_bb_MET, 22, 0., 3.3)
-    TH1D_ENTRY(DeltaPhi_tt_MET, 22, 0., 3.3)
-    TH1D_ENTRY(DeltaPhi_hh, 22, 0., 3.3)
-    TH1D_ENTRY(DeltaR_tt, 40, 0, 6)
-    TH1D_ENTRY(DeltaR_bb, 40, 0, 6)
-    TH1D_ENTRY(DeltaR_hh, 40, 0, 6)
-    TH1D_ENTRY_CUSTOM(m_bb_slice, mass_bins_slice_5fette_fb)
-    TH1D_ENTRY_CUSTOM(m_bb_slice_up, mass_bins_slice_5fette_fb)
-    TH1D_ENTRY_CUSTOM(m_bb_slice_down, mass_bins_slice_5fette_fb)
-    TH1D_ENTRY(MVA_BDT, 40, -1, 1)
-    TH1D_ENTRY(mt_2, 20, 0, 200)
-    TH1D_ENTRY(pt_H_tt_MET, 20, 0, 300)
-    TH1D_ENTRY(convergence, 10, -3.5, 6.5)
-    TH1D_ENTRY(chi2, 20, 0, 100)
-    TH1D_ENTRY(fit_probability, 20, 0, 1)
-    TH1D_ENTRY(pull_balance, 20, -10, 10)
-    TH1D_ENTRY(pull_balance_1, 100, -10, 10)
-    TH1D_ENTRY(pull_balance_2, 100, -10, 10)
-    TH1D_ENTRY(MET, 20, 0, 100)
+    TH1D_ENTRY_EX(pt_1, 20, 0, 200, "P_{T}(leading#tau_{h})[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(eta_1, 25, -2.5, 2.5, "#eta(leading#tau_{h})", "Events", false, 2)
+    TH1D_ENTRY_EX(pt_2, 20, 0, 200, "P_{T}(subleading#tau_{h})[GeV]", "Events", false, 1)
+    TH1D_ENTRY_EX(eta_2, 25, -2.5, 2.5, "#eta(subleading#tau_{h})", "Events", false, 2)
+    TH1D_ENTRY_EX(pt_b1, 20, 0, 200, "P_{T}[GeV](leading_jet)", "Events", false, 1.1)
+    TH1D_ENTRY_EX(eta_b1, 25, -2.5, 2.5, "#eta(leading_jet)", "Events", false, 2)
+    TH1D_ENTRY_EX(csv_b1, 25, 0, 1, "CSV(leading_jet)", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pt_b2, 20, 0, 200, "P_{T}[GeV](subleading_jet)", "Events", false, 1.1)
+    TH1D_ENTRY_EX(eta_b2, 25, -2.5, 2.5, "#eta(subleading_jet)", "Events", false, 2)
+    TH1D_ENTRY_EX(csv_b2, 25, 0, 1, "CSV(subleading_jet)", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pt_H_tt, 20, 0, 300, "P_{T}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pt_H_bb, 20, 0, 300, "P_{T}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pt_H_hh, 20, 0, 300, "P_{T}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_CUSTOM_EX(m_sv, mass_bins, "M_{#tau#tau}[GeV]", "dN/dm_{#tau#tau}[1/GeV]", false, 1.5)
+    TH1D_ENTRY_CUSTOM_EX(m_vis, mass_bins, "M_{vis}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(m_bb, 30, 0, 600, "M_{jj}[GeV]", "dN/dm_{bb}[1/GeV]", false, 1.1)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb, mass_ttbb_bins, "M_{#tau#taubb}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb_kinfit_only, mass_ttbb_bins, "M_{#tau#taubb}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb_kinfit_only_massCut, mass_ttbb_bins, "M_{#tau#taubb}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(DeltaPhi_tt, 22, 0., 3.3, "#Delta#Phi_{#tau#tau}[rad]", "Events", false, 1.3)
+    TH1D_ENTRY_EX(DeltaPhi_bb, 22, 0., 3.3, "#Delta#Phi_{bb}[rad]", "Events", false, 1.8)
+    TH1D_ENTRY_EX(DeltaPhi_bb_MET, 22, 0., 3.3, "#Delta#Phi_{bb,MET}[rad]", "Events", false, 1.5)
+    TH1D_ENTRY_EX(DeltaPhi_tt_MET, 22, 0., 3.3, "#Delta#Phi_{#tau#tau,MET}[rad]", "Events", false, 1.5)
+    TH1D_ENTRY_EX(DeltaPhi_hh, 22, 0., 3.3, "#Delta#Phi_{#tau#taubb}[rad]", "Events", false, 1.5)
+    TH1D_ENTRY_EX(DeltaR_tt, 40, 0, 6, "#DeltaR_{#tau#tau}", "Events", false, 1.1)
+    TH1D_ENTRY_EX(DeltaR_bb, 40, 0, 6, "#DeltaR_{bb}[rad]", "Events", false, 1.7)
+    TH1D_ENTRY_EX(DeltaR_hh, 40, 0, 6, "#DeltaR_{#tau#taubb}[rad]", "Events", false, 1.5)
+    TH1D_ENTRY_CUSTOM_EX(m_bb_slice, mass_bins_slice_5fette_fb, "2DM_{sv}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(mt_2, 20, 0, 200, "M_{T}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pt_H_tt_MET, 20, 0, 300, "P_{T}[GeV]", "Evnets", false, 1.1)
+    TH1D_ENTRY_EX(convergence, 10, -3.5, 6.5, "Fit_convergence", "Events", false, 1.1)
+    TH1D_ENTRY_EX(chi2, 20, 0, 100, "#chi^{2}", "Events", false, 1.1)
+    TH1D_ENTRY_EX(fit_probability, 20, 0, 1, "Fit_probability", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pull_balance, 20, -10, 10, "pull_balance", "Events", false, 2)
+    TH1D_ENTRY_EX(pull_balance_1, 100, -10, 10, "pull_balance_1", "Events", false, 1.1)
+    TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1)
+    TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1)
 
     static std::string FullHistogramName(const std::string& hist_name, EventEnergyScale eventEnergyScale)
     {
@@ -217,7 +202,6 @@ public:
         pull_balance().Fill(eventInfo.fitResults.pull_balance,weight);
         pull_balance_1().Fill(eventInfo.fitResults.pull_balance_1,weight);
         pull_balance_2().Fill(eventInfo.fitResults.pull_balance_2,weight);
-//        MVA_BDT().Fill(eventInfo.mva_BDT, weight);
     }
 
     void FillAll(const FlatEventInfo& eventInfo, double weight, bool fill_all)
@@ -269,14 +253,11 @@ public:
         return regions;
     }
 
-    BaseFlatTreeAnalyzer(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
-                         const std::string& _outputFileName, Channel channel_id,
-                         const std::string& signal_list)
-        : inputPath(_inputPath), outputFileName(_outputFileName),
-          dataCategoryCollection(source_cfg, signal_list, channel_id)
+    BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
+                         const std::string& _outputFileName)
+        : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection)
     {
         TH1::SetDefaultSumw2();
-        histograms = HistogramDescriptor::ReadFromFile(hist_cfg);
     }
 
     void Run()
@@ -309,9 +290,9 @@ public:
 
         std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
         for (EventCategory eventCategory : EventCategoriesToProcess()){
-            for (const auto& hist : histograms) {
+            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
                 //RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
-                CreateHistogramForZTT(eventCategory, hist.name, embeddedSF, true);
+                CreateHistogramForZTT(eventCategory, hist_name, embeddedSF, true);
             }
         }
 
@@ -324,8 +305,8 @@ public:
                              wjets_scale_factors.at(eventRegion) << std::endl;
             }
             std::cout<<"Estimate for W - - - - - - - -"<<std::endl;
-            for (const auto& hist : histograms) {
-                EstimateWjets(eventCategory, hist.name, wjets_scale_factors);
+            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+                EstimateWjets(eventCategory, hist_name, wjets_scale_factors);
             }
         }
 
@@ -336,9 +317,9 @@ public:
             //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
             std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
-            for (const auto& hist : histograms) {
-                EstimateQCD(hist.name, eventCategory, qcd_scale_factor);
-                ProcessCompositDataCategories(eventCategory, hist.name);
+            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+                EstimateQCD(hist_name, eventCategory, qcd_scale_factor);
+                ProcessCompositDataCategories(eventCategory, hist_name);
             }
             std::cout << std::endl;
         }
@@ -531,7 +512,6 @@ protected:
                 if(eventRegion == EventRegion::Unknown) continue;
                 const bool fill_all = EssentialEventRegions().count(eventRegion);
 
-
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
 
@@ -548,7 +528,6 @@ protected:
                     GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
                                                                                fill_all,eventInfo.eventEnergyScale);
             }
-
         }
     }
 
@@ -685,24 +664,24 @@ protected:
         root_ext::PdfPrinter printer(outputFileName + blindCondition + ratioCondition + ".pdf");
 
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
-            for (const HistogramDescriptor& hist : histograms) {
+            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
                 //root_ext::PdfPrinter printer(outputFileName + blindCondition + "_" + hist.name + ratioCondition +".pdf");
                 std::ostringstream ss_title;
-                ss_title << eventCategory << ": " << hist.title;
-                StackedPlotDescriptor stackDescriptor(hist, ss_title.str(),false,ChannelNameLatex(),drawRatio);
+                ss_title << eventCategory << ": " << hist_name;
+                StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(), drawRatio);
 
                 for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                     if(!category->draw) continue;
 
-                    TH1D* histogram = GetSignalHistogram(eventCategory, category->name, hist.name);
+                    const auto histogram = GetSignalHistogram(eventCategory, category->name, hist_name);
                     if(!histogram) continue;
 
                     if(category->IsSignal())
-                        stackDescriptor.AddSignalHistogram(histogram, category->title, category->color, category->draw_sf);
+                        stackDescriptor.AddSignalHistogram(*histogram, category->title, category->color, category->draw_sf);
                     else if(category->IsBackground())
-                        stackDescriptor.AddBackgroundHistogram(histogram, category->title, category->color);
+                        stackDescriptor.AddBackgroundHistogram(*histogram, category->title, category->color);
                     else if(category->IsData())
-                        stackDescriptor.AddDataHistogram(histogram, category->title, isBlind, GetBlindRegion(hist.name));
+                        stackDescriptor.AddDataHistogram(*histogram, category->title, isBlind, GetBlindRegion(hist_name));
                 }
 
                 printer.PrintStack(stackDescriptor);
@@ -907,22 +886,22 @@ private:
     {
         std::wofstream of(outputFileName + "_" + name_suffix + ".csv");
 
-        for(const HistogramDescriptor& hist : histograms) {
-            if (hist.name != ReferenceHistogramName() && hist.name != "m_ttbb_kinfit_only_Central" &&
-                    hist.name != "m_ttbb_kinfit_only_massCut_Central" ) continue;
+        for(const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+            if (hist_name != ReferenceHistogramName() && hist_name != "m_ttbb_kinfit_only_Central" &&
+                    hist_name != "m_ttbb_kinfit_only_massCut_Central" ) continue;
             //PrintTables(of, sep, hist, false,false);
             //PrintTables(of, sep, hist, true, false);
-            PrintTables(of, sep, hist, false,true);
+            PrintTables(of, sep, hist_name, false,true);
             //PrintTables(of, sep, hist, true, true);
         }
         of.flush();
         of.close();
     }
 
-    void PrintTables(std::wostream& of, const std::wstring& sep, const HistogramDescriptor& hist, bool includeOverflow,
+    void PrintTables(std::wostream& of, const std::wstring& sep, const std::string& hist_name, bool includeOverflow,
                         bool includeError)
     {
-        of << std::wstring(hist.title.begin(), hist.title.end());
+        of << std::wstring(hist_name.begin(), hist_name.end());
 
         std::wstring table_name_suffix = L"";
         if(includeOverflow && includeError)
@@ -940,7 +919,7 @@ private:
         for (const DataCategory* dataCategory : dataCategoryCollection.GetAllCategories()) {
             of << std::wstring(dataCategory->title.begin(), dataCategory->title.end()) << sep;
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                if( TH1D* histogram = GetSignalHistogram(eventCategory, dataCategory->name, hist.name) ) {
+                if( TH1D* histogram = GetSignalHistogram(eventCategory, dataCategory->name, hist_name) ) {
                     const PhysicalValue integral = Integral(*histogram, includeOverflow);
                     of << integral.ToString<wchar_t>(includeError) << sep;
                 }
@@ -972,7 +951,6 @@ protected:
     std::string inputPath;
     std::string outputFileName;
     DataCategoryCollection dataCategoryCollection;
-    std::vector<HistogramDescriptor> histograms;
     FullAnaData fullAnaData;
 };
 

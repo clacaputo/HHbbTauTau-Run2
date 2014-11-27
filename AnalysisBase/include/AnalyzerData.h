@@ -56,6 +56,13 @@
 #define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
 #define TH1D_ENTRY_CUSTOM(name, bins) ENTRY_1D(TH1D, name, bins)
 
+#define TH1D_ENTRY_EX(name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf) \
+    ENTRY_1D(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf)
+#define TH1D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, x_axis_title, y_axis_title, use_log_y, max_y_sf) \
+    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), title, x_axis_title, y_axis_title, use_log_y, max_y_sf)
+#define TH1D_ENTRY_CUSTOM_EX(name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf) \
+    ENTRY_1D(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf)
+
 #define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
     ENTRY_1D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
 #define TH2D_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
@@ -63,6 +70,16 @@
 
 namespace root_ext {
 class AnalyzerData {
+private:
+    static std::set<std::string>& HistogramNames()
+    {
+        static std::set<std::string> names;
+        return names;
+    }
+
+public:
+    static const std::set<std::string>& GetAllHistogramNames() { return HistogramNames(); }
+
 public:
     AnalyzerData() : outputFile(nullptr), ownOutputFile(false) {}
     AnalyzerData(const std::string& outputFileName)
@@ -138,6 +155,7 @@ public:
             cd();
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
+            HistogramNames().insert(h->Name());
             if(!outputFile)
                 h->DetachFromFile();
         }
@@ -172,6 +190,7 @@ public:
         cd();
         AbstractHistogram* h = new SmartHistogram<ValueType>(original);
         data[h->Name()] = h;
+        HistogramNames().insert(h->Name());
         if(!outputFile)
             h->DetachFromFile();
         return *static_cast< SmartHistogram<ValueType>* >(h);

@@ -130,6 +130,16 @@ public:
         }
     }
 
+    DataCategoryCollection(const DataCategoryCollection& other)
+        : all_sources(other.all_sources), categories(other.categories)
+    {
+        for(const auto& category_entry : categories) {
+            all_categories.push_back(&category_entry.second);
+            for(DataCategoryType type : category_entry.second.types)
+                categories_by_type[type].insert(&category_entry.second);
+        }
+    }
+
     const DataCategoryPtrVector& GetAllCategories() const { return all_categories; }
     const DataCategoryPtrSet& GetCategories(DataCategoryType dataCategoryType) const
     {

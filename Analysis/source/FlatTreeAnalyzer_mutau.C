@@ -32,7 +32,7 @@
 
 class FlatAnalyzerData_mutau : public analysis::FlatAnalyzerData {
 public:
-    TH1D_ENTRY(mt_1, 50, 0, 50)
+    TH1D_ENTRY_EX(mt_1, 50, 0, 50, "M_{T}[GeV]", "Events", false, 1.1)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
                       analysis::EventEnergyScale eventEnergyScale) override
@@ -47,9 +47,10 @@ public:
 
 class FlatTreeAnalyzer_mutau : public analysis::SemileptonicFlatTreeAnalyzer {
 public:
-    FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
+    FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& _inputPath,
                            const std::string& outputFileName, const std::string& signal_list)
-         : SemileptonicFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
+         : SemileptonicFlatTreeAnalyzer(analysis::DataCategoryCollection(source_cfg, signal_list, ChannelId()),
+                                        _inputPath, outputFileName)
     {
     }
 

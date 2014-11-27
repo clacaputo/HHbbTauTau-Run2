@@ -28,10 +28,10 @@
 
 class FlatAnalyzerData_tautau : public analysis::FlatAnalyzerData {
 public:
-    TH1D_ENTRY(mt_1, 20, 0, 200)
-    TH1D_ENTRY(iso_tau1, 100, 0, 10)
-    TH1D_ENTRY(iso_tau2, 100, 0, 10)
-    TH1D_ENTRY(H_tt_charge, 8, -4, 4)
+    TH1D_ENTRY_EX(mt_1, 20, 0, 200, "M_{T}[GeV]", "Events", false, 1.1)
+    TH1D_ENTRY_EX(iso_tau1, 100, 0, 10, "Iso#tau_{1}", "Events", false, 1)
+    TH1D_ENTRY_EX(iso_tau2, 100, 0, 10, "Iso#tau_{2}", "Events", false, 1)
+    TH1D_ENTRY_EX(H_tt_charge, 8, -4, 4, "H_{#tau#tau} Charge", "Events", false, 1.1)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
                       analysis::EventEnergyScale eventEnergyScale) override
@@ -50,9 +50,10 @@ public:
 
 class FlatTreeAnalyzer_tautau : public analysis::BaseFlatTreeAnalyzer {
 public:
-    FlatTreeAnalyzer_tautau(const std::string& source_cfg, const std::string& hist_cfg, const std::string& _inputPath,
+    FlatTreeAnalyzer_tautau(const std::string& source_cfg, const std::string& _inputPath,
                             const std::string& outputFileName, const std::string& signal_list)
-          : BaseFlatTreeAnalyzer(source_cfg, hist_cfg, _inputPath, outputFileName, ChannelId(), signal_list)
+          : BaseFlatTreeAnalyzer(analysis::DataCategoryCollection(source_cfg, signal_list, ChannelId()), _inputPath,
+                                 outputFileName)
     {
     }
 
