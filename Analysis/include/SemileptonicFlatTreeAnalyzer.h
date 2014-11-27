@@ -59,7 +59,7 @@ protected:
             return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
                     event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
         else
-            return event.pfRelIso_1 > Htautau_Summer13::ETau::electronID::pFRelIso;
+            return false;
     }
 
     virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
@@ -103,6 +103,8 @@ protected:
     {
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
                                                              analysis::EventCategory::TwoJets_TwoBtag};
+        static const analysis::EventCategorySet inclusive_categories= {analysis::EventCategory::Inclusive,
+                                                             analysis::EventCategory::TwoJets_Inclusive};
         analysis::EventCategory refEventCategory = eventCategory;
         if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);

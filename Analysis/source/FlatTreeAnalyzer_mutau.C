@@ -76,10 +76,11 @@ protected:
         const bool os = event.q_1 * event.q_2 == -1;
         const bool iso = event.pfRelIso_1 < muonID::pFRelIso;
         const bool low_mt = event.mt_1 < muonID::mt;
+        const bool antiIso = !iso || IsAntiIsolatedRegion(event,eventCategory);
 
         if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
         else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-        else if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+        else if(antiIso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
         else return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
     }
 
