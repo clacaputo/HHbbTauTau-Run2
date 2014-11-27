@@ -93,7 +93,7 @@ protected:
         return os ? EventRegion::OS_AntiIsolated : EventRegion::SS_AntiIsolated;
     }
 
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
+    virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
                                                             analysis::EventCategory eventCategory) override
     {
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
@@ -103,36 +103,31 @@ protected:
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         const analysis::PhysicalValue yield_OSAntiIso =
-                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::OS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated);
 
         const analysis::PhysicalValue yield_SSIso =
-                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_Isolated);
 
         const analysis::PhysicalValue yield_SSAntiIso =
-                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_AntiIsolated);
 
 
-        const auto iso_antiIso_sf = yield_SSIso/yield_SSAntiIso;
-        std::cout << "iso_antiIso_sf: " << iso_antiIso_sf << "\n";
+        const auto iso_antiIso_sf = yield_SSIso / yield_SSAntiIso;
+        std::cout << eventCategory << ": QCD SF Iso / AntiIso = " << iso_antiIso_sf << ". \n";
         if(refEventCategory == eventCategory)
-            return yield_OSAntiIso*iso_antiIso_sf;
+            return yield_OSAntiIso * iso_antiIso_sf;
 
         const analysis::PhysicalValue yield_SSAntiIso_Medium =
-                CalculateYieldsForQCD(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_AntiIsolated);
 
-        const analysis::PhysicalValue yield_SSAntiIso_Loose =
-                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+        const auto medium_loose_sf = yield_SSAntiIso_Medium / yield_SSAntiIso;
+        std::cout << eventCategory << ": QCD SF Medium b-tag / Loose b-tag = " << medium_loose_sf << ".\n";
 
-        const auto medium_loose_sf = yield_SSAntiIso_Medium/yield_SSAntiIso_Loose;
-        std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
-
-        return yield_OSAntiIso*iso_antiIso_sf * medium_loose_sf;
+        return yield_OSAntiIso * iso_antiIso_sf * medium_loose_sf;
     }
 
-
-
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
-                             const analysis::PhysicalValue& scale_factor) override
+                             const analysis::PhysicalValue& yield) override
     {
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
                                                              analysis::EventCategory::TwoJets_TwoBtag};
@@ -148,8 +143,7 @@ protected:
 
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
         SubtractBackgroundHistograms(histogram, refEventCategory, analysis::EventRegion::OS_AntiIsolated, qcd.name,true);
-        analysis::RenormalizeHistogram(histogram,scale_factor,true);
-
+        analysis::RenormalizeHistogram(histogram, yield, true);
     }
 
     virtual PhysicalValueMap CalculateWjetsYields(analysis::EventCategory eventCategory,

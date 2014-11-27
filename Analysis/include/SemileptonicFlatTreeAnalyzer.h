@@ -49,7 +49,7 @@ protected:
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
     }
 
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
+    virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
                                                             analysis::EventCategory eventCategory) override
     {
         static const PhysicalValue sf(1.06, 0.001);
@@ -106,8 +106,7 @@ protected:
 
     }
 
-    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory,
-                                                        const std::string& hist_name) override
+    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) override
     {
         PhysicalValueMap valueMap;
         using analysis::EventRegion;
@@ -123,7 +122,7 @@ protected:
         if(categoriesToRelax.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        for (const auto& eventRegion : HighMt_LowMt_RegionMap){
+        for (const auto& eventRegion : HighMt_LowMt_RegionMap) {
 
             const PhysicalValue bkg_yield =
                     CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name);
@@ -136,10 +135,12 @@ protected:
                 throw exception("Negative number of estimated events in Wjets SF estimation for ")
                         << eventCategory << " " << eventRegion.first << ".";
 
-            PhysicalValue n_HighMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.first,hist_name,wjets_mc_categories);
-            PhysicalValue n_LowMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.second,hist_name,wjets_mc_categories);
+            const PhysicalValue n_HighMt_mc =
+                    CalculateFullIntegral(refEventCategory, eventRegion.first, hist_name, wjets_mc_categories);
+            const PhysicalValue n_LowMt_mc =
+                    CalculateFullIntegral(refEventCategory, eventRegion.second, hist_name, wjets_mc_categories);
 
-            PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
+            const PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
 
             valueMap[eventRegion.second] = n_HighMt * ratio_LowToHighMt;
         }
