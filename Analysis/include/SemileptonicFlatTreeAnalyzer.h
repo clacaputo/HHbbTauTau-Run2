@@ -55,17 +55,61 @@ protected:
         return sf;
     }
 
-    virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
-                             const PhysicalValue& scale_factor) override
+    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
+                                                            analysis::EventCategory eventCategory) override
     {
-        return EstimateQCDEx(hist_name, eventCategory, eventCategory, EventRegion::SS_Isolated, scale_factor);
+        static const PhysicalValue sf(1.06, 0.001);
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_TwoBtag};
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(categories.count(eventCategory))
+            //refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+            refEventCategory = analysis::EventCategory::TwoJets_Inclusive;
+
+        const analysis::PhysicalValue yield_SSIso =
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
+
+        std::cout << "yield_ssIso: " << yield_SSIso << "\n";
+        if(refEventCategory == eventCategory)
+            return sf*yield_SSIso;
+
+        const analysis::PhysicalValue yield_SSAntiIso_Medium =
+                CalculateYieldsForQCD(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+        const analysis::PhysicalValue yield_SSAntiIso_Loose =
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+
+        const auto medium_loose_sf = yield_SSAntiIso_Medium/yield_SSAntiIso_Loose;
+        std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
+
+        return sf*yield_SSIso * medium_loose_sf;
     }
 
-    virtual PhysicalValueMap CalculateWjetsScaleFactors(EventCategory eventCategory,
+
+    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
+                             const analysis::PhysicalValue& scale_factor) override
+    {
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
+                                                             analysis::EventCategory::TwoJets_TwoBtag};
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(categories.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        auto hist_shape_data = GetHistogram(refEventCategory, data.name, analysis::EventRegion::SS_AntiIsolated, hist_name);
+        if(!hist_shape_data) return;
+
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
+        //here is missing subtraction for inclusive part
+        analysis::RenormalizeHistogram(histogram,scale_factor,true);
+
+    }
+
+    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory,
                                                         const std::string& hist_name) override
     {
         PhysicalValueMap valueMap;
-        static const analysis::PhysicalValue one(1, 0.001);
         using analysis::EventRegion;
         using analysis::DataCategoryType;
 
@@ -73,57 +117,36 @@ protected:
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
+
+        static const EventCategorySet categoriesToRelax= {EventCategory::TwoJets_TwoBtag};
         analysis::EventCategory refEventCategory = eventCategory;
-        if(CategoriesToRelax().count(eventCategory))
+        if(categoriesToRelax.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         for (const auto& eventRegion : HighMt_LowMt_RegionMap){
+
+            const PhysicalValue bkg_yield =
+                    CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name);
+
             auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
             if(!hist_data)
                 throw exception("Unable to find data histograms for Wjet scale factors estimation");
-            TH1D& hist_HighMt = CloneHistogram(eventCategory, wjets.name, eventRegion.first, *hist_data);
-            SubtractBackgroundHistograms(hist_HighMt, eventCategory, eventRegion.first, wjets.name, true);
-            const PhysicalValue n_HighMt = Integral(hist_HighMt, false);
+            const PhysicalValue n_HighMt = Integral(*hist_data, true) - bkg_yield;
+            if(n_HighMt.value < 0)
+                throw exception("Negative number of estimated events in Wjets SF estimation for ")
+                        << eventCategory << " " << eventRegion.first << ".";
 
-            PhysicalValue n_HighMt_mc;
-            bool hist_mc_found = false;
-            PhysicalValue ratio_HighToLowMt;
-            for(const analysis::DataCategory* wjets_category : wjets_mc_categories){
-                if(auto hist_mc = GetHistogram(eventCategory, wjets_category->name, eventRegion.first, hist_name)) {
-                    hist_mc_found = true;
-                    n_HighMt_mc += Integral(*hist_mc, false);
-                }
-            }
-            try {
-                if (!hist_mc_found)
-                    throw exception("Unable to find mc histograms for Wjet scale factors estimation.");
-                if(n_HighMt.value < 0)
-                    throw exception("Negative number of estimated events in Wjets SF estimation for ")
-                            << eventCategory << " " << eventRegion.second << ".";
-                ratio_HighToLowMt = n_HighMt / n_HighMt_mc;
-                //valueMap[eventRegion.second] = n_HighMt / n_HighMt_mc;
-            } catch(exception& ex) {
-                static const PhysicalValue defaultValue(1, 0.0001);
-                std::cerr << ex.message() << " Using default value " << defaultValue << "." << std::endl;
-                //valueMap[eventRegion.second] = defaultValue;
-                ratio_HighToLowMt = defaultValue;
-            }
+            PhysicalValue n_HighMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.first,hist_name,wjets_mc_categories);
+            PhysicalValue n_LowMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.second,hist_name,wjets_mc_categories);
 
-            analysis::PhysicalValue sf_MediumToLow = one;
-            if(eventCategory != refEventCategory) {
-                try {
-                    const auto n_medium = CalculateFullIntegral(eventCategory, eventRegion.first, hist_name, wjets_mc_categories);
-                    const auto n_ref = CalculateFullIntegral(refEventCategory, eventRegion.first, hist_name, wjets_mc_categories);
-                    sf_MediumToLow = n_medium / n_ref;
-                } catch(analysis::exception& ex) {
-                    std::cerr << ex.message() << " Using default value " << one << "." << std::endl;
-                }
-            }
-            valueMap[eventRegion.second] = ratio_HighToLowMt*sf_MediumToLow;
+            PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
+
+            valueMap[eventRegion.second] = n_HighMt * ratio_LowToHighMt;
         }
 
         return valueMap;
     }
+
 };
 
 } // namespace analysis

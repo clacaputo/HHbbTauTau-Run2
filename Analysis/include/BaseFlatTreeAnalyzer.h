@@ -149,7 +149,7 @@ public:
         const ntuple::Flat& event = *eventInfo.event;
         double mass_tautau = event.m_sv_MC;
         m_sv(eventEnergyScale).Fill(mass_tautau, weight);
-        if(!fill_all) return;
+        //if(!fill_all) return;
 
         const double m_ttbb_kinFit = eventInfo.fitResults.mass;
         if (eventInfo.fitResults.has_valid_mass)
@@ -240,9 +240,17 @@ public:
     static const EventCategorySet& EventCategoriesToProcess() { return AllEventCategories; }
 
 
-    virtual const EventCategorySet & CategoriesToRelax()
+    virtual const EventCategorySet & CategoriesToRelaxForShapes()
     {
         static const EventCategorySet categories= {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
+        //static const EventCategorySet categories;
+        return categories;
+    }
+
+    // tbc
+    virtual const EventCategorySet & CategoriesToRelax()
+    {
+        static const EventCategorySet categories= {EventCategory::TwoJets_TwoBtag};
         //static const EventCategorySet categories;
         return categories;
     }
@@ -284,7 +292,7 @@ public:
 
         std::cout << "Calculating embedded scale factor... " << std::endl;
         const auto embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
-        //const auto TTembeddedSF = CalculateTTEmbeddedScaleFactor(ReferenceHistogramName());
+//        const auto TTembeddedSF = CalculateTTEmbeddedScaleFactor(ReferenceHistogramName());
 //        const double embeddedSF = 1;
         std::cout << "Embedded SF = " << embeddedSF << std::endl;
 
@@ -299,27 +307,34 @@ public:
         std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
         for (EventCategory eventCategory : EventCategoriesToProcess()){
             std::cout<<"ScaleFactors for W - - - - - - - -"<<std::endl;
-            const auto wjets_scale_factors = CalculateWjetsScaleFactors(eventCategory, ReferenceHistogramName());
-            for (EventRegion eventRegion : QcdRegions){
-                std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
-                             wjets_scale_factors.at(eventRegion) << std::endl;
-            }
+//            const auto wjets_yields = CalculateWjetsYields(eventCategory, ReferenceHistogramName());
+//            for (EventRegion eventRegion : QcdRegions){
+//                std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
+//                             wjets_yields.at(eventRegion) << std::endl;
+//            }
             std::cout<<"Estimate for W - - - - - - - -"<<std::endl;
-            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
-                EstimateWjets(eventCategory, hist_name, wjets_scale_factors);
+            for (const auto& hist : histograms) {
+                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist.name);
+                for (EventRegion eventRegion : QcdRegions){
+                    std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
+                                 wjets_yields.at(eventRegion) << std::endl;
+                }
+                EstimateWjets(eventCategory, hist.name, wjets_yields);
             }
         }
 
         for (EventCategory eventCategory : EventCategoriesToProcess()) {
 
             std::cout<<"ScaleFactor for QCD - - - - - - - -"<<std::endl;
-            const auto qcd_scale_factor = CalculateQCDScaleFactor(ReferenceHistogramName(), eventCategory);
+            //const auto qcd_scale_factor = CalculateQCDScaleFactor(ReferenceHistogramName(), eventCategory);
             //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
-            std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
+            //std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
-            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
-                EstimateQCD(hist_name, eventCategory, qcd_scale_factor);
-                ProcessCompositDataCategories(eventCategory, hist_name);
+            for (const auto& hist : histograms) {
+                const auto qcd_scale_factor = CalculateQCDScaleFactor(hist.name, eventCategory);
+                std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
+                EstimateQCD(hist.name, eventCategory, qcd_scale_factor);
+                ProcessCompositDataCategories(eventCategory, hist.name);
             }
             std::cout << std::endl;
         }
@@ -355,9 +370,11 @@ protected:
     virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory) = 0;
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
                              const PhysicalValue& scale_factor) = 0;
-    virtual PhysicalValueMap CalculateWjetsScaleFactors(EventCategory eventCategory, const std::string& hist_name) = 0;
+    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) = 0;
 
 
+
+// start remove
     virtual PhysicalValue CalculateQCDScaleFactorEx(const std::string& hist_name,
                                                     EventCategory num_eventCategory, EventCategory den_eventCategory,
                                                     EventRegion num_eventRegion, EventRegion den_eventRegion)
@@ -389,14 +406,14 @@ protected:
             SubtractBackgroundHistograms(*hist_den, den_eventCategory, den_eventRegion, qcd.name, true);
         }
 
-        const PhysicalValue n_num = Integral(*hist_num, false);
-        const PhysicalValue n_den = Integral(*hist_den, false);
+        const PhysicalValue n_num = Integral(*hist_num, true);
+        const PhysicalValue n_den = Integral(*hist_den, true);
         if(n_num.value < 0 || n_den.value < 0)
             throw exception("Negative number of estimated events in QCD SF estimation for ") << num_eventCategory;
         return n_num / n_den;
     }
 
-    virtual void EstimateQCDEx(const std::string& hist_name, EventCategory eventCategory, EventCategory shapeCategory,
+    void EstimateQCDEx(const std::string& hist_name, EventCategory eventCategory, EventCategory shapeCategory,
                                EventRegion shapeRegion, const PhysicalValue& scale_factor)
     {
         const DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
@@ -406,25 +423,50 @@ protected:
         if(!hist_shape_data) return;
 
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
-        SubtractBackgroundHistograms(histogram, shapeCategory, shapeRegion, qcd.name);
+        SubtractBackgroundHistograms(histogram, shapeCategory, shapeRegion, qcd.name,true);
         histogram.Scale(scale_factor.value);
+    }
+    // end remove
+    analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
+                                                   analysis::EventRegion eventRegion)
+    {
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        const analysis::PhysicalValue bkg_yield =
+                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name);
+
+        auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
+        if(!hist_data)
+            throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
+        const analysis::PhysicalValue yield = analysis::Integral(*hist_data, true) - bkg_yield;
+        if(yield.value < 0)
+            throw analysis::exception("Negative number of estimated events in Wjets SF estimation for ")
+                    << eventCategory << " " << analysis::EventRegion::OS_AntiIsolated << ".";
+        return yield;
     }
 
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValueMap& scale_factor_map)
+                         const PhysicalValueMap& yield_map)
+    {
+        static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
+        const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+        return EstimateWjetsEx(eventCategory,shapeEventCategory,hist_name,yield_map);
+    }
+
+    void EstimateWjetsEx(EventCategory eventCategory, EventCategory shapeEventCategory, const std::string& hist_name,
+                         const PhysicalValueMap& yield_map)
     {
         const analysis::DataCategory& wjets = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets);
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
-        const EventCategory shapeEventCategory = CategoriesToRelax().count(eventCategory)
-                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
-
         for(EventRegion eventRegion : QcdRegions) {
-            if(!scale_factor_map.count(eventRegion))
+            if(!yield_map.count(eventRegion))
                 throw exception("W-jet SF not found for ") << eventRegion;
 
-            const PhysicalValue& scale_factor = scale_factor_map.at(eventRegion);
+            const PhysicalValue& yield = yield_map.at(eventRegion);
             TH1D* hist = nullptr;
             for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
                 if(auto hist_mc = GetHistogram(shapeEventCategory, wjets_category->name, eventRegion, hist_name)) {
@@ -435,7 +477,7 @@ protected:
                 }
             }
             if (hist)
-                hist->Scale(scale_factor.value);
+                RenormalizeHistogram(*hist,yield,true);
         }
     }
 
@@ -565,8 +607,8 @@ protected:
         if(!hist_embedded || !hist_tt )
             throw std::runtime_error("TTembedded or tt_lept_MC hist not found");
 
-        const PhysicalValue n_tt = Integral(*hist_tt, false);
-        const PhysicalValue n_embedded = Integral(*hist_embedded, false);
+        const PhysicalValue n_tt = Integral(*hist_tt, true);
+        const PhysicalValue n_embedded = Integral(*hist_embedded, true);
         return n_tt / n_embedded;
     }
 
@@ -597,8 +639,8 @@ protected:
         if(!hist_ztautau )
             throw exception("ztt hist not found");
 
-        const PhysicalValue n_ztautau = Integral(*hist_ztautau, false);
-        const PhysicalValue n_embedded = Integral(*hist_embedded, false);
+        const PhysicalValue n_ztautau = Integral(*hist_ztautau, true);
+        const PhysicalValue n_embedded = Integral(*hist_embedded, true);
         return n_ztautau / n_embedded;
     }
 
@@ -784,7 +826,7 @@ protected:
             std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
                       << " for Event category '" << eventCategory << "'.\n"
                       << " for data category '" << current_category << "'.\n"
-                      << "Initial integral: " << Integral(histogram, false) << ".\n";
+                      << "Initial integral: " << Integral(histogram, true) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category || !category->isCategoryToSubtract ) continue;
 
@@ -793,12 +835,12 @@ protected:
             if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName())) {
                 histogram.Add(other_histogram, -1);
                 if(verbose)
-                    std::cout << Integral(*other_histogram, false) << ".\n";
+                    std::cout << Integral(*other_histogram, true) << ".\n";
             } else if(verbose)
                 std::cout << "not found.\n";
         }
 
-        const PhysicalValue original_Integral = Integral(histogram, false);
+        const PhysicalValue original_Integral = Integral(histogram, true);
         if(verbose)
             std::cout << "Integral after bkg subtraction: " << original_Integral.value << ".\n" << std::endl;
         if (original_Integral.value < 0)
@@ -819,9 +861,21 @@ protected:
             histogram.SetBinContent(n,correction_factor);
             histogram.SetBinError(n,new_error);
         }
-        const PhysicalValue new_Integral = Integral(histogram, false);
+        const PhysicalValue new_Integral = Integral(histogram, true);
         const PhysicalValue correctionSF = original_Integral/new_Integral;
         histogram.Scale(correctionSF.value);
+    }
+
+    PhysicalValue CalculateBackgroundIntegral(const std::string& hist_name, EventCategory eventCategory, EventRegion eventRegion,
+                                      const std::string& current_category)
+    {
+        DataCategoryPtrSet bkg_dataCategories;
+        for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
+            if(category->IsComposit() || category->name == current_category || !category->isCategoryToSubtract ) continue;
+            bkg_dataCategories.insert(category);
+        }
+
+        return CalculateFullIntegral(eventCategory,eventRegion,hist_name,bkg_dataCategories);
     }
 
     PhysicalValue CalculateFullIntegral(analysis::EventCategory eventCategory, analysis::EventRegion eventRegion,
@@ -831,9 +885,9 @@ protected:
         bool hist_found = false;
 
         for(const auto& dataCategory : dataCategories){
-            if(auto hist_mc = GetHistogram(eventCategory, dataCategory->name, eventRegion, hist_name)) {
+            if(auto hist = GetHistogram(eventCategory, dataCategory->name, eventRegion, hist_name)) {
                 hist_found = true;
-                integral += Integral(*hist_mc, false);
+                integral += Integral(*hist, true);
             }
         }
 
