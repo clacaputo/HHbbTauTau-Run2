@@ -121,8 +121,7 @@ protected:
 
     }
 
-    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory,
-                                                        const std::string& hist_name) override
+    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) override
     {
         PhysicalValueMap valueMap;
         using analysis::EventRegion;
@@ -138,7 +137,7 @@ protected:
         if(categoriesToRelax.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        for (const auto& eventRegion : HighMt_LowMt_RegionMap){
+        for (const auto& eventRegion : HighMt_LowMt_RegionMap) {
 
             const PhysicalValue bkg_yield =
                     CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name,true);
@@ -155,7 +154,7 @@ protected:
             PhysicalValue n_HighMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.first,hist_name,wjets_mc_categories,true);
             PhysicalValue n_LowMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.second,hist_name,wjets_mc_categories,true);
 
-            PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
+            const PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
 
             valueMap[eventRegion.second] = n_HighMt * ratio_LowToHighMt;
         }

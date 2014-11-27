@@ -290,54 +290,34 @@ public:
             }
         }
 
-        std::cout << "Calculating embedded scale factor... " << std::endl;
-        const auto embeddedSF = CalculateEmbeddedScaleFactor(ReferenceHistogramName());
-//        const auto TTembeddedSF = CalculateTTEmbeddedScaleFactor(ReferenceHistogramName());
-//        const double embeddedSF = 1;
-        std::cout << "Embedded SF = " << embeddedSF << std::endl;
+        for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+            std::cout << "Processing '" << hist_name << "'..." << std::endl;
 
-        std::cout<<"Histrogram for ZTT - - - - - - - -"<<std::endl;
-        for (EventCategory eventCategory : EventCategoriesToProcess()){
-            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
-                //RescaleHistogramForTTembedded(eventCategory, hist.name, TTembeddedSF);
+            for (EventCategory eventCategory : EventCategoriesToProcess()) {
+                const auto embeddedSF = CalculateEmbeddedScaleFactor(hist_name);
+                std::cout << eventCategory << ": ZTT Embedded SF = " << embeddedSF << ".\n";
                 CreateHistogramForZTT(eventCategory, hist_name, embeddedSF, true);
             }
-        }
 
-        std::cout << "Estimating QCD, Wjets and composit data categories... " << std::endl;
-        for (EventCategory eventCategory : EventCategoriesToProcess()){
-            std::cout<<"ScaleFactors for W - - - - - - - -"<<std::endl;
-//            const auto wjets_yields = CalculateWjetsYields(eventCategory, ReferenceHistogramName());
-//            for (EventRegion eventRegion : QcdRegions){
-//                std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
-//                             wjets_yields.at(eventRegion) << std::endl;
-//            }
-            std::cout<<"Estimate for W - - - - - - - -"<<std::endl;
-            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+            for (EventCategory eventCategory : EventCategoriesToProcess()) {
                 const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name);
-                for (EventRegion eventRegion : QcdRegions){
-                    std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
-                                 wjets_yields.at(eventRegion) << std::endl;
+                for (const auto yield_entry : wjets_yields){
+                    std::cout << eventCategory << ": W+jets yield in " << yield_entry.first << " = "
+                              << yield_entry.second << ".\n";
                 }
                 EstimateWjets(eventCategory, hist_name, wjets_yields);
             }
-        }
 
-        for (EventCategory eventCategory : EventCategoriesToProcess()) {
-
-            std::cout<<"ScaleFactor for QCD - - - - - - - -"<<std::endl;
-            //const auto qcd_scale_factor = CalculateQCDScaleFactor(ReferenceHistogramName(), eventCategory);
-            //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
-            //std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
-
-            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
-                const auto qcd_scale_factor = CalculateQCDScaleFactor(hist_name, eventCategory);
-                std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
-                EstimateQCD(hist_name, eventCategory, qcd_scale_factor);
+            for (EventCategory eventCategory : EventCategoriesToProcess()) {
+                const auto qcd_yield = CalculateQCDYield(hist_name, eventCategory);
+                std::cout << eventCategory << ": QCD yield = " << qcd_yield << ".\n";
+                EstimateQCD(hist_name, eventCategory, qcd_yield);
                 ProcessCompositDataCategories(eventCategory, hist_name);
             }
             std::cout << std::endl;
         }
+
+
 
         std::cout << "Saving tables... " << std::endl;
         PrintTables("comma", L",");
@@ -367,66 +347,11 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event, EventCategory eventCategory) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory) = 0;
+    virtual PhysicalValue CalculateQCDYield(const std::string& hist_name, EventCategory eventCategory) = 0;
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
                              const PhysicalValue& scale_factor) = 0;
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) = 0;
 
-
-
-// start remove
-    virtual PhysicalValue CalculateQCDScaleFactorEx(const std::string& hist_name,
-                                                    EventCategory num_eventCategory, EventCategory den_eventCategory,
-                                                    EventRegion num_eventRegion, EventRegion den_eventRegion)
-    {
-        const DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
-        const DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-        auto hist_num_data = GetHistogram(num_eventCategory, data.name, num_eventRegion, hist_name);
-        auto hist_den_data = GetHistogram(den_eventCategory, data.name, den_eventRegion, hist_name);
-
-        if(!hist_num_data)
-            throw analysis::exception("Unable to find num histograms for QCD scale factor estimation for ")
-                << hist_name << ", num_eventCategory: " << num_eventCategory << ", num_eventRegion: " <<
-                   num_eventRegion;
-
-        if(!hist_den_data)
-            throw analysis::exception("Unable to find den histograms for QCD scale factor estimation for ")
-                << hist_name << ", den_eventCategory: " << den_eventCategory << ", den_eventRegion: " <<
-                   den_eventRegion;
-
-        TH1D* hist_num = GetHistogram(num_eventCategory, qcd.name, num_eventRegion, hist_name);
-        if(!hist_num) {
-            hist_num = &CloneHistogram(num_eventCategory, qcd.name, num_eventRegion, *hist_num_data);
-            SubtractBackgroundHistograms(*hist_num, num_eventCategory, num_eventRegion, qcd.name, true);
-        }
-
-        TH1D* hist_den = GetHistogram(den_eventCategory, qcd.name, den_eventRegion, hist_name);
-        if(!hist_den) {
-            hist_den = &CloneHistogram(den_eventCategory, qcd.name, den_eventRegion, *hist_den_data);
-            SubtractBackgroundHistograms(*hist_den, den_eventCategory, den_eventRegion, qcd.name, true);
-        }
-
-        const PhysicalValue n_num = Integral(*hist_num, true);
-        const PhysicalValue n_den = Integral(*hist_den, true);
-        if(n_num.value < 0 || n_den.value < 0)
-            throw exception("Negative number of estimated events in QCD SF estimation for ") << num_eventCategory;
-        return n_num / n_den;
-    }
-
-    void EstimateQCDEx(const std::string& hist_name, EventCategory eventCategory, EventCategory shapeCategory,
-                               EventRegion shapeRegion, const PhysicalValue& scale_factor)
-    {
-        const DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(DataCategoryType::QCD);
-        const DataCategory& data = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Data);
-
-        auto hist_shape_data = GetHistogram(shapeCategory, data.name, shapeRegion, hist_name);
-        if(!hist_shape_data) return;
-
-        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, EventRegion::OS_Isolated, *hist_shape_data);
-        SubtractBackgroundHistograms(histogram, shapeCategory, shapeRegion, qcd.name,true);
-        histogram.Scale(scale_factor.value);
-    }
-    // end remove
     analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
                                                    analysis::EventRegion eventRegion)
     {
