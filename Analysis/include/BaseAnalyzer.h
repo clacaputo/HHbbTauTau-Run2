@@ -715,12 +715,12 @@ protected:
                     Higgs_ToBB_Product = HiggsDecayProducts.at(1);
                     final_state.Higgs_TauTau = HiggsBosons.at(HiggsIndexes.at(0));
                     final_state.Higgs_BB = HiggsBosons.at(HiggsIndexes.at(1));
-                }
-                else if (FindDecayProducts(*HiggsBosons.at(1),SM_ResonanceDecay_1,Higgs_ToTauTau_Product)){
+                } else if (FindDecayProducts(*HiggsBosons.at(1),SM_ResonanceDecay_1,Higgs_ToTauTau_Product)){
                     final_state.Higgs_TauTau = HiggsBosons.at(1);
-                }
-                else
-                    throw exception("Nor HH-> bb tautau Nor A->Zh->lltautau");
+                } else if (FindDecayProducts(*HiggsBosons.at(1),SM_ResonanceDecay_2,Higgs_ToBB_Product)){
+                    final_state.Higgs_BB = HiggsBosons.at(1);
+                } else
+                    throw exception("Nor HH-> bbtautau, nor A->Zh->lltautau, nor A->Zh->llbb");
 
                 for(const GenParticle* tau : Higgs_ToTauTau_Product) {
                     const VisibleGenObject tau_products(tau);
