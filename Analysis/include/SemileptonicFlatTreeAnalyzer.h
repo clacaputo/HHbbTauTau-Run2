@@ -49,6 +49,19 @@ protected:
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
     }
 
+    bool IsAntiIsolatedRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory)
+    {
+        using namespace cuts;
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_ZeroBtag,
+                                                             analysis::EventCategory::TwoJets_OneBtag,
+                                                             analysis::EventCategory::TwoJets_TwoBtag};
+        if (categories.count(eventCategory))
+            return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
+                    event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
+        else
+            return event.pfRelIso_1 > Htautau_Summer13::ETau::electronID::pFRelIso;
+    }
+
     virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
                                                             analysis::EventCategory eventCategory) override
     {
@@ -126,18 +139,19 @@ protected:
         for (const auto& eventRegion : HighMt_LowMt_RegionMap){
 
             const PhysicalValue bkg_yield =
-                    CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name);
+                    CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name,true);
 
             auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
             if(!hist_data)
                 throw exception("Unable to find data histograms for Wjet scale factors estimation");
+            std::cout << "Data Integral in Wjets Yield: " << Integral(*hist_data, true) << std::endl;
             const PhysicalValue n_HighMt = Integral(*hist_data, true) - bkg_yield;
             if(n_HighMt.value < 0)
                 throw exception("Negative number of estimated events in Wjets SF estimation for ")
                         << eventCategory << " " << eventRegion.first << ".";
 
-            PhysicalValue n_HighMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.first,hist_name,wjets_mc_categories);
-            PhysicalValue n_LowMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.second,hist_name,wjets_mc_categories);
+            PhysicalValue n_HighMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.first,hist_name,wjets_mc_categories,true);
+            PhysicalValue n_LowMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.second,hist_name,wjets_mc_categories,true);
 
             PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
 

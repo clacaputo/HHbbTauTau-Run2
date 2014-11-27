@@ -434,7 +434,7 @@ protected:
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
 
         const analysis::PhysicalValue bkg_yield =
-                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name);
+                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name,true);
 
         auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
         if(!hist_data)
@@ -867,30 +867,39 @@ protected:
     }
 
     PhysicalValue CalculateBackgroundIntegral(const std::string& hist_name, EventCategory eventCategory, EventRegion eventRegion,
-                                      const std::string& current_category)
+                                      const std::string& current_category, bool verbose = false)
     {
         DataCategoryPtrSet bkg_dataCategories;
+        if(verbose)
+            std::cout << "\nCalculating background Integral for '" << hist_name << "' in region " << eventRegion
+                      << " for Event category '" << eventCategory << "'.\n"
+                      << " for data category '" << current_category << "'.\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category || !category->isCategoryToSubtract ) continue;
             bkg_dataCategories.insert(category);
         }
 
-        return CalculateFullIntegral(eventCategory,eventRegion,hist_name,bkg_dataCategories);
+        return CalculateFullIntegral(eventCategory,eventRegion,hist_name,bkg_dataCategories,verbose);
     }
 
     PhysicalValue CalculateFullIntegral(analysis::EventCategory eventCategory, analysis::EventRegion eventRegion,
-                                        const std::string& hist_name, const DataCategoryPtrSet& dataCategories)
+                                        const std::string& hist_name, const DataCategoryPtrSet& dataCategories,
+                                        bool verbose = false)
     {
         PhysicalValue integral;
         bool hist_found = false;
 
         for(const auto& dataCategory : dataCategories){
+            if(verbose)
+                std::cout << "Sample '" << dataCategory->name << "': ";
             if(auto hist = GetHistogram(eventCategory, dataCategory->name, eventRegion, hist_name)) {
                 hist_found = true;
                 integral += Integral(*hist, true);
             }
         }
 
+        if(verbose)
+            std::cout << "Bkg Integral: " << integral.value << ".\n" << std::endl;
         if(!hist_found)
             throw exception("No histogram with name '") << hist_name <<
                                                            "' was found in the given data category set, eventCategory: "

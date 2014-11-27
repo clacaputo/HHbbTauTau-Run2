@@ -42,6 +42,12 @@ namespace WjetsBackgroundEstimation {
     const double HighMtRegion_high = 120; // < For W-jets data driven estimation in 2jet2tag for ltau channels
 }
 
+namespace IsolationRegionForLeptonicChannel {
+    const double pfRelIso = 0.1;
+    const double isolation_low = 0.2; // > For QCD data driven estimation in 2jet*tag for ltau channels
+    const double isolation_high = 0.5; // < For QCD data driven estimation in 2jet*tag for ltau channels
+}
+
 namespace jetCorrections {
     const double energyUncertainty = 0.05;
 }
