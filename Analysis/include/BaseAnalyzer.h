@@ -700,7 +700,7 @@ protected:
 
             bool doubleHiggsSignal = true;
             GenParticlePtrVector HiggsBosons;
-            if(!FindDecayProducts(*final_state.resonance, resonanceDecay_1, HiggsBosons) ||
+            if(!FindDecayProducts(*final_state.resonance, resonanceDecay_1, HiggsBosons) &&
                     !FindDecayProducts(*final_state.resonance, resonanceDecay_2, HiggsBosons))
                 doubleHiggsSignal = false;
 
@@ -744,38 +744,48 @@ protected:
         //search H->bb, H->tautau
         const GenParticleSet SM_particles = genEvent.GetParticles(SM_ResonanceCodes);
 
-        GenParticlePtrVector SM_ResonanceToTauTau;
-        GenParticlePtrVector SM_ResonanceToBB;
+        GenParticlePtrVector SM_ResonanceToTauTau_products;
+        GenParticlePtrVector SM_ResonanceToBB_products;
 
         for (const GenParticle* SM_particle : SM_particles){
             GenParticlePtrVector resonanceDecayProducts;
             if(FindDecayProducts(*SM_particle, SM_ResonanceDecay_1,resonanceDecayProducts)){
-                for(const GenParticle* tau : resonanceDecayProducts) {
-                    const VisibleGenObject tau_products(tau);
-                    final_state.taus.push_back(tau_products);
-//                    if(tau_products.finalStateChargedHadrons.size() != 0)
-                    if(!IsLeptonicTau(*tau)){
-
-                        final_state.hadronic_taus.push_back(tau_products);
-                    }
+                if(!final_state.Higgs_TauTau || (final_state.Higgs_TauTau->pdg.Code != particles::Higgs
+                                             && SM_particle->pdg.Code == particles::Higgs)) {
+                    final_state.Higgs_TauTau = SM_particle;
+                    SM_ResonanceToTauTau_products = resonanceDecayProducts;
+                } else if((final_state.Higgs_TauTau->pdg.Code == particles::Higgs
+                           && SM_particle->pdg.Code == particles::Higgs)
+                          || (final_state.Higgs_TauTau->pdg.Code != particles::Higgs
+                              && SM_particle->pdg.Code != particles::Higgs)) {
+                    throw exception("more than one SM resonance to tautau per event");
                 }
-                final_state.Higgs_TauTau = SM_particle;
-                SM_ResonanceToTauTau.push_back(SM_particle);
             }
             else if (FindDecayProducts(*SM_particle, SM_ResonanceDecay_2,resonanceDecayProducts)){
-                for(const GenParticle* b : resonanceDecayProducts)
-                    final_state.b_jets.push_back(VisibleGenObject(b));
-                final_state.Higgs_BB = SM_particle;
-                SM_ResonanceToBB.push_back(SM_particle);
+                if(!final_state.Higgs_BB || (final_state.Higgs_BB->pdg.Code != particles::Higgs
+                                             && SM_particle->pdg.Code == particles::Higgs)) {
+                    final_state.Higgs_BB = SM_particle;
+                    SM_ResonanceToBB_products = resonanceDecayProducts;
+                } else if((final_state.Higgs_BB->pdg.Code == particles::Higgs
+                           && SM_particle->pdg.Code == particles::Higgs)
+                          || (final_state.Higgs_BB->pdg.Code != particles::Higgs
+                              && SM_particle->pdg.Code != particles::Higgs)) {
+                    throw exception("more than one SM resonance to bb per event");
+                }
             }
         }
 
-        if (SM_ResonanceToTauTau.size() > 1)
-            throw exception("more than one SM resonance to tautau per event");
-        if (SM_ResonanceToBB.size() > 1)
-            throw exception("more than one SM resonance to bb per event");
+        for(const GenParticle* tau : SM_ResonanceToTauTau_products) {
+            const VisibleGenObject tau_products(tau);
+            final_state.taus.push_back(tau_products);
+            if(!IsLeptonicTau(*tau))
+                final_state.hadronic_taus.push_back(tau_products);
+        }
 
-        if (SM_ResonanceToTauTau.size() + SM_ResonanceToBB.size() == 0) {
+        for(const GenParticle* b : SM_ResonanceToBB_products)
+            final_state.b_jets.push_back(VisibleGenObject(b));
+
+        if (!final_state.Higgs_TauTau && !final_state.Higgs_BB) {
             if(config.ExpectedAtLeastOneSMResonanceToTauTauOrToBB())
                 throw exception("SM resonance to tautau or to bb not found.");
             return false;
