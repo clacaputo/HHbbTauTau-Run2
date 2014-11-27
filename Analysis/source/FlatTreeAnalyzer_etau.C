@@ -38,7 +38,7 @@ public:
                       analysis::EventEnergyScale eventEnergyScale) override
     {
         FlatAnalyzerData::Fill(eventInfo, weight, fill_all, eventEnergyScale);
-        if(!fill_all) return;
+        //if(!fill_all) return;
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);

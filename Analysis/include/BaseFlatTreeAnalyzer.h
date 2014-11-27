@@ -313,13 +313,13 @@ public:
 //                             wjets_yields.at(eventRegion) << std::endl;
 //            }
             std::cout<<"Estimate for W - - - - - - - -"<<std::endl;
-            for (const auto& hist : histograms) {
-                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist.name);
+            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name);
                 for (EventRegion eventRegion : QcdRegions){
                     std::cout << eventCategory << ", " << eventRegion << ", scale factor = " <<
                                  wjets_yields.at(eventRegion) << std::endl;
                 }
-                EstimateWjets(eventCategory, hist.name, wjets_yields);
+                EstimateWjets(eventCategory, hist_name, wjets_yields);
             }
         }
 
@@ -330,11 +330,11 @@ public:
             //std::cout << eventCategory << " SS_Iso / SS_NotIso = " << qcd_scale_factor << std::endl;
             //std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
 
-            for (const auto& hist : histograms) {
-                const auto qcd_scale_factor = CalculateQCDScaleFactor(hist.name, eventCategory);
+            for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+                const auto qcd_scale_factor = CalculateQCDScaleFactor(hist_name, eventCategory);
                 std::cout << eventCategory << " OS_NotIso / SS_NotIso = " << qcd_scale_factor << std::endl;
-                EstimateQCD(hist.name, eventCategory, qcd_scale_factor);
-                ProcessCompositDataCategories(eventCategory, hist.name);
+                EstimateQCD(hist_name, eventCategory, qcd_scale_factor);
+                ProcessCompositDataCategories(eventCategory, hist_name);
             }
             std::cout << std::endl;
         }

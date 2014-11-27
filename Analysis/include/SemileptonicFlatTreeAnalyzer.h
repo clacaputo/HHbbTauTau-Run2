@@ -49,12 +49,6 @@ protected:
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
     }
 
-    virtual PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name, EventCategory eventCategory) override
-    {
-        static const PhysicalValue sf(1.06, 0.001);
-        return sf;
-    }
-
     virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
                                                             analysis::EventCategory eventCategory) override
     {
@@ -72,16 +66,22 @@ protected:
         if(refEventCategory == eventCategory)
             return sf*yield_SSIso;
 
-        const analysis::PhysicalValue yield_SSAntiIso_Medium =
-                CalculateYieldsForQCD(hist_name,eventCategory,analysis::EventRegion::SS_AntiIsolated);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
 
-        const analysis::PhysicalValue yield_SSAntiIso_Loose =
-                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_AntiIsolated);
+        auto hist_data_EvtCategory = GetHistogram(eventCategory, data.name, analysis::EventRegion::SS_AntiIsolated, hist_name);
+        if(!hist_data_EvtCategory)
+            throw analysis::exception("Unable to find hist_data_EvtCategory for QCD scale factors estimation - SS AntiIso");
+        const analysis::PhysicalValue yield_Data_EvtCategory = analysis::Integral(*hist_data_EvtCategory, true);
 
-        const auto medium_loose_sf = yield_SSAntiIso_Medium/yield_SSAntiIso_Loose;
-        std::cout << "medium_loose_sf: " << medium_loose_sf << "\n";
+        auto hist_data_RefCategory = GetHistogram(refEventCategory, data.name, analysis::EventRegion::SS_AntiIsolated, hist_name);
+        if(!hist_data_RefCategory)
+            throw analysis::exception("Unable to find hist_data_RefCategory for QCD scale factors estimation - SS AntiIso");
+        const analysis::PhysicalValue yield_Data_RefCategory = analysis::Integral(*hist_data_RefCategory, true);
 
-        return sf*yield_SSIso * medium_loose_sf;
+        const auto evt_ToRef_category_sf = yield_Data_EvtCategory/yield_Data_RefCategory;
+        std::cout << "evt_ToRef_category_sf: " << evt_ToRef_category_sf << "\n";
+
+        return sf * yield_SSIso * evt_ToRef_category_sf;
     }
 
 
