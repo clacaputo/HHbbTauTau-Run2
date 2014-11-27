@@ -59,7 +59,7 @@ protected:
             return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
                     event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
         else
-            return event.pfRelIso_1 > Htautau_Summer13::ETau::electronID::pFRelIso;
+            return false;
     }
 
     virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
@@ -97,24 +97,42 @@ protected:
         return sf * yield_SSIso * evt_ToRef_category_sf;
     }
 
-
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& scale_factor) override
     {
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
                                                              analysis::EventCategory::TwoJets_TwoBtag};
+        static const analysis::EventCategorySet inclusive_categories= {analysis::EventCategory::Inclusive,
+                                                             analysis::EventCategory::TwoJets_Inclusive};
         analysis::EventCategory refEventCategory = eventCategory;
-        if(categories.count(eventCategory))
-            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
+        if(categories.count(eventCategory)){
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,scale_factor,false);
+        }
+        else if (inclusive_categories.count(eventCategory)){
+            refEventCategory = analysis::Inclusive_EventCategoryMap.at(eventCategory);
+            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_Isolated,scale_factor,true);
+        }
+        else
+            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,scale_factor,false);
+
+
+    }
+
+    void EstimateQCDEx(const std::string& hist_name, analysis::EventCategory eventCategory,
+                       analysis::EventCategory refEventCategory, analysis::EventRegion eventRegion,
+                       const analysis::PhysicalValue& scale_factor, bool subtractHistograms)
+    {
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
 
-        auto hist_shape_data = GetHistogram(refEventCategory, data.name, analysis::EventRegion::SS_AntiIsolated, hist_name);
+        auto hist_shape_data = GetHistogram(refEventCategory, data.name,eventRegion, hist_name);
         if(!hist_shape_data) return;
 
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
-        //here is missing subtraction for inclusive part
+        if (subtractHistograms)
+            SubtractBackgroundHistograms(histogram,refEventCategory,eventRegion,qcd.name,true);
         analysis::RenormalizeHistogram(histogram,scale_factor,true);
 
     }
