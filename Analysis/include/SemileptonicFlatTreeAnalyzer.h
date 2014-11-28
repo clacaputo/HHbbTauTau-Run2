@@ -183,14 +183,6 @@ protected:
         return valueMap;
     }
 
-    //fix ZL ZJ function -> all together!!!!
-    PhysicalValueMap CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
-                         const std::string& hist_name)
-    {
-        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
-
-    }
-
     virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) override
     {
         const std::map<DataCategoryType, DataCategoryType> z_type_category_map = {
@@ -220,8 +212,7 @@ protected:
                 auto z_hist_shape = GetHistogram(shapeEventCategory, originalZcategory.name, eventRegion, hist_name);
                 if (z_hist_shape){
                     TH1D& z_hist = CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
-                    if (z_hist)
-                        RenormalizeHistogram(z_hist,yield,true);
+                    RenormalizeHistogram(z_hist,yield,true);
                 }
             }
 
