@@ -364,6 +364,7 @@ protected:
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
                              const PhysicalValue& scale_factor) = 0;
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) = 0;
+    virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) = 0;
 
     analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
                                                    analysis::EventRegion eventRegion)
@@ -518,13 +519,13 @@ protected:
     void FillDYjetHistograms(const FlatEventInfo& eventInfo, EventCategory eventCategory, EventRegion eventRegion,
                              double weight)
     {
-        const analysis::DataCategory& ZL = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZL);
-        const analysis::DataCategory& ZJ = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZJ);
+        const analysis::DataCategory& ZL_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZL_MC);
+        const analysis::DataCategory& ZJ_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZJ_MC);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
         const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
 
         const std::map<ntuple::EventType, std::string> type_category_map = {
-            { ntuple::EventType::ZL, ZL.name }, { ntuple::EventType::ZJ, ZJ.name },
+            { ntuple::EventType::ZL, ZL_MC.name }, { ntuple::EventType::ZJ, ZJ_MC.name },
             { ntuple::EventType::ZTT, ZTT_MC.name }, {ntuple::EventType::ZTT_L, ZTT_L.name}
         };
 
@@ -586,38 +587,6 @@ protected:
                 CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
         }
     }
-
-    //fix ZL ZJ function -> all together!!!!
-//    PhysicalValueMap CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
-//                         const std::string& hist_name)
-//    {
-//        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
-//        PhysicalValueMap valueMap;
-
-//        for(EventRegion eventRegion : AllEventRegions) {
-//            auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
-//            if (z_hist_yield)
-//                valueMap[eventRegion] = Integral(*z_hist_yield,true);
-//        }
-//        return valueMap;
-//    }
-
-//    void CreateHistogramForZcategory(DataCategoryType dataCategoryType, EventCategory eventCategory,
-//                                     const std::string& hist_name, const PhysicalValueMap valueMap)
-//    {
-//        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
-
-//        static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
-//        const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
-//                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
-
-//        for(EventRegion eventRegion : valueMap) {
-//            if (!valueMap.count(eventRegion))
-//                throw exception("yield not found for Z category, for this event region: ") << ;
-//            auto z_hist_shape = GetHistogram(shapeEventCategory, Z.name, eventRegion, hist_name);
-//            RenormalizeHistogram(*z_hist_shape,valueMap.at(eventRegion),true);
-//        }
-//    }
 
 
     void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,

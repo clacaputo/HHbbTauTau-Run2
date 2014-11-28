@@ -183,6 +183,51 @@ protected:
         return valueMap;
     }
 
+    //fix ZL ZJ function -> all together!!!!
+    PhysicalValueMap CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
+                         const std::string& hist_name)
+    {
+        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
+
+    }
+
+    virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) override
+    {
+        const std::map<DataCategoryType, DataCategoryType> z_type_category_map = {
+            { DataCategoryType::ZL_MC, DataCategoryType::ZL }, { DataCategoryType::ZJ_MC, DataCategoryType::ZJ }
+        };
+
+        for (const auto& z_category : z_type_category_map){
+            const analysis::DataCategory& originalZcategory = dataCategoryCollection.GetUniqueCategory(z_category.first);
+            const analysis::DataCategory& newZcategory = dataCategoryCollection.GetUniqueCategory(z_category.second);
+
+            PhysicalValueMap valueMap;
+
+            for(EventRegion eventRegion : AllEventRegions) {
+                auto z_hist_yield = GetHistogram(eventCategory, originalZcategory.name, eventRegion, hist_name);
+                if (z_hist_yield)
+                    valueMap[eventRegion] = Integral(*z_hist_yield,true);
+            }
+
+            static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag,
+                                                               EventCategory::TwoJets_TwoBtag};
+            const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+                    ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+
+            for(const auto& yield_iter : valueMap) {
+                const EventRegion eventRegion = yield_iter.first;
+                const PhysicalValue& yield = yield_iter.second;
+                auto z_hist_shape = GetHistogram(shapeEventCategory, originalZcategory.name, eventRegion, hist_name);
+                if (z_hist_shape){
+                    TH1D& z_hist = CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
+                    if (z_hist)
+                        RenormalizeHistogram(z_hist,yield,true);
+                }
+            }
+
+        }
+    }
+
 };
 
 } // namespace analysis
