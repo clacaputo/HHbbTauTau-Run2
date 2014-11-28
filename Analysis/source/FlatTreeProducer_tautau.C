@@ -151,7 +151,7 @@ protected:
         cut(FindAnalysisFinalState(selection.tauTau_MC) || !config.RequireSpecificFinalState(), "spec_final_state");
         cut(!config.isDYEmbeddedSample() || GenFilterForZevents(selection.tauTau_MC), "genFilter");
 
-        const auto& selectedTriggerPath = config.isDYEmbeddedSample()
+        const auto& selectedTriggerPath = config.IsEmbeddedSample()
                 ? DYEmbedded::trigger::hltPaths : trigger::hltPaths;
         cut(HaveTriggerFired(selectedTriggerPath), "trigger");
 
@@ -182,7 +182,7 @@ protected:
         const auto higgs_JetsMap = MatchedHiggsAndJets(higgses, jets);
         const auto higgs_looseJetsMap = MatchedHiggsAndJets(higgses, looseJets);
 
-        const auto higgsTriggered = config.isDYEmbeddedSample()
+        const auto higgsTriggered = config.IsEmbeddedSample()
                 ? ApplyTriggerMatchForEmbedded(higgs_JetsMap) : ApplyTriggerMatch(higgs_JetsMap,false);
         cut(higgsTriggered.size(), "trigger obj match");
 
