@@ -144,12 +144,11 @@ public:
             Get((TH1D*)nullptr, hist_name, eventEnergyScale, binning);
     }
 
-    virtual void Fill(const FlatEventInfo& eventInfo, double weight, bool fill_all, EventEnergyScale eventEnergyScale)
+    virtual void Fill(const FlatEventInfo& eventInfo, double weight, EventEnergyScale eventEnergyScale)
     {
         const ntuple::Flat& event = *eventInfo.event;
         double mass_tautau = event.m_sv_MC;
         m_sv(eventEnergyScale).Fill(mass_tautau, weight);
-        //if(!fill_all) return;
 
         const double m_ttbb_kinFit = eventInfo.fitResults.mass;
         if (eventInfo.fitResults.has_valid_mass)
@@ -204,11 +203,22 @@ public:
         pull_balance_2().Fill(eventInfo.fitResults.pull_balance_2,weight);
     }
 
-    void FillAll(const FlatEventInfo& eventInfo, double weight, bool fill_all)
+    void FillEnergyScales(const FlatEventInfo& eventInfo, double weight, const std::set<EventEnergyScale>& energyScales)
     {
-        for (EventEnergyScale energyScale : AllEventEnergyScales){
-            Fill(eventInfo, weight, fill_all, energyScale);
-        }
+        for (EventEnergyScale energyScale : energyScales)
+            Fill(eventInfo, weight, energyScale);
+    }
+
+    void FillCentralAndJetEnergyScales(const FlatEventInfo& eventInfo, double weight)
+    {
+        static const std::set<EventEnergyScale> energyScales =
+            { EventEnergyScale::Central, EventEnergyScale::JetUp, EventEnergyScale::JetDown };
+        FillEnergyScales(eventInfo, weight, energyScales);
+    }
+
+    void FillAllEnergyScales(const FlatEventInfo& eventInfo, double weight)
+    {
+        FillEnergyScales(eventInfo, weight, AllEventEnergyScales);
     }
 
 private:
@@ -255,12 +265,6 @@ public:
         return categories;
     }
 
-    virtual const EventRegionSet& EssentialEventRegions()
-    {
-        static const EventRegionSet regions = { EventRegion::OS_Isolated, EventRegion::SS_Isolated };
-        return regions;
-    }
-
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
                          const std::string& _outputFileName)
         : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection)
@@ -290,36 +294,41 @@ public:
             }
         }
 
+        static const std::set<std::string> interesting_histograms =
+            { "m_sv_Central", "m_ttbb_kinfit_only_Central", "m_ttbb_kinfit_only_massCut_Central",
+              "m_bb_slice_Central" };
+
         for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
             std::cout << "Processing '" << hist_name << "'..." << std::endl;
 
+            std::ostringstream ss_debug;
+            std::ostream& s_out = interesting_histograms.count(hist_name) ? std::cout : ss_debug;
+
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
                 const auto embeddedSF = CalculateEmbeddedScaleFactor(hist_name);
-                std::cout << eventCategory << ": ZTT Embedded SF = " << embeddedSF << ".\n";
+                s_out << eventCategory << ": ZTT Embedded SF = " << embeddedSF << ".\n";
                 CreateHistogramForZTT(eventCategory, hist_name, embeddedSF, true);
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
                 const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name);
                 for (const auto yield_entry : wjets_yields){
-                    std::cout << eventCategory << ": W+jets yield in " << yield_entry.first << " = "
-                              << yield_entry.second << ".\n";
+                    s_out << eventCategory << ": W+jets yield in " << yield_entry.first << " = " << yield_entry.second
+                          << ".\n";
                 }
                 EstimateWjets(eventCategory, hist_name, wjets_yields);
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                const auto qcd_yield = CalculateQCDYield(hist_name, eventCategory);
-                std::cout << eventCategory << ": QCD yield = " << qcd_yield << ".\n";
+                const auto qcd_yield = CalculateQCDYield(hist_name, eventCategory, s_out);
+                s_out << eventCategory << ": QCD yield = " << qcd_yield << ".\n";
                 EstimateQCD(hist_name, eventCategory, qcd_yield);
                 ProcessCompositDataCategories(eventCategory, hist_name);
             }
-            std::cout << std::endl;
+            s_out << std::endl;
         }
 
-
-
-        std::cout << "Saving tables... " << std::endl;
+        std::cout << "\nSaving tables... " << std::endl;
         PrintTables("comma", L",");
         PrintTables("semicolon", L";");
 
@@ -347,7 +356,8 @@ protected:
     virtual EventRegion DetermineEventRegion(const ntuple::Flat& event, EventCategory eventCategory) = 0;
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
-    virtual PhysicalValue CalculateQCDYield(const std::string& hist_name, EventCategory eventCategory) = 0;
+    virtual PhysicalValue CalculateQCDYield(const std::string& hist_name, EventCategory eventCategory,
+                                            std::ostream& s_out) = 0;
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
                              const PhysicalValue& scale_factor) = 0;
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) = 0;
@@ -358,16 +368,20 @@ protected:
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
 
+        std::string bkg_yield_debug;
         const analysis::PhysicalValue bkg_yield =
-                CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion,qcd.name,true);
+                CalculateBackgroundIntegral(hist_name, eventCategory, eventRegion, qcd.name, false, bkg_yield_debug);
 
         auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
         if(!hist_data)
-            throw analysis::exception("Unable to find data histograms for Wjet scale factors estimation");
-        const analysis::PhysicalValue yield = analysis::Integral(*hist_data, true) - bkg_yield;
-        if(yield.value < 0)
-            throw analysis::exception("Negative number of estimated events in Wjets SF estimation for ")
-                    << eventCategory << " " << analysis::EventRegion::OS_AntiIsolated << ".";
+            throw analysis::exception("Unable to find data histograms for QCD yield estimation.");
+        const auto data_yield = analysis::Integral(*hist_data, true);
+        const analysis::PhysicalValue yield = data_yield - bkg_yield;
+        if(yield.value < 0) {
+            std::cout << bkg_yield_debug << "\nData yiled = " << data_yield << std::endl;
+            throw exception("Negative QCD yield for histogram '") << hist_name << "' in " << eventCategory << " "
+                                                                  << eventRegion << ".";
+        }
         return yield;
     }
 
@@ -455,6 +469,7 @@ protected:
         const analysis::DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
         const analysis::DataCategory& DYJets_excl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_excl);
         const analysis::DataCategory& WJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC_incl);
+        const analysis::DataCategory& DY_Embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
 
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
@@ -477,7 +492,6 @@ protected:
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 const EventRegion eventRegion = DetermineEventRegion(event, eventCategory);
                 if(eventRegion == EventRegion::Unknown) continue;
-                const bool fill_all = EssentialEventRegions().count(eventRegion);
 
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
@@ -489,11 +503,13 @@ protected:
 
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
                     FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
+                auto& anaData = GetAnaData(eventCategory, dataCategory.name, eventRegion);
                 if (dataCategory.IsData())
-                    GetAnaData(eventCategory, dataCategory.name, eventRegion).FillAll(eventInfo,corrected_weight,fill_all);
+                    anaData.FillAllEnergyScales(eventInfo, corrected_weight);
+                else if(dataCategory.name == DY_Embedded.name && eventInfo.eventEnergyScale == EventEnergyScale::Central)
+                    anaData.FillAllEnergyScales(eventInfo, corrected_weight);
                 else
-                    GetAnaData(eventCategory, dataCategory.name, eventRegion).Fill(eventInfo, corrected_weight,
-                                                                               fill_all,eventInfo.eventEnergyScale);
+                    anaData.Fill(eventInfo, corrected_weight, eventInfo.eventEnergyScale);
             }
         }
     }
@@ -513,42 +529,11 @@ protected:
 
         if(type_category_map.count(eventInfo.eventType)) {
             const std::string& name = type_category_map.at(eventInfo.eventType);
-            const bool fill_all = EssentialEventRegions().count(eventRegion);
             auto& anaData = GetAnaData(EventCategory::TwoJets_TwoBtag, name, eventRegion);
             anaData.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
             auto& anaData_loose = GetAnaData(EventCategory::TwoJets_TwoLooseBtag, name, eventRegion);
             anaData_loose.CreateHistogramsWithCustomBinning("m_sv", mass_bins_2j2t);
-            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, fill_all, eventInfo.eventEnergyScale);
-        }
-    }
-
-    PhysicalValue CalculateTTEmbeddedScaleFactor(const std::string& hist_name)
-    {
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
-        const analysis::DataCategory& TT_lept_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_lept);
-
-        TH1D* hist_embedded = GetSignalHistogram(EventCategory::Inclusive, TTembedded.name, hist_name);
-        TH1D* hist_tt = GetSignalHistogram(EventCategory::Inclusive, TT_lept_MC.name, hist_name);
-        if(!hist_embedded || !hist_tt )
-            throw std::runtime_error("TTembedded or tt_lept_MC hist not found");
-
-        const PhysicalValue n_tt = Integral(*hist_tt, true);
-        const PhysicalValue n_embedded = Integral(*hist_embedded, true);
-        return n_tt / n_embedded;
-    }
-
-    void RescaleHistogramForTTembedded(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValue& scale_factor)
-    {
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
-        const double embedded_scaleFactor = scale_factor.value;
-
-        for(EventRegion eventRegion : AllEventRegions) {
-            auto embedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
-            if(!embedded_hist)
-                throw std::runtime_error("TTembedded hist not found");
-            TH1D* hist = static_cast<TH1D*>(embedded_hist->Clone());
-            hist->Scale(embedded_scaleFactor);
+            GetAnaData(eventCategory, name, eventRegion).Fill(eventInfo, weight, eventInfo.eventEnergyScale);
         }
     }
 
@@ -560,9 +545,9 @@ protected:
         TH1D* hist_embedded = GetSignalHistogram(EventCategory::Inclusive, embedded.name, hist_name);
         TH1D* hist_ztautau = GetSignalHistogram(EventCategory::Inclusive, ZTT_MC.name, hist_name);
         if(!hist_embedded)
-            throw exception("embedded hist not found");
+            throw exception("Embedded histogram not found for '") << hist_name << "'.";
         if(!hist_ztautau )
-            throw exception("ztt hist not found");
+            throw exception("ZTT MC histogram not found for '") << hist_name << "'.";
 
         const PhysicalValue n_ztautau = Integral(*hist_ztautau, true);
         const PhysicalValue n_embedded = Integral(*hist_embedded, true);
@@ -744,43 +729,47 @@ protected:
     }
 
     void SubtractBackgroundHistograms(TH1D& histogram, EventCategory eventCategory, EventRegion eventRegion,
-                                      const std::string& current_category, bool verbose = false)
+                                      const std::string& current_category, std::string& debug_info,
+                                      std::string& negative_bins_info)
     {
         static const double correction_factor = 0.0000001;
-        if(verbose)
-            std::cout << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
-                      << " for Event category '" << eventCategory << "'.\n"
-                      << " for data category '" << current_category << "'.\n"
-                      << "Initial integral: " << Integral(histogram, true) << ".\n";
+
+        std::ostringstream ss_debug;
+
+        ss_debug << "\nSubtracting background for '" << histogram.GetName() << "' in region " << eventRegion
+                 << " for Event category '" << eventCategory << "' for data category '" << current_category
+                 << "'.\nInitial integral: " << Integral(histogram, true) << ".\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category || !category->isCategoryToSubtract ) continue;
 
-            if(verbose)
-                std::cout << "Sample '" << category->name << "': ";
+            ss_debug << "Sample '" << category->name << "': ";
             if(auto other_histogram = GetHistogram(eventCategory, category->name, eventRegion, histogram.GetName())) {
                 histogram.Add(other_histogram, -1);
-                if(verbose)
-                    std::cout << Integral(*other_histogram, true) << ".\n";
-            } else if(verbose)
-                std::cout << "not found.\n";
+                ss_debug << Integral(*other_histogram, true) << ".\n";
+            } else
+                ss_debug << "not found.\n";
         }
 
         const PhysicalValue original_Integral = Integral(histogram, true);
-        if(verbose)
-            std::cout << "Integral after bkg subtraction: " << original_Integral.value << ".\n" << std::endl;
-        if (original_Integral.value < 0)
+        ss_debug << "Integral after bkg subtraction: " << original_Integral.value << ".\n";
+        debug_info = ss_debug.str();
+        if (original_Integral.value < 0) {
+            std::cout << debug_info << std::endl;
             throw exception("Integral after bkg subtraction is negative for histogram '")
                 << histogram.GetName() << "' in event category " << eventCategory << " for event region " << eventRegion
                 << ".";
+        }
+
+        std::ostringstream ss_negative;
 
         for (Int_t n = 1; n <= histogram.GetNbinsX(); ++n){
             if (histogram.GetBinContent(n) >= 0) continue;
             const std::string prefix = histogram.GetBinContent(n) + histogram.GetBinError(n) >= 0 ? "WARNING" : "ERROR";
 
-            std::cout << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
-                      << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
-                      << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
-                      << "].\n";
+            ss_negative << prefix << ": " << histogram.GetName() << " Bin " << n << ", content = "
+                        << histogram.GetBinContent(n) << ", error = " << histogram.GetBinError(n)
+                        << ", bin limits=[" << histogram.GetBinLowEdge(n) << "," << histogram.GetBinLowEdge(n+1)
+                        << "].\n";
             const double error = correction_factor - histogram.GetBinContent(n);
             const double new_error = std::sqrt(error*error + histogram.GetBinError(n)*histogram.GetBinError(n));
             histogram.SetBinContent(n,correction_factor);
@@ -789,47 +778,77 @@ protected:
         const PhysicalValue new_Integral = Integral(histogram, true);
         const PhysicalValue correctionSF = original_Integral/new_Integral;
         histogram.Scale(correctionSF.value);
+        negative_bins_info = ss_negative.str();
     }
 
-    PhysicalValue CalculateBackgroundIntegral(const std::string& hist_name, EventCategory eventCategory, EventRegion eventRegion,
-                                      const std::string& current_category, bool verbose = false)
+    PhysicalValue CalculateBackgroundIntegral(const std::string& hist_name, EventCategory eventCategory,
+                                              EventRegion eventRegion, const std::string& current_category,
+                                              bool expect_at_least_one_contribution = false)
+    {
+        std::string debug_info;
+        return CalculateBackgroundIntegral(hist_name, eventCategory, eventRegion, current_category,
+                                           expect_at_least_one_contribution, debug_info);
+    }
+
+    PhysicalValue CalculateBackgroundIntegral(const std::string& hist_name, EventCategory eventCategory,
+                                              EventRegion eventRegion, const std::string& current_category,
+                                              bool expect_at_least_one_contribution, std::string& debug_info)
     {
         DataCategoryPtrSet bkg_dataCategories;
-        if(verbose)
-            std::cout << "\nCalculating background Integral for '" << hist_name << "' in region " << eventRegion
-                      << " for Event category '" << eventCategory << "'.\n"
-                      << " for data category '" << current_category << "'.\n";
         for (auto category : dataCategoryCollection.GetCategories(DataCategoryType::Background)) {
             if(category->IsComposit() || category->name == current_category || !category->isCategoryToSubtract ) continue;
             bkg_dataCategories.insert(category);
         }
 
-        return CalculateFullIntegral(eventCategory,eventRegion,hist_name,bkg_dataCategories,verbose);
+        return CalculateFullIntegral(eventCategory, eventRegion, hist_name, bkg_dataCategories,
+                                     expect_at_least_one_contribution, debug_info);
     }
 
     PhysicalValue CalculateFullIntegral(analysis::EventCategory eventCategory, analysis::EventRegion eventRegion,
                                         const std::string& hist_name, const DataCategoryPtrSet& dataCategories,
-                                        bool verbose = false)
+                                        bool expect_at_least_one_contribution = false)
+    {
+        std::string debug_info;
+        return CalculateFullIntegral(eventCategory, eventRegion, hist_name, dataCategories,
+                                     expect_at_least_one_contribution, debug_info);
+    }
+
+
+    PhysicalValue CalculateFullIntegral(analysis::EventCategory eventCategory, analysis::EventRegion eventRegion,
+                                        const std::string& hist_name, const DataCategoryPtrSet& dataCategories,
+                                        bool expect_at_least_one_contribution, std::string& debug_info)
     {
         PhysicalValue integral;
         bool hist_found = false;
 
-        for(const auto& dataCategory : dataCategories){
-            if(verbose)
-                std::cout << "Sample '" << dataCategory->name << "': ";
+        std::ostringstream ss_debug;
+
+        ss_debug << "\nCalculating full integral for '" << hist_name << "' in region " << eventRegion
+                 << " for Event category '" << eventCategory << "' considering data categories (" << dataCategories
+                 << ").\n";
+
+        for(const auto& dataCategory : dataCategories) {
+            ss_debug << "Sample '" << dataCategory->name << "': ";
+
             if(auto hist = GetHistogram(eventCategory, dataCategory->name, eventRegion, hist_name)) {
                 hist_found = true;
-                integral += Integral(*hist, true);
-            }
+                const auto hist_integral = Integral(*hist, true);
+                integral += hist_integral;
+                ss_debug << hist_integral << ".\n";
+            } else
+                ss_debug << "not found.\n";
         }
 
-        if(verbose)
-            std::cout << "Bkg Integral: " << integral.value << ".\n" << std::endl;
-        if(!hist_found)
-            throw exception("No histogram with name '") << hist_name <<
-                                                           "' was found in the given data category set, eventCategory: "
-                                                        << eventCategory << " and eventRegion: " << eventRegion <<
-                                                           "to calculate full integral.";
+        ss_debug << "Full integral: " << integral << ".\n";
+        debug_info = ss_debug.str();
+
+        if(!hist_found && expect_at_least_one_contribution) {
+            std::cout << debug_info << std::endl;
+            throw exception("No histogram with name '")
+                << hist_name << "' was found in the given data category set (" << dataCategories
+                << "), eventCategory: " << eventCategory << ", eventRegion: " << eventRegion
+                << "to calculate full integral.";
+        }
 
         return integral;
     }

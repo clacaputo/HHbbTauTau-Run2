@@ -34,11 +34,10 @@ class FlatAnalyzerData_etau : public analysis::FlatAnalyzerData {
 public:
     TH1D_ENTRY_EX(mt_1, 50, 0, 50, "M_{T}[GeV]", "Events", false, 1.1)
 
-    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight,
                       analysis::EventEnergyScale eventEnergyScale) override
     {
-        FlatAnalyzerData::Fill(eventInfo, weight, fill_all, eventEnergyScale);
-        //if(!fill_all) return;
+        FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale);
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);

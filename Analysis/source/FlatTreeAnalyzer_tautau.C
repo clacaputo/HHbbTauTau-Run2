@@ -33,11 +33,10 @@ public:
     TH1D_ENTRY_EX(iso_tau2, 100, 0, 10, "Iso#tau_{2}", "Events", false, 1)
     TH1D_ENTRY_EX(H_tt_charge, 8, -4, 4, "H_{#tau#tau} Charge", "Events", false, 1.1)
 
-    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, bool fill_all,
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight,
                       analysis::EventEnergyScale eventEnergyScale) override
     {
-        FlatAnalyzerData::Fill(eventInfo, weight, fill_all, eventEnergyScale);
-//        if(!fill_all) return;
+        FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale);
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);
@@ -65,13 +64,6 @@ protected:
         return std::shared_ptr<FlatAnalyzerData_tautau>(new FlatAnalyzerData_tautau());
     }
 
-    virtual const analysis::EventRegionSet& EssentialEventRegions() override
-    {
-        static const analysis::EventRegionSet regions = { analysis::EventRegion::OS_Isolated,
-                                                          analysis::EventRegion::OS_AntiIsolated };
-        return regions;
-    }
-
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
                                                        analysis::EventCategory /*eventCategory*/) override
     {
@@ -94,7 +86,8 @@ protected:
     }
 
     virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
-                                                            analysis::EventCategory eventCategory) override
+                                                      analysis::EventCategory eventCategory,
+                                                      std::ostream& s_out) override
     {
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
                                                    analysis::EventCategory::TwoJets_TwoBtag};
@@ -113,7 +106,7 @@ protected:
 
 
         const auto iso_antiIso_sf = yield_SSIso / yield_SSAntiIso;
-        std::cout << eventCategory << ": QCD SF Iso / AntiIso = " << iso_antiIso_sf << ". \n";
+        s_out << eventCategory << ": QCD SF Iso / AntiIso = " << iso_antiIso_sf << ". \n";
         if(refEventCategory == eventCategory)
             return yield_OSAntiIso * iso_antiIso_sf;
 
@@ -121,7 +114,7 @@ protected:
                 CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_AntiIsolated);
 
         const auto medium_loose_sf = yield_SSAntiIso_Medium / yield_SSAntiIso;
-        std::cout << eventCategory << ": QCD SF Medium b-tag / Loose b-tag = " << medium_loose_sf << ".\n";
+        s_out << eventCategory << ": QCD SF Medium b-tag / Loose b-tag = " << medium_loose_sf << ".\n";
 
         return yield_OSAntiIso * iso_antiIso_sf * medium_loose_sf;
     }
@@ -142,27 +135,23 @@ protected:
         if(!hist_shape_data) return;
 
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
-        SubtractBackgroundHistograms(histogram, refEventCategory, analysis::EventRegion::OS_AntiIsolated, qcd.name,true);
+        std::string debug_info, negative_bins_info;
+        SubtractBackgroundHistograms(histogram, refEventCategory, analysis::EventRegion::OS_AntiIsolated, qcd.name,
+                                     debug_info, negative_bins_info);
+        if(negative_bins_info.size())
+            std::cerr << negative_bins_info;
         analysis::RenormalizeHistogram(histogram, yield, true);
     }
 
     virtual PhysicalValueMap CalculateWjetsYields(analysis::EventCategory eventCategory,
                                                         const std::string& hist_name) override
     {
-        PhysicalValueMap valueMap;
-
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
 
-        for (analysis::EventRegion eventRegion : analysis::QcdRegions) {
-            analysis::PhysicalValue yield;
-            try {
-                yield = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories,true);
-            } catch(analysis::exception& ex) {
-                std::cerr << ex.message() << " considering yield equal 0." << std::endl;
-            }
-            valueMap[eventRegion] = yield;
-        }
+        PhysicalValueMap valueMap;
+        for (analysis::EventRegion eventRegion : analysis::QcdRegions)
+            valueMap[eventRegion] = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
         return valueMap;
     }
 };

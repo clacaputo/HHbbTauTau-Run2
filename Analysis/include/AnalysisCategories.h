@@ -292,6 +292,18 @@ std::ostream& operator<<(std::ostream& s, const DataCategory& category){
     return s;
 }
 
+std::ostream& operator<<(std::ostream& s, const DataCategoryPtrSet& dataCategories)
+{
+    bool first_category = true;
+    for(const auto& dataCategory : dataCategories) {
+        if(!first_category)
+            s << ", ";
+        s << dataCategory->name;
+        first_category = false;
+    }
+    return s;
+}
+
 enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_AntiIsolated = 2, SS_Isolated = 3, SS_AntiIsolated = 4,
                          OS_Iso_HighMt = 5, SS_Iso_HighMt = 6, OS_AntiIso_HighMt = 7, SS_AntiIso_HighMt = 8 };
 
