@@ -49,21 +49,16 @@ protected:
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
     }
 
-    bool IsAntiIsolatedRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory)
+    bool IsAntiIsolatedRegion(const ntuple::Flat& event)
     {
-        using namespace cuts;
-        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_ZeroBtag,
-                                                             analysis::EventCategory::TwoJets_OneBtag,
-                                                             analysis::EventCategory::TwoJets_TwoBtag};
-        if (categories.count(eventCategory))
-            return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
-                    event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
-        else
-            return false;
+        using namespace cuts;        
+        return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
+                event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
     }
 
-    virtual analysis::PhysicalValue CalculateQCDScaleFactor(const std::string& hist_name,
-                                                            analysis::EventCategory eventCategory) override
+    virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
+                                                      analysis::EventCategory eventCategory,
+                                                      std::ostream& s_out) override
     {
         static const PhysicalValue sf(1.06, 0.001);
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_TwoBtag};
@@ -75,7 +70,7 @@ protected:
         const analysis::PhysicalValue yield_SSIso =
                 CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
 
-        std::cout << "yield_ssIso: " << yield_SSIso << "\n";
+        s_out << "yield_ssIso: " << yield_SSIso << "\n";
         if(refEventCategory == eventCategory)
             return sf*yield_SSIso;
 
@@ -92,7 +87,7 @@ protected:
         const analysis::PhysicalValue yield_Data_RefCategory = analysis::Integral(*hist_data_RefCategory, true);
 
         const auto evt_ToRef_category_sf = yield_Data_EvtCategory/yield_Data_RefCategory;
-        std::cout << "evt_ToRef_category_sf: " << evt_ToRef_category_sf << "\n";
+        s_out << "evt_ToRef_category_sf: " << evt_ToRef_category_sf << "\n";
 
         return sf * yield_SSIso * evt_ToRef_category_sf;
     }
@@ -131,8 +126,10 @@ protected:
         if(!hist_shape_data) return;
 
         TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
-        if (subtractHistograms)
-            SubtractBackgroundHistograms(histogram,refEventCategory,eventRegion,qcd.name,true);
+        if (subtractHistograms){
+            std::string debug_info, negative_bins_info;
+            SubtractBackgroundHistograms(histogram,refEventCategory,eventRegion,qcd.name,debug_info, negative_bins_info);
+        }
         analysis::RenormalizeHistogram(histogram,scale_factor,true);
 
     }
@@ -153,29 +150,73 @@ protected:
         if(categoriesToRelax.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        for (const auto& eventRegion : HighMt_LowMt_RegionMap) {
+        static const EventRegionMap HighMt_LowMt_RegionMap_forW =
+                { { EventRegion::OS_Iso_HighMt, EventRegion::OS_Isolated },
+                  { EventRegion::SS_Iso_HighMt, EventRegion::SS_Isolated }};
 
+        for (const auto& eventRegion : HighMt_LowMt_RegionMap_forW) {
+            std::string bkg_yield_debug;
             const PhysicalValue bkg_yield =
-                    CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name,true);
+                    CalculateBackgroundIntegral(hist_name,eventCategory,eventRegion.first,wjets.name,false,bkg_yield_debug);
 
             auto hist_data = GetHistogram(eventCategory, data.name, eventRegion.first, hist_name);
             if(!hist_data)
                 throw exception("Unable to find data histograms for Wjet scale factors estimation");
             std::cout << "Data Integral in Wjets Yield: " << Integral(*hist_data, true) << std::endl;
-            const PhysicalValue n_HighMt = Integral(*hist_data, true) - bkg_yield;
-            if(n_HighMt.value < 0)
-                throw exception("Negative number of estimated events in Wjets SF estimation for ")
-                        << eventCategory << " " << eventRegion.first << ".";
+
+            const auto data_yield = analysis::Integral(*hist_data, true);
+            const analysis::PhysicalValue yield = data_yield - bkg_yield;
+            if(yield.value < 0){
+                std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
+                throw exception("Negative Wjets yield for histogram '") << hist_name << "' in " << eventCategory << " "
+                                                                      << eventRegion.first << ".";
+            }
 
             PhysicalValue n_HighMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.first,hist_name,wjets_mc_categories,true);
             PhysicalValue n_LowMt_mc = CalculateFullIntegral(refEventCategory,eventRegion.second,hist_name,wjets_mc_categories,true);
 
             const PhysicalValue ratio_LowToHighMt = n_LowMt_mc / n_HighMt_mc;
 
-            valueMap[eventRegion.second] = n_HighMt * ratio_LowToHighMt;
+            valueMap[eventRegion.second] = yield * ratio_LowToHighMt;
         }
 
         return valueMap;
+    }
+
+    virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) override
+    {
+        const std::map<DataCategoryType, DataCategoryType> z_type_category_map = {
+            { DataCategoryType::ZL_MC, DataCategoryType::ZL }, { DataCategoryType::ZJ_MC, DataCategoryType::ZJ }
+        };
+
+        for (const auto& z_category : z_type_category_map){
+            const analysis::DataCategory& originalZcategory = dataCategoryCollection.GetUniqueCategory(z_category.first);
+            const analysis::DataCategory& newZcategory = dataCategoryCollection.GetUniqueCategory(z_category.second);
+
+            PhysicalValueMap valueMap;
+
+            for(EventRegion eventRegion : AllEventRegions) {
+                auto z_hist_yield = GetHistogram(eventCategory, originalZcategory.name, eventRegion, hist_name);
+                if (z_hist_yield)
+                    valueMap[eventRegion] = Integral(*z_hist_yield,true);
+            }
+
+            static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag,
+                                                               EventCategory::TwoJets_TwoBtag};
+            const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+                    ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+
+            for(const auto& yield_iter : valueMap) {
+                const EventRegion eventRegion = yield_iter.first;
+                const PhysicalValue& yield = yield_iter.second;
+                auto z_hist_shape = GetHistogram(shapeEventCategory, originalZcategory.name, eventRegion, hist_name);
+                if (z_hist_shape){
+                    TH1D& z_hist = CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
+                    RenormalizeHistogram(z_hist,yield,true);
+                }
+            }
+
+        }
     }
 
 };

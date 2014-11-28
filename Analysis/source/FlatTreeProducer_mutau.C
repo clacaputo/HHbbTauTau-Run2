@@ -180,7 +180,7 @@ protected:
         cut(FindAnalysisFinalState(selection.muTau_MC) || !config.RequireSpecificFinalState(), "spec_final_state");
         cut(!config.isDYEmbeddedSample() || GenFilterForZevents(selection.muTau_MC), "genFilter");
 
-        const auto& selectedTriggerPath = config.isDYEmbeddedSample()
+        const auto& selectedTriggerPath = config.IsEmbeddedSample()
                 ? DYEmbedded::trigger::hltPaths : trigger::hltPaths;
         cut(HaveTriggerFired(selectedTriggerPath), "trigger");
 
@@ -224,7 +224,7 @@ protected:
 
         cut(higgses.size(), "mu_tau");
 
-        const auto higgsTriggered = config.isDYEmbeddedSample() ? higgses :
+        const auto higgsTriggered = config.IsEmbeddedSample() ? higgses :
                                                                 ApplyTriggerMatch(higgses,trigger::hltPaths,false);
 
         cut(higgsTriggered.size(), "trigger obj match");
