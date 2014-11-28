@@ -308,8 +308,8 @@ public:
                 const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory);
                 s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
                 CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
-//                CreateHistogramForZcategory(DataCategoryType::ZL,eventCategory,hist_name);
-//                CreateHistogramForZcategory(DataCategoryType::ZJ,eventCategory,hist_name);
+                //CreateHistogramForZcategory(DataCategoryType::ZL,eventCategory,hist_name);
+                //CreateHistogramForZcategory(DataCategoryType::ZJ,eventCategory,hist_name);
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
@@ -622,6 +622,14 @@ protected:
         }
     }
 
+    void CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
+                         const std::string& hist_name)
+    {
+        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
+        auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
+        const PhysicalValue& z_yield = Integral(*z_hist_yield,true);
+    }
+
     void CreateHistogramForZcategory(DataCategoryType dataCategoryType, EventCategory eventCategory,
                                      const std::string& hist_name)
     {
@@ -632,8 +640,7 @@ protected:
                 ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
 
         for(EventRegion eventRegion : AllEventRegions) {
-            auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
-            const PhysicalValue& z_yield = Integral(*z_hist_yield,true);
+
             auto z_hist_shape = GetHistogram(shapeEventCategory, Z.name, eventRegion, hist_name);
             RenormalizeHistogram(*z_hist_shape,z_yield,true);
         }
