@@ -1,2 +1,0 @@
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_56_1_iWr.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_14_1_dix.root

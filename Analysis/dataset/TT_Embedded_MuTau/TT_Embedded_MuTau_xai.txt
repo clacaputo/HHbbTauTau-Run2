@@ -1,2 +1,0 @@
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_20_1_2Zp.root
-/store/user/kandroso/TT_Embedded/MuTau/TREE/Tree_75_1_zcE.root
