@@ -308,9 +308,7 @@ public:
                 const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory);
                 s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
                 CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
-//                const auto ZL_yield = CalculateZYield(DataCategoryType::ZL,eventCategory,hist_name);
-//                CreateHistogramForZcategory(DataCategoryType::ZL,eventCategory,hist_name,ZL_yield);
-                //CreateHistogramForZcategory(DataCategoryType::ZJ,eventCategory,hist_name);
+                CreateHistogramForZcategory(eventCategory,hist_name);
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
