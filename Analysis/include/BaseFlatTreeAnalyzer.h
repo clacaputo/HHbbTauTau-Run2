@@ -308,7 +308,8 @@ public:
                 const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory);
                 s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
                 CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
-                //CreateHistogramForZcategory(DataCategoryType::ZL,eventCategory,hist_name);
+//                const auto ZL_yield = CalculateZYield(DataCategoryType::ZL,eventCategory,hist_name);
+//                CreateHistogramForZcategory(DataCategoryType::ZL,eventCategory,hist_name,ZL_yield);
                 //CreateHistogramForZcategory(DataCategoryType::ZJ,eventCategory,hist_name);
             }
 
@@ -380,7 +381,7 @@ protected:
         const auto data_yield = analysis::Integral(*hist_data, true);
         const analysis::PhysicalValue yield = data_yield - bkg_yield;
         if(yield.value < 0) {
-            std::cout << bkg_yield_debug << "\nData yiled = " << data_yield << std::endl;
+            std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
             throw exception("Negative QCD yield for histogram '") << hist_name << "' in " << eventCategory << " "
                                                                   << eventRegion << ".";
         }
@@ -403,11 +404,9 @@ protected:
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(DataCategoryType::WJets_MC);
 
-        for(EventRegion eventRegion : QcdRegions) {
-            if(!yield_map.count(eventRegion))
-                throw exception("W-jet SF not found for ") << eventRegion;
-
-            const PhysicalValue& yield = yield_map.at(eventRegion);
+        for(const auto& yield_entry : yield_map) {
+            const EventRegion eventRegion = yield_entry.first;
+            const PhysicalValue& yield = yield_entry.second;
             TH1D* hist = nullptr;
             for (const analysis::DataCategory* wjets_category : wjets_mc_categories){
                 if(auto hist_mc = GetHistogram(shapeEventCategory, wjets_category->name, eventRegion, hist_name)) {
@@ -588,16 +587,23 @@ protected:
         }
     }
 
-    void CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
+    //fix ZL ZJ function -> all together!!!!
+    PhysicalValueMap CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
                          const std::string& hist_name)
     {
         const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
-        auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
-        const PhysicalValue& z_yield = Integral(*z_hist_yield,true);
+        PhysicalValueMap valueMap;
+
+        for(EventRegion eventRegion : AllEventRegions) {
+            auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
+            if (z_hist_yield)
+                valueMap[eventRegion] = Integral(*z_hist_yield,true);
+        }
+        return valueMap;
     }
 
     void CreateHistogramForZcategory(DataCategoryType dataCategoryType, EventCategory eventCategory,
-                                     const std::string& hist_name)
+                                     const std::string& hist_name, const PhysicalValueMap valueMap)
     {
         const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
 
@@ -605,10 +611,11 @@ protected:
         const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
                 ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
 
-        for(EventRegion eventRegion : AllEventRegions) {
-
+        for(EventRegion eventRegion : valueMap) {
+            if (!valueMap.count(eventRegion))
+                throw exception("yield not found for Z category, for this event region: ") << ;
             auto z_hist_shape = GetHistogram(shapeEventCategory, Z.name, eventRegion, hist_name);
-            RenormalizeHistogram(*z_hist_shape,z_yield,true);
+            RenormalizeHistogram(*z_hist_shape,valueMap.at(eventRegion),true);
         }
     }
 
