@@ -588,36 +588,36 @@ protected:
     }
 
     //fix ZL ZJ function -> all together!!!!
-    PhysicalValueMap CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
-                         const std::string& hist_name)
-    {
-        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
-        PhysicalValueMap valueMap;
+//    PhysicalValueMap CalculateZYield(DataCategoryType dataCategoryType, EventCategory eventCategory,
+//                         const std::string& hist_name)
+//    {
+//        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
+//        PhysicalValueMap valueMap;
 
-        for(EventRegion eventRegion : AllEventRegions) {
-            auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
-            if (z_hist_yield)
-                valueMap[eventRegion] = Integral(*z_hist_yield,true);
-        }
-        return valueMap;
-    }
+//        for(EventRegion eventRegion : AllEventRegions) {
+//            auto z_hist_yield = GetHistogram(eventCategory, Z.name, eventRegion, hist_name);
+//            if (z_hist_yield)
+//                valueMap[eventRegion] = Integral(*z_hist_yield,true);
+//        }
+//        return valueMap;
+//    }
 
-    void CreateHistogramForZcategory(DataCategoryType dataCategoryType, EventCategory eventCategory,
-                                     const std::string& hist_name, const PhysicalValueMap valueMap)
-    {
-        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
+//    void CreateHistogramForZcategory(DataCategoryType dataCategoryType, EventCategory eventCategory,
+//                                     const std::string& hist_name, const PhysicalValueMap valueMap)
+//    {
+//        const analysis::DataCategory& Z = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
 
-        static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
-        const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
-                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+//        static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
+//        const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+//                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
 
-        for(EventRegion eventRegion : valueMap) {
-            if (!valueMap.count(eventRegion))
-                throw exception("yield not found for Z category, for this event region: ") << ;
-            auto z_hist_shape = GetHistogram(shapeEventCategory, Z.name, eventRegion, hist_name);
-            RenormalizeHistogram(*z_hist_shape,valueMap.at(eventRegion),true);
-        }
-    }
+//        for(EventRegion eventRegion : valueMap) {
+//            if (!valueMap.count(eventRegion))
+//                throw exception("yield not found for Z category, for this event region: ") << ;
+//            auto z_hist_shape = GetHistogram(shapeEventCategory, Z.name, eventRegion, hist_name);
+//            RenormalizeHistogram(*z_hist_shape,valueMap.at(eventRegion),true);
+//        }
+//    }
 
 
     void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,
