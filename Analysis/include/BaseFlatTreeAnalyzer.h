@@ -539,36 +539,6 @@ protected:
         }
     }
 
-    PhysicalValue CalculateTTEmbeddedScaleFactor(const std::string& hist_name)
-    {
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
-        const analysis::DataCategory& TT_lept_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_lept);
-
-        TH1D* hist_embedded = GetSignalHistogram(EventCategory::Inclusive, TTembedded.name, hist_name);
-        TH1D* hist_tt = GetSignalHistogram(EventCategory::Inclusive, TT_lept_MC.name, hist_name);
-        if(!hist_embedded || !hist_tt )
-            throw std::runtime_error("TTembedded or tt_lept_MC hist not found");
-
-        const PhysicalValue n_tt = Integral(*hist_tt, true);
-        const PhysicalValue n_embedded = Integral(*hist_embedded, true);
-        return n_tt / n_embedded;
-    }
-
-    void RescaleHistogramForTTembedded(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValue& scale_factor)
-    {
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
-        const double embedded_scaleFactor = scale_factor.value;
-
-        for(EventRegion eventRegion : AllEventRegions) {
-            auto embedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
-            if(!embedded_hist)
-                throw std::runtime_error("TTembedded hist not found");
-            TH1D* hist = static_cast<TH1D*>(embedded_hist->Clone());
-            hist->Scale(embedded_scaleFactor);
-        }
-    }
-
     PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory)
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
@@ -595,30 +565,26 @@ protected:
         const analysis::DataCategory& embedded = useEmbedded
                 ? dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded)
                 : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
-        static const PhysicalValue one(1, 0.001);
-        const PhysicalValue embedded_scaleFactor = useEmbedded ? ztt_yield : one;
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
         const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
         const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
 
         for(EventRegion eventRegion : AllEventRegions) {
-
             auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
             auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name);
             auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
 
             if (embedded_hist){
                 TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
-                RenormalizeHistogram(ztt_hist,embedded_scaleFactor,true);
-                if (ztt_l_hist){
+                if(useEmbedded)
+                    RenormalizeHistogram(ztt_hist, ztt_yield, true);
+                if (ztt_l_hist)
                     ztt_hist.Add(ztt_l_hist);
-                }
                 if (TTembedded_hist)
                     ztt_hist.Add(TTembedded_hist, -1);
             }
-            if (!embedded_hist && ztt_l_hist){
+            if (!embedded_hist && ztt_l_hist)
                 CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
-            }
         }
     }
 
