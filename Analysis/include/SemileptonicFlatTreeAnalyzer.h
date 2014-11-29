@@ -134,7 +134,8 @@ protected:
 
     }
 
-    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) override
+    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
+                                                  bool fullEstimate) override
     {
         PhysicalValueMap valueMap;
         using analysis::EventRegion;

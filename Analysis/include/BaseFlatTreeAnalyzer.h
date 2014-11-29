@@ -155,6 +155,7 @@ public:
             m_ttbb_kinfit_only(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
         if (mass_tautau > cuts::massWindow::m_tautau_low && mass_tautau < cuts::massWindow::m_tautau_high &&
                 eventInfo.Hbb.M() > cuts::massWindow::m_bb_low && eventInfo.Hbb.M() < cuts::massWindow::m_bb_high) {
+            convergence("withMassCut").Fill(eventInfo.fitResults.convergence,weight);
             if (eventInfo.fitResults.has_valid_mass)
                 m_ttbb_kinfit_only_massCut(eventEnergyScale).Fill(m_ttbb_kinFit, weight);
         }
@@ -312,7 +313,7 @@ public:
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name);
+                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name,true);
                 for (const auto yield_entry : wjets_yields){
                     s_out << eventCategory << ": W+jets yield in " << yield_entry.first << " = " << yield_entry.second
                           << ".\n";
@@ -361,7 +362,8 @@ protected:
                                             std::ostream& s_out) = 0;
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
                              const PhysicalValue& scale_factor) = 0;
-    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name) = 0;
+    virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
+                                                  bool fullEstimate) = 0;
     virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) = 0;
 
     analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
