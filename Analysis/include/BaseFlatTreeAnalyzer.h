@@ -478,7 +478,8 @@ protected:
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
                                                                                  event.nBjets_retagged,
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
-                                                                                 cuts::Htautau_Summer13::btag::CSVM);
+                                                                                 cuts::Htautau_Summer13::btag::CSVM,
+                                                                                 false);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
