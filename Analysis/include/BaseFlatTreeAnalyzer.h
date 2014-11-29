@@ -481,7 +481,7 @@ protected:
                                                                                  event.nBjets_retagged,
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
-                                                                                 false);
+                                                                                 true);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
