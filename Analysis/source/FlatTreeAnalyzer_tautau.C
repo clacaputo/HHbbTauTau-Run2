@@ -161,6 +161,41 @@ protected:
         return valueMap;
     }
 
+    virtual analysis::PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name,
+                                                             analysis::EventCategory eventCategory) override
+    {
+        const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
+
+        TH1D* hist_ztautau = GetSignalHistogram(eventCategory, ZTT_MC.name, hist_name);
+        if(!hist_ztautau )
+            throw analysis::exception("ztt hist not found in event category") << eventCategory;
+
+        const analysis::PhysicalValue n_ztautau = analysis::Integral(*hist_ztautau, true);
+        return n_ztautau;
+    }
+
+    virtual void CreateHistogramForZTT(analysis::EventCategory eventCategory, const std::string& hist_name,
+                               const analysis::PhysicalValue& ztt_yield, bool useEmbedded) override
+    {
+        const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT);
+
+        static const analysis::EventCategorySet categoriesToRelax = {analysis::EventCategory::TwoJets_OneBtag,
+                                                                     analysis::EventCategory::TwoJets_TwoBtag};
+        const analysis::EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+                ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+
+        for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
+
+            auto ztt_mc_hist = GetHistogram(shapeEventCategory, ZTT_MC.name, eventRegion, hist_name);
+
+            if (ztt_mc_hist){
+                TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_mc_hist);
+                RenormalizeHistogram(ztt_hist, ztt_yield, true);
+            }
+        }
+    }
+
     virtual void CreateHistogramForZcategory(analysis::EventCategory eventCategory, const std::string& hist_name) override
     {
         const std::map<analysis::DataCategoryType, analysis::DataCategoryType> z_type_category_map = {

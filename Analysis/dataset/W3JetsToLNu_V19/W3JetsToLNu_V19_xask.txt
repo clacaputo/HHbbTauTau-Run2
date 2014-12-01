@@ -1,5 +1,3 @@
-/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_2508_1_mQN.root
-/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_2519_1_rg5.root
-/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_2681_1_4ak.root
-/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_1473_1_EiM.root
-/store/user/kandroso/W2JetsToLNu_V19/TREE/Tree_292_1_7yN.root
+/store/user/kandroso/W3JetsToLNu_V19/TREE/Tree_1447_1_P8A.root
+/store/user/kandroso/W3JetsToLNu_V19/TREE/Tree_285_1_Njq.root
+/store/user/kandroso/W3JetsToLNu_V19/TREE/Tree_126_1_IKE.root
