@@ -56,6 +56,56 @@ protected:
                 event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
     }
 
+    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory) override
+    {
+        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+        const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+
+        TH1D* hist_embedded_inclusive = GetSignalHistogram(EventCategory::Inclusive, embedded.name, hist_name);
+        TH1D* hist_embedded_category = GetSignalHistogram(eventCategory, embedded.name, hist_name);
+        TH1D* hist_ztautau_inclusive = GetSignalHistogram(EventCategory::Inclusive, ZTT_MC.name, hist_name);
+        if(!hist_embedded_inclusive)
+            throw exception("embedded hist in inclusive category not found");
+        if(!hist_embedded_category)
+            throw exception("embedded hist not found in event category: ") << eventCategory << "\n";
+        if(!hist_ztautau_inclusive )
+            throw exception("ztt hist in inclusive category not found");
+
+        const PhysicalValue n_ztautau_inclusive = Integral(*hist_ztautau_inclusive, true);
+        const PhysicalValue embedded_eff = Integral(*hist_embedded_category, true)/Integral(*hist_embedded_inclusive, true);
+        return n_ztautau_inclusive * embedded_eff;
+    }
+
+    virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
+                               const PhysicalValue& ztt_yield, bool useEmbedded) override
+    {
+        const analysis::DataCategory& embedded = useEmbedded
+                ? dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded)
+                : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
+        const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
+        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
+
+        for(EventRegion eventRegion : AllEventRegions) {
+            auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
+            auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name);
+            auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
+
+            if (embedded_hist){
+                TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
+                if(useEmbedded)
+                    RenormalizeHistogram(ztt_hist, ztt_yield, true);
+                if (ztt_l_hist)
+                    ztt_hist.Add(ztt_l_hist);
+                if (TTembedded_hist)
+                    ztt_hist.Add(TTembedded_hist, -1);
+            }
+            if (!embedded_hist && ztt_l_hist)
+                CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
+        }
+    }
+
+
     virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
                                                       analysis::EventCategory eventCategory,
                                                       std::ostream& s_out) override
