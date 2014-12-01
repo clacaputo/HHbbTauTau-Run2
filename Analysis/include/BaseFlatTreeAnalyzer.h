@@ -306,9 +306,9 @@ public:
             std::ostream& s_out = interesting_histograms.count(hist_name) ? std::cout : ss_debug;
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory);
+                const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory,false);
                 s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
-                CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
+                CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, false);
                 CreateHistogramForZcategory(eventCategory,hist_name);
             }
 
@@ -365,7 +365,8 @@ protected:
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) = 0;
     virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) = 0;
-    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory) = 0;
+    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory,
+                                                   bool useEmbedded) = 0;
     virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
                                const PhysicalValue& ztt_yield, bool useEmbedded) = 0;
 
@@ -513,7 +514,7 @@ protected:
                 if (dataCategory.IsData())
                     anaData.FillAllEnergyScales(eventInfo, corrected_weight);
                 else if(dataCategory.name == DY_Embedded.name && eventInfo.eventEnergyScale == EventEnergyScale::Central)
-                    anaData.FillAllEnergyScales(eventInfo, corrected_weight);
+                    anaData.FillCentralAndJetEnergyScales(eventInfo, corrected_weight);
                 else
                     anaData.Fill(eventInfo, corrected_weight, eventInfo.eventEnergyScale);
             }

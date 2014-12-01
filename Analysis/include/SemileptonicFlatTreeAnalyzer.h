@@ -56,7 +56,8 @@ protected:
                 event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
     }
 
-    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory) override
+    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory,
+                                                   bool useEmbedded) override
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
@@ -97,7 +98,7 @@ protected:
                     RenormalizeHistogram(ztt_hist, ztt_yield, true);
                 if (ztt_l_hist)
                     ztt_hist.Add(ztt_l_hist);
-                if (TTembedded_hist)
+                if (TTembedded_hist && useEmbedded)
                     ztt_hist.Add(TTembedded_hist, -1);
             }
             if (!embedded_hist && ztt_l_hist)
