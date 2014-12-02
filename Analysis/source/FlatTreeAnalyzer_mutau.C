@@ -30,20 +30,6 @@
 
 #include "Analysis/include/SemileptonicFlatTreeAnalyzer.h"
 
-class FlatAnalyzerData_mutau : public analysis::FlatAnalyzerData {
-public:
-    TH1D_ENTRY_EX(mt_1, 50, 0, 50, "M_{T}[GeV]", "Events", false, 1.1)
-
-    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight,
-                      analysis::EventEnergyScale eventEnergyScale) override
-    {
-        FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale);
-        if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
-        const ntuple::Flat& event = *eventInfo.event;
-        mt_1().Fill(event.mt_1, weight);
-    }
-};
-
 class FlatTreeAnalyzer_mutau : public analysis::SemileptonicFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_mutau(const std::string& source_cfg, const std::string& _inputPath,
@@ -55,11 +41,6 @@ public:
 
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::MuTau; }
-
-    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData() override
-    {
-        return std::shared_ptr<FlatAnalyzerData_mutau>(new FlatAnalyzerData_mutau());
-    }
 
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
                                                        analysis::EventCategory eventCategory) override

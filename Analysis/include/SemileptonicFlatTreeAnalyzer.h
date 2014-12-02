@@ -30,6 +30,35 @@
 
 namespace analysis {
 
+class FlatAnalyzerData_semileptonic : public analysis::FlatAnalyzerData {
+public:
+    TH1D_ENTRY_EX(mt_1, 50, 0, 50, "M_{T}[GeV]", "Events", false, 1.1)
+
+    virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight, EventEnergyScale eventEnergyScale,
+                      EventSubCategory subCategory) override
+    {
+        FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale, subCategory);
+        if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
+        const ntuple::Flat& event = *eventInfo.event;
+        mt_1().Fill(event.mt_1, weight);
+    }
+
+    virtual const std::vector<double>& M_ttbb_Bins() const override
+    {
+        static const std::vector<double> bins = { 200, 250, 280, 310, 340, 370, 400, 500, 600, 700 };
+        return bins;
+    }
+};
+
+class FlatAnalyzerData_semileptonic_2tag : public analysis::FlatAnalyzerData_semileptonic {
+public:
+    virtual const std::vector<double>& M_tt_Bins() const override
+    {
+        static const std::vector<double> bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350 };
+        return bins;
+    }
+};
+
 class SemileptonicFlatTreeAnalyzer : public BaseFlatTreeAnalyzer {
 public:
     SemileptonicFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
@@ -39,6 +68,14 @@ public:
     }
 
 protected:
+
+    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData(EventCategory eventCategory) override
+    {
+        if(eventCategory == EventCategory::TwoJets_TwoBtag || eventCategory == EventCategory::TwoJets_TwoLooseBtag)
+            return std::shared_ptr<FlatAnalyzerData>(new FlatAnalyzerData_semileptonic_2tag());
+        return std::shared_ptr<FlatAnalyzerData>(new FlatAnalyzerData_semileptonic());
+    }
+
     bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory)
     {
         using namespace cuts;
@@ -162,8 +199,6 @@ protected:
         }
         else
             return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,scale_factor,false);
-
-
     }
 
     void EstimateQCDEx(const std::string& hist_name, analysis::EventCategory eventCategory,

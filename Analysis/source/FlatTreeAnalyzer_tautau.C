@@ -31,19 +31,31 @@ public:
     TH1D_ENTRY_EX(mt_1, 20, 0, 200, "M_{T}[GeV]", "Events", false, 1.1)
     TH1D_ENTRY_EX(iso_tau1, 100, 0, 10, "Iso#tau_{1}", "Events", false, 1)
     TH1D_ENTRY_EX(iso_tau2, 100, 0, 10, "Iso#tau_{2}", "Events", false, 1)
-    TH1D_ENTRY_EX(H_tt_charge, 8, -4, 4, "H_{#tau#tau} Charge", "Events", false, 1.1)
 
     virtual void Fill(const analysis::FlatEventInfo& eventInfo, double weight,
-                      analysis::EventEnergyScale eventEnergyScale) override
+                      analysis::EventEnergyScale eventEnergyScale, analysis::EventSubCategory subCategory) override
     {
-        FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale);
+        FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale, subCategory);
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
         mt_1().Fill(event.mt_1, weight);
-//        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
-//        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
-//        int diTau_charge = event.q_1*event.q_2;
-//        H_tt_charge().Fill(diTau_charge,weight);
+        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
+        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
+    }
+
+    virtual const std::vector<double>& M_ttbb_Bins() const override
+    {
+        static const std::vector<double> bins = { 200, 250, 280, 310, 340, 370, 400, 500, 600, 700 };
+        return bins;
+    }
+};
+
+class FlatAnalyzerData_tautau_2tag : public FlatAnalyzerData_tautau {
+public:
+    virtual const std::vector<double>& M_tt_Bins() const override
+    {
+        static const std::vector<double> bins = { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350 };
+        return bins;
     }
 };
 
@@ -59,9 +71,12 @@ public:
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::TauTau; }
 
-    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData() override
+    virtual std::shared_ptr<analysis::FlatAnalyzerData> MakeAnaData(analysis::EventCategory eventCategory) override
     {
-        return std::shared_ptr<FlatAnalyzerData_tautau>(new FlatAnalyzerData_tautau());
+        if(eventCategory == analysis::EventCategory::TwoJets_TwoBtag
+                || eventCategory == analysis::EventCategory::TwoJets_TwoLooseBtag)
+            return std::shared_ptr<analysis::FlatAnalyzerData>(new FlatAnalyzerData_tautau_2tag());
+        return std::shared_ptr<analysis::FlatAnalyzerData>(new FlatAnalyzerData_tautau());
     }
 
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
@@ -178,7 +193,7 @@ protected:
                 throw analysis::exception("embedded hist in inclusive category not found");
             if(!hist_embedded_category)
                 throw analysis::exception("embedded hist not found in event category: ") << eventCategory << "\n";
-            if(!hist_ztautau_inclusive )
+            if(!hist_ztautau_inclusive)
                 throw analysis::exception("ztt hist in inclusive category not found");
 
             const analysis::PhysicalValue n_ztautau_inclusive = analysis::Integral(*hist_ztautau_inclusive, true);

@@ -314,6 +314,9 @@ enum class EventCategory { Inclusive = 0, TwoJets_Inclusive = 1, TwoJets_ZeroBta
                            TwoJets_TwoBtag = 4, TwoJets_ZeroLooseBtag = 5, TwoJets_OneLooseBtag = 6,
                            TwoJets_TwoLooseBtag = 7 };
 
+enum class EventSubCategory { NoCuts = 0, KinematicFitConverged = 1, MassWindow = 2,
+                              KinematicFitConvergedWithMassWindow = 3 };
+
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
           { { EventCategory::Inclusive, "Inclusive" }, { EventCategory::TwoJets_Inclusive, "2jets" },
@@ -329,13 +332,20 @@ static const std::map<EventRegion, std::string> eventRegionNamesMap =
             { EventRegion::SS_AntiIsolated, "SS_AntiIsolated"}, { EventRegion::OS_Iso_HighMt, "OS_Iso_HighMt"},
             { EventRegion::SS_Iso_HighMt, "SS_Iso_HighMt"} , { EventRegion::OS_AntiIso_HighMt, "OS_AntiIso_HighMt"},
             { EventRegion::SS_AntiIso_HighMt, "SS_AntiIso_HighMt"} };
+
+static const std::map<EventSubCategory, std::string> eventSubCategoryNamesMap =
+          { { EventSubCategory::NoCuts, "NoCuts" }, { EventSubCategory::KinematicFitConverged, "KinFitConverged" },
+            { EventSubCategory::MassWindow, "MassWindow" },
+            { EventSubCategory::KinematicFitConvergedWithMassWindow, "KinFitConvergedWithMassWindow" } };
 } // namespace detail
 
 typedef std::vector<EventCategory> EventCategoryVector;
 typedef std::set<EventCategory> EventCategorySet;
 typedef std::map<EventCategory, EventCategory> EventCategoryMap;
+typedef std::set<EventSubCategory> EventSubCategorySet;
 
 static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
+static const EventSubCategorySet AllEventSubCategories = tools::collect_map_keys(detail::eventSubCategoryNamesMap);
 
 static const EventCategoryMap MediumToLoose_EventCategoryMap =
         { { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_ZeroLooseBtag },
@@ -385,6 +395,10 @@ std::ostream& operator<<(std::ostream& s, const EventRegion& eventRegion) {
     return s;
 }
 
+std::ostream& operator<<(std::ostream& s, const EventSubCategory& eventSubCategory) {
+    s << detail::eventSubCategoryNamesMap.at(eventSubCategory);
+    return s;
+}
 
 EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, Int_t nBjets_retagged, double CSVL,
                                              double CSVM, bool doRetag = false)

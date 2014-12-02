@@ -42,6 +42,7 @@
         return Get((type*)nullptr, #name, key, ##__VA_ARGS__); \
     } \
     root_ext::SmartHistogram< type >& name() { return name(""); } \
+    static std::string name##_Name() { return #name; } \
     /**/
 
 #define ENTRY_2D(type, name, ...) \
