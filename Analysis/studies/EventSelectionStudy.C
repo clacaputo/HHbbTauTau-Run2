@@ -50,10 +50,8 @@ protected:
         if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
 
         if(eventInfo.eventEnergyScale == analysis::EventEnergyScale::Central &&
-                category == EventCategory::TwoJets_ZeroBtag &&
-//                (eventInfo.eventType == ntuple::EventType::ZTT || eventInfo.eventType == ntuple::EventType::ZTT_L))
-                (eventInfo.eventType == ntuple::EventType::ZL))
-            std::cout << eventInfo.event->evt << std::endl;
+                category == EventCategory::TwoJets_TwoBtag)
+            std::cout << eventInfo.eventType << " " << eventInfo.event->evt << std::endl;
     }
 
 private:

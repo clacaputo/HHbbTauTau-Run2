@@ -107,9 +107,9 @@ public:
             std::ostream& s_out = interesting_histograms.count(hist_name) ? std::cout : ss_debug;
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory,false);
+                const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory,true);
                 s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
-                CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, false);
+                CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
                 CreateHistogramForZcategory(eventCategory,hist_name);
             }
 
@@ -278,11 +278,12 @@ protected:
             tree->GetEntry(current_entry);
             const ntuple::Flat& event = tree->data;
 
+            const bool useRetag = dataCategory.IsData() || dataCategory.name == DY_Embedded.name  ? false : true;
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
                                                                                  event.nBjets_retagged,
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
-                                                                                 true);
+                                                                                 useRetag);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;

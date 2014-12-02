@@ -339,3 +339,4 @@ HHKinFit/include/PSMath.h
 RunTools/src/Scan.C
 RunTools/scan_trees.sh
 Analysis/include/FlatAnalyzerData.h
+RunTools/source/Scan.C
