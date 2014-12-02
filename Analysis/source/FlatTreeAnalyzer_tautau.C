@@ -171,19 +171,29 @@ protected:
         analysis::PhysicalValue zttYield;
         if (useEmbedded){
             const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Embedded);
+            const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::TT_Embedded);
             TH1D* hist_embedded_inclusive = GetSignalHistogram(analysis::EventCategory::Inclusive, embedded.name, hist_name);
             TH1D* hist_embedded_category = GetSignalHistogram(eventCategory, embedded.name, hist_name);
+            TH1D* hist_TTembedded_inclusive = GetSignalHistogram(analysis::EventCategory::Inclusive, TTembedded.name, hist_name);
+            TH1D* hist_TTembedded_category = GetSignalHistogram(eventCategory, TTembedded.name, hist_name);
             TH1D* hist_ztautau_inclusive = GetSignalHistogram(analysis::EventCategory::Inclusive, ZTT_MC.name, hist_name);
             if(!hist_embedded_inclusive)
                 throw analysis::exception("embedded hist in inclusive category not found");
             if(!hist_embedded_category)
                 throw analysis::exception("embedded hist not found in event category: ") << eventCategory << "\n";
+            if(!hist_TTembedded_inclusive)
+                throw analysis::exception("TTembedded hist in inclusive category not found");
+            if(!hist_TTembedded_category)
+                throw analysis::exception("TTembedded hist not found in event category: ") << eventCategory << "\n";
             if(!hist_ztautau_inclusive )
                 throw analysis::exception("ztt hist in inclusive category not found");
 
+            const analysis::PhysicalValue n_emb_inclusive =
+                    analysis::Integral(*hist_embedded_inclusive, true) - analysis::Integral(*hist_TTembedded_inclusive, true);
+            const analysis::PhysicalValue n_emb_category =
+                    analysis::Integral(*hist_embedded_category, true) - analysis::Integral(*hist_TTembedded_category, true);
             const analysis::PhysicalValue n_ztautau_inclusive = analysis::Integral(*hist_ztautau_inclusive, true);
-            const analysis::PhysicalValue embedded_eff =
-                    analysis::Integral(*hist_embedded_category, true)/analysis::Integral(*hist_embedded_inclusive, true);
+            const analysis::PhysicalValue embedded_eff = n_emb_category/n_emb_inclusive;
             zttYield = n_ztautau_inclusive * embedded_eff;
         }
         else {
@@ -209,25 +219,25 @@ protected:
         const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_L);
         const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::TT_Embedded);
 
-//        static const analysis::EventCategorySet categoriesToRelax = {analysis::EventCategory::TwoJets_OneBtag,
-//                                                                     analysis::EventCategory::TwoJets_TwoBtag};
+        static const analysis::EventCategorySet categoriesToRelax = {analysis::EventCategory::TwoJets_OneBtag,
+                                                                     analysis::EventCategory::TwoJets_TwoBtag};
 
-        const analysis::EventCategory shapeEventCategory = eventCategory;
-//        if (categoriesToRelax.count(eventCategory))
-//            shapeEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+        analysis::EventCategory shapeEventCategory = eventCategory;
+        if (categoriesToRelax.count(eventCategory))
+            shapeEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
             auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
             auto embedded_hist = GetHistogram(shapeEventCategory, embedded.name, eventRegion, hist_name);
-            auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
+            auto TTembedded_hist = GetHistogram(shapeEventCategory, TTembedded.name, eventRegion, hist_name);
 
             if (embedded_hist){
                 TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
-                RenormalizeHistogram(ztt_hist, ztt_yield, true);
-                if (ztt_l_hist)
-                    ztt_hist.Add(ztt_l_hist);
                 if (TTembedded_hist && useEmbedded)
                     ztt_hist.Add(TTembedded_hist, -1);
+                RenormalizeHistogram(ztt_hist, ztt_yield, true);
+                if (ztt_l_hist)
+                    ztt_hist.Add(ztt_l_hist);                
             }
             if (!embedded_hist && ztt_l_hist)
                 CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);

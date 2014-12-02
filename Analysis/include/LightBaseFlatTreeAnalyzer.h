@@ -84,7 +84,7 @@ public:
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
             const EventCategoryVector eventCategories =
-                    DetermineEventCategories(event.csv_Bjets, event.nBjets_retagged, CSVL, CSVM,false);
+                    DetermineEventCategories(event.csv_Bjets, event.nBjets_retagged, CSVL, CSVM,true);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), recalc_kinfit);
             for (EventCategory eventCategory : eventCategories)
                 AnalyzeEvent(eventInfo, eventCategory);
@@ -108,6 +108,13 @@ protected:
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
     }
 
+    bool IsAntiIsolatedRegion(const ntuple::Flat& event) const
+    {
+        using namespace cuts;
+        return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
+                event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
+    }
+
     TFile& GetOutputFile() { return *outputFile; }
 
     analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo, analysis::EventCategory category) const
@@ -119,6 +126,7 @@ protected:
 
             if(!event.againstMuonTight_2
                     || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                    || (event.pfRelIso_1 >= muonID::pFRelIso && !IsAntiIsolatedRegion(event))
                     || (event.mt_1 >= muonID::mt && !IsHighMtRegion(event,category)))
                 return EventRegion::Unknown;
 
@@ -126,28 +134,33 @@ protected:
             const bool iso = event.pfRelIso_1 < muonID::pFRelIso;
             const bool low_mt = event.mt_1 < muonID::mt;
 
+
             if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
-            else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-            else if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
-            else return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
+            if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+            if(os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+            return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
         if (eventInfo.channel == Channel::ETau){
+
             using namespace cuts::Htautau_Summer13::ETau;
 
             if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || (event.mt_1 >= electronID::mt && !IsHighMtRegion(event,category)))
+                    || (event.pfRelIso_1 >= electronID::pFRelIso && !IsAntiIsolatedRegion(event))
+                    || (event.mt_1 >= electronID::mt && !IsHighMtRegion(event,category)) /*|| event.pt_2 <= 30*/ )
                 return EventRegion::Unknown;
 
             const bool os = event.q_1 * event.q_2 == -1;
             const bool iso = event.pfRelIso_1 < electronID::pFRelIso;
             const bool low_mt = event.mt_1 < electronID::mt;
 
+
             if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
-            else if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
-            else if(!iso && os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
-            else return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
+            if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+            if(os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+            return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
         if (eventInfo.channel == Channel::TauTau){
+
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
             if(!event.againstElectronLooseMVA_2
