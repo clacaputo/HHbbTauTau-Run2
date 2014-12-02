@@ -306,14 +306,14 @@ public:
             std::ostream& s_out = interesting_histograms.count(hist_name) ? std::cout : ss_debug;
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory);
+                const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory,false);
                 s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
-                CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
+                CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, false);
                 CreateHistogramForZcategory(eventCategory,hist_name);
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name,true);
+                const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name,false);
                 for (const auto yield_entry : wjets_yields){
                     s_out << eventCategory << ": W+jets yield in " << yield_entry.first << " = " << yield_entry.second
                           << ".\n";
@@ -365,6 +365,10 @@ protected:
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) = 0;
     virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) = 0;
+    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory,
+                                                   bool useEmbedded) = 0;
+    virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
+                               const PhysicalValue& ztt_yield, bool useEmbedded) = 0;
 
     analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
                                                    analysis::EventRegion eventRegion)
@@ -510,7 +514,7 @@ protected:
                 if (dataCategory.IsData())
                     anaData.FillAllEnergyScales(eventInfo, corrected_weight);
                 else if(dataCategory.name == DY_Embedded.name && eventInfo.eventEnergyScale == EventEnergyScale::Central)
-                    anaData.FillAllEnergyScales(eventInfo, corrected_weight);
+                    anaData.FillCentralAndJetEnergyScales(eventInfo, corrected_weight);
                 else
                     anaData.Fill(eventInfo, corrected_weight, eventInfo.eventEnergyScale);
             }
@@ -540,54 +544,6 @@ protected:
         }
     }
 
-    PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory)
-    {
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
-        const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
-
-        TH1D* hist_embedded_inclusive = GetSignalHistogram(EventCategory::Inclusive, embedded.name, hist_name);
-        TH1D* hist_embedded_category = GetSignalHistogram(eventCategory, embedded.name, hist_name);
-        TH1D* hist_ztautau_inclusive = GetSignalHistogram(EventCategory::Inclusive, ZTT_MC.name, hist_name);
-        if(!hist_embedded_inclusive)
-            throw exception("embedded hist in inclusive category not found");
-        if(!hist_embedded_category)
-            throw exception("embedded hist not found in event category: ") << eventCategory << "\n";
-        if(!hist_ztautau_inclusive )
-            throw exception("ztt hist in inclusive category not found");
-
-        const PhysicalValue n_ztautau_inclusive = Integral(*hist_ztautau_inclusive, true);
-        const PhysicalValue embedded_eff = Integral(*hist_embedded_category, true)/Integral(*hist_embedded_inclusive, true);
-        return n_ztautau_inclusive * embedded_eff;
-    }
-
-    void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValue& ztt_yield, bool useEmbedded)
-    {
-        const analysis::DataCategory& embedded = useEmbedded
-                ? dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded)
-                : dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
-        const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
-        const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
-
-        for(EventRegion eventRegion : AllEventRegions) {
-            auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
-            auto embedded_hist = GetHistogram(eventCategory, embedded.name, eventRegion, hist_name);
-            auto TTembedded_hist = GetHistogram(eventCategory, TTembedded.name, eventRegion, hist_name);
-
-            if (embedded_hist){
-                TH1D& ztt_hist = CloneHistogram(eventCategory, ZTT.name, eventRegion, *embedded_hist);
-                if(useEmbedded)
-                    RenormalizeHistogram(ztt_hist, ztt_yield, true);
-                if (ztt_l_hist)
-                    ztt_hist.Add(ztt_l_hist);
-                if (TTembedded_hist)
-                    ztt_hist.Add(TTembedded_hist, -1);
-            }
-            if (!embedded_hist && ztt_l_hist)
-                CloneHistogram(eventCategory, ZTT.name, eventRegion, *ztt_l_hist);
-        }
-    }
 
 
     void UpdateMvaInfo(FlatEventInfo& eventInfo, EventCategory eventCategory, bool calc_BDT, bool calc_BDTD,
