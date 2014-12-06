@@ -105,11 +105,11 @@ protected:
                                                       analysis::EventCategory eventCategory,
                                                       std::ostream& s_out) override
     {
-//        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
-//                                                   analysis::EventCategory::TwoJets_TwoBtag};
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
+                                                   analysis::EventCategory::TwoJets_TwoBtag};
         analysis::EventCategory refEventCategory = eventCategory;
-//        if(categories.count(eventCategory))
-//            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+        if(categories.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         const analysis::PhysicalValue yield_OSAntiIso =
                 CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated);
@@ -138,11 +138,11 @@ protected:
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& yield) override
     {
-//        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
-//                                                             analysis::EventCategory::TwoJets_TwoBtag};
+        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
+                                                             analysis::EventCategory::TwoJets_TwoBtag};
         analysis::EventCategory refEventCategory = eventCategory;
-//        if(categories.count(eventCategory))
-//            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+        if(categories.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
