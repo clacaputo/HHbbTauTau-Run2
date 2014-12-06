@@ -42,9 +42,8 @@ namespace analysis {
 
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
-enum class DataCategoryType { Signal, Background, Data, DYJets, DYJets_incl, DYJets_excl, ZL, ZJ, ZL_MC, ZJ_MC, ZTT, ZTT_MC, ZTT_L,
-                              Embedded, TT_Embedded, Limits, Composit, QCD, WJets, WJets_MC, WJets_MC_incl, WJets_MC_excl,
-                              TT_hadr, TT_lept, TT_semi};
+enum class DataCategoryType { Signal, Background, Data, DYJets, DYJets_incl, DYJets_excl, ZL, ZJ, ZL_MC, ZJ_MC, ZTT,
+                              ZTT_MC, ZTT_L, Embedded, TT_Embedded, Limits, Composit, QCD, WJets, WJets_MC };
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
     { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" },
@@ -54,11 +53,7 @@ static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::ZTT_MC, "ZTT_MC" }, { DataCategoryType::ZTT_L, "ZTT_L" }, { DataCategoryType::Embedded, "EMBEDDED" },
     { DataCategoryType::TT_Embedded, "TT_EMBEDDED" },
     { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" },
-    { DataCategoryType::WJets, "W_JETS" }, { DataCategoryType::WJets_MC, "W_JETS_MC" },
-    { DataCategoryType::WJets_MC_incl, "W_JETS_MC_incl" }, { DataCategoryType::WJets_MC_excl, "W_JETS_MC_excl" } ,
-    { DataCategoryType::TT_hadr, "TT_hadr" }, { DataCategoryType::TT_lept, "TT_lept" },
-    { DataCategoryType::TT_semi, "TT_semi" }
-
+    { DataCategoryType::WJets, "W_JETS" }, { DataCategoryType::WJets_MC, "W_JETS_MC" }
 };
 
 std::ostream& operator<< (std::ostream& s, const DataCategoryType& dataCategoryType) {
@@ -91,6 +86,7 @@ struct DataCategory {
     std::set<Channel> channels;
     std::set<std::string> sub_categories;
     DataSourceScaleFactorMap sources_sf;
+    std::map<unsigned, double> exclusive_sf;
 
     DataCategory()
         : color(kBlack), limits_sf(1.0), draw(false), draw_sf(1), isCategoryToSubtract(true) {}
@@ -259,6 +255,12 @@ private:
             ss >> category.datacard;
         } else if(param_name == "subcategory") {
             category.sub_categories.insert(param_value);
+        } else if(param_name == "exclusive_sf") {
+            unsigned n_jets;
+            double scale_factor;
+            ss >> n_jets;
+            ss >> scale_factor;
+            category.exclusive_sf[n_jets] = scale_factor;
         } else
             throw exception("Unsupported parameter '") << param_name << "' in configuration line " << line_number;
     }

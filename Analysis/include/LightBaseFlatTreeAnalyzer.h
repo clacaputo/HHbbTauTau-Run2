@@ -59,12 +59,6 @@
 
 namespace analysis {
 
-class LightFlatAnalyzerData : public root_ext::AnalyzerData {
-public:
-    LightFlatAnalyzerData(TFile& outputFile) : AnalyzerData(outputFile) {}
-
-};
-
 class LightBaseFlatTreeAnalyzer {
 public:
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
@@ -93,7 +87,6 @@ public:
     }
 
 protected:
-    virtual LightFlatAnalyzerData& GetAnaData() = 0;
     virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
     virtual void EndOfRun(){}
 

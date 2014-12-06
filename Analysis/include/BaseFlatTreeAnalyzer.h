@@ -271,7 +271,6 @@ protected:
 
         const analysis::DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
         const analysis::DataCategory& DYJets_excl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_excl);
-        const analysis::DataCategory& WJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::WJets_MC_incl);
         const analysis::DataCategory& DY_Embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
 
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
@@ -286,7 +285,11 @@ protected:
                                                                                  useRetag);
             FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
 
-            const double weight = dataCategory.IsData() ? 1 : event.weight * scale_factor;
+            const bool useCustomSF = dataCategory.exclusive_sf.count(eventInfo.event->n_extraJets_MC);
+            const double corrected_sf = useCustomSF
+                    ? dataCategory.exclusive_sf.at(eventInfo.event->n_extraJets_MC) : scale_factor;
+
+            const double weight = dataCategory.IsData() ? 1 : event.weight * corrected_sf;
             if(std::isnan(event.weight)) {
                 std::cerr << "ERROR: event " << event.evt << " will not be processed because event weight is NaN."
                           << std::endl;
@@ -301,20 +304,16 @@ protected:
                 UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
 
-                const bool isMixedInclusiveSample = dataCategory.name == DYJets_incl.name
-                                                 || dataCategory.name == WJets_incl.name;
-                const bool haveExtraJets = eventInfo.event->n_extraJets_MC > 5 && eventInfo.event->n_extraJets_MC < 10;
-                const double corrected_weight = isMixedInclusiveSample && haveExtraJets ? weight / 2 : weight;
 
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
-                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, corrected_weight);
+                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
                 auto& anaData = GetAnaData(eventCategory, dataCategory.name, eventRegion);
                 if (dataCategory.IsData())
-                    anaData.FillAllEnergyScales(eventInfo, corrected_weight);
+                    anaData.FillAllEnergyScales(eventInfo, weight);
                 else if(dataCategory.name == DY_Embedded.name && eventInfo.eventEnergyScale == EventEnergyScale::Central)
-                    anaData.FillCentralAndJetEnergyScales(eventInfo, corrected_weight);
+                    anaData.FillCentralAndJetEnergyScales(eventInfo, weight);
                 else
-                    anaData.FillSubCategories(eventInfo, corrected_weight, eventInfo.eventEnergyScale);
+                    anaData.FillSubCategories(eventInfo, weight, eventInfo.eventEnergyScale);
             }
         }
     }
