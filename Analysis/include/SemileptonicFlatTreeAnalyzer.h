@@ -40,7 +40,8 @@ public:
         FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale, subCategory);
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
-        mt_1().Fill(event.mt_1, weight);
+        const std::string key = HistogramSuffix(subCategory, eventEnergyScale);
+        mt_1(key).Fill(event.mt_1, weight);
     }
 
     virtual const std::vector<double>& M_ttbb_Bins() const override

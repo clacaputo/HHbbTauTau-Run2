@@ -38,9 +38,10 @@ public:
         FlatAnalyzerData::Fill(eventInfo, weight, eventEnergyScale, subCategory);
         if (eventEnergyScale != analysis::EventEnergyScale::Central) return;
         const ntuple::Flat& event = *eventInfo.event;
-        mt_1().Fill(event.mt_1, weight);
-        iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
-        iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
+        const std::string key = HistogramSuffix(subCategory, eventEnergyScale);
+        mt_1(key).Fill(event.mt_1, weight);
+        iso_tau1(key).Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
+        iso_tau2(key).Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
     }
 
     virtual const std::vector<double>& M_ttbb_Bins() const override

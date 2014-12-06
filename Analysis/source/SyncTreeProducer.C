@@ -29,66 +29,50 @@
 #include "Analysis/include/LightBaseFlatTreeAnalyzer.h"
 #include "AnalysisBase/include/SyncTree.h"
 
-class SyncTreeProducerData : public analysis::LightFlatAnalyzerData {
-public:
-    SyncTreeProducerData(TFile& outputFile) : LightFlatAnalyzerData(outputFile) {}
-
-
-};
-
-
 class SyncTreeProducer : public analysis::LightBaseFlatTreeAnalyzer {
 public:
-
     typedef std::map<analysis::EventEnergyScale, ntuple::Flat> ES_toEvent_Map;
     typedef std::map<analysis::EventId, ES_toEvent_Map> EventId_ToES_Map;
 
     SyncTreeProducer(const std::string& inputFileName, const std::string& outputFileName)
-         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile())
+         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), inclusive(0), passed(0)
     {
-        anaData.getOutputFile().cd();
+        GetOutputFile().cd();
         syncTree = std::shared_ptr<ntuple::SyncTree>(new ntuple::SyncTree("syncTree"));
+        recalc_kinfit = false;
     }
 
     virtual ~SyncTreeProducer() {
         syncTree->Write();
     }
-protected:
-    virtual analysis::LightFlatAnalyzerData& GetAnaData() override { return anaData; }
 
-    bool PassSyncTreeSelection(const analysis::FlatEventInfo& eventInfo) const
+protected:
+    static bool PassSyncTreeSelection(const analysis::FlatEventInfo& eventInfo)
     {
         using analysis::EventRegion;
         const ntuple::Flat& event = *eventInfo.event;
         if (eventInfo.channel == analysis::Channel::MuTau){
             using namespace cuts::Htautau_Summer13::MuTau;
 
-            if(!event.againstMuonTight_2
-                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || event.pfRelIso_1 >= muonID::pFRelIso || event.q_1 * event.q_2 == +1)
-                return false;
-            return true;
+            return !(!event.againstMuonTight_2
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                || event.pfRelIso_1 >= muonID::pFRelIso || event.q_1 * event.q_2 == +1);
         }
         if (eventInfo.channel == analysis::Channel::ETau){
             using namespace cuts::Htautau_Summer13::ETau;
 
-            if(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                    || event.pfRelIso_1 >= electronID::pFRelIso || event.q_1 * event.q_2 == +1)
-                return false;
-            return true;
+            return !(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
+                || event.pfRelIso_1 >= electronID::pFRelIso || event.q_1 * event.q_2 == +1);
         }
         if (eventInfo.channel == analysis::Channel::TauTau){
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
-            if(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
-                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
-                        || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits)
-                return false;
-            return true;
+            return !(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits);
         }
         throw analysis::exception("unsupported channel ") << eventInfo.channel;
     }
-
 
     virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category) override
     {
@@ -97,8 +81,8 @@ protected:
         if (category != EventCategory::Inclusive) return;
         ++inclusive;
         if (!PassSyncTreeSelection(eventInfo)) return;
-
         ++passed;
+
         const ntuple::Flat& event = *eventInfo.event;
         const analysis::EventId eventId(event.run,event.lumi,event.evt);
         eventId_ToES_Map[eventId][static_cast<analysis::EventEnergyScale>(event.eventEnergyScale)] = event;
@@ -187,7 +171,6 @@ protected:
             syncTree->againstMuonLoose2_2() = event.againstMuonLoose_2;
             syncTree->againstMuonMedium2_2() = event.againstMuonMedium_2;
             syncTree->againstMuonTight2_2() = event.againstMuonTight_2;
-
 
             syncTree->pt_tt() = eventInfo.Htt_MET.Pt();
 
@@ -288,15 +271,11 @@ protected:
             }
 
             syncTree->Fill();
-
         }
-
     }
 
 private:
-    SyncTreeProducerData anaData;
     std::shared_ptr<ntuple::SyncTree> syncTree;
     EventId_ToES_Map eventId_ToES_Map;
     unsigned inclusive, passed;
 };
-
