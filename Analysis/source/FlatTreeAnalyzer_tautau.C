@@ -166,11 +166,13 @@ protected:
                 dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
 
 
-        static const analysis::EventCategorySet NotEstimated_categories= {analysis::EventCategory::TwoJets_OneBtag,
-                                                                          analysis::EventCategory::TwoJets_TwoBtag};
+        static const analysis::EventCategorySet NotEstimated_categories = {
+            analysis::EventCategory::TwoJets_OneBtag, analysis::EventCategory::TwoJets_TwoBtag,
+            analysis::EventCategory::TwoJets_OneLooseBtag, analysis::EventCategory::TwoJets_TwoLooseBtag
+        };
 
         PhysicalValueMap valueMap;
-        if (fullEstimate || !NotEstimated_categories.count(eventCategory)){
+        if (fullEstimate || !NotEstimated_categories.count(eventCategory)) {
             for (analysis::EventRegion eventRegion : analysis::QcdRegions)
                 valueMap[eventRegion] = CalculateFullIntegral(eventCategory, eventRegion, hist_name, wjets_mc_categories);
         }

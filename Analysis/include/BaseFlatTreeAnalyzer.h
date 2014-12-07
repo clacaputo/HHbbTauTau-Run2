@@ -283,11 +283,9 @@ protected:
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  useRetag);
-            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), false);
-
-            const bool useCustomSF = dataCategory.exclusive_sf.count(eventInfo.event->n_extraJets_MC);
+            const bool useCustomSF = dataCategory.exclusive_sf.count(event.n_extraJets_MC);
             const double corrected_sf = useCustomSF
-                    ? dataCategory.exclusive_sf.at(eventInfo.event->n_extraJets_MC) : scale_factor;
+                    ? dataCategory.exclusive_sf.at(event.n_extraJets_MC) : scale_factor;
 
             const double weight = dataCategory.IsData() ? 1 : event.weight * corrected_sf;
             if(std::isnan(event.weight)) {
@@ -296,24 +294,29 @@ protected:
                 continue;
             }
 
+            std::shared_ptr<FlatEventInfo> eventInfo;
             for(auto eventCategory : eventCategories) {
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 const EventRegion eventRegion = DetermineEventRegion(event, eventCategory);
                 if(eventRegion == EventRegion::Unknown) continue;
 
-                UpdateMvaInfo(eventInfo, eventCategory, false, false, false);
-                if(applyMVAcut && !PassMvaCut(eventInfo, eventCategory)) continue;
+                if(!eventInfo)
+                    eventInfo = std::shared_ptr<FlatEventInfo>(new FlatEventInfo(event, FlatEventInfo::BjetPair(0, 1),
+                                                                                 true));
+
+                UpdateMvaInfo(*eventInfo, eventCategory, false, false, false);
+                if(applyMVAcut && !PassMvaCut(*eventInfo, eventCategory)) continue;
 
 
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
-                    FillDYjetHistograms(eventInfo, eventCategory, eventRegion, weight);
+                    FillDYjetHistograms(*eventInfo, eventCategory, eventRegion, weight);
                 auto& anaData = GetAnaData(eventCategory, dataCategory.name, eventRegion);
                 if (dataCategory.IsData())
-                    anaData.FillAllEnergyScales(eventInfo, weight);
-                else if(dataCategory.name == DY_Embedded.name && eventInfo.eventEnergyScale == EventEnergyScale::Central)
-                    anaData.FillCentralAndJetEnergyScales(eventInfo, weight);
+                    anaData.FillAllEnergyScales(*eventInfo, weight);
+                else if(dataCategory.name == DY_Embedded.name && eventInfo->eventEnergyScale == EventEnergyScale::Central)
+                    anaData.FillCentralAndJetEnergyScales(*eventInfo, weight);
                 else
-                    anaData.FillSubCategories(eventInfo, weight, eventInfo.eventEnergyScale);
+                    anaData.FillSubCategories(*eventInfo, weight, eventInfo->eventEnergyScale);
             }
         }
     }

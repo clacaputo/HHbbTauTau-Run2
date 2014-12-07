@@ -29,33 +29,24 @@
 #include "Analysis/include/LightBaseFlatTreeAnalyzer.h"
 #include "AnalysisBase/include/KinFitTree.h"
 
-class KinFitTreeProducerData : public analysis::LightFlatAnalyzerData {
-public:
-    KinFitTreeProducerData(TFile& outputFile) : LightFlatAnalyzerData(outputFile) {}
-
-
-};
-
 class KinFitTreeProducer : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     KinFitTreeProducer(const std::string& inputFileName, const std::string& outputFileName)
-         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile())
+         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName)
     {
-        anaData.getOutputFile().cd();
+        GetOutputFile().cd();
+        recalc_kinfit = true;
         kinFitTree = std::shared_ptr<ntuple::KinFitTree>(new ntuple::KinFitTree("kinFitTree"));
     }
 
-    virtual ~KinFitTreeProducer() {
-        kinFitTree->Write();
-    }
-protected:
-    virtual analysis::LightFlatAnalyzerData& GetAnaData() override { return anaData; }
+    virtual ~KinFitTreeProducer() { kinFitTree->Write(); }
 
+protected:
     virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category) override
     {
         using analysis::EventCategory;
-        if (!analysis::TwoJetsEventCategories.count(category)) return;
-        const analysis::EventRegion eventRegion = DetermineEventRegion(eventInfo);
+        if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
+        const analysis::EventRegion eventRegion = DetermineEventRegion(eventInfo, category);
         if (eventRegion == analysis::EventRegion::Unknown) return;
         if (eventInfo.fitResults.convergence != 0) return;
         //std::cout << "event: " << eventInfo.event->evt << ", convergence= " << eventInfo.fitResults.fit_bb_tt.convergence << std::endl;
@@ -104,7 +95,6 @@ protected:
     }
 
 private:
-    KinFitTreeProducerData anaData;
     std::shared_ptr<ntuple::KinFitTree> kinFitTree;
 };
 
