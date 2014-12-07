@@ -75,8 +75,8 @@ void drawHisto(TCanvas* C,TString Group1,TFile* F1,TString Group2,TFile* F2,TStr
   TXdiff.SetTextColor(2);
   TXdiff.SetTextSize(.03);
   char yield1[100];
-  const double H1_Integral = H1->Integral(0, H1->GetNbinsX() + 1);
-  const double H2_Integral = H2->Integral(0, H2->GetNbinsX() + 1);
+  const double H1_Integral = H1->Integral(1, H1->GetNbinsX());
+  const double H2_Integral = H2->Integral(1, H2->GetNbinsX());
   sprintf(yield1,"%.2f",H1_Integral);
   char yield2[100];
   sprintf(yield2,"%.2f",H2_Integral);
