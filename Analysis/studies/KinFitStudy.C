@@ -26,12 +26,12 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Analysis/include/KinFit_CMSSW.h"
+//#include "Analysis/include/KinFit_CMSSW.h"
 #include "Analysis/include/LightBaseFlatTreeAnalyzer.h"
 
-class KinFitStudyData : public analysis::LightFlatAnalyzerData {
+class KinFitStudyData : public root_ext::AnalyzerData {
 public:
-    KinFitStudyData(TFile& outputFile) : LightFlatAnalyzerData(outputFile) {}
+    KinFitStudyData(TFile& outputFile) : AnalyzerData(outputFile) {}
 
     TH1D_ENTRY(HHKinFit_convergence, 10, -3.5, 6.5)
     TH1D_ENTRY(HHKinFit_M_bbtt, 30, 0, 600)
@@ -47,24 +47,20 @@ public:
     KinFitStudy(const std::string& inputFileName, const std::string& outputFileName)
          : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile())
     {
+        recalc_kinfit = true;
         anaData.getOutputFile().cd();
     }
 
 protected:
-    virtual analysis::LightFlatAnalyzerData& GetAnaData() override { return anaData; }
-
     virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category) override
     {
         using analysis::EventCategory;
         using namespace analysis::kinematic_fit;
 
-        if(!PassSelection(eventInfo, category)) return;
-        if (!analysis::TwoJetsEventCategories.count(category)) return;
+        if(DetermineEventRegion(eventInfo,category) != analysis::EventRegion::OS_Isolated) return;
+        if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
 
-        const four_body::FitInput four_body_input(eventInfo.bjet_momentums.at(0), eventInfo.bjet_momentums.at(1),
-                                                  eventInfo.lepton_momentums.at(0), eventInfo.lepton_momentums.at(1),
-                                                  eventInfo.MET, eventInfo.MET_covariance);
-        const four_body::FitResults four_body_result_HHKinFit = four_body::Fit(four_body_input);
+        const four_body::FitResults& four_body_result_HHKinFit = eventInfo.fitResults;
         anaData.HHKinFit_convergence(category).Fill(four_body_result_HHKinFit.convergence);
         if(four_body_result_HHKinFit.convergence > 0) {
             anaData.HHKinFit_M_bbtt(category).Fill(four_body_result_HHKinFit.mass);
