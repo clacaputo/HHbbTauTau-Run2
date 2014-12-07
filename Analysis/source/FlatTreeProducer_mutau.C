@@ -241,9 +241,12 @@ protected:
             selection.pfMET = event->metPF();
 
         const ntuple::MET mvaMet = ComputeMvaMet(selection.higgs, selection.vertices);
+
         const ntuple::MET correctedMET = config.ApplyTauESCorrection()
                 ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
 
+//        std::cout << "correctedMET: " << correctedMET.pt << ", phi:" << correctedMET.phi << ", mt: " <<
+//                      analysis::Calculate_MT(selection.higgs->GetDaughter(analysis::Candidate::Type::Muon)->GetMomentum(),correctedMET.pt,correctedMET.phi) << std::endl;
         const auto looseJets = CollectLooseJets();
         selection.jetsPt20 = FilterCompatibleObjects(looseJets, selection.higgs, jetID::deltaR_signalObjects);
 
@@ -255,6 +258,9 @@ protected:
 
         selection.MET_with_recoil_corrections = ApplyRecoilCorrections(selection.higgs, selection.muTau_MC.Higgs_TauTau,
                                                                        selection.jets.size(), correctedMET);
+//        std::cout << "recoilMET: " << selection.MET_with_recoil_corrections.pt <<
+//                     ", phi:" << selection.MET_with_recoil_corrections.phi << ", mt: " <<
+//                     analysis::Calculate_MT(selection.higgs->GetDaughter(analysis::Candidate::Type::Muon)->GetMomentum(),selection.MET_with_recoil_corrections.pt,selection.MET_with_recoil_corrections.phi) << std::endl;
         return selection;
     }
 

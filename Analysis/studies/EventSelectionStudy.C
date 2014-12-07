@@ -26,22 +26,16 @@
 
 #include "Analysis/include/LightBaseFlatTreeAnalyzer.h"
 
-class EventSelectionStudyData : public analysis::LightFlatAnalyzerData {
-public:
-    EventSelectionStudyData(TFile& outputFile) : LightFlatAnalyzerData(outputFile) {}
-};
-
 class EventSelectionStudy : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     EventSelectionStudy(const std::string& _inputFileName, const std::string& _outputFileName)
-         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile())
+         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName)
     {
         recalc_kinfit = false;
-        anaData.getOutputFile().cd();
+        GetOutputFile().cd();
     }
 
 protected:
-    virtual analysis::LightFlatAnalyzerData& GetAnaData() override { return anaData; }
 
     virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category) override
     {
@@ -50,10 +44,9 @@ protected:
         if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
 
         if(eventInfo.eventEnergyScale == analysis::EventEnergyScale::Central &&
-                category == EventCategory::TwoJets_TwoBtag)
+                category == EventCategory::TwoJets_OneBtag &&
+                eventInfo.eventType == ntuple::EventType::ZL )
             std::cout << eventInfo.eventType << " " << eventInfo.event->evt << std::endl;
     }
 
-private:
-    EventSelectionStudyData anaData;
 };
