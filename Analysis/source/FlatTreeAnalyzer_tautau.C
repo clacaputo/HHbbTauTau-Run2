@@ -112,13 +112,13 @@ protected:
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
         const analysis::PhysicalValue yield_OSAntiIso =
-                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated, s_out);
 
         const analysis::PhysicalValue yield_SSIso =
-                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_Isolated);
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_Isolated, s_out);
 
         const analysis::PhysicalValue yield_SSAntiIso =
-                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_AntiIsolated, s_out);
 
 
         const auto iso_antiIso_sf = yield_SSIso / yield_SSAntiIso;
@@ -127,7 +127,7 @@ protected:
             return yield_OSAntiIso * iso_antiIso_sf;
 
         const analysis::PhysicalValue yield_SSAntiIso_Medium =
-                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_AntiIsolated);
+                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_AntiIsolated, s_out);
 
         const auto medium_loose_sf = yield_SSAntiIso_Medium / yield_SSAntiIso;
         s_out << eventCategory << ": QCD SF Medium b-tag / Loose b-tag = " << medium_loose_sf << ".\n";
