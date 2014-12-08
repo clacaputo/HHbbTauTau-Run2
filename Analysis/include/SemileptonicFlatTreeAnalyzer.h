@@ -183,7 +183,7 @@ protected:
             refEventCategory = analysis::EventCategory::TwoJets_Inclusive;
 
         const analysis::PhysicalValue yield_SSIso =
-                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated);
+                CalculateYieldsForQCD(hist_name,refEventCategory,analysis::EventRegion::SS_Isolated, s_out);
 
         s_out << "yield_ssIso: " << yield_SSIso << "\n";
         if(refEventCategory == eventCategory)

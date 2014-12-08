@@ -168,7 +168,7 @@ protected:
                                const PhysicalValue& ztt_yield, bool useEmbedded) = 0;
 
     analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
-                                                   analysis::EventRegion eventRegion)
+                                                   analysis::EventRegion eventRegion, std::ostream& s_out)
     {
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
@@ -177,11 +177,14 @@ protected:
         const analysis::PhysicalValue bkg_yield =
                 CalculateBackgroundIntegral(hist_name, eventCategory, eventRegion, qcd.name, false, bkg_yield_debug);
 
+        s_out << bkg_yield_debug;
+
         auto hist_data = GetHistogram(eventCategory, data.name, eventRegion, hist_name);
         if(!hist_data)
             throw analysis::exception("Unable to find data histograms for QCD yield estimation.");
         const auto data_yield = analysis::Integral(*hist_data, true);
         const analysis::PhysicalValue yield = data_yield - bkg_yield;
+        s_out << "Data yield = " << data_yield << "\nData-MC yield = " << yield << std::endl;
         if(yield.value < 0) {
             std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
             throw exception("Negative QCD yield for histogram '") << hist_name << "' in " << eventCategory << " "
@@ -302,7 +305,7 @@ protected:
 
                 if(!eventInfo)
                     eventInfo = std::shared_ptr<FlatEventInfo>(new FlatEventInfo(event, FlatEventInfo::BjetPair(0, 1),
-                                                                                 true));
+                                                                                 false));
 
                 UpdateMvaInfo(*eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(*eventInfo, eventCategory)) continue;

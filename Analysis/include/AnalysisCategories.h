@@ -110,8 +110,8 @@ public:
         std::ifstream cfg(sources_cfg_name);
         size_t line_number = 0;
         while(ReadNextCategory(cfg, line_number, category)) {
-            CheckCategoryValidity(category);
             if(category.channels.size() && !category.channels.count(channel_id)) continue;
+            CheckCategoryValidity(category);
             categories[category.name] = category;
             all_categories.push_back(&categories[category.name]);
             for(DataCategoryType type : category.types)
