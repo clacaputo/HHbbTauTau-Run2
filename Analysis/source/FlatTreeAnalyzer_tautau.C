@@ -179,14 +179,14 @@ protected:
         return valueMap;
     }
 
-    virtual analysis::PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name,
+    virtual PhysicalValueMap CalculateZTTmatchedYield(const std::string& hist_name,
                                                              analysis::EventCategory eventCategory,
                                                              bool useEmbedded) override
     {
 
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
 
-        analysis::PhysicalValue zttYield;
+        PhysicalValueMap zttYield;
         if (useEmbedded){
             const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Embedded);
             const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::TT_Embedded);
@@ -212,23 +212,27 @@ protected:
                     analysis::Integral(*hist_embedded_category, true) - analysis::Integral(*hist_TTembedded_category, true);
             const analysis::PhysicalValue n_ztautau_inclusive = analysis::Integral(*hist_ztautau_inclusive, true);
             const analysis::PhysicalValue embedded_eff = n_emb_category/n_emb_inclusive;
-            zttYield = n_ztautau_inclusive * embedded_eff;
+            zttYield[analysis::EventRegion::OS_Isolated] = n_ztautau_inclusive * embedded_eff;
         }
-        else {
 
-            TH1D* hist_ztautau = GetSignalHistogram(eventCategory, ZTT_MC.name, hist_name);
-            if(!hist_ztautau )
-                throw analysis::exception("ztt hist not found in event category") << eventCategory;
+        for (analysis::EventRegion eventRegion : analysis::AllEventRegions){
+            if (zttYield.count(eventRegion)) continue;
+            TH1D* hist_ztautau = GetHistogram(eventCategory, ZTT_MC.name,eventRegion, hist_name);
 
-            const analysis::PhysicalValue n_ztautau = analysis::Integral(*hist_ztautau, true);
-            zttYield = n_ztautau;
+            if(!hist_ztautau ){
+                if (eventRegion == analysis::EventRegion::OS_Isolated)
+                    throw analysis::exception("ztt hist not found in event category") << eventCategory;
+                continue;
+            }
+
+            zttYield[eventRegion] = analysis::Integral(*hist_ztautau, true);
         }
         return zttYield;
     }
 
 
     virtual void CreateHistogramForZTT(analysis::EventCategory eventCategory, const std::string& hist_name,
-                               const analysis::PhysicalValue& ztt_yield, bool useEmbedded) override
+                               const PhysicalValueMap& ztt_yield_map, bool useEmbedded) override
     {
         const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Embedded);
         const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
@@ -243,7 +247,9 @@ protected:
         if (categoriesToRelax.count(eventCategory))
             shapeEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
+        for(const auto& eventRegionKey : ztt_yield_map) {
+            const analysis::EventRegion eventRegion = eventRegionKey.first;
+            const analysis::PhysicalValue& ztt_yield = eventRegionKey.second;
             auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
             const std::string embeddedName = useEmbedded && eventRegion == analysis::EventRegion::OS_Isolated ?
                                              embedded.name : ZTT_MC.name;

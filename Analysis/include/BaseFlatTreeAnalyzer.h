@@ -108,7 +108,10 @@ public:
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
                 const auto ZTT_matched_yield = CalculateZTTmatchedYield(hist_name,eventCategory,true);
-                s_out << eventCategory << ": ZTT MC yield = " << ZTT_matched_yield << ".\n";
+                for (const auto yield_entry : ZTT_matched_yield)
+                    s_out << eventCategory << ": ZTT MC yield in " << yield_entry.first << " = " << yield_entry.second
+                          << ".\n";
+
                 CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
                 CreateHistogramForZcategory(eventCategory,hist_name);
             }
@@ -164,10 +167,10 @@ protected:
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) = 0;
     virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) = 0;
-    virtual PhysicalValue CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory,
+    virtual PhysicalValueMap CalculateZTTmatchedYield(const std::string& hist_name, EventCategory eventCategory,
                                                    bool useEmbedded) = 0;
     virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
-                               const PhysicalValue& ztt_yield, bool useEmbedded) = 0;
+                               const PhysicalValueMap& ztt_yield, bool useEmbedded) = 0;
 
     analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
                                                    analysis::EventRegion eventRegion, std::ostream& s_out)
