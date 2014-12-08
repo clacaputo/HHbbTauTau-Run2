@@ -41,10 +41,10 @@ protected:
     {
         using analysis::EventCategory;
         if(DetermineEventRegion(eventInfo,category) != analysis::EventRegion::OS_Isolated) return;
-        if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
+        //if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
 
         if(eventInfo.eventEnergyScale == analysis::EventEnergyScale::Central &&
-                category == EventCategory::TwoJets_OneBtag &&
+                category == EventCategory::Inclusive &&
                 eventInfo.eventType == ntuple::EventType::ZL )
             std::cout << eventInfo.eventType << " " << eventInfo.event->evt << std::endl;
     }

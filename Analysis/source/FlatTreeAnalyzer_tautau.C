@@ -230,9 +230,8 @@ protected:
     virtual void CreateHistogramForZTT(analysis::EventCategory eventCategory, const std::string& hist_name,
                                const analysis::PhysicalValue& ztt_yield, bool useEmbedded) override
     {
-        const analysis::DataCategory& embedded = useEmbedded
-                ? dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Embedded)
-                : dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
+        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Embedded);
+        const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
         const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT);
         const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_L);
         const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::TT_Embedded);
@@ -246,7 +245,10 @@ protected:
 
         for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
             auto ztt_l_hist = GetHistogram(eventCategory, ZTT_L.name, eventRegion, hist_name);
-            auto embedded_hist = GetHistogram(shapeEventCategory, embedded.name, eventRegion, hist_name);
+            const std::string embeddedName = useEmbedded && eventRegion == analysis::EventRegion::OS_Isolated ?
+                                             embedded.name : ZTT_MC.name;
+
+            auto embedded_hist = GetHistogram(shapeEventCategory, embeddedName, eventRegion, hist_name);
             auto TTembedded_hist = GetHistogram(shapeEventCategory, TTembedded.name, eventRegion, hist_name);
 
             if (embedded_hist){

@@ -144,10 +144,12 @@ public:
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        PrintStackedPlots(false, false);
-        PrintStackedPlots(true, false);
-        PrintStackedPlots(false, true);
-        PrintStackedPlots(true, true);
+        for (analysis::EventRegion eventRegion : analysis::QcdRegions){
+            PrintStackedPlots(false, false,eventRegion);
+            PrintStackedPlots(true, false,eventRegion);
+            PrintStackedPlots(false, true,eventRegion);
+            PrintStackedPlots(true, true,eventRegion);
+        }
     }
 
 protected:
@@ -364,11 +366,13 @@ protected:
         eventInfo.mva_BDTMitFisher = getMVA(calc_BDTMitFisher, MVA_Selections::BDTMitFisher);
     }
 
-    void PrintStackedPlots(bool isBlind, bool drawRatio)
+    void PrintStackedPlots(bool isBlind, bool drawRatio, EventRegion eventRegion)
     {
         const std::string blindCondition = isBlind ? "_blind" : "_noBlind";
         const std::string ratioCondition = drawRatio ? "_ratio" : "_noRatio";
-        root_ext::PdfPrinter printer(outputFileName + blindCondition + ratioCondition + ".pdf");
+        std::ostringstream eventRegionName;
+        eventRegionName << outputFileName << blindCondition << ratioCondition << "_" << eventRegion << ".pdf";
+        root_ext::PdfPrinter printer(eventRegionName.str());
 
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
@@ -380,7 +384,8 @@ protected:
                 for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                     if(!category->draw) continue;
 
-                    const auto histogram = GetSignalHistogram(eventCategory, category->name, hist_name);
+//                    const auto histogram = GetSignalHistogram(eventCategory, category->name, hist_name);
+                    const auto histogram = GetHistogram(eventCategory,category->name,eventRegion,hist_name);
                     if(!histogram) continue;
 
                     if(category->IsSignal())
@@ -706,16 +711,21 @@ private:
 
     void ProcessCompositDataCategories(EventCategory eventCategory, const std::string& hist_name)
     {
-        for(const DataCategory* composit : dataCategoryCollection.GetCategories(DataCategoryType::Composit)) {
-            for(const std::string& sub_name : composit->sub_categories) {
-                const DataCategory& sub_category = dataCategoryCollection.FindCategory(sub_name);
-                auto sub_hist = GetSignalHistogram(eventCategory, sub_category.name, hist_name);
-                if(!sub_hist) continue;
+        for (analysis::EventRegion eventRegion : analysis::AllEventRegions){
+            for(const DataCategory* composit : dataCategoryCollection.GetCategories(DataCategoryType::Composit)) {
+                for(const std::string& sub_name : composit->sub_categories) {
+                    const DataCategory& sub_category = dataCategoryCollection.FindCategory(sub_name);
+                    //auto sub_hist = GetSignalHistogram(eventCategory, sub_category.name, hist_name);
+                    auto sub_hist = GetHistogram(eventCategory,sub_category.name,eventRegion,hist_name);
+                    if(!sub_hist) continue;
 
-                if(auto composit_hist = GetSignalHistogram(eventCategory, composit->name, hist_name))
-                    composit_hist->Add(sub_hist);
-                else
-                    CloneSignalHistogram(eventCategory, composit->name, *sub_hist);
+//                    if(auto composit_hist = GetSignalHistogram(eventCategory, composit->name, hist_name))
+                    if(auto composit_hist = GetHistogram(eventCategory, composit->name, eventRegion, hist_name))
+                        composit_hist->Add(sub_hist);
+                    else
+                        //CloneSignalHistogram(eventCategory, composit->name, *sub_hist);
+                        CloneHistogram(eventCategory, composit->name,eventRegion, *sub_hist);
+                }
             }
         }
     }
