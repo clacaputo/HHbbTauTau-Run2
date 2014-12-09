@@ -90,6 +90,8 @@ public:
         static const std::set<std::string> interesting_histograms = {
             FlatAnalyzerData::FullHistogramName(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts,
                                                 EventEnergyScale::Central),
+            FlatAnalyzerData::FullHistogramName(FlatAnalyzerData::m_sv_Name(), EventSubCategory::MassWindow,
+                                                EventEnergyScale::Central),
             FlatAnalyzerData::FullHistogramName(FlatAnalyzerData::m_ttbb_kinfit_Name(),
                                                 EventSubCategory::KinematicFitConverged,
                                                 EventEnergyScale::Central),
@@ -148,6 +150,7 @@ public:
 
         std::cout << "Printing stacked plots... " << std::endl;
         for (analysis::EventRegion eventRegion : analysis::QcdRegions){
+            if (eventRegion != analysis::EventRegion::OS_Isolated) continue;
             PrintStackedPlots(false, false,eventRegion);
             PrintStackedPlots(true, false,eventRegion);
             PrintStackedPlots(false, true,eventRegion);
@@ -295,12 +298,20 @@ protected:
             const double corrected_sf = useCustomSF
                     ? dataCategory.exclusive_sf.at(event.n_extraJets_MC) : scale_factor;
 
-            const double weight = dataCategory.IsData() ? 1 : event.weight * corrected_sf;
             if(std::isnan(event.weight)) {
                 std::cerr << "ERROR: event " << event.evt << " will not be processed because event weight is NaN."
                           << std::endl;
                 continue;
             }
+
+            double weight;
+            if (dataCategory.IsData())
+                weight = 1;
+            else if (!dataCategory.IsSignal() && static_cast<ntuple::EventType>(event.eventType) != ntuple::EventType::ZTT
+                     && event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero)
+                weight = event.weight * corrected_sf / cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
+            else
+                weight = event.weight * corrected_sf;
 
             std::shared_ptr<FlatEventInfo> eventInfo;
             for(auto eventCategory : eventCategories) {
@@ -666,6 +677,8 @@ private:
 
         static const std::set<std::string> interesting_histograms = {
             FlatAnalyzerData::FullHistogramName(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts,
+                                                EventEnergyScale::Central),
+            FlatAnalyzerData::FullHistogramName(FlatAnalyzerData::m_sv_Name(), EventSubCategory::MassWindow,
                                                 EventEnergyScale::Central),
             FlatAnalyzerData::FullHistogramName(FlatAnalyzerData::m_ttbb_kinfit_Name(),
                                                 EventSubCategory::KinematicFitConverged,
