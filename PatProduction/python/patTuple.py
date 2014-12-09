@@ -33,7 +33,8 @@ process.source.inputCommands = cms.untracked.vstring(
         'keep *',
         'drop recoPFTaus_*_*_*'
     )
-#process.source.eventsToProcess = cms.untracked.VEventRange('1:435019-1:435019')
+#process.source.eventsToProcess = cms.untracked.VEventRange('190706:11370491-190706:11370491')
+#process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange('190706:15-190706:15')
 
 from HHbbTauTau.PatProduction.patOptions import *
 parseAndApplyOptions(process)
