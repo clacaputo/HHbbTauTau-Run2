@@ -711,11 +711,65 @@ private:
         return result;
     }
 
+    template<typename VarType>
+    std::vector<VarType> CollectValuesEx(TTree* tree, const std::string& name)
+    {
+        std::vector<VarType> result;
+
+        TBranch* branch = tree->GetBranch(name.c_str());
+        if (!branch){
+            std::ostringstream ss;
+            ss << "Branch '" << name << "' not found.";
+            throw std::runtime_error(ss.str());
+        }
+        TClass *branch_class;
+        EDataType branch_type;
+        branch->GetExpectedType(branch_class, branch_type);
+        if(branch_class) {
+            std::ostringstream ss;
+            ss << "branches with complex objects are not supported for branch '" << name << "'.";
+            throw std::runtime_error(ss.str());
+        }
+        if(branch_type == kInt_t) {
+            const std::vector<Int_t> original_result = CollectValues<Int_t>(tree, name);
+            result.resize(original_result.size());
+            std::copy(original_result.begin(), original_result.end(), result.begin());
+        }
+        if(branch_type == kUInt_t) {
+            const std::vector<UInt_t> original_result = CollectValues<UInt_t>(tree, name);
+            result.resize(original_result.size());
+            std::copy(original_result.begin(), original_result.end(), result.begin());
+        }
+        if(branch_type == kFloat_t) {
+            const std::vector<Float_t> original_result = CollectValues<Float_t>(tree, name);
+            result.resize(original_result.size());
+            std::copy(original_result.begin(), original_result.end(), result.begin());
+        }
+        if(branch_type == kDouble_t) {
+            const std::vector<Double_t> original_result = CollectValues<Double_t>(tree, name);
+            result.resize(original_result.size());
+            std::copy(original_result.begin(), original_result.end(), result.begin());
+        }
+        if(branch_type == kChar_t) {
+            const std::vector<Char_t> original_result = CollectValues<Char_t>(tree, name);
+            result.resize(original_result.size());
+            std::copy(original_result.begin(), original_result.end(), result.begin());
+        }
+        if(branch_type == kBool_t) {
+            const std::vector<Bool_t> original_result = CollectValues<Bool_t>(tree, name);
+            result.resize(original_result.size());
+            std::copy(original_result.begin(), original_result.end(), result.begin());
+        }
+
+        return result;
+    }
+
+
     EventVector CollectEventIds(TTree* tree)
     {
-        const std::vector<Int_t> run = CollectValues<Int_t>(tree, "run");
-        const std::vector<Int_t> lumi = CollectValues<Int_t>(tree, "lumi");
-        const std::vector<Int_t> evt = CollectValues<Int_t>(tree, "evt");
+        const std::vector<UInt_t> run = CollectValuesEx<UInt_t>(tree, "run");
+        const std::vector<UInt_t> lumi = CollectValuesEx<UInt_t>(tree, "lumi");
+        const std::vector<UInt_t> evt = CollectValuesEx<UInt_t>(tree, "evt");
 
         EventVector events;
         for(size_t n = 0; n < evt.size(); ++n)
