@@ -294,7 +294,7 @@ void MuonsUserEmbedded::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
         aMuon.addUserFloat("PFRelIso03v2", (chIso03v2 + nhIso03v2 + phIso03v2) / aMuon.pt());
         aMuon.addUserFloat("PFRelIsoDB04v2",
             (chIso04v2 + std::max(nhIso04v2 + phIso04v2 - 0.5 * 0.5 * (nhIsoPU04v2 + phIsoPU04v2), 0.0)) / aMuon.pt());
-        if (iEvent.id() == 11370491){
+        if (iEvent.id().event() == 11370491){
             std::cout << "event: " << iEvent.id() << ", chIso04v2: " << chIso04v2 << ", nhIso04v2: " << nhIso04v2 <<
                          ", phIso04v2: " << phIso04v2 << ", nhIsoPU04v2: " << nhIsoPU04v2 << ", phIsoPU04v2: " <<
                          phIsoPU04v2 << ", sum: " <<
