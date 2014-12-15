@@ -104,7 +104,8 @@ private:
                 objectWritten = true;
             } else {
                 source->cd();
-                std::unique_ptr<TObject> obj(key->ReadObj());
+                std::unique_ptr<TObject> original_obj(key->ReadObj());
+                std::unique_ptr<TObject> obj(original_obj->Clone());
                 destination->cd();
                 obj->Write(key->GetName());
                 objectWritten = true;
