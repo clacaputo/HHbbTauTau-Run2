@@ -271,8 +271,9 @@ void MuonsUserEmbedded::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
         float phIsoPU03v2 =
             aMuon.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.3, vetos2011Photons).first;
 
+        // User1Iso corresponds in the python (see patMuons.py) to muPFIsoDepositChargedAllPFIso -> all noPU CH+MU+E
         float allChIso04v2 =
-            aMuon.isoDeposit(pat::PfChargedAllIso)->depositAndCountWithin(0.4, vetos2011Charged).first;
+            aMuon.isoDeposit(pat::User1Iso)->depositAndCountWithin(0.4, vetos2011Charged).first;
         float chIso04v2 =
             aMuon.isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4, vetos2011Charged).first;
         float nhIso04v2 =
@@ -300,15 +301,15 @@ void MuonsUserEmbedded::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
         //legacy definition
         aMuon.addUserFloat("PFRelIsoDB04v2",
             (allChIso04v2 + std::max(nhIso04v2 + phIso04v2 - 0.5 * (nhIsoPU04v2), 0.0)) / aMuon.pt());
-        if (iEvent.id().event() == 11370491 && iEvent.run() == 190706 && iEvent.luminosityBlock() == 15){
-            std::cout << "event: " << iEvent.id() << ", allChIso04v2: " << allChIso04v2 << ", chIso04v2: " << chIso04v2
-                      << ", nhIso04v2: " << nhIso04v2 << ", phIso04v2: " << phIso04v2 << ", nhIsoPU04v2: " << nhIsoPU04v2
-                      << ", phIsoPU04v2: " << phIsoPU04v2 << ", sum: " <<
-                         (allChIso04v2 + std::max(nhIso04v2 + phIso04v2 - 0.5 * (nhIsoPU04v2), 0.0)) <<
-                         ", pt Mu: " << aMuon.pt() << ", eta Mu: " << aMuon.eta() << ", phi Mu: " << aMuon.phi() <<
-                         ", iso: " << (allChIso04v2 + std::max(nhIso04v2 + phIso04v2 - 0.5 * (nhIsoPU04v2), 0.0)) / aMuon.pt() <<
-                         std::endl;
-        }
+//        if (iEvent.id().event() == 11370491 && iEvent.run() == 190706 && iEvent.luminosityBlock() == 15){
+//            std::cout << "event: " << iEvent.id() << ", allChIso04v2: " << allChIso04v2 << ", chIso04v2: " << chIso04v2
+//                      << ", nhIso04v2: " << nhIso04v2 << ", phIso04v2: " << phIso04v2 << ", nhIsoPU04v2: " << nhIsoPU04v2
+//                      << ", phIsoPU04v2: " << phIsoPU04v2 << ", sum: " <<
+//                         (allChIso04v2 + std::max(nhIso04v2 + phIso04v2 - 0.5 * (nhIsoPU04v2), 0.0)) <<
+//                         ", pt Mu: " << aMuon.pt() << ", eta Mu: " << aMuon.eta() << ", phi Mu: " << aMuon.phi() <<
+//                         ", iso: " << (allChIso04v2 + std::max(nhIso04v2 + phIso04v2 - 0.5 * (nhIsoPU04v2), 0.0)) / aMuon.pt() <<
+//                         std::endl;
+//        }
         aMuon.addUserFloat("PFRelIsoDB03v2",
             (chIso03v2 + std::max(nhIso03v2 + phIso03v2 - 0.5 * 0.5 * (nhIsoPU03v2 + phIsoPU03v2), 0.0)) / aMuon.pt());
 

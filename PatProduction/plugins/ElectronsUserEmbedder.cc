@@ -507,6 +507,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
 
         //////////////////////////////////////////////////////////////
 
+        float AllChIso04EBPFId =
+            aElectron.isoDeposit(pat::User1Iso)->depositAndCountWithin(0.4, vetos2012EBPFIdCharged).first;
         float chIso04EBPFId =
             aElectron.isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4, vetos2012EBPFIdCharged).first;
         float nhIso04EBPFId =
@@ -518,6 +520,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         //float phIsoPU04EBPFId =
         //  aElectron.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4, vetos2012EBPFIdPhotons).first;
 
+        float AllChIso04EEPFId =
+            aElectron.isoDeposit(pat::User1Iso)->depositAndCountWithin(0.4, vetos2012EEPFIdCharged).first;
         float chIso04EEPFId =
             aElectron.isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4, vetos2012EEPFIdCharged).first;
         float nhIso04EEPFId =
@@ -529,6 +533,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         //float phIsoPU04EEPFId =
         //  aElectron.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4, vetos2012EEPFIdPhotons).first;
 
+        float AllChIso04EBNoPFId =
+            aElectron.isoDeposit(pat::User1Iso)->depositAndCountWithin(0.4, vetos2012EBNoPFIdCharged).first;
         float chIso04EBNoPFId =
             aElectron.isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4, vetos2012EBNoPFIdCharged).first;
         float nhIso04EBNoPFId =
@@ -540,6 +546,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         //float phIsoPU04EBNoPFId =
         //  aElectron.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4, vetos2012EBNoPFIdPhotons).first;
 
+        float AllChIso04EENoPFId =
+            aElectron.isoDeposit(pat::User1Iso)->depositAndCountWithin(0.4, vetos2012EENoPFIdCharged).first;
         float chIso04EENoPFId =
             aElectron.isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4, vetos2012EENoPFIdCharged).first;
         float nhIso04EENoPFId =
@@ -566,6 +574,9 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
                           (aElectron.isEB()) * nhIsoPU03EBPFId + (aElectron.isEE()) * nhIsoPU03EEPFId :
                           (aElectron.isEB()) * nhIsoPU03EBNoPFId + (aElectron.isEE()) * nhIsoPU03EENoPFId ;
 
+        float AllChIso04 = pfId ?
+                        (aElectron.isEB()) * AllChIso04EBPFId + (aElectron.isEE()) * AllChIso04EEPFId :
+                        (aElectron.isEB()) * AllChIso04EBNoPFId + (aElectron.isEE()) * AllChIso04EENoPFId ;
         float chIso04 = pfId ?
                         (aElectron.isEB()) * chIso04EBPFId + (aElectron.isEE()) * chIso04EEPFId :
                         (aElectron.isEB()) * chIso04EBNoPFId + (aElectron.isEE()) * chIso04EENoPFId ;
@@ -623,8 +634,12 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
 
         aElectron.addUserFloat("PFRelIso04",
                                (chIso04 + nhIso04 + phIso04) / aElectron.pt());
+        // with charged hadrons only
+//        aElectron.addUserFloat("PFRelIsoDB04",
+//                               (chIso04 + std::max(nhIso04 + phIso04 - 0.5 * (nhIsoPU04), 0.0)) / aElectron.pt());
+        // legacy definition
         aElectron.addUserFloat("PFRelIsoDB04",
-                               (chIso04 + std::max(nhIso04 + phIso04 - 0.5 * (nhIsoPU04), 0.0)) / aElectron.pt());
+                               (AllChIso04 + std::max(nhIso04 + phIso04 - 0.5 * (nhIsoPU04), 0.0)) / aElectron.pt());
 
         // cleaning
         for(unsigned int i = 0; i < vetos2010Charged.size(); i++) {
