@@ -36,7 +36,7 @@
 #include <TKey.h>
 #include <TSystem.h>
 #include <TTree.h>
-
+#include <memory>
 #include "AnalysisBase/include/exception.h"
 
 class MergeRootFiles {
