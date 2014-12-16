@@ -269,11 +269,18 @@ protected:
 
     Higgs_TriggerPathMap ApplyTriggerMatch(const Higgs_JetsMap& higgs_JetsMap, bool useStandardTriggerMatch)
     {
+        using namespace cuts::Htautau_Summer13::TauTau;
+
         Higgs_TriggerPathMap triggeredHiggses;
         for (const auto& higgs_iter : higgs_JetsMap) {
             const analysis::CandidatePtr& higgs = higgs_iter.first;
-            const analysis::CandidatePtrVector& jets = higgs_iter.second;
-            for (const auto& interestingPathIter : cuts::Htautau_Summer13::TauTau::trigger::hltPathsMap) {
+            const analysis::CandidatePtrVector& all_jets = higgs_iter.second;
+            analysis::CandidatePtrVector jets;
+            for(auto jet : all_jets) {
+                if(jet->GetMomentum().Pt() > trigger::jet_pt && std::abs(jet->GetMomentum().Eta()) < trigger::jet_eta)
+                    jets.push_back(jet);
+            }
+            for (const auto& interestingPathIter : trigger::hltPathsMap) {
                 const std::string& interestingPath = interestingPathIter.first;
                 const bool jetTriggerRequest = interestingPathIter.second;
 

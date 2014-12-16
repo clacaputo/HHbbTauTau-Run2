@@ -46,7 +46,8 @@ public:
 
     virtual const std::vector<double>& M_ttbb_Bins() const override
     {
-        static const std::vector<double> bins = { 200, 250, 280, 310, 340, 370, 400, 500, 600, 700 };
+        static const std::vector<double> bins = { 200, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 500, 550,
+                                                  600, 650, 700 };
         return bins;
     }
 };
