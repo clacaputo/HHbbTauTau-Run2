@@ -116,6 +116,7 @@ public:
 
                 CreateHistogramForZTT(eventCategory, hist_name, ZTT_matched_yield, true);
                 CreateHistogramForZcategory(eventCategory,hist_name);
+                CreateHistogramForVVcategory(eventCategory,hist_name);
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
@@ -171,6 +172,7 @@ protected:
                                                   bool fullEstimate) = 0;
     virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
                                const PhysicalValueMap& ztt_yield, bool useEmbedded) = 0;
+    virtual void CreateHistogramForVVcategory(EventCategory eventCategory,const std::string& hist_name) = 0;
 
     PhysicalValueMap CalculateZTTmatchedYield(const std::string& hist_name,
                                                              analysis::EventCategory eventCategory,

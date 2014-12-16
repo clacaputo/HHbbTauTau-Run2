@@ -246,4 +246,41 @@ protected:
 //        }
 //    }
 
+
+    virtual void CreateHistogramForVVcategory(analysis::EventCategory eventCategory,const std::string& hist_name) override
+    {
+        const std::map<analysis::DataCategoryType, analysis::DataCategoryType> diboson_category_map = {
+            { analysis::DataCategoryType::DiBoson_MC, analysis::DataCategoryType::DiBoson }
+        };
+
+        for (const auto& diboson_category : diboson_category_map){
+            const analysis::DataCategory& originalVVcategory = dataCategoryCollection.GetUniqueCategory(diboson_category.first);
+            const analysis::DataCategory& newVVcategory = dataCategoryCollection.GetUniqueCategory(diboson_category.second);
+
+            PhysicalValueMap valueMap;
+
+            for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
+                auto vv_hist_yield = GetHistogram(eventCategory, originalVVcategory.name, eventRegion, hist_name);
+                if (vv_hist_yield)
+                    valueMap[eventRegion] = analysis::Integral(*vv_hist_yield,true);
+            }
+
+            static const analysis::EventCategorySet categoriesToRelax =
+                { analysis::EventCategory::TwoJets_OneBtag, analysis::EventCategory::TwoJets_TwoBtag,
+                  analysis::EventCategory::TwoJets_AtLeastOneBtag };
+            const analysis::EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+                    ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+
+            for(const auto& yield_iter : valueMap) {
+                const analysis::EventRegion eventRegion = yield_iter.first;
+                const analysis::PhysicalValue& yield = yield_iter.second;
+                auto vv_hist_shape = GetHistogram(shapeEventCategory, originalVVcategory.name, eventRegion, hist_name);
+                if (vv_hist_shape){
+                    TH1D& vv_hist = CloneHistogram(eventCategory, newVVcategory.name, eventRegion, *vv_hist_shape);
+                    RenormalizeHistogram(vv_hist,yield,true);
+                }
+            }
+        }
+    }
+
 };
