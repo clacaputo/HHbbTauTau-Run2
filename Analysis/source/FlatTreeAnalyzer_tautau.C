@@ -112,8 +112,12 @@ protected:
         if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
+        //loose
+//        const analysis::PhysicalValue yield_OSAntiIso =
+//                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated, s_out);
+        //medium
         const analysis::PhysicalValue yield_OSAntiIso =
-                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated, s_out);
+                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::OS_AntiIsolated, s_out);
 
         const analysis::PhysicalValue yield_SSIso =
                 CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_Isolated, s_out);
@@ -124,16 +128,16 @@ protected:
 
         const auto iso_antiIso_sf = yield_SSIso / yield_SSAntiIso;
         s_out << eventCategory << ": QCD SF Iso / AntiIso = " << iso_antiIso_sf << ". \n";
-        if(refEventCategory == eventCategory)
-            return yield_OSAntiIso * iso_antiIso_sf;
+//        if(refEventCategory == eventCategory)
+        return yield_OSAntiIso * iso_antiIso_sf;
 
-        const analysis::PhysicalValue yield_SSAntiIso_Medium =
-                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_AntiIsolated, s_out);
+//        const analysis::PhysicalValue yield_SSAntiIso_Medium =
+//                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_AntiIsolated, s_out);
 
-        const auto medium_loose_sf = yield_SSAntiIso_Medium / yield_SSAntiIso;
-        s_out << eventCategory << ": QCD SF Medium b-tag / Loose b-tag = " << medium_loose_sf << ".\n";
+//        const auto medium_loose_sf = yield_SSAntiIso_Medium / yield_SSAntiIso;
+//        s_out << eventCategory << ": QCD SF Medium b-tag / Loose b-tag = " << medium_loose_sf << ".\n";
 
-        return yield_OSAntiIso * iso_antiIso_sf * medium_loose_sf;
+//        return yield_OSAntiIso * iso_antiIso_sf * medium_loose_sf;
     }
 
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
