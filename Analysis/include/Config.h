@@ -54,6 +54,7 @@ public:
 
     ANA_CONFIG_PARAMETER(bool, EstimateTauEnergyUncertainties, false)
     ANA_CONFIG_PARAMETER(bool, EstimateJetEnergyUncertainties, false)
+    ANA_CONFIG_PARAMETER(bool, EstimateBtagEfficiencyUncertainties, false)
     ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputFile, "")
     ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputSection, "")
 
