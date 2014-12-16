@@ -314,10 +314,10 @@ enum class EventRegion { Unknown = 0, OS_Isolated = 1, OS_AntiIsolated = 2, SS_I
 
 enum class EventCategory { Inclusive = 0, TwoJets_Inclusive = 1, TwoJets_ZeroBtag = 2, TwoJets_OneBtag = 3,
                            TwoJets_TwoBtag = 4, TwoJets_ZeroLooseBtag = 5, TwoJets_OneLooseBtag = 6,
-                           TwoJets_TwoLooseBtag = 7 };
+                           TwoJets_TwoLooseBtag = 7, TwoJets_AtLeastOneBtag = 8, TwoJets_AtLeastOneLooseBtag = 9 };
 
 enum class EventSubCategory { NoCuts = 0, KinematicFitConverged = 1, MassWindow = 2,
-                              KinematicFitConvergedWithMassWindow = 3 };
+                              KinematicFitConvergedWithMassWindow = 3, OutsideMassWindow = 4 };
 
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
@@ -326,7 +326,9 @@ static const std::map<EventCategory, std::string> eventCategoryNamesMap =
             { EventCategory::TwoJets_TwoBtag, "2jets2btag" },
             { EventCategory::TwoJets_ZeroLooseBtag, "2jets0Loosebtag" },
             { EventCategory::TwoJets_OneLooseBtag, "2jets1Loosebtag" },
-            { EventCategory::TwoJets_TwoLooseBtag, "2jets2Loosebtag" } };
+            { EventCategory::TwoJets_TwoLooseBtag, "2jets2Loosebtag" },
+            { EventCategory::TwoJets_AtLeastOneBtag, "2jets_at_least_1btag" },
+          { EventCategory::TwoJets_AtLeastOneLooseBtag, "2jets_at_least_1Loosebtag" }};
 
 static const std::map<EventRegion, std::string> eventRegionNamesMap =
           { { EventRegion::Unknown, "Unknown"}, { EventRegion::OS_Isolated, "OS_Isolated"},
@@ -338,7 +340,8 @@ static const std::map<EventRegion, std::string> eventRegionNamesMap =
 static const std::map<EventSubCategory, std::string> eventSubCategoryNamesMap =
           { { EventSubCategory::NoCuts, "NoCuts" }, { EventSubCategory::KinematicFitConverged, "KinFitConverged" },
             { EventSubCategory::MassWindow, "MassWindow" },
-            { EventSubCategory::KinematicFitConvergedWithMassWindow, "KinFitConvergedWithMassWindow" } };
+            { EventSubCategory::KinematicFitConvergedWithMassWindow, "KinFitConvergedWithMassWindow" },
+            { EventSubCategory::OutsideMassWindow, "OutsideMassWindow" } };
 } // namespace detail
 
 typedef std::vector<EventCategory> EventCategoryVector;
@@ -352,7 +355,8 @@ static const EventSubCategorySet AllEventSubCategories = tools::collect_map_keys
 static const EventCategoryMap MediumToLoose_EventCategoryMap =
         { { EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_ZeroLooseBtag },
           { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_OneLooseBtag },
-          { EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_TwoLooseBtag } };
+          { EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_TwoLooseBtag },
+          { EventCategory::TwoJets_AtLeastOneBtag, EventCategory::TwoJets_AtLeastOneLooseBtag }};
 
 static const EventCategoryMap Inclusive_EventCategoryMap =
         { { EventCategory::Inclusive, EventCategory::Inclusive },
@@ -420,19 +424,19 @@ EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets
 
     if (csv_Bjets.size() >= 2){
         categories.push_back(EventCategory::TwoJets_Inclusive);
-        if (doRetag){
-            const size_t n_bjets_retagged = std::min<size_t>(nBjets_retagged, 2);
-            if(mediumCategories_map.count(n_bjets_retagged))
-                categories.push_back(mediumCategories_map.at(n_bjets_retagged));
-        }
-        else {
-            size_t n_mediumBtag = 0;
+
+        size_t n_mediumBtag = 0;
+        if(doRetag) {
+            n_mediumBtag = std::min<size_t>(nBjets_retagged, 2);
+        } else {
             if(csv_Bjets.at(0) > CSVM) ++n_mediumBtag;
             if(csv_Bjets.at(1) > CSVM) ++n_mediumBtag;
-
-            if(mediumCategories_map.count(n_mediumBtag))
-                categories.push_back(mediumCategories_map.at(n_mediumBtag));
         }
+
+        if(mediumCategories_map.count(n_mediumBtag))
+            categories.push_back(mediumCategories_map.at(n_mediumBtag));
+        if(n_mediumBtag > 0)
+            categories.push_back(EventCategory::TwoJets_AtLeastOneBtag);
 
         size_t n_looseBtag = 0;
         if(csv_Bjets.at(0) > CSVL) ++n_looseBtag;
@@ -440,6 +444,8 @@ EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets
 
         if(looseCategories_map.count(n_looseBtag))
             categories.push_back(looseCategories_map.at(n_looseBtag));
+        if(n_looseBtag > 0)
+            categories.push_back(EventCategory::TwoJets_AtLeastOneLooseBtag);
     }
 
     return categories;

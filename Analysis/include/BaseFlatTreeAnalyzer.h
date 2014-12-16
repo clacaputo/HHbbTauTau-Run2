@@ -151,10 +151,10 @@ public:
         std::cout << "Printing stacked plots... " << std::endl;
         for (analysis::EventRegion eventRegion : analysis::QcdRegions){
             if (eventRegion != analysis::EventRegion::OS_Isolated) continue;
-            PrintStackedPlots(false, false,eventRegion);
-            PrintStackedPlots(true, false,eventRegion);
-            PrintStackedPlots(false, true,eventRegion);
-            PrintStackedPlots(true, true,eventRegion);
+//            PrintStackedPlots(false, false, eventRegion);
+//            PrintStackedPlots(true, false, eventRegion);
+            PrintStackedPlots(false, true, eventRegion);
+            PrintStackedPlots(true, true, eventRegion);
         }
     }
 
@@ -169,8 +169,6 @@ protected:
                              const PhysicalValue& scale_factor) = 0;
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) = 0;
-    virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name) = 0;
-
     virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
                                const PhysicalValueMap& ztt_yield, bool useEmbedded) = 0;
 
@@ -225,9 +223,44 @@ protected:
         return zttYield;
     }
 
+    virtual void CreateHistogramForZcategory(EventCategory eventCategory, const std::string& hist_name)
+    {
+        const std::map<DataCategoryType, DataCategoryType> z_type_category_map = {
+            { DataCategoryType::ZL_MC, DataCategoryType::ZL }, { DataCategoryType::ZJ_MC, DataCategoryType::ZJ }
+        };
 
-    analysis::PhysicalValue CalculateYieldsForQCD(const std::string& hist_name,analysis::EventCategory eventCategory,
-                                                   analysis::EventRegion eventRegion, std::ostream& s_out)
+        for (const auto& z_category : z_type_category_map){
+            const analysis::DataCategory& originalZcategory = dataCategoryCollection.GetUniqueCategory(z_category.first);
+            const analysis::DataCategory& newZcategory = dataCategoryCollection.GetUniqueCategory(z_category.second);
+
+            PhysicalValueMap valueMap;
+
+            for(EventRegion eventRegion : AllEventRegions) {
+                auto z_hist_yield = GetHistogram(eventCategory, originalZcategory.name, eventRegion, hist_name);
+                if (z_hist_yield)
+                    valueMap[eventRegion] = Integral(*z_hist_yield,true);
+            }
+
+            static const EventCategorySet categoriesToRelax =
+                { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
+            const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
+                    ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
+
+            for(const auto& yield_iter : valueMap) {
+                const EventRegion eventRegion = yield_iter.first;
+                const PhysicalValue& yield = yield_iter.second;
+                auto z_hist_shape = GetHistogram(shapeEventCategory, originalZcategory.name, eventRegion, hist_name);
+                if (z_hist_shape){
+                    TH1D& z_hist = CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
+                    RenormalizeHistogram(z_hist,yield,true);
+                }
+            }
+
+        }
+    }
+
+    PhysicalValue CalculateYieldsForQCD(const std::string& hist_name, EventCategory eventCategory,
+                                        EventRegion eventRegion, std::ostream& s_out)
     {
         const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
@@ -255,7 +288,8 @@ protected:
     virtual void EstimateWjets(EventCategory eventCategory, const std::string& hist_name,
                          const PhysicalValueMap& yield_map)
     {
-        static const EventCategorySet categoriesToRelax = {EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag};
+        static const EventCategorySet categoriesToRelax =
+            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
         const EventCategory shapeEventCategory = categoriesToRelax.count(eventCategory)
                 ? analysis::MediumToLoose_EventCategoryMap.at(eventCategory) : eventCategory;
         return EstimateWjetsEx(eventCategory,shapeEventCategory,hist_name,yield_map);
@@ -500,7 +534,9 @@ protected:
             { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" },
             { EventCategory::TwoJets_ZeroLooseBtag, "2jetloose0tag" },
             { EventCategory::TwoJets_OneLooseBtag, "2jetloose1tag" },
-            { EventCategory::TwoJets_TwoLooseBtag, "2jetloose2tag" }
+            { EventCategory::TwoJets_TwoLooseBtag, "2jetloose2tag" },
+            { EventCategory::TwoJets_AtLeastOneBtag, "2jet_at_least_1tag" },
+            { EventCategory::TwoJets_AtLeastOneLooseBtag, "2jet_at_least_loose1tag" }
         };
 
         static const std::map<std::string, std::string> channelNameForFolder = {

@@ -105,8 +105,9 @@ protected:
                                                       analysis::EventCategory eventCategory,
                                                       std::ostream& s_out) override
     {
-        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
-                                                   analysis::EventCategory::TwoJets_TwoBtag};
+        using analysis::EventCategory;
+        static const analysis::EventCategorySet categories =
+            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
         analysis::EventCategory refEventCategory = eventCategory;
         if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
@@ -138,8 +139,9 @@ protected:
     virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
                              const analysis::PhysicalValue& yield) override
     {
-        static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_OneBtag,
-                                                             analysis::EventCategory::TwoJets_TwoBtag};
+        using analysis::EventCategory;
+        static const analysis::EventCategorySet categories =
+            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
         analysis::EventCategory refEventCategory = eventCategory;
         if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
@@ -162,13 +164,16 @@ protected:
     virtual PhysicalValueMap CalculateWjetsYields(analysis::EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) override
     {
+        using analysis::EventCategory;
+
         const analysis::DataCategoryPtrSet& wjets_mc_categories =
                 dataCategoryCollection.GetCategories(analysis::DataCategoryType::WJets_MC);
 
 
         static const analysis::EventCategorySet NotEstimated_categories = {
-            analysis::EventCategory::TwoJets_OneBtag, analysis::EventCategory::TwoJets_TwoBtag,
-            analysis::EventCategory::TwoJets_OneLooseBtag, analysis::EventCategory::TwoJets_TwoLooseBtag
+            EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_OneLooseBtag,
+            EventCategory::TwoJets_TwoLooseBtag, EventCategory::TwoJets_AtLeastOneBtag,
+            EventCategory::TwoJets_AtLeastOneLooseBtag
         };
 
         PhysicalValueMap valueMap;
@@ -179,21 +184,23 @@ protected:
         return valueMap;
     }
 
-
-
     virtual void CreateHistogramForZTT(analysis::EventCategory eventCategory, const std::string& hist_name,
                                const PhysicalValueMap& ztt_yield_map, bool useEmbedded) override
     {
-        const analysis::DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Embedded);
-        const analysis::DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_MC);
-        const analysis::DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT);
-        const analysis::DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::ZTT_L);
-        const analysis::DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::TT_Embedded);
+        using analysis::DataCategory;
+        using analysis::DataCategoryType;
+        using analysis::EventCategory;
 
-        static const analysis::EventCategorySet categoriesToRelax = {analysis::EventCategory::TwoJets_OneBtag,
-                                                                     analysis::EventCategory::TwoJets_TwoBtag};
+        const DataCategory& embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+        const DataCategory& ZTT_MC = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_MC);
+        const DataCategory& ZTT = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT);
+        const DataCategory& ZTT_L = dataCategoryCollection.GetUniqueCategory(DataCategoryType::ZTT_L);
+        const DataCategory& TTembedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
 
-        analysis::EventCategory shapeEventCategory = eventCategory;
+        static const analysis::EventCategorySet categoriesToRelax =
+            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
+
+        EventCategory shapeEventCategory = eventCategory;
         if (categoriesToRelax.count(eventCategory))
             shapeEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
@@ -220,23 +227,23 @@ protected:
         }
     }
 
-    virtual void CreateHistogramForZcategory(analysis::EventCategory eventCategory, const std::string& hist_name) override
-    {
-        const std::map<analysis::DataCategoryType, analysis::DataCategoryType> z_type_category_map = {
-            { analysis::DataCategoryType::ZL_MC, analysis::DataCategoryType::ZL },
-            { analysis::DataCategoryType::ZJ_MC, analysis::DataCategoryType::ZJ }
-        };
+//    virtual void CreateHistogramForZcategory(analysis::EventCategory eventCategory, const std::string& hist_name) override
+//    {
+//        const std::map<analysis::DataCategoryType, analysis::DataCategoryType> z_type_category_map = {
+//            { analysis::DataCategoryType::ZL_MC, analysis::DataCategoryType::ZL },
+//            { analysis::DataCategoryType::ZJ_MC, analysis::DataCategoryType::ZJ }
+//        };
 
-        for (const auto& z_category : z_type_category_map){
-            const analysis::DataCategory& originalZcategory = dataCategoryCollection.GetUniqueCategory(z_category.first);
-            const analysis::DataCategory& newZcategory = dataCategoryCollection.GetUniqueCategory(z_category.second);
+//        for (const auto& z_category : z_type_category_map){
+//            const analysis::DataCategory& originalZcategory = dataCategoryCollection.GetUniqueCategory(z_category.first);
+//            const analysis::DataCategory& newZcategory = dataCategoryCollection.GetUniqueCategory(z_category.second);
 
-            for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
-                auto z_hist_shape = GetHistogram(eventCategory, originalZcategory.name, eventRegion, hist_name);
-                if (z_hist_shape)
-                    CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
-            }
-        }
-    }
+//            for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
+//                auto z_hist_shape = GetHistogram(eventCategory, originalZcategory.name, eventRegion, hist_name);
+//                if (z_hist_shape)
+//                    CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
+//            }
+//        }
+//    }
 
 };

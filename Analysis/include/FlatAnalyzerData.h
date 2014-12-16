@@ -181,10 +181,12 @@ public:
         Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::NoCuts);
         const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
                 && eventInfo.Hbb.M() > m_bb_low && eventInfo.Hbb.M() < m_bb_high;
-        if(eventInfo.fitResults.has_valid_mass)
-            Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConverged);
         if(inside_mass_window)
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::MassWindow);
+        else
+            Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::OutsideMassWindow);
+        if(eventInfo.fitResults.has_valid_mass)
+            Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConverged);
         if(eventInfo.fitResults.has_valid_mass && inside_mass_window)
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConvergedWithMassWindow);
     }
