@@ -254,24 +254,6 @@ protected:
         return valueMap;
     }
 
-    virtual void CreateHistogramForZcategory(analysis::EventCategory eventCategory, const std::string& hist_name) override
-    {
-        const std::map<analysis::DataCategoryType, analysis::DataCategoryType> z_type_category_map = {
-            { analysis::DataCategoryType::ZL_MC, analysis::DataCategoryType::ZL },
-            { analysis::DataCategoryType::ZJ_MC, analysis::DataCategoryType::ZJ }
-        };
-
-        for (const auto& z_category : z_type_category_map){
-            const analysis::DataCategory& originalZcategory = dataCategoryCollection.GetUniqueCategory(z_category.first);
-            const analysis::DataCategory& newZcategory = dataCategoryCollection.GetUniqueCategory(z_category.second);
-
-            for(analysis::EventRegion eventRegion : analysis::AllEventRegions) {
-                auto z_hist_shape = GetHistogram(eventCategory, originalZcategory.name, eventRegion, hist_name);
-                if (z_hist_shape)
-                    CloneHistogram(eventCategory, newZcategory.name, eventRegion, *z_hist_shape);
-            }
-        }
-    }
 
     virtual void CreateHistogramForVVcategory(EventCategory eventCategory,const std::string& hist_name) override
     {
