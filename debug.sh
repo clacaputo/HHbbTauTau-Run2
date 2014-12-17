@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#  \file runx.sh
-#  \brief Compile and run C++ file with a specified name, passing to it command line arguments.
+#  \file debug.sh
+#  \brief Compile and run C++ file with a specified name, passing to it command line arguments in debug mode.
 #  \author Konstantin Androsov (Siena University, INFN Pisa)
 #  \author Maria Teresa Grippo (Siena University, INFN Pisa)
 #
