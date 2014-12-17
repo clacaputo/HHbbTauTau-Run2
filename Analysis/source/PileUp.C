@@ -1,5 +1,5 @@
 /*!
- * \class PileUp PileUp.h
+ * \class PileUp PileUp.C
  * \brief Class to calculate and apply PU reweighting.
  *
  * Based on PhysicsTools/Utilities/src/LumiReWeighting.cc
