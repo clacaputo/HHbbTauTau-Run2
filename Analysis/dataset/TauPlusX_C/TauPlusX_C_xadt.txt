@@ -1,0 +1,8 @@
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_716_1_Afl.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_1320_1_ksn.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_1822_1_bg6.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_2626_1_U6o.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_296_1_ll1.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_2269_1_qZj.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_232_1_7cG.root
+/store/user/kandroso/TauPlusX_Run2012C_22Jan2013_v1/TREE/Tree_1146_1_676.root
