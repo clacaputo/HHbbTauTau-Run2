@@ -45,7 +45,7 @@ protected:
 
         if(eventInfo.eventEnergyScale == analysis::EventEnergyScale::Central &&
                 category == EventCategory::Inclusive &&
-                eventInfo.eventType == ntuple::EventType::ZL )
+                eventInfo.eventType == ntuple::EventType::ZJ )
             std::cout << eventInfo.eventType << " " << eventInfo.event->evt << std::endl;
     }
 

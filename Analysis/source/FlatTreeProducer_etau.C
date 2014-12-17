@@ -285,6 +285,9 @@ protected:
         const ntuple::MET correctedMET = config.ApplyTauESCorrection()
                 ? ApplyTauCorrectionsToMVAMET(mvaMet, correctedTaus) : mvaMet;
 
+//        std::cout << "correctedMET: " << correctedMET.pt << ", phi:" << correctedMET.phi << ", mt: " <<
+//                      analysis::Calculate_MT(selection.higgs->
+//                                             GetDaughter(analysis::Candidate::Type::Electron)->GetMomentum(),correctedMET.pt,correctedMET.phi) << std::endl;
         const auto looseJets = CollectLooseJets();
         selection.jetsPt20 = FilterCompatibleObjects(looseJets, selection.higgs, jetID::deltaR_signalObjects);
 
@@ -296,6 +299,10 @@ protected:
 
         selection.MET_with_recoil_corrections = ApplyRecoilCorrections(selection.higgs, selection.eTau_MC.Higgs_TauTau,
                                                                        selection.jets.size(), correctedMET);
+//        std::cout << "recoilMET: " << selection.MET_with_recoil_corrections.pt <<
+//                     ", phi:" << selection.MET_with_recoil_corrections.phi << ", mt: " <<
+//                     analysis::Calculate_MT(selection.higgs->GetDaughter(analysis::Candidate::Type::Electron)->
+//                                            GetMomentum(),selection.MET_with_recoil_corrections.pt,selection.MET_with_recoil_corrections.phi) << std::endl;
         return selection;
     }
 
@@ -394,7 +401,7 @@ protected:
         cut(X(sigmaIEtaIEta) < sigma_ieta_ieta[eta_index], "sigmaIetaIeta");
         cut(X(deltaEtaTrkSC) < delta_eta[eta_index], "deltaEtaSC");
         cut(X(deltaPhiTrkSC) < delta_phi[eta_index], "deltaPhiSC");
-        cut(X(eSuperClusterOverP) < HoverE[eta_index], "HoverE");
+        cut(X(hcalOverEcal) < HoverE[eta_index], "HoverE");
     }
 
     bool FindAnalysisFinalState(analysis::finalState::bbETaujet& final_state)
