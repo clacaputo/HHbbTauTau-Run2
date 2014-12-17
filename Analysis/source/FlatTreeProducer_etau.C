@@ -353,7 +353,7 @@ protected:
         cut(std::abs( X(eta) ) < eta, "eta");
         cut(X(decayModeFinding) > decayModeFinding, "decay_mode");
         cut(X(againstMuonLoose) > againstMuonLoose, "vs_mu_loose");
-        const bool againstElectron =  ComputeAntiElectronMVA3New(object, againstElectronMVA3_customWP_id);
+        const bool againstElectron =  ComputeAntiElectronMVA3New(object, againstElectronMVA3_customWP_id, true);
         cut(Y(againstElectron), "vs_e_mediumMVA");
         cut(X(byCombinedIsolationDeltaBetaCorrRaw3Hits) <
             cuts::skim::ETau::tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits, "relaxed_Iso3Hits");
@@ -436,6 +436,7 @@ protected:
         const analysis::CandidatePtr& electron = selection.GetElectron();
         const ntuple::Electron& ntuple_electron = electron->GetNtupleObject<ntuple::Electron>();
         const analysis::CandidatePtr& tau = selection.GetTau();
+        const ntuple::Tau& ntuple_tau = tau->GetNtupleObject<ntuple::Tau>();
 
         BaseFlatTreeProducer::FillFlatTree(selection);
 
@@ -463,6 +464,15 @@ protected:
         flatTree->againstMuonTight_1() = false;
         flatTree->againstElectronMVA3raw_1() = default_int_value;
         flatTree->byIsolationMVA2raw_1() = default_int_value;
+        flatTree->againstElectronLooseMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 0, true);
+        flatTree->againstElectronMediumMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 1, true);
+        flatTree->againstElectronTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 2, true);
+        flatTree->againstElectronVTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 3, true);
+
 
         const bool electron_matched = analysis::HasMatchWithMCParticle(electron->GetMomentum(),
                                                                        selection.eTau_MC.electron,

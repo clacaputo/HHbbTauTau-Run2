@@ -388,6 +388,7 @@ protected:
         const analysis::CandidatePtr& muon = selection.GetMuon();
         const ntuple::Muon& ntuple_muon = muon->GetNtupleObject<ntuple::Muon>();
         const analysis::CandidatePtr& tau = selection.GetTau();
+        const ntuple::Tau& ntuple_tau = tau->GetNtupleObject<ntuple::Tau>();
 
         flatTree->channel() = static_cast<int>(analysis::Channel::MuTau);
         flatTree->pfRelIso_1() = ntuple_muon.pfRelIso;
@@ -413,6 +414,15 @@ protected:
         flatTree->againstMuonTight_1() = false;
         flatTree->againstElectronMVA3raw_1() = default_int_value;
         flatTree->byIsolationMVA2raw_1() = default_int_value;
+        flatTree->againstElectronLooseMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 0, true);
+        flatTree->againstElectronMediumMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 1, true);
+        flatTree->againstElectronTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 2, true);
+        flatTree->againstElectronVTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau, 3, true);
+
 
         const bool muon_matched = analysis::HasMatchWithMCParticle(muon->GetMomentum(), selection.muTau_MC.muon,
                                                                    cuts::DeltaR_MC_Match);

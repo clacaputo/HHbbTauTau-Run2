@@ -410,7 +410,8 @@ namespace DYEmbedded {
 }
 
 namespace customTauMVA {
-    bool ComputeAntiElectronMVA3New(const ntuple::Tau& tau, size_t WP)
+    // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/Utilities/src/FnPredicates.cc#L319
+    bool ComputeAntiElectronMVA3New(const ntuple::Tau& tau, size_t WP, bool applyDzCut = false)
     {
         static size_t n_categories = 16;
         static const std::vector< std::vector<float> > cuts {
@@ -423,6 +424,12 @@ namespace customTauMVA {
             { 0.978, 0.98, 0.982, 0.985, 0.977, 0.974, 0.989, 0.977, 0.986, 0.983, 0.984, 0.983, 0.971, 0.987,
                 0.977, 0.981 } // very tight
         };
+
+        if(applyDzCut) {
+            const TLorentzVector momentum = analysis::MakeLorentzVectorPtEtaPhiM(tau.pt, tau.eta, tau.phi, tau.mass);
+            const double z_2 = tau.vz + (130. / std::tan(momentum.Theta()));
+            if (z_2 > -1.5 && z_2 < 0.5) return false;
+        }
 
         const int category = std::round(tau.againstElectronMVA3category);
         const float raw = tau.againstElectronMVA3raw;

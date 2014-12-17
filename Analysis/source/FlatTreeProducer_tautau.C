@@ -391,6 +391,7 @@ protected:
         const analysis::CandidatePtr& leadTau = selection.GetLeadingTau();
         const analysis::CandidatePtr& subLeadTau = selection.GetSubleadingTau();
         const ntuple::Tau& ntuple_tau_leg1 = leadTau->GetNtupleObject<ntuple::Tau>();
+        const ntuple::Tau& ntuple_tau_leg2 = subLeadTau->GetNtupleObject<ntuple::Tau>();
 
         BaseFlatTreeProducer::FillFlatTree(selection);
 
@@ -410,6 +411,14 @@ protected:
                     ntuple_tau_leg1, 2);
         flatTree->againstElectronVTightMVA_custom_1() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
                     ntuple_tau_leg1, 3);
+        flatTree->againstElectronLooseMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 0);
+        flatTree->againstElectronMediumMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 1);
+        flatTree->againstElectronTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 2);
+        flatTree->againstElectronVTightMVA_custom_2() = cuts::Htautau_Summer13::customTauMVA::ComputeAntiElectronMVA3New(
+                    ntuple_tau_leg2, 3);
         flatTree->againstElectronLooseMVA_1() = ntuple_tau_leg1.againstElectronLooseMVA3;
         flatTree->againstElectronMediumMVA_1() = ntuple_tau_leg1.againstElectronMediumMVA3;
         flatTree->againstElectronTightMVA_1() = ntuple_tau_leg1.againstElectronTightMVA3;
