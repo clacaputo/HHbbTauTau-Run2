@@ -512,6 +512,8 @@ protected:
             full_name << "t_" << channel_name;
         else if(eventEnergyScale == EventEnergyScale::JetUp || eventEnergyScale == EventEnergyScale::JetDown)
             full_name << "j";
+        else if(eventEnergyScale == EventEnergyScale::BtagEfficiencyUp || eventEnergyScale == EventEnergyScale::BtagEfficiencyDown)
+            full_name << "btag";
         else
             throw exception("Unsupported event energy scale ") << eventEnergyScale;
         full_name << "_8TeV";

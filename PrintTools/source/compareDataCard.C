@@ -127,7 +127,7 @@ void drawCategory(TCanvas* C,TString Group1, TFile* F1,TString Group2, TFile* F2
   drawHisto(C,Group1,F1,Group2,F2,channel,category,"QCD"                                  ,1&&PrintDiff,MaxBin);
   drawHisto(C,Group1,F1,Group2,F2,channel,category,"TT"                                   ,1&&PrintDiff,MaxBin);
   drawHisto(C,Group1,F1,Group2,F2,channel,category,"VV"                                   ,1&&PrintDiff,MaxBin);
-  drawHisto(C,Group1,F1,Group2,F2,channel,category,"TT_emb"                                   ,1&&PrintDiff,MaxBin);
+//  drawHisto(C,Group1,F1,Group2,F2,channel,category,"TT_emb"                                   ,1&&PrintDiff,MaxBin);
 
 //   drawHisto(C,Group1,F1,Group2,F2,channel,category,"ggH_SM125" 				  ,1&&PrintDiff,MaxBin);
 //   drawHisto(C,Group1,F1,Group2,F2,channel,category,"ggH_SM125_CMS_scale_t_tautau_8TeVUp"  ,1&&PrintDiff,MaxBin);
