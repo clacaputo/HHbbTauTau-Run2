@@ -150,13 +150,7 @@ public:
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        for (analysis::EventRegion eventRegion : analysis::QcdRegions){
-            if (eventRegion != analysis::EventRegion::OS_Isolated) continue;
-//            PrintStackedPlots(false, false, eventRegion);
-//            PrintStackedPlots(true, false, eventRegion);
-            PrintStackedPlots(false, true, eventRegion);
-            PrintStackedPlots(true, true, eventRegion);
-        }
+        PrintStackedPlots(true, true, EventRegion::OS_Isolated);
     }
 
 protected:
@@ -740,11 +734,14 @@ private:
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), 2 }, { FlatAnalyzerData::m_bb_slice_Name(), 3 }
         };
 
+        static const std::set<EventSubCategory> sidebandSubCategories = { EventSubCategory::OutsideMassWindow };
+
         const auto findRegionId = [&]() -> size_t {
             if(histogramsToBlind.count(hist_name))
                 return histogramsToBlind.at(hist_name);
             for(EventEnergyScale eventEnergyScale : AllEventEnergyScales) {
                 for(EventSubCategory subCategory : AllEventSubCategories) {
+                    if(sidebandSubCategories.count(subCategory)) continue;
                     for(const auto& entry : histogramsToBlind) {
                         const auto full_hist_name = FlatAnalyzerData::FullHistogramName(entry.first, subCategory,
                                                                                         eventEnergyScale);
@@ -758,7 +755,7 @@ private:
 
         const size_t regionId = findRegionId();
         if(regionId >= blindingRegions.size())
-            throw analysis::exception("Bad blinding region index = ") << regionId;
+            throw exception("Bad blinding region index = ") << regionId;
         return blindingRegions.at(regionId);
     }
 

@@ -1,6 +1,6 @@
 /*!
- * \file Print_SmartHistogram.C
- * \brief Print smart histograms with specified name superimposing several files.
+ * \file Print_TreeBranch.C
+ * \brief Print histogram for a tree branch with a specified name superimposing several files.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \date 2014-04-03 created

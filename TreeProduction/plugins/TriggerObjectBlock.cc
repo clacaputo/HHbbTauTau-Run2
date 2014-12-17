@@ -1,5 +1,5 @@
 /*!
- * \file TriggerBlock.cc
+ * \file TriggerObjectBlock.cc
  * \author Original author: Subir Sarkar
  * \author Contributing author: Konstantin Androsov (Siena University, INFN Pisa)
  * \author Contributing author: Maria Teresa Grippo (Siena University, INFN Pisa)
