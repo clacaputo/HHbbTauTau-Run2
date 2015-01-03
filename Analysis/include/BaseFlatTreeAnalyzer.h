@@ -151,6 +151,7 @@ public:
 
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(true, true, EventRegion::OS_Isolated);
+        PrintStackedPlots(false, true, EventRegion::OS_Isolated);
     }
 
 protected:
