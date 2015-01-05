@@ -340,3 +340,6 @@ RunTools/src/Scan.C
 RunTools/scan_trees.sh
 Analysis/include/FlatAnalyzerData.h
 RunTools/source/Scan.C
+Analysis/studies/AnalyzeBKGShape.C
+Analysis/studies/AnalyzeQCDShape.C
+Analysis/studies/AnalyzeEMBShape.C
