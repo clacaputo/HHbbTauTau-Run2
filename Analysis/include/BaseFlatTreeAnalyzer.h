@@ -149,7 +149,7 @@ public:
 //                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
 //        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
-        for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
             ProduceFileForLimitsCalculation(hist_name,EventSubCategory::KinematicFitConvergedWithMassWindow);
         }
         std::cout << "Printing stacked plots... " << std::endl;
@@ -533,7 +533,7 @@ protected:
     void ProduceFileForLimitsCalculation(const std::string& hist_name, EventSubCategory eventSubCategory)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
-            { EventCategory::Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
+            { EventCategory::TwoJets_Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
             { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" },
             { EventCategory::TwoJets_ZeroLooseBtag, "2jetloose0tag" },
             { EventCategory::TwoJets_OneLooseBtag, "2jetloose1tag" },

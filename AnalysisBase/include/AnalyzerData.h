@@ -78,8 +78,16 @@ private:
         return names;
     }
 
+    static std::set<std::string>& OriginalHistogramNames()
+    {
+        static std::set<std::string> names;
+        return names;
+    }
+
+
 public:
     static const std::set<std::string>& GetAllHistogramNames() { return HistogramNames(); }
+    static const std::set<std::string>& GetOriginalHistogramNames() { return OriginalHistogramNames(); }
 
 public:
     AnalyzerData() : outputFile(nullptr), ownOutputFile(false) {}
@@ -157,6 +165,7 @@ public:
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
             HistogramNames().insert(h->Name());
+            OriginalHistogramNames().insert(name);
             if(!outputFile)
                 h->DetachFromFile();
         }
