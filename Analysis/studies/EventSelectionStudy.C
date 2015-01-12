@@ -44,7 +44,7 @@ protected:
         //if (!analysis::TwoJetsEventCategories_MediumBjets.count(category)) return;
 
         if(eventInfo.eventEnergyScale == analysis::EventEnergyScale::Central &&
-                category == EventCategory::Inclusive &&
+                category == EventCategory::TwoJets_OneBtag &&
                 eventInfo.eventType == ntuple::EventType::ZJ )
             std::cout << /*eventInfo.eventType << " " <<*/ eventInfo.event->evt << std::endl;
     }

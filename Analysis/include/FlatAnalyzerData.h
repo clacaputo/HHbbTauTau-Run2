@@ -130,7 +130,7 @@ public:
             m_ttbb_kinfit(key).Fill(eventInfo.fitResults.mass, weight);
         FillSlice(m_bb_slice(key), mass_tautau, eventInfo.Hbb.M(), weight);
 
-        if (eventEnergyScale != EventEnergyScale::Central) return;
+        //if (eventEnergyScale != EventEnergyScale::Central) return;
 
         pt_1(key).Fill(event.pt_1, weight);
         eta_1(key).Fill(event.eta_1, weight);
@@ -202,10 +202,11 @@ public:
             FillSubCategories(eventInfo, weight, energyScale);
     }
 
-    void FillCentralAndJetEnergyScales(const FlatEventInfo& eventInfo, double weight)
+    void FillCentralAndJetEnergyScalesAndBjet(const FlatEventInfo& eventInfo, double weight)
     {
         static const std::set<EventEnergyScale> energyScales =
-            { EventEnergyScale::Central, EventEnergyScale::JetUp, EventEnergyScale::JetDown };
+            { EventEnergyScale::Central, EventEnergyScale::JetUp, EventEnergyScale::JetDown,
+              EventEnergyScale::BtagEfficiencyUp, EventEnergyScale::BtagEfficiencyDown };
         FillEnergyScales(eventInfo, weight, energyScales);
     }
 

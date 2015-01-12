@@ -418,7 +418,7 @@ protected:
                 if (dataCategory.IsData())
                     anaData.FillAllEnergyScales(*eventInfo, weight);
                 else if(dataCategory.name == DY_Embedded.name && eventInfo->eventEnergyScale == EventEnergyScale::Central)
-                    anaData.FillCentralAndJetEnergyScales(*eventInfo, weight);
+                    anaData.FillCentralAndJetEnergyScalesAndBjet(*eventInfo, weight);
                 else
                     anaData.FillSubCategories(*eventInfo, weight, eventInfo->eventEnergyScale);
             }
@@ -521,7 +521,8 @@ protected:
         else
             throw exception("Unsupported event energy scale ") << eventEnergyScale;
         full_name << "_8TeV";
-        if(eventEnergyScale == EventEnergyScale::TauUp || eventEnergyScale == EventEnergyScale::JetUp)
+        if(eventEnergyScale == EventEnergyScale::TauUp || eventEnergyScale == EventEnergyScale::JetUp ||
+                eventEnergyScale == EventEnergyScale::BtagEfficiencyUp )
             full_name << "Up";
         else
             full_name << "Down";
