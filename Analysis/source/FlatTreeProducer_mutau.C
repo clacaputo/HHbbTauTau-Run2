@@ -230,6 +230,7 @@ protected:
         cut(higgsTriggered.size(), "trigger obj match");
 
         selection.higgs = SelectSemiLeptonicHiggs(higgsTriggered);
+        GetAnaData().Htautau_Mass().Fill(selection.higgs->GetMomentum().M());
         selection.eventType = DoEventCategorization(selection.higgs);
 
         cut(!config.isDYEmbeddedSample() || selection.eventType == ntuple::EventType::ZTT, "tau match with MC truth");

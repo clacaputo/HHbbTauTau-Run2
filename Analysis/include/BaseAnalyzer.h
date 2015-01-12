@@ -66,6 +66,7 @@ public:
 
     TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
+    TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
 };
 
 class BaseAnalyzer {

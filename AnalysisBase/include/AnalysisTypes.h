@@ -165,7 +165,7 @@ struct PhysicalValue {
     PhysicalValue& operator/=(const PhysicalValue& other)
     {
         value /= other.value;
-        error = std::sqrt(sqr(error) + sqr(value * other.error / sqr(other.value))) / std::abs(other.value);
+        error = std::sqrt(sqr(error) + sqr(value * other.error / other.value)) / std::abs(other.value);
         return *this;
     }
 

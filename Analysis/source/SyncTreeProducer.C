@@ -67,30 +67,30 @@ protected:
         if (eventInfo.channel == analysis::Channel::TauTau){
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
-            return !(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
-                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits);
-//            if(!event.againstElectronLooseMVA_2
-//                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
-//                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
-//                    || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
-//                        && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits))
-//                return false;
+//            return !(event.againstElectronLooseMVA_2 <= againstElectronLooseMVA3
+//                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+//                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits);
+            if(!event.againstElectronLooseMVA_2
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
+                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
+                    || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
+                        && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits))
+                return false;
 
-//            const bool os = event.q_1 * event.q_2 == -1;
-//            const bool iso = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-//                             event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
+            const bool os = event.q_1 * event.q_2 == -1;
+            const bool iso = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
+                             event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
 
-//            if(eventInfo.bjet_momentums.size() < 2 || !eventInfo.fitResults.has_valid_mass)
-//                return false;
+            if(eventInfo.bjet_momentums.size() < 2 || !eventInfo.fitResults.has_valid_mass)
+                return false;
 
-//            using namespace cuts::massWindow;
-//            const double mass_tautau = eventInfo.event->m_sv_MC;
-//            const double mass_bb = eventInfo.Hbb.M();
-//            const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
-//                    && mass_bb > m_bb_low && mass_bb < m_bb_high;
+            using namespace cuts::massWindow;
+            const double mass_tautau = eventInfo.event->m_sv_MC;
+            const double mass_bb = eventInfo.Hbb.M();
+            const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
+                    && mass_bb > m_bb_low && mass_bb < m_bb_high;
 
-//            return os && iso && inside_mass_window;
+            return !os && iso && inside_mass_window;
         }
         throw analysis::exception("unsupported channel ") << eventInfo.channel;
     }
@@ -99,7 +99,7 @@ protected:
     {
         using analysis::EventCategory;
 
-        if (category != EventCategory::Inclusive) return;
+        if (category != EventCategory::TwoJets_TwoLooseBtag) return;
         ++inclusive;
         if (!PassSyncTreeSelection(eventInfo)) return;
         ++passed;

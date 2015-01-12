@@ -142,13 +142,16 @@ public:
         PrintTables("semicolon", L";");
 
         std::cout << "Saving datacards... " << std::endl;
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts);
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
-                                        EventSubCategory::KinematicFitConverged);
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
-                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
+//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts);
+//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
+//                                        EventSubCategory::KinematicFitConverged);
+//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
+//                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
+//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
+        for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+            ProduceFileForLimitsCalculation(hist_name,EventSubCategory::KinematicFitConvergedWithMassWindow);
+        }
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(true, true, EventRegion::OS_Isolated);
         PrintStackedPlots(false, true, EventRegion::OS_Isolated);
