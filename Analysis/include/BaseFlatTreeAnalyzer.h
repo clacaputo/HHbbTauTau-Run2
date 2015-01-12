@@ -150,7 +150,7 @@ public:
 //        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
         for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
-            ProduceFileForLimitsCalculation(hist_name,EventSubCategory::KinematicFitConvergedWithMassWindow);
+            ProduceFileForLimitsCalculation(hist_name, EventSubCategory::NoCuts);
         }
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(true, true, EventRegion::OS_Isolated);

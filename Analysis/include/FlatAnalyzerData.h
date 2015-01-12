@@ -189,11 +189,6 @@ public:
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConverged);
         if(eventInfo.fitResults.has_valid_mass && inside_mass_window)
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConvergedWithMassWindow);
-
-        if(eventEnergyScale == EventEnergyScale::Central) {
-            FillSubCategories(eventInfo, weight, EventEnergyScale::BtagEfficiencyUp);
-            FillSubCategories(eventInfo, weight, EventEnergyScale::BtagEfficiencyDown);
-        }
     }
 
     void FillEnergyScales(const FlatEventInfo& eventInfo, double weight, const std::set<EventEnergyScale>& energyScales)
