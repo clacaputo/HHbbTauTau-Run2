@@ -51,6 +51,7 @@
     SIMPLE_VAR(Float_t, weight) /* mcweight*puweight*effweight */ \
     SIMPLE_VAR(Float_t, embeddedWeight) /*  */ \
     SIMPLE_VAR(Float_t, signalWeight) /*  */ \
+    SIMPLE_VAR(Float_t, etau_fakerate) /* e to tau fake weight*/ \
     /* SV Fit variables */ \
     SIMPLE_VAR(Float_t, mvis) /* SV Fit using integration method */ \
     SIMPLE_VAR(Float_t, m_sv) /* SV Fit using integration method */ \

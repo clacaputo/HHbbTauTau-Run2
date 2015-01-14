@@ -352,6 +352,10 @@ typedef std::map<EventCategory, EventCategory> EventCategoryMap;
 typedef std::set<EventSubCategory> EventSubCategorySet;
 
 static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
+static const EventCategorySet EventCategories_ETau = {EventCategory::Inclusive, EventCategory::TwoJets_Inclusive,
+                                                     EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag,
+                                                     EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_OneLooseBtag,
+                                                     EventCategory::TwoJets_TwoLooseBtag};
 static const EventSubCategorySet AllEventSubCategories = tools::collect_map_keys(detail::eventSubCategoryNamesMap);
 
 static const EventCategoryMap MediumToLoose_EventCategoryMap =

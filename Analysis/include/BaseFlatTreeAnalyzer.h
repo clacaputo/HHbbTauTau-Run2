@@ -62,7 +62,7 @@ public:
     typedef std::map<EventCategory, AnaDataForEventCategory> FullAnaData;
     typedef std::map<EventRegion, PhysicalValue> PhysicalValueMap;
 
-    static const EventCategorySet& EventCategoriesToProcess() { return AllEventCategories; }
+    virtual const EventCategorySet& EventCategoriesToProcess() const { return AllEventCategories; }
 
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
                          const std::string& _outputFileName)
@@ -120,7 +120,6 @@ public:
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                if (eventCategory == EventCategory::TwoJets_AtLeastOneLooseBtag) continue;
                 const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name,false);
                 for (const auto yield_entry : wjets_yields){
                     s_out << eventCategory << ": W+jets yield in " << yield_entry.first << " = " << yield_entry.second
@@ -415,11 +414,13 @@ protected:
 
 
                 if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name){
-                    if (eventInfo->channel == analysis::Channel::ETau) {
+                    if (eventInfo->channel == analysis::Channel::ETau &&
+                            eventInfo->eventType == ntuple::EventType::ZL) {
                         double tmp_weight = weight / event.fakeweight_2;
                         double fakeWeight =
                                 cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
-                                    event.eta_2, event.decayMode_2);
+                                    event.eta_2,
+                                    ntuple::tau_id::ConvertToHadronicDecayMode(event.decayMode_2));
                         weight = tmp_weight * fakeWeight;
                     }
                     FillDYjetHistograms(*eventInfo, eventCategory, eventRegion, weight);

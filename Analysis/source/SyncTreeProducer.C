@@ -158,7 +158,12 @@ protected:
             double correct_weight = event.weight * DYweight / event.fakeweight_2;
             if (event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero)
                 correct_weight = correct_weight/0.88;
-            syncTree->weight() = correct_weight;
+            double fakeWeight =
+                    cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
+                        event.eta_2,
+                        ntuple::tau_id::ConvertToHadronicDecayMode(event.decayMode_2));
+            syncTree->etau_fakerate() = fakeWeight;
+            syncTree->weight() = correct_weight * fakeWeight;
             //without DYweight and decayMode weight correction
             //syncTree->weight() = event.weight;
             syncTree->embeddedWeight() = event.embeddedWeight;

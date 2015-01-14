@@ -375,7 +375,7 @@ namespace jetToTauFakeRateWeight {
 namespace electronEtoTauFakeRateWeight {
 
     //inline double CalculateEtoTauFakeWeight(const ntuple::Tau& tau_leg)
-    inline double CalculateEtoTauFakeWeight(double tau_eta, int tau_decayMode)
+    inline double CalculateEtoTauFakeWeight(double tau_eta, ntuple::tau_id::hadronicDecayMode tau_decayMode)
     {
         static const double eta = 1.5 ;
         static const std::map<ntuple::tau_id::hadronicDecayMode, std::vector<double>> decayModeMap= {
