@@ -157,7 +157,8 @@ protected:
             if(!has_gen_electrons)
                 throw exception("Gen electrons are not set.");
             if (analysis::FindMatchedParticles(leg->GetMomentum(), genElectrons, deltaR_matchGenParticle).size() > 0)
-                fakeEtoTauWeight = CalculateEtoTauFakeWeight(leg->GetNtupleObject<ntuple::Tau>());
+                fakeEtoTauWeight = CalculateEtoTauFakeWeight(leg->GetNtupleObject<ntuple::Tau>().eta,
+                                                             leg->GetNtupleObject<ntuple::Tau>().decayMode);
         }
 
         const double fakeJetToTauWeight = applyJetToTauFakeRate

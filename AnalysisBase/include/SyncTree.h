@@ -47,6 +47,7 @@
     SIMPLE_VAR(Float_t, isoweight_2) /* Effieiency Scale factor (all components multiplied in) */ \
     SIMPLE_VAR(Float_t, fakeweight) /* Effieiency Scale factor (all components multiplied in) */ \
     SIMPLE_VAR(Float_t, effweight) /* Effieiency Scale factor (all components multiplied in) */ \
+    SIMPLE_VAR(Float_t, DYweight) /* Effieiency Scale factor (all components multiplied in) */ \
     SIMPLE_VAR(Float_t, weight) /* mcweight*puweight*effweight */ \
     SIMPLE_VAR(Float_t, embeddedWeight) /*  */ \
     SIMPLE_VAR(Float_t, signalWeight) /*  */ \

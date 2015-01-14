@@ -99,10 +99,13 @@ protected:
     {
         using analysis::EventCategory;
 
-        if (category != EventCategory::TwoJets_TwoLooseBtag) return;
-        ++inclusive;
+//        if (category != EventCategory::TwoJets_TwoLooseBtag) return;
+//        ++inclusive;
+
         if (!PassSyncTreeSelection(eventInfo)) return;
         ++passed;
+        if (eventInfo.eventType != ntuple::EventType::ZL) return;
+        ++passedEventType;
 
         const ntuple::Flat& event = *eventInfo.event;
         const analysis::EventId eventId(event.run,event.lumi,event.evt);
@@ -111,7 +114,8 @@ protected:
 
     virtual void EndOfRun() override
     {
-        std::cout << "inclusive evt = " << inclusive << ", passed = " << passed << std::endl;
+        std::cout << "inclusive evt = " << inclusive << ", passed = " << passed << ", passedEventType = " <<
+                     passedEventType << std::endl;
         std::cout << "eventId_ToES_Map.size = " << eventId_ToES_Map.size() << std::endl;
         for (const auto& event_iter : eventId_ToES_Map){
             const ES_toEvent_Map& es_toEventMap = event_iter.second;
@@ -135,8 +139,28 @@ protected:
             syncTree->isoweight_1() = event.isoweight_1;
             syncTree->isoweight_2() = event.isoweight_2;
             syncTree->fakeweight() = event.fakeweight_2;
-
-            syncTree->weight() = event.weight;
+            double DYweight = 1;
+            //inclusive sample
+//            if (event.n_extraJets_MC == 6)
+//                DYweight = 0.1941324;
+//            if (event.n_extraJets_MC == 7)
+//                DYweight = 0.0787854;
+//            if (event.n_extraJets_MC == 8)
+//                DYweight = 0.0457089;
+//            if (event.n_extraJets_MC == 9)
+//                DYweight = 0.0357635;
+            //exclusive sample
+//            DYweight = 0.1941324; //1jet
+//            DYweight = 0.0787854; //2jets
+//            DYweight = 0.0457089; //3jets
+            DYweight = 0.0357635; //4jets
+            syncTree->DYweight() = DYweight;
+            double correct_weight = event.weight * DYweight / event.fakeweight_2;
+            if (event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero)
+                correct_weight = correct_weight/0.88;
+            syncTree->weight() = correct_weight;
+            //without DYweight and decayMode weight correction
+            //syncTree->weight() = event.weight;
             syncTree->embeddedWeight() = event.embeddedWeight;
 
             syncTree->mvis() = eventInfo.Htt.M();
@@ -298,5 +322,5 @@ protected:
 private:
     std::shared_ptr<ntuple::SyncTree> syncTree;
     EventId_ToES_Map eventId_ToES_Map;
-    unsigned inclusive, passed;
+    unsigned inclusive, passed, passedEventType;
 };

@@ -130,7 +130,7 @@ public:
             m_ttbb_kinfit(key).Fill(eventInfo.fitResults.mass, weight);
         FillSlice(m_bb_slice(key), mass_tautau, eventInfo.Hbb.M(), weight);
 
-        //if (eventEnergyScale != EventEnergyScale::Central) return;
+        if (eventEnergyScale != EventEnergyScale::Central) return;
 
         pt_1(key).Fill(event.pt_1, weight);
         eta_1(key).Fill(event.eta_1, weight);

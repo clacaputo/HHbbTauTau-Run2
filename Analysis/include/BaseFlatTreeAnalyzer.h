@@ -120,6 +120,7 @@ public:
             }
 
             for (EventCategory eventCategory : EventCategoriesToProcess()) {
+                if (eventCategory == EventCategory::TwoJets_AtLeastOneLooseBtag) continue;
                 const auto wjets_yields = CalculateWjetsYields(eventCategory, hist_name,false);
                 for (const auto yield_entry : wjets_yields){
                     s_out << eventCategory << ": W+jets yield in " << yield_entry.first << " = " << yield_entry.second
@@ -142,16 +143,16 @@ public:
         PrintTables("semicolon", L";");
 
         std::cout << "Saving datacards... " << std::endl;
-//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts);
 //        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
 //                                        EventSubCategory::KinematicFitConverged);
-//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
-//                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
-//        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
+                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
-        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
-            ProduceFileForLimitsCalculation(hist_name, EventSubCategory::NoCuts);
-        }
+//        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
+//            ProduceFileForLimitsCalculation(hist_name, EventSubCategory::NoCuts);
+//        }
         std::cout << "Printing stacked plots... " << std::endl;
         PrintStackedPlots(true, true, EventRegion::OS_Isolated);
         PrintStackedPlots(false, true, EventRegion::OS_Isolated);
@@ -363,6 +364,7 @@ protected:
 
     void ProcessDataSource(const DataCategory& dataCategory, std::shared_ptr<ntuple::FlatTree> tree, double scale_factor)
     {
+
         static const bool applyMVAcut = false;
 
         const analysis::DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
@@ -412,8 +414,16 @@ protected:
                 if(applyMVAcut && !PassMvaCut(*eventInfo, eventCategory)) continue;
 
 
-                if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
+                if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name){
+                    if (eventInfo->channel == analysis::Channel::ETau) {
+                        double tmp_weight = weight / event.fakeweight_2;
+                        double fakeWeight =
+                                cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
+                                    event.eta_2, event.decayMode_2);
+                        weight = tmp_weight * fakeWeight;
+                    }
                     FillDYjetHistograms(*eventInfo, eventCategory, eventRegion, weight);
+                }
                 auto& anaData = GetAnaData(eventCategory, dataCategory.name, eventRegion);
                 if (dataCategory.IsData())
                     anaData.FillAllEnergyScales(*eventInfo, weight);

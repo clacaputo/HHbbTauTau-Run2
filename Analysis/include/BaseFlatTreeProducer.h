@@ -96,8 +96,8 @@ protected:
         flatTree->idweight_2() = GetEventWeights().GetIdWeight(2);
         flatTree->isoweight_1() = GetEventWeights().GetIsoWeight(1);
         flatTree->isoweight_2() = GetEventWeights().GetIsoWeight(2);
-        flatTree->fakeweight_1() = GetEventWeights().GetFakeWeight(1); // e -> tau fake rate
-        flatTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // jet -> tau fake rate - default
+        flatTree->fakeweight_1() = GetEventWeights().GetFakeWeight(1); //
+        flatTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // e -> tau fake rate * jet -> tau fake rate
         flatTree->weight() = GetEventWeights().GetFullWeight();
         flatTree->embeddedWeight() = GetEventWeights().GetEmbeddedWeight();
 
