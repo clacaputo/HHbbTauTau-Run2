@@ -170,13 +170,15 @@ public:
         main_pad->cd();
 
 
-        if (background_histograms.size()){
+        if (background_histograms.size()) {
             const auto& bkg_hist = background_histograms.front();
             stack = std::shared_ptr<THStack>(new THStack(bkg_hist->GetName(), bkg_hist->GetTitle()));
+
             for (auto iter = background_histograms.rbegin(); iter != background_histograms.rend(); ++iter){
                 stack->Add(iter->get());
             }
             stack->Draw("HIST");
+
             Double_t maxY = stack->GetMaximum();
             if (data_histogram){
                 const Int_t maxBin = data_histogram->GetMaximumBin();
@@ -209,6 +211,12 @@ public:
             stack->GetYaxis()->SetTitleOffset(1.6);
             stack->GetYaxis()->SetLabelSize(0.04);
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
+
+            sum_backgound_histogram->SetMarkerSize(0);
+            sum_backgound_histogram->SetFillColor(13);
+            sum_backgound_histogram->SetFillStyle(3013);
+            sum_backgound_histogram->SetLineWidth(1);
+            sum_backgound_histogram->Draw("e2same");
         }
 
         for(const hist_ptr& signal : signal_histograms)
