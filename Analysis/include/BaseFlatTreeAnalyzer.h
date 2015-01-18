@@ -938,7 +938,7 @@ private:
                 if(auto hist = GetHistogram(eventCategory, dataCategory->name, eventRegion, hist_name)) {
                     hist->Scale(scaleFactor);
                     for (Int_t n = 0; n <= hist->GetNbinsX() + 1; ++n) {
-                        const double error = std::sqrt(sqr(hist->GetBinError(n)) + sqr(uncertainty));
+                        const double error = hist->GetBinError(n) * std::sqrt(1 + sqr(uncertainty));
                         hist->SetBinError(n, error);
                     }
                 }
