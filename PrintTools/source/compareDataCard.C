@@ -480,7 +480,7 @@ void compareDataCard(
 //   drawCategory(&C,Group1,&F1,Group2,&F2,channel,"nobtag"   ,1,MaxBin       );
 //   drawCategory(&C,Group1,&F1,Group2,&F2,channel,"btag"     ,1,(int)MaxBin/2);
 
-//  drawCategory(&C,Group1,&F1,Group2,&F2,channel,"inclusive"             ,1,MaxBin       );
+  drawCategory(&C,Group1,&F1,Group2,&F2,channel,"inclusive"             ,1,MaxBin       );
 //  drawCategory(&C,Group1,&F1,Group2,&F2,channel,"2jet0tag" ,1,MaxBin       );
   drawCategory(&C,Group1,&F1,Group2,&F2,channel,"2jet1tag"   ,1,MaxBin       );
   drawCategory(&C,Group1,&F1,Group2,&F2,channel,"2jet2tag"                   ,1,(int)MaxBin/2);

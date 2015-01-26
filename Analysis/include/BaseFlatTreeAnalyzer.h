@@ -386,13 +386,15 @@ protected:
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
             const ntuple::Flat& event = tree->data;
-
+            //if (event.evt != 37734792 || event.eventEnergyScale != 0) continue;
             const bool useRetag = dataCategory.IsData() || dataCategory.name == DY_Embedded.name  ? false : true;
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
                                                                                  event.nBjets_retagged,
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  useRetag);
+//            std::cout << "eventId: " << event.evt << std::endl;
+//            std::cout << "scale_factor: " << scale_factor << std::endl;
             const bool useCustomSF = dataCategory.exclusive_sf.count(event.n_extraJets_MC);
             const double corrected_sf = useCustomSF
                     ? dataCategory.exclusive_sf.at(event.n_extraJets_MC) : scale_factor;
@@ -403,6 +405,7 @@ protected:
                 continue;
             }
 
+            //std::cout << "original weight: " << event.weight << std::endl;
             double weight;
             if (dataCategory.IsData())
                 weight = 1;
@@ -411,8 +414,28 @@ protected:
                 weight = event.weight * corrected_sf / cuts::Htautau_Summer13::tauCorrections::DecayModeWeight;
             else
                 weight = event.weight * corrected_sf;
+            //std::cout << "1st corrected weight: " << weight << std::endl;
 
             std::shared_ptr<FlatEventInfo> eventInfo;
+            if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name){
+                if (event.channel == 0 &&
+                        event.eventType == 1) {
+                    //std::cout << "original fakeweight: " << event.fakeweight_2 << std::endl;
+                    double tmp_weight = weight / event.fakeweight_2;
+                    double fakeWeight =
+                            cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
+                                event.eta_2,
+                                ntuple::tau_id::ConvertToHadronicDecayMode(event.decayMode_2));
+                    //std::cout << "new fakeweight: " << fakeWeight << std::endl;
+                    weight = tmp_weight * fakeWeight;
+                    //std::cout << "final weight: " << weight << std::endl;
+
+                    //std::cout << "forRebecca final weight: " << weight/2.2662 << std::endl;
+
+                }
+
+            }
+
             for(auto eventCategory : eventCategories) {
                 if (!EventCategoriesToProcess().count(eventCategory)) continue;
                 const EventRegion eventRegion = DetermineEventRegion(event, eventCategory);
@@ -426,18 +449,9 @@ protected:
                 if(applyMVAcut && !PassMvaCut(*eventInfo, eventCategory)) continue;
 
 
-                if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name){
-                    if (eventInfo->channel == analysis::Channel::ETau &&
-                            eventInfo->eventType == ntuple::EventType::ZL) {
-                        double tmp_weight = weight / event.fakeweight_2;
-                        double fakeWeight =
-                                cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
-                                    event.eta_2,
-                                    ntuple::tau_id::ConvertToHadronicDecayMode(event.decayMode_2));
-                        weight = tmp_weight * fakeWeight;
-                    }
+                if(dataCategory.name == DYJets_excl.name || dataCategory.name == DYJets_incl.name)
                     FillDYjetHistograms(*eventInfo, eventCategory, eventRegion, weight);
-                }
+
                 auto& anaData = GetAnaData(eventCategory, dataCategory.name, eventRegion);
                 if (dataCategory.IsData())
                     anaData.FillAllEnergyScales(*eventInfo, weight);
@@ -557,7 +571,7 @@ protected:
     void ProduceFileForLimitsCalculation(const std::string& hist_name, EventSubCategory eventSubCategory)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
-            { EventCategory::TwoJets_Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
+            { EventCategory::Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
             { EventCategory::TwoJets_OneBtag, "2jet1tag" }, { EventCategory::TwoJets_TwoBtag, "2jet2tag" },
             { EventCategory::TwoJets_ZeroLooseBtag, "2jetloose0tag" },
             { EventCategory::TwoJets_OneLooseBtag, "2jetloose1tag" },
