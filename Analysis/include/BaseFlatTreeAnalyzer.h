@@ -102,7 +102,7 @@ public:
                                                 EventEnergyScale::Central)
         };
 
-        static const bool applyPostFitCorrections = true;
+        static const bool applyPostFitCorrections = false;
 
         for (const auto& original_hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
             for(EventSubCategory subCategory : AllEventSubCategories) {
@@ -555,12 +555,15 @@ protected:
         else if(eventEnergyScale == EventEnergyScale::JetUp || eventEnergyScale == EventEnergyScale::JetDown)
             full_name << "j";
         else if(eventEnergyScale == EventEnergyScale::BtagEfficiencyUp || eventEnergyScale == EventEnergyScale::BtagEfficiencyDown)
-            full_name << "btag";
+            full_name << "btagEff";
+        else if(eventEnergyScale == EventEnergyScale::BtagFakeUp || eventEnergyScale == EventEnergyScale::BtagFakeDown)
+            full_name << "btagFake";
         else
             throw exception("Unsupported event energy scale ") << eventEnergyScale;
         full_name << "_8TeV";
         if(eventEnergyScale == EventEnergyScale::TauUp || eventEnergyScale == EventEnergyScale::JetUp ||
-                eventEnergyScale == EventEnergyScale::BtagEfficiencyUp )
+                eventEnergyScale == EventEnergyScale::BtagEfficiencyUp ||
+                eventEnergyScale == EventEnergyScale::BtagFakeUp )
             full_name << "Up";
         else
             full_name << "Down";

@@ -201,7 +201,8 @@ public:
     {
         static const std::set<EventEnergyScale> energyScales =
             { EventEnergyScale::Central, EventEnergyScale::JetUp, EventEnergyScale::JetDown,
-              EventEnergyScale::BtagEfficiencyUp, EventEnergyScale::BtagEfficiencyDown };
+              EventEnergyScale::BtagEfficiencyUp, EventEnergyScale::BtagEfficiencyDown,
+              EventEnergyScale::BtagFakeUp, EventEnergyScale::BtagFakeDown };
         FillEnergyScales(eventInfo, weight, energyScales);
     }
 

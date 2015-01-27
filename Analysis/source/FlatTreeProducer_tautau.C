@@ -47,9 +47,10 @@ class EventWeights_tautau : public EventWeights {
 public:
     typedef std::vector< std::pair<std::string, bool> > TriggerPathVector;
 
-    EventWeights_tautau(bool is_data, bool is_embedded, bool apply_pu_weight, const std::string& pu_reweight_file_name,
+    EventWeights_tautau(bool is_data, bool is_embedded, bool apply_pu_weight, bool _apply_DM_weight,
+                        const std::string& pu_reweight_file_name,
                        double _max_available_pu, double _default_pu_weight)
-        : EventWeights(is_data, is_embedded, apply_pu_weight, pu_reweight_file_name, _max_available_pu,
+        : EventWeights(is_data, is_embedded, apply_pu_weight, _apply_DM_weight, pu_reweight_file_name, _max_available_pu,
                        _default_pu_weight) {}
 
     virtual void Reset() override
@@ -91,12 +92,12 @@ protected:
         return DiTau::CalculateTauWeight(leg->GetMomentum());
     }
 
-    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
-    {
-        const ntuple::Tau& ntuple_object = leg->GetNtupleObject<ntuple::Tau>();
-        return ntuple_object.decayMode == ntuple::tau_id::kOneProng0PiZero
-                ? cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
-    }
+//    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
+//    {
+//        const ntuple::Tau& ntuple_object = leg->GetNtupleObject<ntuple::Tau>();
+//        return ntuple_object.decayMode == ntuple::tau_id::kOneProng0PiZero
+//                ? cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
+//    }
 
 private:
     bool has_trigger_path;
@@ -117,7 +118,7 @@ public:
                             std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile),
-          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(),
+          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(), config.ApplyDMweight(),
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight())
     {

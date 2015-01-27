@@ -338,6 +338,7 @@ namespace tauCorrections {
     const double DecayModeWeight = 0.88; // = HiggsToTauTauWorkingSummer2013#TauTau_scale_factors
                                          // for 1-prong no pi 0 taus
 
+    const double deltaR_matchGenParticle = 0.5; // gen Particle match
     const double deltaR = 0.3; // < Updated to be compatible with H->tautau code
 
     const double energyUncertainty = 0.03;

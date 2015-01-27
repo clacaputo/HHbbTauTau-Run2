@@ -28,15 +28,18 @@
 
 #include "SelectionResults.h"
 #include "AnalysisBase/include/Tools.h"
+#include "Analysis/include/Htautau_Summer13.h"
+#include "AnalysisBase/include/MCfinalState.h"
 
 namespace analysis {
 
 class EventWeights {
 public:
-    EventWeights(bool _is_data, bool _is_embedded, bool _apply_pu_weight, const std::string& pu_reweight_file_name,
-                 double _max_available_pu, double _default_pu_weight)
+    EventWeights(bool _is_data, bool _is_embedded, bool _apply_pu_weight, bool _apply_DM_weight,
+                 const std::string& pu_reweight_file_name, double _max_available_pu, double _default_pu_weight)
         : is_data(_is_data), is_embedded(_is_embedded), apply_pu_weight(_apply_pu_weight),
-          max_available_pu(_max_available_pu), default_pu_weight(_default_pu_weight)
+          apply_DM_weight(_apply_DM_weight), max_available_pu(_max_available_pu),
+          default_pu_weight(_default_pu_weight)
     {
         if(is_data && apply_pu_weight)
             throw exception("Inconsistend event weight configuration: requested to apply PU weight for data sample.");
@@ -160,7 +163,28 @@ protected:
     virtual double CalculateTriggerWeight(CandidatePtr leg) { return 1; }
     virtual double CalculateIsoWeight(CandidatePtr leg) { return 1; }
     virtual double CalculateIdWeight(CandidatePtr leg) { return 1; }
-    virtual double CalculateDecayModeWeight(CandidatePtr leg) { return 1; }
+    //virtual double CalculateDecayModeWeight(CandidatePtr leg) { return 1; }
+
+    //not working!!
+    double CalculateDecayModeWeight(CandidatePtr leg)
+    {
+        using namespace cuts::Htautau_Summer13::tauCorrections;
+
+        if(leg->GetType() != Candidate::Type::Tau)
+            return 1;
+
+        double DMweight = 1;
+        if(apply_DM_weight) {
+            VisibleGenObjectVector gen_tau_jets = &SelectionResults::GetFinalStateMC().hadronic_taus;
+            if(gen_tau_jets.size() == 0)
+                throw exception("Gen taus are not set.");
+            const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
+            if (analysis::FindMatchedObjects(leg->GetMomentum(), gen_tau_jets, deltaR_matchGenParticle).size() > 0)
+                DMweight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
+        }
+        return DMweight;
+    }
+
     virtual double CalculateFakeWeight(CandidatePtr leg) { return 1; }
 
 private:
@@ -204,7 +228,7 @@ private:
     }
 
 private:
-    bool is_data, is_embedded, apply_pu_weight;
+    bool is_data, is_embedded, apply_pu_weight, apply_DM_weight;
     double max_available_pu, default_pu_weight;
     std::shared_ptr<TH1D> pu_weights;
     bool has_pu_weight, has_selection_dependent_weights, has_embedded_weight;

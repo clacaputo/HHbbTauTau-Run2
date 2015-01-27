@@ -44,9 +44,10 @@ struct SelectionResults_mutau : public SelectionResults {
 
 class EventWeights_mutau : public EventWeights {
 public:
-    EventWeights_mutau(bool is_data, bool is_embedded, bool apply_pu_weight, const std::string& pu_reweight_file_name,
+    EventWeights_mutau(bool is_data, bool is_embedded, bool apply_pu_weight, bool _apply_DM_weight,
+                       const std::string& pu_reweight_file_name,
                        double _max_available_pu, double _default_pu_weight, bool _applyJetToTauFakeRate)
-        : EventWeights(is_data, is_embedded, apply_pu_weight, pu_reweight_file_name, _max_available_pu, _default_pu_weight),
+        : EventWeights(is_data, is_embedded, apply_pu_weight, _apply_DM_weight, pu_reweight_file_name, _max_available_pu, _default_pu_weight),
           applyJetToTauFakeRate(_applyJetToTauFakeRate) {}
 
 protected:
@@ -107,18 +108,18 @@ protected:
         return scaleFactors.at(pt_bin).at(eta_bin);
     }
 
-    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
-    {
-        using namespace cuts::Htautau_Summer13::tauCorrections;
+//    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
+//    {
+//        using namespace cuts::Htautau_Summer13::tauCorrections;
 
-        if(leg->GetType() == Candidate::Type::Muon)
-            return 1;
-        if(leg->GetType() != Candidate::Type::Tau)
-            throw exception("Bad leg type ") << leg->GetType();
+//        if(leg->GetType() == Candidate::Type::Muon)
+//            return 1;
+//        if(leg->GetType() != Candidate::Type::Tau)
+//            throw exception("Bad leg type ") << leg->GetType();
 
-        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
-        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
-    }
+//        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
+//        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
+//    }
 
     virtual double CalculateFakeWeight(CandidatePtr leg) override
     {
@@ -146,7 +147,7 @@ public:
                            std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile),
-          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(),
+          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(), config.ApplyDMweight(),
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight(), config.ApplyJetToTauFakeRate())
     {
@@ -196,11 +197,11 @@ protected:
         const auto electrons_bkg = CollectBackgroundElectrons();
         cut(!electrons_bkg.size(), "no_electron");
 
-        const auto muons = CollectSignalMuons();
+        const auto signal_muons = CollectSignalMuons(); //rename to signalMuons
 
         const auto muons_extra = CollectBackgroundMuons();
-        const bool have_bkg_muon = muons_extra.size() > 1 || muons.size() > 1 ||
-                ( muons_extra.size() == 1 && muons.size() == 1 && *muons_extra.front() != *muons.front() );
+        const bool have_bkg_muon = muons_extra.size() > 1 || signal_muons.size() > 1 ||
+                ( muons_extra.size() == 1 && signal_muons.size() == 1 && *muons_extra.front() != *signal_muons.front() );
         cut(!have_bkg_muon, "no_bkg_muon");
 
         const auto allmuons = CollectMuons();
@@ -216,11 +217,23 @@ protected:
 
         // First check OS, isolated higgs candidates
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
-        auto higgses = FindCompatibleObjects(muons, signaltaus, DeltaR_betweenSignalObjects, Candidate::Type::Higgs,
+        auto higgses = FindCompatibleObjects(signal_muons, signaltaus, DeltaR_betweenSignalObjects, Candidate::Type::Higgs,
                                              "H_mu_tau", 0);
+        //check SS Isolated higgs candidates
         if(!higgses.size())
-            higgses = FindCompatibleObjects(allmuons, alltaus, DeltaR_betweenSignalObjects,
+            higgses = FindCompatibleObjects(signal_muons, signaltaus, DeltaR_betweenSignalObjects,
                                             Candidate::Type::Higgs, "H_mu_tau");
+
+        //check OS notIsolated higgs candidates
+        if(!higgses.size())
+            higgses = FindCompatibleObjects(allmuons, signaltaus, DeltaR_betweenSignalObjects,
+                                            Candidate::Type::Higgs, "H_mu_tau", 0);
+
+        //check SS notIsolated higgs candidates
+        if(!higgses.size())
+            higgses = FindCompatibleObjects(allmuons, signaltaus, DeltaR_betweenSignalObjects,
+                                            Candidate::Type::Higgs, "H_mu_tau");
+
 
         cut(higgses.size(), "mu_tau");
 

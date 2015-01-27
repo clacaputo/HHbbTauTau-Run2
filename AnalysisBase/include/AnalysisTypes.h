@@ -41,7 +41,7 @@ namespace analysis {
 enum class Channel { ETau = 0, MuTau = 1, TauTau = 2 };
 
 enum class EventEnergyScale { Central = 0, TauUp = 1, TauDown = 2, JetUp = 3, JetDown = 4, BtagEfficiencyUp = 5,
-                              BtagEfficiencyDown = 6 };
+                              BtagEfficiencyDown = 6 , BtagFakeUp = 7, BtagFakeDown = 8};
 
 namespace detail {
 const std::map<Channel, std::string> ChannelNameMap = {
@@ -58,6 +58,8 @@ const std::map<EventEnergyScale, std::string> EventEnergyScaleNameMap = {
     { EventEnergyScale::JetUp, "JetUp" }, { EventEnergyScale::JetDown, "JetDown" },
     { EventEnergyScale::BtagEfficiencyUp, "BtagEfficiencyUp" },
     { EventEnergyScale::BtagEfficiencyDown, "BtagEfficiencyDown" },
+    { EventEnergyScale::BtagFakeUp, "BtagFakeUp" },
+    { EventEnergyScale::BtagFakeDown, "BtagFakeDown" }
 };
 
 } // namespace detail
