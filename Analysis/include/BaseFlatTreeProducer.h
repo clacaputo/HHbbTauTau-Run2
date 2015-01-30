@@ -57,8 +57,8 @@ public:
         using namespace analysis;
 
         SelectionResults& selection = ApplyBaselineSelection();
-        selection.svfitResults = sv_fit::CombinedFit(*selection.higgs, selection.MET_with_recoil_corrections,
-                                                     true, true);
+        selection.svfitResults = sv_fit::CombinedFit({ selection.GetLeg(1), selection.GetLeg(2) },
+                                                     selection.MET_with_recoil_corrections, true, true);
         selection.kinfitResults = RunKinematicFit(selection.bjets_all, *selection.higgs,
                                                   selection.MET_with_recoil_corrections);
 

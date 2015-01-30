@@ -90,7 +90,7 @@ protected:
             const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
                     && mass_bb > m_bb_low && mass_bb < m_bb_high;
 
-            return !os && iso && inside_mass_window;
+            return os && iso /*&& inside_mass_window*/;
         }
         throw analysis::exception("unsupported channel ") << eventInfo.channel;
     }
@@ -99,12 +99,12 @@ protected:
     {
         using analysis::EventCategory;
 
-//        if (category != EventCategory::TwoJets_TwoLooseBtag) return;
-//        ++inclusive;
+        if (category != EventCategory::TwoJets_OneBtag) return;
+        ++inclusive;
 
         if (!PassSyncTreeSelection(eventInfo)) return;
         ++passed;
-        if (eventInfo.eventType != ntuple::EventType::ZL) return;
+//        if (eventInfo.eventType != ntuple::EventType::ZL) return;
         ++passedEventType;
 
         const ntuple::Flat& event = *eventInfo.event;
@@ -139,7 +139,7 @@ protected:
             syncTree->isoweight_1() = event.isoweight_1;
             syncTree->isoweight_2() = event.isoweight_2;
             syncTree->fakeweight() = event.fakeweight_2;
-            double DYweight = 1;
+//            double DYweight = 1;
             //inclusive sample
 //            if (event.n_extraJets_MC == 6)
 //                DYweight = 0.1941324;
@@ -153,19 +153,19 @@ protected:
 //            DYweight = 0.1941324; //1jet
 //            DYweight = 0.0787854; //2jets
 //            DYweight = 0.0457089; //3jets
-            DYweight = 0.0357635; //4jets
-            syncTree->DYweight() = DYweight;
-            double correct_weight = event.weight * DYweight / event.fakeweight_2;
-            if (event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero)
-                correct_weight = correct_weight/0.88;
-            double fakeWeight =
-                    cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
-                        event.eta_2,
-                        ntuple::tau_id::ConvertToHadronicDecayMode(event.decayMode_2));
-            syncTree->etau_fakerate() = fakeWeight;
-            syncTree->weight() = correct_weight * fakeWeight;
+//            DYweight = 0.0357635; //4jets
+//            syncTree->DYweight() = DYweight;
+//            double correct_weight = event.weight * DYweight / event.fakeweight_2;
+//            if (event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero)
+//                correct_weight = correct_weight/0.88;
+//            double fakeWeight =
+//                    cuts::Htautau_Summer13::electronEtoTauFakeRateWeight::CalculateEtoTauFakeWeight(
+//                        event.eta_2,
+//                        ntuple::tau_id::ConvertToHadronicDecayMode(event.decayMode_2));
+//            syncTree->etau_fakerate() = fakeWeight;
+//            syncTree->weight() = correct_weight * fakeWeight;
             //without DYweight and decayMode weight correction
-            //syncTree->weight() = event.weight;
+            syncTree->weight() = event.weight;
             syncTree->embeddedWeight() = event.embeddedWeight;
 
             syncTree->mvis() = eventInfo.Htt.M();

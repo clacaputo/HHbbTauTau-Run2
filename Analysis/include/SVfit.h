@@ -67,35 +67,32 @@ struct CombinedFitResults {
     FitResults fit_mc;
 };
 
-inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate, const ntuple::MET& met,
-                      double tauESfactor)
+inline FitResults Fit(FitAlgorithm fitAlgorithm, const CandidatePtrVector& higgsLegs, const ntuple::MET& met)
 {
     static const bool debug = false;
-    FitResults result;
 
-    if(higgsCandidate.GetType() != Candidate::Type::Higgs)
-        throw std::runtime_error("Invalid candidate type for SVfit");
-    if (higgsCandidate.GetFinalStateDaughters().size() != 2)
-        throw std::runtime_error("Invalid candidate type for SVfit - it doesn't have 2 daughters");
+    static const std::map<Candidate::Type, NSVfitStandalone::kDecayType> decayTypeMap = {
+        { Candidate::Type::Electron, NSVfitStandalone::kLepDecay },
+        { Candidate::Type::Muon, NSVfitStandalone::kLepDecay },
+        { Candidate::Type::Tau, NSVfitStandalone::kHadDecay }
+    };
 
-    // setup the MET coordinates and significance
+    if (higgsLegs.size() != 2)
+        throw exception("Invalid number of legs to perform svFit");
+
+    const Candidate higgsCandidate(Candidate::Type::Higgs, higgsLegs.at(0), higgsLegs.at(1));
     const NSVfitStandalone::Vector measuredMET(met.pt * std::cos(met.phi), met.pt * std::sin(met.phi), 0.0);
     const TMatrixD covMET = ntuple::VectorToSignificanceMatrix(met.significanceMatrix);
 
-    // setup measure tau lepton vectors
     std::vector<NSVfitStandalone::MeasuredTauLepton> measuredTauLeptons;
-    for (const auto& daughter : higgsCandidate.GetFinalStateDaughters()){
-        NSVfitStandalone::LorentzVector lepton(daughter->GetMomentum().Px(), daughter->GetMomentum().Py(),
-                                              daughter->GetMomentum().Pz(), daughter->GetMomentum().E());
-        NSVfitStandalone::kDecayType decayType;
-        if (daughter->GetType() == Candidate::Type::Electron || daughter->GetType() == Candidate::Type::Muon)
-            decayType = NSVfitStandalone::kLepDecay;
-        else if (daughter->GetType() == Candidate::Type::Tau){
-            decayType = NSVfitStandalone::kHadDecay;
-            lepton *= tauESfactor;
-        }
-        else
-            throw exception("final state daughters are not compatible with a leptonic or hadronic tau decay");
+    for (const auto& leg : higgsLegs){
+        if(!decayTypeMap.count(leg->GetType()))
+            throw exception("leg is not compatible with leptonic or hadronic tau decay");
+
+        const NSVfitStandalone::kDecayType decayType = decayTypeMap.at(leg->GetType());
+        const NSVfitStandalone::LorentzVector lepton(leg->GetMomentum().Px(), leg->GetMomentum().Py(),
+                                                     leg->GetMomentum().Pz(), leg->GetMomentum().E());
+
         measuredTauLeptons.push_back(NSVfitStandalone::MeasuredTauLepton(decayType, lepton));
     }
 
@@ -107,23 +104,28 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
     else if(fitAlgorithm == FitAlgorithm::MarkovChain)
         algo.integrateMarkovChain();
     else
-        throw std::runtime_error("Unsupported algorithm.");
+        throw exception("Unsupported algorithm.");
+
+    FitResults result;
 
     if(algo.isValidSolution()) {
         result.mass = algo.mass();
         result.has_valid_mass = true;
         if(fitAlgorithm == FitAlgorithm::MarkovChain) {
-            result.momentum.SetPtEtaPhiM(algo.pt(), algo.phi(), algo.eta(), algo.mass());
+            result.momentum.SetPtEtaPhiM(algo.pt(), algo.eta(), algo.phi(), algo.mass());
             result.has_valid_momentum = true;
         }
     } else
         std::cerr << "Can't fit with " << fitAlgorithm << std::endl;
 
     if(debug) {
-        std::cout << "Original mass = " << higgsCandidate.GetMomentum().M()
+        std::cout << std::fixed << std::setprecision(4)
+                  << "\nOriginal mass = " << higgsCandidate.GetMomentum().M()
                   << "\nOriginal momentum = " << higgsCandidate.GetMomentum()
                   << "\nFirst daughter momentum = " << higgsCandidate.GetDaughters().at(0)->GetMomentum()
                   << "\nSecond daughter momentum = " << higgsCandidate.GetDaughters().at(1)->GetMomentum()
+                  << "\nMET momentum = (" << met.pt << ", " << met.phi << ")"
+                  << "\nMET covariance: " << covMET
                   << "\nSVfit algorithm = " << fitAlgorithm;
         if(result.has_valid_mass)
             std::cout << "\nSVfit mass = " << result.mass;
@@ -135,14 +137,14 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const Candidate& higgsCandidate
     return result;
 }
 
-CombinedFitResults CombinedFit(const Candidate& higgsCandidate, const ntuple::MET& met, bool fitWithVegas,
+CombinedFitResults CombinedFit(const CandidatePtrVector& higgsLegs, const ntuple::MET& met, bool fitWithVegas,
                                bool fitWithMarkovChain)
 {
     CombinedFitResults result;
     if(fitWithVegas)
-        result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsCandidate, met, 1.);
+        result.fit_vegas = Fit(FitAlgorithm::Vegas, higgsLegs, met);
     if(fitWithMarkovChain)
-        result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsCandidate, met, 1.);
+        result.fit_mc = Fit(FitAlgorithm::MarkovChain, higgsLegs, met);
     return result;
 }
 
