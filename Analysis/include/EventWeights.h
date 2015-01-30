@@ -65,6 +65,8 @@ public:
         has_pu_weight = false;
         has_selection_dependent_weights = false;
         has_embedded_weight = false;
+        has_gen_taus = false;
+        genTaus.clear();
     }
 
     void CalculatePuWeight(const ntuple::Event& eventInfo)
@@ -116,6 +118,16 @@ public:
         has_embedded_weight = true;
     }
 
+    void SetGenTaus(const finalState::bbTauTau& mc_final_state)
+    {
+        if(has_gen_taus)
+            throw exception("Gen taus are already set.");
+
+        genTaus = mc_final_state.hadronic_taus;
+
+        has_gen_taus = true;
+    }
+
     bool HasPileUpWeight() const { return !apply_pu_weight || has_pu_weight; }
     bool HasEmbeddedWeight() const { return !is_embedded || has_embedded_weight; }
     bool HasPartialWeight() const { return HasPileUpWeight() && HasEmbeddedWeight(); }
@@ -165,7 +177,6 @@ protected:
     virtual double CalculateIdWeight(CandidatePtr leg) { return 1; }
     //virtual double CalculateDecayModeWeight(CandidatePtr leg) { return 1; }
 
-    //not working!!
     double CalculateDecayModeWeight(CandidatePtr leg)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
@@ -175,11 +186,10 @@ protected:
 
         double DMweight = 1;
         if(apply_DM_weight) {
-            VisibleGenObjectVector gen_tau_jets = &SelectionResults::GetFinalStateMC().hadronic_taus;
-            if(gen_tau_jets.size() == 0)
+            if(!has_gen_taus)
                 throw exception("Gen taus are not set.");
             const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
-            if (analysis::FindMatchedObjects(leg->GetMomentum(), gen_tau_jets, deltaR_matchGenParticle).size() > 0)
+            if (analysis::FindMatchedObjects(leg->GetMomentum(), genTaus, deltaR_matchGenParticle).size() > 0)
                 DMweight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
         }
         return DMweight;
@@ -234,6 +244,8 @@ private:
     bool has_pu_weight, has_selection_dependent_weights, has_embedded_weight;
     double eventWeight, PUweight, embeddedWeight;
     std::vector<double> triggerWeights, IDweights, IsoWeights, DMweights, fakeWeights;
+    bool has_gen_taus;
+    VisibleGenObjectVector genTaus;
 };
 
 } // namespace analysis

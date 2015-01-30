@@ -62,8 +62,11 @@ public:
         selection.kinfitResults = RunKinematicFit(selection.bjets_all, *selection.higgs,
                                                   selection.MET_with_recoil_corrections);
 
-        if(config.isMC())
+        if(config.isMC()){
+            if(config.ApplyDMweight())
+                GetEventWeights().SetGenTaus(selection.GetFinalStateMC());
             GetEventWeights().CalculateSelectionDependentWeights(selection);
+        }
 
         FillFlatTree(selection);
     }
