@@ -106,6 +106,9 @@ typedef std::set<DataCategoryType> DataCategoryTypeSet;
 typedef std::vector<const DataCategory*> DataCategoryPtrVector;
 typedef std::map<DataCategoryType, DataCategoryPtrSet> DataCategoryTypeMap;
 
+static const DataCategoryTypeSet dataCategoryTypeForQCD  = { DataCategoryType::QCD,
+                                                             DataCategoryType::QCD_alternative };
+
 class DataCategoryCollection {
 public:
     DataCategoryCollection(const std::string& sources_cfg_name, const std::string& signal_list, Channel channel_id)

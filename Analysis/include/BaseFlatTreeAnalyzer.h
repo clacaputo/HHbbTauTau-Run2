@@ -67,8 +67,7 @@ public:
     // to be checked
     const DataCategoryTypeSet& DataCategoryTypeToProcessForQCD() const
     {
-        const DataCategoryTypeSet types = { DataCategoryType::QCD, DataCategoryType::QCD_alternative };
-        return types;
+        return dataCategoryTypeForQCD;
     }
 
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,

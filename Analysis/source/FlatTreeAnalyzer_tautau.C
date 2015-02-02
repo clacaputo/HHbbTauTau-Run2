@@ -150,7 +150,7 @@ protected:
     //official method
     virtual analysis::PhysicalValue CalculateQCDYield_base(const std::string& hist_name,
                                                       analysis::EventCategory eventCategory,
-                                                      std::ostream& s_out) override
+                                                      std::ostream& s_out)
     {
         using analysis::EventCategory;
         static const analysis::EventCategorySet categories =
@@ -190,7 +190,7 @@ protected:
     //alternative method
     virtual analysis::PhysicalValue CalculateQCDYield_alternative(const std::string& hist_name,
                                                       analysis::EventCategory eventCategory,
-                                                      std::ostream& s_out) override
+                                                      std::ostream& s_out)
     {
         using analysis::EventCategory;
         static const analysis::EventCategorySet categories =
