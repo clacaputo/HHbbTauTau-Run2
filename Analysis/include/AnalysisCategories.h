@@ -43,8 +43,8 @@ namespace analysis {
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
 enum class DataCategoryType { Signal, Background, Data, DYJets, DYJets_incl, DYJets_excl, ZL, ZJ, ZL_MC, ZJ_MC, ZTT,
-                              ZTT_MC, ZTT_L, Embedded, TT_Embedded, Limits, Composit, QCD, WJets, WJets_MC, DiBoson_MC,
-                              DiBoson};
+                              ZTT_MC, ZTT_L, Embedded, TT_Embedded, Limits, Composit, QCD, QCD_alternative, WJets,
+                              WJets_MC, DiBoson_MC, DiBoson};
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
     { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" },
@@ -53,7 +53,8 @@ static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::ZL_MC, "ZL_MC" }, { DataCategoryType::ZJ_MC, "ZJ_MC" }, { DataCategoryType::ZTT, "ZTT" },
     { DataCategoryType::ZTT_MC, "ZTT_MC" }, { DataCategoryType::ZTT_L, "ZTT_L" }, { DataCategoryType::Embedded, "EMBEDDED" },
     { DataCategoryType::TT_Embedded, "TT_EMBEDDED" },
-    { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" },
+    { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" },
+    { DataCategoryType::QCD, "QCD" }, { DataCategoryType::QCD_alternative, "QCD_alternative" },
     { DataCategoryType::WJets, "W_JETS" }, { DataCategoryType::WJets_MC, "W_JETS_MC" },
     { DataCategoryType::DiBoson, "DiBoson" }, { DataCategoryType::DiBoson_MC, "DiBoson_MC" }
 };
@@ -101,6 +102,7 @@ struct DataCategory {
 
 typedef std::map<std::string, DataCategory> DataCategoryMap;
 typedef std::set<const DataCategory*> DataCategoryPtrSet;
+typedef std::set<DataCategoryType> DataCategoryTypeSet;
 typedef std::vector<const DataCategory*> DataCategoryPtrVector;
 typedef std::map<DataCategoryType, DataCategoryPtrSet> DataCategoryTypeMap;
 
