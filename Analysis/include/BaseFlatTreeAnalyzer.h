@@ -64,6 +64,13 @@ public:
 
     virtual const EventCategorySet& EventCategoriesToProcess() const { return AllEventCategories; }
 
+    // to be checked
+    const DataCategoryTypeSet& DataCategoryTypeToProcessForQCD() const
+    {
+        const DataCategoryTypeSet types = { DataCategoryType::QCD, DataCategoryType::QCD_alternative };
+        return types;
+    }
+
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
                          const std::string& _outputFileName)
         : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection)
@@ -136,9 +143,11 @@ public:
                     }
 
                     for (EventCategory eventCategory : EventCategoriesToProcess()) {
-                        const auto qcd_yield = CalculateQCDYield(hist_name, eventCategory, s_out);
-                        s_out << eventCategory << ": QCD yield = " << qcd_yield << ".\n";
-                        EstimateQCD(hist_name, eventCategory, qcd_yield);
+                        for (DataCategoryType dataCategoryType : DataCategoryTypeToProcessForQCD()) {
+                            const auto qcd_yield = CalculateQCDYield(hist_name, eventCategory, s_out,dataCategoryType);
+                            s_out << eventCategory << ": QCD yield = " << qcd_yield << ".\n";
+                            EstimateQCD(hist_name, eventCategory, qcd_yield,dataCategoryType);
+                        }
                         if(applyPostFitCorrections)
                             ApplyPostFitCorrections(eventCategory, subCategory, hist_name, false);
                         ProcessCompositDataCategories(eventCategory, hist_name);
@@ -176,9 +185,9 @@ protected:
     virtual bool PassMvaCut(const FlatEventInfo& eventInfo, EventCategory eventCategory) { return true; }
 
     virtual PhysicalValue CalculateQCDYield(const std::string& hist_name, EventCategory eventCategory,
-                                            std::ostream& s_out) = 0;
+                                            std::ostream& s_out, DataCategoryType dataCategoryType) = 0;
     virtual void EstimateQCD(const std::string& hist_name, EventCategory eventCategory,
-                             const PhysicalValue& scale_factor) = 0;
+                             const PhysicalValue& scale_factor, DataCategoryType dataCategoryType) = 0;
     virtual PhysicalValueMap CalculateWjetsYields(EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) = 0;
     virtual void CreateHistogramForZTT(EventCategory eventCategory, const std::string& hist_name,
