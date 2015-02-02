@@ -175,24 +175,22 @@ protected:
     virtual double CalculateTriggerWeight(CandidatePtr leg) { return 1; }
     virtual double CalculateIsoWeight(CandidatePtr leg) { return 1; }
     virtual double CalculateIdWeight(CandidatePtr leg) { return 1; }
-    //virtual double CalculateDecayModeWeight(CandidatePtr leg) { return 1; }
 
     double CalculateDecayModeWeight(CandidatePtr leg)
     {
         using namespace cuts::Htautau_Summer13::tauCorrections;
 
-        if(leg->GetType() != Candidate::Type::Tau)
+        if(leg->GetType() != Candidate::Type::Tau || !apply_DM_weight)
             return 1;
 
-        double DMweight = 1;
-        if(apply_DM_weight) {
-            if(!has_gen_taus)
-                throw exception("Gen taus are not set.");
-            const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
-            if (analysis::FindMatchedObjects(leg->GetMomentum(), genTaus, deltaR_matchGenParticle).size() > 0)
-                DMweight = tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
-        }
-        return DMweight;
+        if(!has_gen_taus)
+            throw exception("Gen taus are not set.");
+
+        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
+        if(tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero
+                && FindMatchedObjects(leg->GetMomentum(), genTaus, deltaR_matchGenParticle).size())
+            return DecayModeWeight;
+        return 1;
     }
 
     virtual double CalculateFakeWeight(CandidatePtr leg) { return 1; }
