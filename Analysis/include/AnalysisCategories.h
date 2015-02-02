@@ -185,10 +185,10 @@ private:
                 throw exception("Invalid sub-category '") << sub_category << "' for category '" << category.name
                                                       << "'. Composit category hierarchy is not supported.";
         }
-        for(const auto& source_entry : category.sources_sf) {
-            if(all_sources.count(source_entry.first))
-                throw exception("Source '") << source_entry.first << "' is already part of the other data category.";
-        }
+//        for(const auto& source_entry : category.sources_sf) {
+//            if(all_sources.count(source_entry.first))
+//                throw exception("Source '") << source_entry.first << "' is already part of the other data category.";
+//        }
     }
 
     static bool ReadNextCategory(std::istream& cfg, size_t& line_number, DataCategory& category)
