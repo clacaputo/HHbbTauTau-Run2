@@ -90,7 +90,7 @@ protected:
             const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
                     && mass_bb > m_bb_low && mass_bb < m_bb_high;
 
-            return os && iso /*&& inside_mass_window*/;
+            return os && iso && inside_mass_window;
         }
         throw analysis::exception("unsupported channel ") << eventInfo.channel;
     }
@@ -99,7 +99,7 @@ protected:
     {
         using analysis::EventCategory;
 
-        if (category != EventCategory::TwoJets_OneBtag) return;
+//        if (category != EventCategory::TwoJets_TwoBtag) return;
         ++inclusive;
 
         if (!PassSyncTreeSelection(eventInfo)) return;
