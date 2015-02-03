@@ -1,3 +1,3 @@
-/store/user/kandroso/DY4JetsToLL/TREE/Tree_168_1_Fmo.root
-/store/user/kandroso/DY4JetsToLL/TREE/Tree_543_1_iCs.root
-/store/user/kandroso/DY4JetsToLL/TREE/Tree_301_1_S1F.root
+/store/user/kandroso/DY4JetsToLL/TREE/Tree_347_1_FQk.root
+/store/user/kandroso/DY4JetsToLL/TREE/Tree_356_1_kSZ.root
+/store/user/kandroso/DY4JetsToLL/TREE/Tree_298_1_Jr6.root
