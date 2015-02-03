@@ -57,13 +57,16 @@ public:
         using namespace analysis;
 
         SelectionResults& selection = ApplyBaselineSelection();
-        selection.svfitResults = sv_fit::CombinedFit(*selection.higgs, selection.MET_with_recoil_corrections,
-                                                     true, true);
+        selection.svfitResults = sv_fit::CombinedFit({ selection.GetLeg(1), selection.GetLeg(2) },
+                                                     selection.MET_with_recoil_corrections, true, true);
         selection.kinfitResults = RunKinematicFit(selection.bjets_all, *selection.higgs,
                                                   selection.MET_with_recoil_corrections);
 
-        if(config.isMC())
+        if(config.isMC()){
+            if(config.ApplyDMweight())
+                GetEventWeights().SetGenTaus(selection.GetFinalStateMC());
             GetEventWeights().CalculateSelectionDependentWeights(selection);
+        }
 
         FillFlatTree(selection);
     }
@@ -96,8 +99,8 @@ protected:
         flatTree->idweight_2() = GetEventWeights().GetIdWeight(2);
         flatTree->isoweight_1() = GetEventWeights().GetIsoWeight(1);
         flatTree->isoweight_2() = GetEventWeights().GetIsoWeight(2);
-        flatTree->fakeweight_1() = GetEventWeights().GetFakeWeight(1); // e -> tau fake rate
-        flatTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // jet -> tau fake rate - default
+        flatTree->fakeweight_1() = GetEventWeights().GetFakeWeight(1); //
+        flatTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // e -> tau fake rate * jet -> tau fake rate
         flatTree->weight() = GetEventWeights().GetFullWeight();
         flatTree->embeddedWeight() = GetEventWeights().GetEmbeddedWeight();
 

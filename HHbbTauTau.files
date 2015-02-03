@@ -343,3 +343,4 @@ RunTools/source/Scan.C
 Analysis/studies/AnalyzeBKGShape.C
 Analysis/studies/AnalyzeQCDShape.C
 Analysis/studies/AnalyzeEMBShape.C
+Analysis/studies/AnalyzeESshape.C

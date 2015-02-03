@@ -103,7 +103,54 @@ protected:
 
     virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
                                                       analysis::EventCategory eventCategory,
-                                                      std::ostream& s_out) override
+                                                      std::ostream& s_out,
+                                                      analysis::DataCategoryType dataCategoryType) override
+    {
+        if (dataCategoryType == analysis::DataCategoryType::QCD)
+            return CalculateQCDYield_base(hist_name,eventCategory,s_out);
+        else
+            return CalculateQCDYield_alternative(hist_name,eventCategory,s_out);
+    }
+
+    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
+                             const analysis::PhysicalValue& yield,
+                             analysis::DataCategoryType dataCategoryType) override
+    {
+        using analysis::EventCategory;
+        static const analysis::EventCategorySet categories =
+            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
+        analysis::EventCategory refEventCategory = eventCategory;
+        if(categories.count(eventCategory))
+            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
+        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+        analysis::EventRegion eventRegion = analysis::EventRegion::OS_AntiIsolated;
+        static const std::map<analysis::DataCategoryType, analysis::EventRegion> dataCategoryType_eventRegions= {
+            {analysis::DataCategoryType::QCD, analysis::EventRegion::OS_AntiIsolated},
+            {analysis::DataCategoryType::QCD_alternative, analysis::EventRegion::SS_Isolated}
+        };
+        if(dataCategoryType_eventRegions.count(dataCategoryType))
+            eventRegion = dataCategoryType_eventRegions.at(dataCategoryType);
+
+        auto hist_shape_data = GetHistogram(refEventCategory, data.name, eventRegion, hist_name);
+        if(!hist_shape_data) return;
+
+        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
+        std::string debug_info, negative_bins_info;
+        SubtractBackgroundHistograms(histogram, refEventCategory, eventRegion, qcd.name,
+                                     debug_info, negative_bins_info);
+        if(negative_bins_info.size())
+            std::cerr << negative_bins_info;
+        analysis::RenormalizeHistogram(histogram, yield, true);
+    }
+
+
+    //official method
+    virtual analysis::PhysicalValue CalculateQCDYield_base(const std::string& hist_name,
+                                                      analysis::EventCategory eventCategory,
+                                                      std::ostream& s_out)
     {
         using analysis::EventCategory;
         static const analysis::EventCategorySet categories =
@@ -140,8 +187,10 @@ protected:
 //        return yield_OSAntiIso * iso_antiIso_sf * medium_loose_sf;
     }
 
-    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
-                             const analysis::PhysicalValue& yield) override
+    //alternative method
+    virtual analysis::PhysicalValue CalculateQCDYield_alternative(const std::string& hist_name,
+                                                      analysis::EventCategory eventCategory,
+                                                      std::ostream& s_out)
     {
         using analysis::EventCategory;
         static const analysis::EventCategorySet categories =
@@ -150,20 +199,50 @@ protected:
         if(categories.count(eventCategory))
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
 
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
-        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+        //medium
 
-        auto hist_shape_data = GetHistogram(refEventCategory, data.name, analysis::EventRegion::OS_AntiIsolated, hist_name);
-        if(!hist_shape_data) return;
+        const analysis::PhysicalValue yield_SSIso =
+                CalculateYieldsForQCD(hist_name, eventCategory, analysis::EventRegion::SS_Isolated, s_out);
 
-        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
-        std::string debug_info, negative_bins_info;
-        SubtractBackgroundHistograms(histogram, refEventCategory, analysis::EventRegion::OS_AntiIsolated, qcd.name,
-                                     debug_info, negative_bins_info);
-        if(negative_bins_info.size())
-            std::cerr << negative_bins_info;
-        analysis::RenormalizeHistogram(histogram, yield, true);
+        const analysis::PhysicalValue yield_OSAntiIso =
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::OS_AntiIsolated, s_out);
+
+        const analysis::PhysicalValue yield_SSAntiIso =
+                CalculateYieldsForQCD(hist_name, refEventCategory, analysis::EventRegion::SS_AntiIsolated, s_out);
+
+
+        const auto os_ss_antiIso_sf = yield_OSAntiIso / yield_SSAntiIso;
+        s_out << eventCategory << ": QCD alternative SF OS_AntiIso / SS_AntiIso = " << os_ss_antiIso_sf << ". \n";
+
+        return yield_SSIso * os_ss_antiIso_sf;
     }
+
+    //official method - estimate QCD
+//    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
+//                             const analysis::PhysicalValue& yield) override
+//    {
+//        using analysis::EventCategory;
+//        static const analysis::EventCategorySet categories =
+//            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
+//        analysis::EventCategory refEventCategory = eventCategory;
+//        if(categories.count(eventCategory))
+//            refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
+
+//        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+//        const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
+
+//        auto hist_shape_data = GetHistogram(refEventCategory, data.name, analysis::EventRegion::OS_AntiIsolated, hist_name);
+//        if(!hist_shape_data) return;
+
+//        TH1D& histogram = CloneHistogram(eventCategory, qcd.name, analysis::EventRegion::OS_Isolated, *hist_shape_data);
+//        std::string debug_info, negative_bins_info;
+//        SubtractBackgroundHistograms(histogram, refEventCategory, analysis::EventRegion::OS_AntiIsolated, qcd.name,
+//                                     debug_info, negative_bins_info);
+//        if(negative_bins_info.size())
+//            std::cerr << negative_bins_info;
+//        analysis::RenormalizeHistogram(histogram, yield, true);
+//    }
+
 
     virtual PhysicalValueMap CalculateWjetsYields(analysis::EventCategory eventCategory, const std::string& hist_name,
                                                   bool fullEstimate) override

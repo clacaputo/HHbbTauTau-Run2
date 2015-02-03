@@ -44,10 +44,12 @@ struct SelectionResults_etau : public SelectionResults {
 
 class EventWeights_etau : public EventWeights {
 public:
-    EventWeights_etau(bool is_data, bool is_embedded, bool apply_pu_weight, const std::string& pu_reweight_file_name,
+    EventWeights_etau(bool is_data, bool is_embedded, bool apply_pu_weight, bool _apply_DM_weight,
+                      const std::string& pu_reweight_file_name,
                       double _max_available_pu, double _default_pu_weight, bool _applyJetToTauFakeRate,
                       bool _applyEtoTauFakeRate)
-        : EventWeights(is_data, is_embedded, apply_pu_weight, pu_reweight_file_name, _max_available_pu, _default_pu_weight),
+        : EventWeights(is_data, is_embedded, apply_pu_weight, _apply_DM_weight, pu_reweight_file_name,
+                       _max_available_pu, _default_pu_weight),
           applyJetToTauFakeRate(_applyJetToTauFakeRate), applyEtoTauFakeRate(_applyEtoTauFakeRate) {}
 
     virtual void Reset() override
@@ -128,18 +130,18 @@ protected:
         return scaleFactors.at(pt_bin).at(eta_bin);
     }
 
-    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
-    {
-        using namespace cuts::Htautau_Summer13::tauCorrections;
+//    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
+//    {
+//        using namespace cuts::Htautau_Summer13::tauCorrections;
 
-        if(leg->GetType() == Candidate::Type::Electron)
-            return 1;
-        if(leg->GetType() != Candidate::Type::Tau)
-            throw exception("Bad leg type ") << leg->GetType();
+//        if(leg->GetType() == Candidate::Type::Electron)
+//            return 1;
+//        if(leg->GetType() != Candidate::Type::Tau)
+//            throw exception("Bad leg type ") << leg->GetType();
 
-        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
-        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
-    }
+//        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
+//        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
+//    }
 
     virtual double CalculateFakeWeight(CandidatePtr leg) override
     {
@@ -157,7 +159,8 @@ protected:
             if(!has_gen_electrons)
                 throw exception("Gen electrons are not set.");
             if (analysis::FindMatchedParticles(leg->GetMomentum(), genElectrons, deltaR_matchGenParticle).size() > 0)
-                fakeEtoTauWeight = CalculateEtoTauFakeWeight(leg->GetNtupleObject<ntuple::Tau>());
+                fakeEtoTauWeight = CalculateEtoTauFakeWeight(leg->GetNtupleObject<ntuple::Tau>().eta,
+                                                             ntuple::tau_id::ConvertToHadronicDecayMode(leg->GetNtupleObject<ntuple::Tau>().decayMode));
         }
 
         const double fakeJetToTauWeight = applyJetToTauFakeRate
@@ -182,7 +185,7 @@ public:
                           std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
           baseAnaData(*outputFile),
-          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(),
+          eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(), config.ApplyDMweight(),
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight(), config.ApplyJetToTauFakeRate(), config.ApplyEtoTauFakeRate())
     {
@@ -232,11 +235,11 @@ protected:
         const auto muons_bkg = CollectBackgroundMuons();
         cut(!muons_bkg.size(), "no_muon");
 
-        const auto electrons = CollectSignalElectrons();
+        const auto signal_electrons = CollectSignalElectrons();
 
         const auto electrons_bkg = CollectBackgroundElectrons();
-        const bool have_bkg_electron = electrons_bkg.size() > 1 || electrons.size() > 1 ||
-                ( electrons_bkg.size() == 1 && electrons.size() == 1 && *electrons_bkg.front() != *electrons.front() );
+        const bool have_bkg_electron = electrons_bkg.size() > 1 || signal_electrons.size() > 1 ||
+                ( electrons_bkg.size() == 1 && signal_electrons.size() == 1 && *electrons_bkg.front() != *signal_electrons.front() );
         cut(!have_bkg_electron, "no_bkg_electron");
 
         const auto allelectrons = CollectElectrons();
@@ -252,10 +255,22 @@ protected:
 
         // First check OS, isolated higgs candidates
         // If no OS candidate, keep any higgs-ish candidates for bkg estimation (don't cut on sign nor isolation)
-        auto higgses = FindCompatibleObjects(electrons, signaltaus, DeltaR_betweenSignalObjects,
+        auto higgses = FindCompatibleObjects(signal_electrons, signaltaus, DeltaR_betweenSignalObjects,
                                              Candidate::Type::Higgs, "H_e_tau", 0);
+
+        //check SS isolated higgs candidates
         if (!higgses.size())
-          higgses = FindCompatibleObjects(allelectrons, alltaus, DeltaR_betweenSignalObjects,
+          higgses = FindCompatibleObjects(signal_electrons, signaltaus, DeltaR_betweenSignalObjects,
+                                          Candidate::Type::Higgs, "H_e_tau");
+
+        //check 0S antiisolated higgs candidates
+        if (!higgses.size())
+          higgses = FindCompatibleObjects(allelectrons, signaltaus, DeltaR_betweenSignalObjects,
+                                          Candidate::Type::Higgs, "H_e_tau", 0);
+
+        //check SS antiisolated higgs candidates
+        if (!higgses.size())
+          higgses = FindCompatibleObjects(allelectrons, signaltaus, DeltaR_betweenSignalObjects,
                                           Candidate::Type::Higgs, "H_e_tau");
 
         cut(higgses.size(), "e_tau");

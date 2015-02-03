@@ -121,6 +121,11 @@ public:
     virtual void Fill(const FlatEventInfo& eventInfo, double weight, EventEnergyScale eventEnergyScale,
                       EventSubCategory subCategory)
     {
+        if(eventEnergyScale == EventEnergyScale::Central) {
+            Fill(eventInfo, weight, EventEnergyScale::BtagFakeUp, subCategory);
+            Fill(eventInfo, weight, EventEnergyScale::BtagFakeDown, subCategory);
+        }
+
         const ntuple::Flat& event = *eventInfo.event;
         const std::string key = HistogramSuffix(subCategory, eventEnergyScale);
 
@@ -130,7 +135,7 @@ public:
             m_ttbb_kinfit(key).Fill(eventInfo.fitResults.mass, weight);
         FillSlice(m_bb_slice(key), mass_tautau, eventInfo.Hbb.M(), weight);
 
-        //if (eventEnergyScale != EventEnergyScale::Central) return;
+        if (eventEnergyScale != EventEnergyScale::Central) return;
 
         pt_1(key).Fill(event.pt_1, weight);
         eta_1(key).Fill(event.eta_1, weight);
@@ -189,11 +194,6 @@ public:
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConverged);
         if(eventInfo.fitResults.has_valid_mass && inside_mass_window)
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConvergedWithMassWindow);
-
-        if(eventEnergyScale == EventEnergyScale::Central) {
-            FillSubCategories(eventInfo, weight, EventEnergyScale::BtagEfficiencyUp);
-            FillSubCategories(eventInfo, weight, EventEnergyScale::BtagEfficiencyDown);
-        }
     }
 
     void FillEnergyScales(const FlatEventInfo& eventInfo, double weight, const std::set<EventEnergyScale>& energyScales)
@@ -206,13 +206,20 @@ public:
     {
         static const std::set<EventEnergyScale> energyScales =
             { EventEnergyScale::Central, EventEnergyScale::JetUp, EventEnergyScale::JetDown,
-              EventEnergyScale::BtagEfficiencyUp, EventEnergyScale::BtagEfficiencyDown };
+              EventEnergyScale::BtagEfficiencyUp, EventEnergyScale::BtagEfficiencyDown/*,
+              EventEnergyScale::BtagFakeUp, EventEnergyScale::BtagFakeDown*/ };
         FillEnergyScales(eventInfo, weight, energyScales);
     }
 
     void FillAllEnergyScales(const FlatEventInfo& eventInfo, double weight)
     {
-        FillEnergyScales(eventInfo, weight, AllEventEnergyScales);
+        static std::set<EventEnergyScale> allScales;
+        if(!allScales.size()) {
+            allScales = AllEventEnergyScales;
+            allScales.erase(allScales.find(EventEnergyScale::BtagFakeDown));
+            allScales.erase(allScales.find(EventEnergyScale::BtagFakeUp));
+        }
+        FillEnergyScales(eventInfo, weight, allScales);
     }
 
 protected:

@@ -338,6 +338,7 @@ namespace tauCorrections {
     const double DecayModeWeight = 0.88; // = HiggsToTauTauWorkingSummer2013#TauTau_scale_factors
                                          // for 1-prong no pi 0 taus
 
+    const double deltaR_matchGenParticle = 0.5; // gen Particle match
     const double deltaR = 0.3; // < Updated to be compatible with H->tautau code
 
     const double energyUncertainty = 0.03;
@@ -374,16 +375,17 @@ namespace jetToTauFakeRateWeight {
 // twiki HiggsToTauTauWorkingSummer2013
 namespace electronEtoTauFakeRateWeight {
 
-    inline double CalculateEtoTauFakeWeight(const ntuple::Tau& tau_leg)
+    //inline double CalculateEtoTauFakeWeight(const ntuple::Tau& tau_leg)
+    inline double CalculateEtoTauFakeWeight(double tau_eta, ntuple::tau_id::hadronicDecayMode tau_decayMode)
     {
         static const double eta = 1.5 ;
         static const std::map<ntuple::tau_id::hadronicDecayMode, std::vector<double>> decayModeMap= {
-        { ntuple::tau_id::kOneProng0PiZero, {1.37 , 1.11} }, { ntuple::tau_id::kOneProng0PiZero, {2.18 , 0.47} } };
+        { ntuple::tau_id::kOneProng0PiZero, {1.37 , 1.11} }, { ntuple::tau_id::kOneProng1PiZero, {2.18 , 0.47} } };
 
-        if (!decayModeMap.count(ntuple::tau_id::ConvertToHadronicDecayMode(tau_leg.decayMode)))
+        if (!decayModeMap.count(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)))
             return 1;
-        const size_t eta_bin = std::abs(tau_leg.eta) < eta ? 0 : 1;
-        return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_leg.decayMode)).at(eta_bin);
+        const size_t eta_bin = std::abs(tau_eta) < eta ? 0 : 1;
+        return decayModeMap.at(ntuple::tau_id::ConvertToHadronicDecayMode(tau_decayMode)).at(eta_bin);
     }
 
 }

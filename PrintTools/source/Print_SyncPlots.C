@@ -144,6 +144,7 @@ public:
             drawHistos("isoweight_1", 100, 0.90, 1.);
         //drawHistos("isoweight_2", 100, 0.90, 1.);
         drawHistos("fakeweight", 25, 0.5, 1.5);
+        drawHistos("etau_fakerate", 25, 0.5, 2.5);
 
 //        drawHistos("effweight", 30, .8, 1.1);
         drawHistos("weight", 30, .0, 1.2);

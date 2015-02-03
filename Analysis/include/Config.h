@@ -51,10 +51,12 @@ public:
     ANA_CONFIG_PARAMETER(bool, isTTEmbeddedSample, false)
     ANA_CONFIG_PARAMETER(bool, ApplyEtoTauFakeRate, false)
     ANA_CONFIG_PARAMETER(bool, ApplyJetToTauFakeRate, false)
+    ANA_CONFIG_PARAMETER(bool, ApplyDMweight, false)
 
     ANA_CONFIG_PARAMETER(bool, EstimateTauEnergyUncertainties, false)
     ANA_CONFIG_PARAMETER(bool, EstimateJetEnergyUncertainties, false)
     ANA_CONFIG_PARAMETER(bool, EstimateBtagEfficiencyUncertainties, false)
+    ANA_CONFIG_PARAMETER(bool, EstimateBtagFakeUncertainties, false)
     ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputFile, "")
     ANA_CONFIG_PARAMETER(std::string, JetEnergyUncertainties_inputSection, "")
 
@@ -85,7 +87,7 @@ public:
     {
         return ApplyTauESCorrection() || ApplyRecoilCorrection() || RequireSpecificFinalState()
                 || ExpectedOneNonSMResonance() || ExpectedAtLeastOneSMResonanceToTauTauOrToBB()
-                || DoZEventCategorization() || ApplyEtoTauFakeRate() || IsEmbeddedSample();
+                || DoZEventCategorization() || ApplyEtoTauFakeRate() || IsEmbeddedSample() || ApplyDMweight();
     }
 
     bool IsEmbeddedSample() { return isDYEmbeddedSample() || isTTEmbeddedSample(); }

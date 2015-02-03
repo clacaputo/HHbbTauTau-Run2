@@ -129,6 +129,10 @@ public:
             TryProcessEvent(_event, EventEnergyScale::BtagEfficiencyUp);
             TryProcessEvent(_event, EventEnergyScale::BtagEfficiencyDown);
         }
+        if(config.EstimateBtagFakeUncertainties()) {
+            TryProcessEvent(_event, EventEnergyScale::BtagFakeUp);
+            TryProcessEvent(_event, EventEnergyScale::BtagFakeDown);
+        }
     }
 
 private:
@@ -364,18 +368,22 @@ protected:
     {
         using namespace cuts::Htautau_Summer13::btag;
 
-        static const std::map<EventEnergyScale, int> btag_modes_map = {
-            { EventEnergyScale::Central, 0 }, { EventEnergyScale::TauUp, 0 }, { EventEnergyScale::TauDown, 0 },
-            { EventEnergyScale::JetUp, 0 }, { EventEnergyScale::JetDown, 0 }, { EventEnergyScale::BtagEfficiencyUp, 2 },
-            { EventEnergyScale::BtagEfficiencyDown, 1 }
+        static const std::map<EventEnergyScale, std::pair<int,int>> btag_modes_map = {
+            { EventEnergyScale::Central, {0,0} }, { EventEnergyScale::TauUp, {0,0} },
+            { EventEnergyScale::TauDown, {0,0} }, { EventEnergyScale::JetUp, {0,0} },
+            { EventEnergyScale::JetDown, {0,0} }, { EventEnergyScale::BtagEfficiencyUp, {2,0} },
+            { EventEnergyScale::BtagEfficiencyDown, {1,0} }, { EventEnergyScale::BtagFakeUp, {0,2} },
+            { EventEnergyScale::BtagFakeDown, {0,1} }
         };
 
         CandidatePtrVector bjets;
-        const int btag_mode = btag_modes_map.at(eventEnergyScale);
+        const std::pair<int,int> btag_pair = btag_modes_map.at(eventEnergyScale);
+        const int btag_mode = btag_pair.first;
+        const int bfake_mode = btag_pair.second;
         for(const CandidatePtr& looseJetCandidate : looseJets) {
             const ntuple::Jet& looseJet = looseJetCandidate->GetNtupleObject<ntuple::Jet>();
             if(looseJet.pt <= pt || std::abs(looseJet.eta) >= eta) continue;
-            if(doReTag && !btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, btag_mode, btag_mode, CSV))
+            if(doReTag && !btag::ReTag(looseJet, btag::payload::EPS13, btag::tagger::CSVM, btag_mode, bfake_mode, CSV))
                 continue;
             else if(!doReTag && applyCsvCut && looseJet.combinedSecondaryVertexBJetTags <= CSV)
                 continue;

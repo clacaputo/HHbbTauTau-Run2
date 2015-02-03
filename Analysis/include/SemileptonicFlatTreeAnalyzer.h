@@ -127,10 +127,26 @@ protected:
         }
     }
 
-
     virtual analysis::PhysicalValue CalculateQCDYield(const std::string& hist_name,
                                                       analysis::EventCategory eventCategory,
-                                                      std::ostream& s_out) override
+                                                      std::ostream& s_out,
+                                                      DataCategoryType dataCategoryType) override
+    {
+        if (dataCategoryType == analysis::DataCategoryType::QCD)
+            return CalculateQCDYield_semileptonic(hist_name,eventCategory,s_out);
+        else
+            return CalculateQCDYield_semileptonic(hist_name,eventCategory,s_out);
+    }
+
+    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
+                             const analysis::PhysicalValue& scale_factor, DataCategoryType dataCategoryType) override
+    {
+        return EstimateQCD_semileptonic(hist_name,eventCategory,scale_factor,dataCategoryType);
+    }
+
+    virtual analysis::PhysicalValue CalculateQCDYield_semileptonic(const std::string& hist_name,
+                                                      analysis::EventCategory eventCategory,
+                                                      std::ostream& s_out)
     {
         static const PhysicalValue sf(1.06, 0.001);
         static const analysis::EventCategorySet categories= {analysis::EventCategory::TwoJets_TwoBtag};
@@ -164,8 +180,8 @@ protected:
         return sf * yield_SSIso * evt_ToRef_category_sf;
     }
 
-    virtual void EstimateQCD(const std::string& hist_name, analysis::EventCategory eventCategory,
-                             const analysis::PhysicalValue& scale_factor) override
+    virtual void EstimateQCD_semileptonic(const std::string& hist_name, analysis::EventCategory eventCategory,
+                             const analysis::PhysicalValue& scale_factor, DataCategoryType dataCategoryType)
     {
         using analysis::EventCategory;
         static const EventCategorySet categories=
@@ -176,21 +192,25 @@ protected:
 
         if(categories.count(eventCategory)){
             refEventCategory = analysis::MediumToLoose_EventCategoryMap.at(eventCategory);
-            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,scale_factor,false);
+            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,
+                                 scale_factor,false,dataCategoryType);
         }
         else if (inclusive_categories.count(eventCategory)){
             refEventCategory = analysis::Inclusive_EventCategoryMap.at(eventCategory);
-            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_Isolated,scale_factor,true);
+            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_Isolated,
+                                 scale_factor,true,dataCategoryType);
         }
         else
-            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,scale_factor,false);
+            return EstimateQCDEx(hist_name,eventCategory,refEventCategory,analysis::EventRegion::SS_AntiIsolated,
+                                 scale_factor,false,dataCategoryType);
     }
 
     void EstimateQCDEx(const std::string& hist_name, analysis::EventCategory eventCategory,
                        analysis::EventCategory refEventCategory, analysis::EventRegion eventRegion,
-                       const analysis::PhysicalValue& scale_factor, bool subtractHistograms)
+                       const analysis::PhysicalValue& scale_factor, bool subtractHistograms,
+                       DataCategoryType dataCategoryType)
     {
-        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::QCD);
+        const analysis::DataCategory& qcd = dataCategoryCollection.GetUniqueCategory(dataCategoryType);
         const analysis::DataCategory& data = dataCategoryCollection.GetUniqueCategory(analysis::DataCategoryType::Data);
 
         auto hist_shape_data = GetHistogram(refEventCategory, data.name,eventRegion, hist_name);

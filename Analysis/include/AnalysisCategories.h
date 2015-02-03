@@ -43,8 +43,8 @@ namespace analysis {
 typedef std::map<std::string, double> DataSourceScaleFactorMap;
 
 enum class DataCategoryType { Signal, Background, Data, DYJets, DYJets_incl, DYJets_excl, ZL, ZJ, ZL_MC, ZJ_MC, ZTT,
-                              ZTT_MC, ZTT_L, Embedded, TT_Embedded, Limits, Composit, QCD, WJets, WJets_MC, DiBoson_MC,
-                              DiBoson};
+                              ZTT_MC, ZTT_L, Embedded, TT_Embedded, Limits, Composit, QCD, QCD_alternative, WJets,
+                              WJets_MC, DiBoson_MC, DiBoson};
 static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::Signal, "SIGNAL" }, { DataCategoryType::Background, "BACKGROUND" },
     { DataCategoryType::Data, "DATA" }, { DataCategoryType::DYJets, "DY_JETS" },
@@ -53,7 +53,8 @@ static const std::map<DataCategoryType, std::string> dataCategoryTypeNameMap = {
     { DataCategoryType::ZL_MC, "ZL_MC" }, { DataCategoryType::ZJ_MC, "ZJ_MC" }, { DataCategoryType::ZTT, "ZTT" },
     { DataCategoryType::ZTT_MC, "ZTT_MC" }, { DataCategoryType::ZTT_L, "ZTT_L" }, { DataCategoryType::Embedded, "EMBEDDED" },
     { DataCategoryType::TT_Embedded, "TT_EMBEDDED" },
-    { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" }, { DataCategoryType::QCD, "QCD" },
+    { DataCategoryType::Limits, "LIMITS" }, { DataCategoryType::Composit, "COMPOSIT" },
+    { DataCategoryType::QCD, "QCD" }, { DataCategoryType::QCD_alternative, "QCD_alternative" },
     { DataCategoryType::WJets, "W_JETS" }, { DataCategoryType::WJets_MC, "W_JETS_MC" },
     { DataCategoryType::DiBoson, "DiBoson" }, { DataCategoryType::DiBoson_MC, "DiBoson_MC" }
 };
@@ -101,8 +102,12 @@ struct DataCategory {
 
 typedef std::map<std::string, DataCategory> DataCategoryMap;
 typedef std::set<const DataCategory*> DataCategoryPtrSet;
+typedef std::set<DataCategoryType> DataCategoryTypeSet;
 typedef std::vector<const DataCategory*> DataCategoryPtrVector;
 typedef std::map<DataCategoryType, DataCategoryPtrSet> DataCategoryTypeMap;
+
+static const DataCategoryTypeSet dataCategoryTypeForQCD  = { DataCategoryType::QCD,
+                                                             DataCategoryType::QCD_alternative };
 
 class DataCategoryCollection {
 public:
@@ -183,10 +188,10 @@ private:
                 throw exception("Invalid sub-category '") << sub_category << "' for category '" << category.name
                                                       << "'. Composit category hierarchy is not supported.";
         }
-        for(const auto& source_entry : category.sources_sf) {
-            if(all_sources.count(source_entry.first))
-                throw exception("Source '") << source_entry.first << "' is already part of the other data category.";
-        }
+//        for(const auto& source_entry : category.sources_sf) {
+//            if(all_sources.count(source_entry.first))
+//                throw exception("Source '") << source_entry.first << "' is already part of the other data category.";
+//        }
     }
 
     static bool ReadNextCategory(std::istream& cfg, size_t& line_number, DataCategory& category)
@@ -352,6 +357,10 @@ typedef std::map<EventCategory, EventCategory> EventCategoryMap;
 typedef std::set<EventSubCategory> EventSubCategorySet;
 
 static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
+static const EventCategorySet EventCategories_ETau = {EventCategory::Inclusive, EventCategory::TwoJets_Inclusive,
+                                                     EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag,
+                                                     EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_OneLooseBtag,
+                                                     EventCategory::TwoJets_TwoLooseBtag};
 static const EventSubCategorySet AllEventSubCategories = tools::collect_map_keys(detail::eventSubCategoryNamesMap);
 
 static const EventCategoryMap MediumToLoose_EventCategoryMap =
