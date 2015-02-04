@@ -344,3 +344,5 @@ Analysis/studies/AnalyzeBKGShape.C
 Analysis/studies/AnalyzeQCDShape.C
 Analysis/studies/AnalyzeEMBShape.C
 Analysis/studies/AnalyzeESshape.C
+Analysis/studies/AnalyzeQCDshapeSyst.C
+Analysis/studies/AnalyzeZTTshape.C

@@ -390,6 +390,7 @@ protected:
         const analysis::DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
         const analysis::DataCategory& DYJets_excl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_excl);
         const analysis::DataCategory& DY_Embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::Embedded);
+        const analysis::DataCategory& TT_Embedded = dataCategoryCollection.GetUniqueCategory(DataCategoryType::TT_Embedded);
 
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
@@ -467,8 +468,58 @@ protected:
                     anaData.FillCentralAndJetEnergyScalesAndBjet(*eventInfo, weight);
                 else
                     anaData.FillSubCategories(*eventInfo, weight, eventInfo->eventEnergyScale);
+
+                using namespace cuts::massWindow;
+                const bool inside_mass_window = eventInfo->event->m_sv_MC > m_tautau_low &&
+                        eventInfo->event->m_sv_MC < m_tautau_high
+                        && eventInfo->Hbb.M() > m_bb_low && eventInfo->Hbb.M() < m_bb_high;
+
+                if (eventInfo->fitResults.has_valid_mass && inside_mass_window &&
+                        eventInfo->fitResults.mass >= 400 && eventInfo->fitResults.mass <= 500 &&
+                        eventCategory == analysis::EventCategory::TwoJets_TwoLooseBtag &&
+                        eventRegion == analysis::EventRegion::OS_Isolated &&
+                        (dataCategory.name == DYJets_incl.name || dataCategory.name == DYJets_excl.name ||
+                         dataCategory.name == DY_Embedded.name || dataCategory.name == TT_Embedded.name)){
+                    PrintEmbeddedInformation(*eventInfo,dataCategory,weight,anaData);
+                }
+
             }
         }
+    }
+
+    void PrintEmbeddedInformation(const FlatEventInfo& eventInfo, const DataCategory& dataCategory, double weight,
+                                  const FlatAnalyzerData& anaData)
+    {
+        std::cout<< "------ eventId: " << eventInfo.event->evt << " ----------- dataCategory: " << dataCategory.name
+                 << " ----------" << std::endl;
+        std::cout<< "eventWeight: " << weight << std::endl;
+        std::cout<< " mH_kinFit = " << eventInfo.fitResults.mass << ", chi2: " <<
+                    eventInfo.fitResults.chi2 << std::endl;
+        std::cout << "mH = " << eventInfo.resonance.M() << std::endl;
+        std::cout<< "H->tautau momentum: " << eventInfo.Htt << std::endl;
+        std::cout<< "MarkovChain: (" << eventInfo.event->pt_sv_MC << ", " << eventInfo.event->eta_sv_MC <<
+                    ", " << eventInfo.event->phi_sv_MC << ", " << eventInfo.event->m_sv_MC << ")" << std::endl;
+        std::cout<< "H->bb momentum: " << eventInfo.Hbb << std::endl;
+        std::cout<< "MVAMET momentum: " << eventInfo.MET << std::endl;
+        std::cout<< "tau1 momentum: " << eventInfo.lepton_momentums.at(0) << std::endl;
+        std::cout<< "tau2 momentum: " << eventInfo.lepton_momentums.at(1) << std::endl;
+        //if (eventInfo.has_bjet_pair){
+            std::cout << "This event has bjet pair " << std::endl;
+            std::cout<< "bjet1 momentum: " << eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first) <<
+                        ", csv: " << eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first) << std::endl;
+            //std::cout << "Is bjet1 matched: " << eventInfo.event->isBjet_MC_Bjet.at(eventInfo.selected_bjets.first) << std::endl;
+            std::cout<< "bjet2 momentum: " << eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second) <<
+                        ", csv: " << eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.second) << std::endl;
+            //std::cout << "Is bjet2 matched: " << eventInfo.event->isBjet_MC_Bjet.at(eventInfo.selected_bjets.second) << std::endl;
+//            unsigned matchedBjets = 0;
+//            for (unsigned k = 0; k < eventInfo.bjet_momentums.size(); ++k){
+//                if (eventInfo.event->isBjet_MC_Bjet.at(k))
+//                    ++matchedBjets;
+//            }
+
+//            std::cout << "matched Bjets: " << matchedBjets << std::endl;
+        //}
+
     }
 
     void FillDYjetHistograms(const FlatEventInfo& eventInfo, EventCategory eventCategory, EventRegion eventRegion,
@@ -638,6 +689,19 @@ protected:
                         hist_syst_up->Write(name_syst_up.c_str());
                         std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
                         hist_syst_down->Scale(0.98);
+                        hist_syst_down->Write(name_syst_down.c_str());
+                    }
+                    //added shape systematics for QCD
+                    if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "QCD_alternative") {
+                        std::string channel_name = ChannelName();
+                        std::transform(channel_name.begin(), channel_name.end(), channel_name.begin(), ::tolower);
+                        const std::string name_syst_prefix = "QCD_CMS_htt_" + dataCategory->datacard
+                                + "Shape_" + channel_name + "_8TeV";
+                        const std::string name_syst_up = name_syst_prefix + "Up";
+                        const std::string name_syst_down = name_syst_prefix + "Down";
+                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                        hist_syst_up->Write(name_syst_up.c_str());
+                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
                         hist_syst_down->Write(name_syst_down.c_str());
                     }
                 }
