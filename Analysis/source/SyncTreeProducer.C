@@ -167,6 +167,10 @@ protected:
             //without DYweight and decayMode weight correction
             syncTree->weight() = event.weight;
             syncTree->embeddedWeight() = event.embeddedWeight;
+            syncTree->decayModeWeight_1() = event.decayMode_1 == ntuple::tau_id::kOneProng0PiZero
+                    ? cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
+            syncTree->decayModeWeight_2() = event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero
+                    ? cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;
 
             syncTree->mvis() = eventInfo.Htt.M();
             syncTree->m_sv() = event.m_sv_MC;

@@ -163,14 +163,15 @@ public:
         PrintTables("semicolon", L";");
 
         std::cout << "Saving datacards... " << std::endl;
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts,
+                                        &FlatAnalyzerData::m_sv<std::string>);
 //        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
 //                                        EventSubCategory::KinematicFitConverged);
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
-                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
-//        ProduceFileForLimitsCalculation(FlatAnalyzerData::csv_b1_vs_ptb1_Name(),
-//                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
+                                        EventSubCategory::KinematicFitConvergedWithMassWindow,
+                                        &FlatAnalyzerData::m_ttbb_kinfit<std::string>);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts,
+                                        &FlatAnalyzerData::m_bb_slice<std::string>);
 
 //        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
 //            ProduceFileForLimitsCalculation(hist_name, EventSubCategory::NoCuts);
@@ -633,7 +634,8 @@ protected:
     }
 
 
-    void ProduceFileForLimitsCalculation(const std::string& hist_name, EventSubCategory eventSubCategory)
+    void ProduceFileForLimitsCalculation(const std::string& hist_name, EventSubCategory eventSubCategory,
+                                         FlatAnalyzerData::HistogramAccessor histogramAccessor)
     {
         static const std::map<EventCategory, std::string> categoryToDirectoryNameSuffix = {
             { EventCategory::Inclusive, "inclusive" }, { EventCategory::TwoJets_ZeroBtag, "2jet0tag" },
@@ -648,6 +650,9 @@ protected:
         static const std::map<std::string, std::string> channelNameForFolder = {
             { "eTau", "eleTau" }, { "muTau", "muTau" }, { "tauTau", "tauTau" }
         };
+
+        static const double tiny_value = 1e-9;
+        static const double tiny_value_error = tiny_value;
 
         const std::string file_name = outputFileName + "_"
                 + FlatAnalyzerData::FullHistogramName(hist_name, eventSubCategory, EventEnergyScale::Central)
@@ -669,12 +674,21 @@ protected:
                                                                                            eventEnergyScale);
                     std::shared_ptr<TH1D> hist;
                     if(auto hist_orig = GetSignalHistogram(eventCategory, dataCategory->name, full_hist_name))
-                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+                        hist = std::shared_ptr<TH1D>(new TH1D(*hist_orig));
                     else {
                         std::cout << "Warning - Datacard histogram '" << full_hist_name
                                   << "' not found for data category '" << dataCategory->name << "' for eventCategory '"
-                                  << categoryToDirectoryNameSuffix.at(eventCategory) << ".\n";
-                        continue;
+                                  << categoryToDirectoryNameSuffix.at(eventCategory) << ". Using histogram with"
+                                  << " a tiny yield in the central bin instead.\n";
+                        const std::string hist_suffix = FlatAnalyzerData::HistogramSuffix(eventSubCategory,
+                                                                                          eventEnergyScale);
+
+                        FlatAnalyzerData& anaData = GetAnaData(eventCategory, dataCategory->name, EventRegion::OS_Isolated);
+                        auto& new_hist = (anaData.*histogramAccessor)(hist_suffix);
+                        hist = std::shared_ptr<TH1D>(new TH1D(new_hist));
+                        const Int_t central_bin = hist->GetNbinsX() / 2;
+                        hist->SetBinContent(central_bin, tiny_value);
+                        hist->SetBinError(central_bin, tiny_value_error);
                     }
                     const std::string full_datacard_name = FullDataCardName(dataCategory->datacard, eventEnergyScale);
                     hist->Scale(dataCategory->limits_sf);

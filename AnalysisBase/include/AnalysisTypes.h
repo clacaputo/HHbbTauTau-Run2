@@ -180,6 +180,9 @@ struct PhysicalValue {
     }
 
     bool operator<(const PhysicalValue& other) const { return value < other.value; }
+    bool operator<=(const PhysicalValue& other) const { return value <= other.value; }
+    bool operator>(const PhysicalValue& other) const { return value > other.value; }
+    bool operator>=(const PhysicalValue& other) const { return value >= other.value; }
 
     bool IsCompatible(const PhysicalValue& other) const
     {
@@ -187,6 +190,8 @@ struct PhysicalValue {
         const double error_sum = error + other.error;
         return delta < error_sum;
     }
+
+    PhysicalValue Scale(double sf) const { return PhysicalValue(value * sf, error * sf); }
 
     template<typename char_type>
     std::basic_string<char_type> ToString(bool print_error) const

@@ -73,7 +73,7 @@ public:
     TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1)
     TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1)
 
-    //TH2D_ENTRY(csv_b1_vs_ptb1, 20, 0, 200 ,25, 0.2, 1.2)
+    typedef root_ext::SmartHistogram<TH1D>& (FlatAnalyzerData::*HistogramAccessor)(const std::string&);
 
     virtual const std::vector<double>& M_tt_Bins() const
     {
@@ -165,9 +165,6 @@ public:
         pt_b1(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
         eta_b1(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
         csv_b1(key).Fill(eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
-
-
-
         pt_b2(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
         eta_b2(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
         csv_b2(key).Fill(eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.second), weight);
