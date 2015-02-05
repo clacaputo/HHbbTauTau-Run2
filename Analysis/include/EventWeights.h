@@ -43,8 +43,8 @@ public:
     {
         if(is_data && apply_pu_weight)
             throw exception("Inconsistend event weight configuration: requested to apply PU weight for data sample.");
-        if(is_embedded && apply_pu_weight)
-            throw exception("Inconsistend event weight configuration: requested to apply PU weight for embedded sample.");
+//        if(is_embedded && apply_pu_weight)
+//            throw exception("Inconsistend event weight configuration: requested to apply PU weight for embedded sample.");
         if(is_data && is_embedded)
             throw exception("Inconsistend event weight configuration: sample is data and embedded at the same time.");
         if(apply_pu_weight)
