@@ -73,6 +73,8 @@ public:
     TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1)
     TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1)
 
+    //TH2D_ENTRY(csv_b1_vs_ptb1, 20, 0, 200 ,25, 0.2, 1.2)
+
     virtual const std::vector<double>& M_tt_Bins() const
     {
         static const std::vector<double> bins = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
@@ -135,7 +137,15 @@ public:
             m_ttbb_kinfit(key).Fill(eventInfo.fitResults.mass, weight);
         FillSlice(m_bb_slice(key), mass_tautau, eventInfo.Hbb.M(), weight);
 
+
+//        if(eventInfo.has_bjet_pair){
+//            csv_b1_vs_ptb1(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
+//                                     eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first),
+//                                     weight);
+//        }
+
         if (eventEnergyScale != EventEnergyScale::Central) return;
+
 
         pt_1(key).Fill(event.pt_1, weight);
         eta_1(key).Fill(event.eta_1, weight);
@@ -155,6 +165,9 @@ public:
         pt_b1(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(), weight);
         eta_b1(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Eta(), weight);
         csv_b1(key).Fill(eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
+
+
+
         pt_b2(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Pt(), weight);
         eta_b2(key).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.second).Eta(), weight);
         csv_b2(key).Fill(eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.second), weight);
@@ -194,6 +207,8 @@ public:
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConverged);
         if(eventInfo.fitResults.has_valid_mass && inside_mass_window)
             Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConvergedWithMassWindow);
+        if(eventInfo.fitResults.has_valid_mass && !inside_mass_window)
+            Fill(eventInfo, weight, eventEnergyScale, EventSubCategory::KinematicFitConvergedOutsideMassWindow);
     }
 
     void FillEnergyScales(const FlatEventInfo& eventInfo, double weight, const std::set<EventEnergyScale>& energyScales)

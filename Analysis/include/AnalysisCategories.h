@@ -324,7 +324,9 @@ enum class EventCategory { Inclusive = 0, TwoJets_Inclusive = 1, TwoJets_ZeroBta
                            TwoJets_TwoLooseBtag = 7, TwoJets_AtLeastOneBtag = 8, TwoJets_AtLeastOneLooseBtag = 9 };
 
 enum class EventSubCategory { NoCuts = 0, KinematicFitConverged = 1, MassWindow = 2,
-                              KinematicFitConvergedWithMassWindow = 3, OutsideMassWindow = 4 };
+                              KinematicFitConvergedWithMassWindow = 3, OutsideMassWindow = 4,
+                              KinematicFitConvergedOutsideMassWindow = 5
+                            };
 
 namespace detail {
 static const std::map<EventCategory, std::string> eventCategoryNamesMap =
@@ -348,6 +350,7 @@ static const std::map<EventSubCategory, std::string> eventSubCategoryNamesMap =
           { { EventSubCategory::NoCuts, "NoCuts" }, { EventSubCategory::KinematicFitConverged, "KinFitConverged" },
             { EventSubCategory::MassWindow, "MassWindow" },
             { EventSubCategory::KinematicFitConvergedWithMassWindow, "KinFitConvergedWithMassWindow" },
+            { EventSubCategory::KinematicFitConvergedOutsideMassWindow, "KinematicFitConvergedOutsideMassWindow" },
             { EventSubCategory::OutsideMassWindow, "OutsideMassWindow" } };
 } // namespace detail
 

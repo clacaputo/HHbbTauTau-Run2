@@ -108,7 +108,7 @@ public:
                                                 EventEnergyScale::Central)
         };
 
-        static const bool applyPostFitCorrections = false;
+        static const bool applyPostFitCorrections = true;
 
         for (const auto& original_hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
             for(EventSubCategory subCategory : AllEventSubCategories) {
@@ -168,6 +168,8 @@ public:
 //                                        EventSubCategory::KinematicFitConverged);
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
                                         EventSubCategory::KinematicFitConvergedWithMassWindow);
+//        ProduceFileForLimitsCalculation(FlatAnalyzerData::csv_b1_vs_ptb1_Name(),
+//                                        EventSubCategory::KinematicFitConvergedWithMassWindow);
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_bb_slice_Name(), EventSubCategory::NoCuts);
 
 //        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
@@ -575,6 +577,7 @@ protected:
 
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             for (const auto& hist_name : FlatAnalyzerData::GetAllHistogramNames()) {
+                //if (hist_name == FlatAnalyzerData::csv_b1_vs_ptb1_Name()) continue;
                 //root_ext::PdfPrinter printer(outputFileName + blindCondition + "_" + hist.name + ratioCondition +".pdf");
                 std::ostringstream ss_title;
                 ss_title << eventCategory << ": " << hist_name;
@@ -852,7 +855,8 @@ private:
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), 2 }, { FlatAnalyzerData::m_bb_slice_Name(), 3 }
         };
 
-        static const std::set<EventSubCategory> sidebandSubCategories = { EventSubCategory::OutsideMassWindow };
+        static const std::set<EventSubCategory> sidebandSubCategories = { EventSubCategory::OutsideMassWindow,
+                                                                        EventSubCategory::KinematicFitConvergedOutsideMassWindow};
 
         const auto findRegionId = [&]() -> size_t {
             if(histogramsToBlind.count(hist_name))

@@ -9,31 +9,31 @@ using namespace std;
 
 
 
-void AnalyzeBKGShape(TString folder_1, TString folder_2, TString sample){
+void AnalyzeBKGShape(TString folder_medium, TString folder_loose, TString sample, double max){
 	gStyle->SetOptStat(000000);
 	
 	TH1::SetDefaultSumw2();
 	
     //emb loose
-    TFile *f_loose= TFile::Open("/Users/Tita/Desktop/analysis_HH_bbTauTau/Limits/auxiliaries/shapes/Italians/htt_tt.inputs-Hhh-8TeV_m_ttbb_kinfit_KinFitConvergedWithMassWindow.root");
+    TFile *f_embedded= TFile::Open("/Users/Tita/Desktop/analysis_HH_bbTauTau/src/HHbbTauTau/data/datacards_tautau_ZTTembLoose_chi2/htt_tt.inputs-Hhh-8TeV_m_ttbb_kinfit_KinFitConvergedWithMassWindow.root");
     //MC medium
-    TFile *f_medium= TFile::Open("/Users/Tita/Desktop/analysis_HH_bbTauTau/src/HHbbTauTau/data/datacards_tautau_ZTT_MC_medium/htt_tt.inputs-Hhh-8TeV_m_ttbb_kinfit_KinFitConvergedWithMassWindow.root");
+    //TFile *f_medium= TFile::Open("/Users/Tita/Desktop/analysis_HH_bbTauTau/src/HHbbTauTau/data/datacards_tautau_ZTT_MC_medium/htt_tt.inputs-Hhh-8TeV_m_ttbb_kinfit_KinFitConvergedWithMassWindow.root");
 	
 
-    //ZTT mc loose
-    TH1D *histoZTT_medium = (TH1D*)f_medium->Get((folder_1+"/"+sample));
+    //ZTT emb medium
+    TH1D *histoZTT_medium = (TH1D*)f_embedded->Get((folder_medium+"/"+sample));
     //ZTT emb loose
-    TH1D *histoZTT_loose = (TH1D*)f_loose->Get((folder_2+"/"+sample));
+    TH1D *histoZTT_loose = (TH1D*)f_embedded->Get((folder_loose+"/"+sample));
 	
 		
 	TCanvas * c1 = new TCanvas("c1","c1", 800,800);
 
-    histoZTT_medium->Scale(1/(histoZTT_medium->Integral()));
+    histoZTT_medium->Scale(1/(histoZTT_medium->Integral()),"width");
     histoZTT_medium->SetLineColor(kBlue);
     histoZTT_medium->SetMarkerColor(kBlue);
     histoZTT_medium->SetMarkerStyle(20);
 	
-    histoZTT_loose->Scale(1/(histoZTT_loose->Integral()));
+    histoZTT_loose->Scale(1/(histoZTT_loose->Integral()),"width");
     histoZTT_loose->SetLineColor(kRed);
     histoZTT_loose->SetMarkerColor(kRed);
     histoZTT_loose->SetMarkerStyle(20);
@@ -52,7 +52,7 @@ void AnalyzeBKGShape(TString folder_1, TString folder_2, TString sample){
     histoZTT_medium->GetXaxis()->SetTitle("M_{H} [GeV]");
     histoZTT_medium->GetYaxis()->SetTitleOffset(1.5);
     histoZTT_medium->GetYaxis()->SetTitle("N Events");
-    histoZTT_medium->SetMaximum(0.7);
+    histoZTT_medium->SetMaximum(max);
 	
 	
 		
@@ -61,18 +61,18 @@ void AnalyzeBKGShape(TString folder_1, TString folder_2, TString sample){
 	legend->SetFillColor(0);
     legend->SetTextSize(0.02);
 	legend->SetEntrySeparation(0.05);
-    legend->AddEntry(histoZTT_medium, " ZTT mc Loose CSV");
-    legend->AddEntry(histoZTT_loose, " ZTT emb Loose CSV");
+    legend->AddEntry(histoZTT_medium, " ZTT emb Loose 1tag");
+    legend->AddEntry(histoZTT_loose, " ZTT emb Loose 2tag");
 	
 	legend->Draw();
 	
-    c1->SaveAs("./ZTT_MC_vs_Emb"+folder_1+".pdf");
+    c1->SaveAs("./ZTT_Emb_Loose_1tag_vs_2tag_chi2cut.pdf");
 }
 
 
 void GetShape(){
 
-    AnalyzeBKGShape("tauTau_2jetloose1tag", "tauTau_2jetloose1tag", "ZTT");
-    AnalyzeBKGShape("tauTau_2jetloose2tag", "tauTau_2jetloose2tag", "ZTT");
+    AnalyzeBKGShape("tauTau_2jetloose1tag", "tauTau_2jetloose2tag", "ZTT", 0.02);
+    //AnalyzeBKGShape("tauTau_2jet2tag", "tauTau_2jetloose2tag", "ZTT", 0.1);
 		
 }

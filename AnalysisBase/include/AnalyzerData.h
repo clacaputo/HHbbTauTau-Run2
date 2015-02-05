@@ -65,7 +65,7 @@
     ENTRY_1D(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf)
 
 #define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
-    ENTRY_1D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
+    ENTRY_2D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
 #define TH2D_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
     TH2D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
 
