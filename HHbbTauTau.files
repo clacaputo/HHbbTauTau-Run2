@@ -344,3 +344,8 @@ Analysis/studies/AnalyzeBKGShape.C
 Analysis/studies/AnalyzeQCDShape.C
 Analysis/studies/AnalyzeEMBShape.C
 Analysis/studies/AnalyzeESshape.C
+Analysis/source/LimitConfigurationProducer.C
+Analysis/config/uncertainties.cfg
+AnalysisBase/include/ConfigReader.h
+Analysis/include/UncertaintyCalculatorCollection.h
+Analysis/include/UncertaintyConfiguration.h

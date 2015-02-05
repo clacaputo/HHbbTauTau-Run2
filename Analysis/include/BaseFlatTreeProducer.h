@@ -103,6 +103,8 @@ protected:
         flatTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // e -> tau fake rate * jet -> tau fake rate
         flatTree->weight() = GetEventWeights().GetFullWeight();
         flatTree->embeddedWeight() = GetEventWeights().GetEmbeddedWeight();
+        flatTree->decayModeWeight_1() = GetEventWeights().GetDecayModeWeight(1);
+        flatTree->decayModeWeight_2() = GetEventWeights().GetDecayModeWeight(2);
 
         // HTT candidate
         flatTree->mvis() = selection.higgs->GetMomentum().M();
