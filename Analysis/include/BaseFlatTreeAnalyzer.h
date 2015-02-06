@@ -71,8 +71,9 @@ public:
     }
 
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
-                         const std::string& _outputFileName)
-        : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection)
+                         const std::string& _outputFileName, bool _applyPostFitCorrections = false)
+        : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection),
+          applyPostFitCorrections(_applyPostFitCorrections)
     {
         TH1::SetDefaultSumw2();
     }
@@ -108,7 +109,7 @@ public:
                                                 EventEnergyScale::Central)
         };
 
-        static const bool applyPostFitCorrections = true;
+
 
         for (const auto& original_hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
             for(EventSubCategory subCategory : AllEventSubCategories) {
@@ -1058,6 +1059,7 @@ protected:
     std::string outputFileName;
     DataCategoryCollection dataCategoryCollection;
     FullAnaData fullAnaData;
+    bool applyPostFitCorrections;
 };
 
 } // namespace analysis
