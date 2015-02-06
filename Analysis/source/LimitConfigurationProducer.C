@@ -165,9 +165,19 @@ private:
                         WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, unc_value.value);
                 }
             } else {
-                const std::string sample_list =
-                        uncertaintyDescriptor->SampleList(categoryDescriptor.samples.GetAllSamples());
-                WriteUncValue(cfg, categoryDescriptor.name, sample_list, full_name, uncertaintyDescriptor->value);
+                SampleNameSet common_samples;
+                for(const std::string& sample : uncertaintyDescriptor->samples) {
+                    if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
+                    if(uncertaintyDescriptor->sample_values.count(sample)) {
+                        const double value = uncertaintyDescriptor->sample_values.at(sample);
+                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, value);
+                    } else
+                        common_samples.insert(sample);
+                }
+                if(common_samples.size()) {
+                    const std::string sample_list = uncertaintyDescriptor->SampleList(common_samples);
+                    WriteUncValue(cfg, categoryDescriptor.name, sample_list, full_name, uncertaintyDescriptor->value);
+                }
             }
         }
     }

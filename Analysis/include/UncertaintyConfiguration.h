@@ -122,6 +122,7 @@ struct UncertaintyDescriptor {
     std::string description, source;
     std::string name_prefix, name_suffix;
     std::set<std::string> samples;
+    std::map<std::string, double> sample_values;
     UncertaintyType type;
     UncertaintyRange range;
     bool calculate_value;
@@ -402,9 +403,13 @@ public:
         std::istringstream ss(param_value);
         ss >> std::boolalpha;
         if(param_name == "description") {
-            ss >> current.description;
+            std::string description;
+            ss >> description;
+            current.description += "\n" + description;
         } else if(param_name == "source") {
+            std::string source;
             ss >> current.source;
+            current.source += "\n" + source;
         } else if(param_name == "name_prefix") {
             ss >> current.name_prefix;
         } else if(param_name == "name_suffix") {
@@ -424,6 +429,13 @@ public:
             ss >> current.value;
         } else if(param_name == "threshold") {
             ss >> current.threshold;
+        } else if(param_name == "sample_value") {
+            std::string sample_name;
+            double value;
+            ss >> sample_name >> value;
+            if(!current.samples.count(sample_name))
+                throw exception("Sample '") << sample_name << "' not listed in the samples list.";
+            current.sample_values[sample_name] = value;
         } else
             throw exception("Unsupported parameter '") << param_name << "'.";
     }
