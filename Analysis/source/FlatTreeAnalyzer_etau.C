@@ -42,9 +42,6 @@ public:
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::ETau; }
 
-    virtual const analysis::EventCategorySet& EventCategoriesToProcess() const override
-    { return analysis::EventCategories_ETau; }
-
     virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
                                                        analysis::EventCategory eventCategory) override
     {

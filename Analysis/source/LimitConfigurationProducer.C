@@ -185,7 +185,7 @@ private:
     static void WriteUncValue(std::ostream& cfg, const std::string& category_name, const std::string& sample_list,
                               const std::string& full_unc_name, double value)
     {
-        static const std::vector<int> column_widths = { 20, 28, 48, 0 };
+        static const std::vector<int> column_widths = { 20, 36, 48, 0 };
 
         cfg << std::setw(column_widths.at(0)) << category_name
             << std::setw(column_widths.at(1)) << sample_list

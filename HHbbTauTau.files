@@ -351,3 +351,4 @@ Analysis/config/uncertainties.cfg
 AnalysisBase/include/ConfigReader.h
 Analysis/include/UncertaintyCalculatorCollection.h
 Analysis/include/UncertaintyConfiguration.h
+Analysis/include/FlatAnalyzerDataCollection.h

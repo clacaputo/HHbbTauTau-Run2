@@ -360,10 +360,6 @@ typedef std::map<EventCategory, EventCategory> EventCategoryMap;
 typedef std::set<EventSubCategory> EventSubCategorySet;
 
 static const EventCategorySet AllEventCategories = tools::collect_map_keys(detail::eventCategoryNamesMap);
-static const EventCategorySet EventCategories_ETau = {EventCategory::Inclusive, EventCategory::TwoJets_Inclusive,
-                                                     EventCategory::TwoJets_ZeroBtag, EventCategory::TwoJets_OneBtag,
-                                                     EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_OneLooseBtag,
-                                                     EventCategory::TwoJets_TwoLooseBtag};
 static const EventSubCategorySet AllEventSubCategories = tools::collect_map_keys(detail::eventSubCategoryNamesMap);
 
 static const EventCategoryMap MediumToLoose_EventCategoryMap =
@@ -371,10 +367,6 @@ static const EventCategoryMap MediumToLoose_EventCategoryMap =
           { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_OneLooseBtag },
           { EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_TwoLooseBtag },
           { EventCategory::TwoJets_AtLeastOneBtag, EventCategory::TwoJets_AtLeastOneLooseBtag }};
-
-static const EventCategoryMap Inclusive_EventCategoryMap =
-        { { EventCategory::Inclusive, EventCategory::Inclusive },
-          { EventCategory::TwoJets_Inclusive, EventCategory::TwoJets_Inclusive }};
 
 static const EventCategorySet TwoJetsEventCategories_MediumBjets =
                                                                 tools::collect_map_keys(MediumToLoose_EventCategoryMap);
