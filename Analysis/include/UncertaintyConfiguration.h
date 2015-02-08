@@ -469,9 +469,13 @@ private:
     static PhysicalValue WeightedAverage(const std::vector<UncertaintyInterval>& intervals, ValuePtr value_ptr)
     {
         double total_weight = 0;
+        if (intervals.size() == 1)
+            return intervals.at(0).*value_ptr;
         PhysicalValue weighted_sum;
         for(const UncertaintyInterval& unc : intervals) {
             const PhysicalValue& value = unc.*value_ptr;
+            if(!value.error)
+                throw exception("Error equal zero!");
             const double weight =  1. / sqr(value.error);
             total_weight += weight;
             weighted_sum += value.Scale(weight);
