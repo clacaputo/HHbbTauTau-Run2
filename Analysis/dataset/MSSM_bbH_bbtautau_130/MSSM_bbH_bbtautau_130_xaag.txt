@@ -1,0 +1,4 @@
+/store/user/kandroso/MSSM_gg_bbH_HToTauTau/gg_bbH_bbtautau_130/TREE/Tree_35_1_h3q.root
+/store/user/kandroso/MSSM_gg_bbH_HToTauTau/gg_bbH_bbtautau_130/TREE/Tree_87_1_3ng.root
+/store/user/kandroso/MSSM_gg_bbH_HToTauTau/gg_bbH_bbtautau_130/TREE/Tree_32_1_YEm.root
+/store/user/kandroso/MSSM_gg_bbH_HToTauTau/gg_bbH_bbtautau_130/TREE/Tree_95_1_0Uq.root
