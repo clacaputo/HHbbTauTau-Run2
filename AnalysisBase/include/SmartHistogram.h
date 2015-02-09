@@ -249,17 +249,40 @@ public:
     SmartHistogram(const std::string& name,
                    size_t nbinsx, double xlow, double xup,
                    size_t nbinsy, double ylow, double yup)
-        : TH2D(name.c_str(), name.c_str(), nbinsx, xlow, xup, nbinsy, ylow, yup), AbstractHistogram(name) {}
+        : TH2D(name.c_str(), name.c_str(), nbinsx, xlow, xup, nbinsy, ylow, yup), AbstractHistogram(name), store(true),
+          use_log_y(false), max_y_sf(1) {}
+
+    SmartHistogram(const std::string& name, size_t nbinsx, double xlow, double xup, size_t nbinsy, double ylow,
+                   double yup, const std::string& x_axis_title, const std::string& y_axis_title, bool _use_log_y,
+                   double _max_y_sf, bool _store)
+        : TH2D(name.c_str(), name.c_str(), nbinsx, xlow, xup, nbinsy, ylow, yup), AbstractHistogram(name),
+          store(_store), use_log_y(_use_log_y), max_y_sf(_max_y_sf)
+    {
+        SetXTitle(x_axis_title.c_str());
+        SetYTitle(y_axis_title.c_str());
+    }
 
     virtual void WriteRootObject() override
     {
-        Write(Name().c_str(), TObject::kOverwrite);
+        if(store)
+            Write(Name().c_str(), TObject::kOverwrite);
     }
 
     virtual void SetOutputDirectory(TDirectory* directory) override
     {
-        SetDirectory(directory);
+        TDirectory* dir = store ? directory : nullptr;
+        SetDirectory(dir);
     }
+
+    bool UseLogY() const { return use_log_y; }
+    double MaxYDrawScaleFactor() const { return max_y_sf; }
+    std::string GetXTitle() const { return GetXaxis()->GetTitle(); }
+    std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
+
+private:
+    bool store;
+    bool use_log_y;
+    double max_y_sf;
 };
 
 template<typename ValueType>
@@ -337,8 +360,6 @@ public:
         const HistogramParameters& params = GetParameters(name);
         return new SmartHistogram<TH1D>(name, params.nbins, params.low, params.high);
     }
-
 };
-
 
 } // root_ext

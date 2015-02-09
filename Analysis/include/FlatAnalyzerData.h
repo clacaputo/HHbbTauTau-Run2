@@ -72,8 +72,9 @@ public:
     TH1D_ENTRY_EX(pull_balance_1, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1, SaveAll)
+    TH2D_ENTRY_EX(csv_b1_vs_ptb1, 20, 0, 200, 25, 0, 1, "P_{T}[GeV](leading_jet)", "CSV(leading_jet)", false, 1, SaveAll)
 
-    static constexpr bool SaveAll = false;
+    static constexpr bool SaveAll = true;
 
     explicit FlatAnalyzerData(bool _fill_all) : fill_all(_fill_all) {}
 
@@ -155,8 +156,8 @@ public:
         pull_balance_1().Fill(eventInfo.fitResults.pull_balance_1,weight);
         pull_balance_2().Fill(eventInfo.fitResults.pull_balance_2,weight);
 
-//        csv_b1_vs_ptb1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
-//                              eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
+        csv_b1_vs_ptb1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
+                              eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
     }
 
 protected:

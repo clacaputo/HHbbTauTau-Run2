@@ -30,6 +30,7 @@
 #include <map>
 #include <stdexcept>
 #include <sstream>
+#include <typeindex>
 
 #include <TFile.h>
 #include <TH1D.h>
@@ -38,7 +39,7 @@
 
 #include "SmartHistogram.h"
 
-#define ENTRY_1D(type, name, ...) \
+#define ANA_DATA_ENTRY(type, name, ...) \
     template<typename Key> \
     root_ext::SmartHistogram< type >& name(const Key& key) { \
         return Get((type*)nullptr, #name, key, ##__VA_ARGS__); \
@@ -48,42 +49,48 @@
         return GetFast((type*)nullptr, #name, index, ##__VA_ARGS__); \
     } \
     static std::string name##_Name() { return #name; } \
+    static std::type_index name##_TypeIndex() { return std::type_index(typeid(type)); } \
     /**/
 
-#define ENTRY_2D(type, name, ...) \
-    template<typename Key> \
-    root_ext::SmartHistogram< root_ext::detail::Base2DHistogram<type>::Value >& name(const Key& key) { \
-        return Get((root_ext::detail::Base2DHistogram<type>::Value*)nullptr, #name, key, ##__VA_ARGS__); \
-    } \
-    root_ext::SmartHistogram< root_ext::detail::Base2DHistogram<type>::Value >& name() { return name(""); } \
-    /**/
-
-#define TH1D_ENTRY(name, nbinsx, xlow, xup) ENTRY_1D(TH1D, name, nbinsx, xlow, xup)
+#define TH1D_ENTRY(name, nbinsx, xlow, xup) ANA_DATA_ENTRY(TH1D, name, nbinsx, xlow, xup)
 #define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
-#define TH1D_ENTRY_CUSTOM(name, bins) ENTRY_1D(TH1D, name, bins)
+#define TH1D_ENTRY_CUSTOM(name, bins) ANA_DATA_ENTRY(TH1D, name, bins)
 
 #define TH1D_ENTRY_EX(name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
-    ENTRY_1D(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
+    ANA_DATA_ENTRY(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
 #define TH1D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
-    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), title, x_axis_title, y_axis_title, use_log_y, \
-                  max_y_sf, store)
+    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
 #define TH1D_ENTRY_CUSTOM_EX(name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
-    ENTRY_1D(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
+    ANA_DATA_ENTRY(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
 
 #define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
-    ENTRY_2D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
+    ANA_DATA_ENTRY(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
 #define TH2D_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
     TH2D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
+
+#define TH2D_ENTRY_EX(name, nbinsx, xlow, xup, nbinsy, ylow, yup, x_axis_title, y_axis_title, use_log_y, max_y_sf, \
+                      store) \
+    ANA_DATA_ENTRY(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup, x_axis_title, y_axis_title, use_log_y, max_y_sf, \
+                   store)
+#define TH2D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow, x_axis_title, y_axis_title, \
+                          use_log_y, max_y_sf, store) \
+    TH2D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy), x_axis_title, \
+                  y_axis_title, use_log_y, max_y_sf, store)
 
 namespace root_ext {
 class AnalyzerData {
 private:
+    typedef std::vector<AbstractHistogram*> DataVector;
+    typedef std::map<std::string, AbstractHistogram*> DataMap;
+
+    template<typename ValueType>
     static std::set<std::string>& HistogramNames()
     {
         static std::set<std::string> names;
         return names;
     }
 
+    template<typename ValueType>
     static std::set<std::string>& OriginalHistogramNames()
     {
         static std::set<std::string> names;
@@ -99,8 +106,11 @@ private:
     static constexpr size_t MaxIndex = 1000;
 
 public:
-    static const std::set<std::string>& GetAllHistogramNames() { return HistogramNames(); }
-    static const std::set<std::string>& GetOriginalHistogramNames() { return OriginalHistogramNames(); }
+    template<typename ValueType>
+    static const std::set<std::string>& GetAllHistogramNames() { return HistogramNames<ValueType>(); }
+
+    template<typename ValueType>
+    static const std::set<std::string>& GetOriginalHistogramNames() { return OriginalHistogramNames<ValueType>(); }
 
     static size_t GetUniqueIndex(const std::string& name)
     {
@@ -124,7 +134,7 @@ public:
     }
 
 public:
-    AnalyzerData() : data_vector(MaxIndex), outputFile(nullptr), ownOutputFile(false), directory(nullptr)
+    AnalyzerData() : outputFile(nullptr), ownOutputFile(false), directory(nullptr)
     {
         data_vector.assign(MaxIndex, nullptr);
     }
@@ -138,7 +148,7 @@ public:
     }
 
     AnalyzerData(TFile& _outputFile, const std::string& directoryName = "")
-        : outputFile(&_outputFile), ownOutputFile(false), directory(nullptr)
+        : outputFile(&_outputFile), ownOutputFile(false)
     {
         data_vector.assign(MaxIndex, nullptr);
         if (directoryName.size()){
@@ -185,6 +195,19 @@ public:
         }
     }
 
+    template<typename ValueType>
+    bool CheckType(const std::string& name) const
+    {
+        const auto iter = data.find(name);
+        if(iter == data.end()) {
+            std::ostringstream ss;
+            ss << "Histogram '" << name << "' not found.";
+            throw std::runtime_error(ss.str());
+        }
+        SmartHistogram<ValueType>* result = dynamic_cast< SmartHistogram<ValueType>* >(iter->second);
+        return result;
+    }
+
     std::vector<std::string> KeysCollection() const
     {
         std::vector<std::string> keys;
@@ -217,10 +240,10 @@ public:
     }
 
     template<typename ValueType>
-    SmartHistogram<ValueType>* GetPtr(const std::string& name)
+    SmartHistogram<ValueType>* GetPtr(const std::string& name) const
     {
-        if(!Contains(name)) return nullptr;
-        return &Get<ValueType>(name);
+        if(!Contains(name) || !CheckType<ValueType>(name)) return nullptr;
+        return &GetAt<ValueType>(data.find(name));
     }
 
     template<typename ValueType>
@@ -231,7 +254,7 @@ public:
         cd();
         SmartHistogram<ValueType>* h = new SmartHistogram<ValueType>(original);
         data[h->Name()] = h;
-        HistogramNames().insert(h->Name());
+        HistogramNames<ValueType>().insert(h->Name());
         h->SetOutputDirectory(directory);
         auto index_iter = IndexMap().find(h->Name());
         if(index_iter != IndexMap().end() && index_iter->second < MaxIndex)
@@ -258,33 +281,38 @@ private:
             cd();
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
-            HistogramNames().insert(h->Name());
-            OriginalHistogramNames().insert(name);
+            HistogramNames<ValueType>().insert(h->Name());
+            OriginalHistogramNames<ValueType>().insert(name);
             h->SetOutputDirectory(directory);
             iter = data.find(full_name);
             auto index_iter = IndexMap().find(full_name);
             if(index_iter != IndexMap().end() && index_iter->second < MaxIndex)
                 data_vector.at(index_iter->second) = h;
         }
+        return GetAt<ValueType>(iter);
+    }
+
+    template<typename ValueType>
+    SmartHistogram<ValueType>& GetAt(const DataMap::const_iterator& iter) const
+    {
+        if(iter == data.end())
+            throw std::runtime_error("Invalid iterator to of a histogram collection.");
+
         SmartHistogram<ValueType>* result = dynamic_cast< SmartHistogram<ValueType>* >(iter->second);
         if(!result) {
             std::ostringstream ss;
-            ss << "Wrong type for histogram '" << full_name << "'.";
+            ss << "Wrong type for histogram '" << iter->first << "'.";
             throw std::runtime_error(ss.str());
         }
         return *result;
     }
 
 private:
-    typedef std::vector<AbstractHistogram*> DataVector;
-    typedef std::map<std::string, AbstractHistogram*> DataMap;
-    DataMap data;
-    DataVector data_vector;
-
-
     TFile* outputFile;
     bool ownOutputFile;
     TDirectory* directory;
-    std::string directoryName;
+
+    DataMap data;
+    DataVector data_vector;
 };
 } // root_ext

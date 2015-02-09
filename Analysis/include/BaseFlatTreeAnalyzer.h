@@ -75,7 +75,7 @@ public:
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
                          const std::string& _outputFileName, bool _applyPostFitCorrections = false)
         : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection),
-          anaDataCollection(outputFileName + "_full.root", false),
+          anaDataCollection(outputFileName + "_full.root", true),
           applyPostFitCorrections(_applyPostFitCorrections)
     {
         TH1::SetDefaultSumw2();
@@ -109,7 +109,7 @@ public:
             FlatAnalyzerData::m_sv_Name(), FlatAnalyzerData::m_ttbb_kinfit_Name()
         };
 
-        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
+        for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames<TH1D>()) {
             for(EventSubCategory subCategory : AllEventSubCategories) {
                 for(EventEnergyScale energyScale : AllEventEnergyScales) {
                     if(energyScale != EventEnergyScale::Central && !complete_histogram_names.count(hist_name))
@@ -519,7 +519,7 @@ protected:
         root_ext::PdfPrinter printer(eventRegionName.str());
 
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
-            for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames()) {
+            for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames<TH1D>()) {
                 for(EventSubCategory subCategory : AllEventSubCategories) {
                     const FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId(eventCategory, subCategory,
                                                                                EventEnergyScale::Central);
