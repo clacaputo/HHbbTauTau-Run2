@@ -26,114 +26,162 @@
 
 #pragma once
 
+#include <vector>
 #include <map>
 #include <stdexcept>
 #include <sstream>
+#include <typeindex>
 
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <Compression.h>
 
 #include "SmartHistogram.h"
 
-#define ENTRY_1D(type, name, ...) \
+#define ANA_DATA_ENTRY(type, name, ...) \
     template<typename Key> \
     root_ext::SmartHistogram< type >& name(const Key& key) { \
         return Get((type*)nullptr, #name, key, ##__VA_ARGS__); \
     } \
-    root_ext::SmartHistogram< type >& name() { return name(""); } \
-    static std::string name##_Name() { return #name; } \
-    /**/
-
-#define ENTRY_2D(type, name, ...) \
-    template<typename Key> \
-    root_ext::SmartHistogram< root_ext::detail::Base2DHistogram<type>::Value >& name(const Key& key) { \
-        return Get((root_ext::detail::Base2DHistogram<type>::Value*)nullptr, #name, key, ##__VA_ARGS__); \
+    root_ext::SmartHistogram< type >& name() { \
+        static const size_t index = GetUniqueIndex(#name); \
+        return GetFast((type*)nullptr, #name, index, ##__VA_ARGS__); \
     } \
-    root_ext::SmartHistogram< root_ext::detail::Base2DHistogram<type>::Value >& name() { return name(""); } \
+    static std::string name##_Name() { return #name; } \
+    static std::type_index name##_TypeIndex() { return std::type_index(typeid(type)); } \
     /**/
 
-#define TH1D_ENTRY(name, nbinsx, xlow, xup) ENTRY_1D(TH1D, name, nbinsx, xlow, xup)
+#define TH1D_ENTRY(name, nbinsx, xlow, xup) ANA_DATA_ENTRY(TH1D, name, nbinsx, xlow, xup)
 #define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
-#define TH1D_ENTRY_CUSTOM(name, bins) ENTRY_1D(TH1D, name, bins)
+#define TH1D_ENTRY_CUSTOM(name, bins) ANA_DATA_ENTRY(TH1D, name, bins)
 
-#define TH1D_ENTRY_EX(name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf) \
-    ENTRY_1D(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf)
-#define TH1D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, x_axis_title, y_axis_title, use_log_y, max_y_sf) \
-    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), title, x_axis_title, y_axis_title, use_log_y, max_y_sf)
-#define TH1D_ENTRY_CUSTOM_EX(name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf) \
-    ENTRY_1D(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf)
+#define TH1D_ENTRY_EX(name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
+    ANA_DATA_ENTRY(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
+#define TH1D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
+    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
+#define TH1D_ENTRY_CUSTOM_EX(name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
+    ANA_DATA_ENTRY(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
 
 #define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
-    ENTRY_1D(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
+    ANA_DATA_ENTRY(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)
 #define TH2D_ENTRY_FIX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow) \
     TH2D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy))
+
+#define TH2D_ENTRY_EX(name, nbinsx, xlow, xup, nbinsy, ylow, yup, x_axis_title, y_axis_title, use_log_y, max_y_sf, \
+                      store) \
+    ANA_DATA_ENTRY(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup, x_axis_title, y_axis_title, use_log_y, max_y_sf, \
+                   store)
+#define TH2D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, binsizey, nbinsy, ylow, x_axis_title, y_axis_title, \
+                          use_log_y, max_y_sf, store) \
+    TH2D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), nbinsy, ylow, (ylow+binsizey*nbinsy), x_axis_title, \
+                  y_axis_title, use_log_y, max_y_sf, store)
 
 namespace root_ext {
 class AnalyzerData {
 private:
+    typedef std::vector<AbstractHistogram*> DataVector;
+    typedef std::map<std::string, AbstractHistogram*> DataMap;
+
+    template<typename ValueType>
     static std::set<std::string>& HistogramNames()
     {
         static std::set<std::string> names;
         return names;
     }
 
+    template<typename ValueType>
     static std::set<std::string>& OriginalHistogramNames()
     {
         static std::set<std::string> names;
         return names;
     }
 
-
-public:
-    static const std::set<std::string>& GetAllHistogramNames() { return HistogramNames(); }
-    static const std::set<std::string>& GetOriginalHistogramNames() { return OriginalHistogramNames(); }
-
-public:
-    AnalyzerData() : outputFile(nullptr), ownOutputFile(false) {}
-    AnalyzerData(const std::string& outputFileName)
-        : outputFile(new TFile(outputFileName.c_str(), "RECREATE")), ownOutputFile(true)
+    static std::map<std::string, size_t>& IndexMap()
     {
-        if(outputFile->IsZombie())
-            throw std::runtime_error("Output file not created.");
-        outputFile->cd();
+        static std::map<std::string, size_t> index_map;
+        return index_map;
     }
-    AnalyzerData(TFile& _outputFile, const std::string& _directoryName = "")
-        : outputFile(&_outputFile), ownOutputFile(false), directoryName(_directoryName)
+
+    static constexpr size_t MaxIndex = 1000;
+
+public:
+    template<typename ValueType>
+    static const std::set<std::string>& GetAllHistogramNames() { return HistogramNames<ValueType>(); }
+
+    template<typename ValueType>
+    static const std::set<std::string>& GetOriginalHistogramNames() { return OriginalHistogramNames<ValueType>(); }
+
+    static size_t GetUniqueIndex(const std::string& name)
     {
-        outputFile->cd();
+        const auto iter = IndexMap().find(name);
+        if(iter != IndexMap().end())
+            return iter->second;
+        const size_t index = IndexMap().size();
+        IndexMap()[name] = index;
+        return index;
+    }
+
+    static TFile* CreateFile(const std::string& fileName)
+    {
+        TFile* file = new TFile(fileName.c_str(), "RECREATE", "", ROOT::kZLIB * 100 + 9);
+        if(file->IsZombie()) {
+            std::ostringstream ss;
+            ss << "File '" << fileName << "' not created.";
+            throw std::runtime_error(ss.str());
+        }
+        return file;
+    }
+
+public:
+    AnalyzerData() : outputFile(nullptr), ownOutputFile(false), directory(nullptr)
+    {
+        data_vector.assign(MaxIndex, nullptr);
+    }
+
+    AnalyzerData(const std::string& outputFileName)
+        : outputFile(CreateFile(outputFileName)), ownOutputFile(true)
+    {
+        data_vector.assign(MaxIndex, nullptr);
+        directory = outputFile;
+        cd();
+    }
+
+    AnalyzerData(TFile& _outputFile, const std::string& directoryName = "")
+        : outputFile(&_outputFile), ownOutputFile(false)
+    {
+        data_vector.assign(MaxIndex, nullptr);
         if (directoryName.size()){
             outputFile->mkdir(directoryName.c_str());
-            outputFile->cd(directoryName.c_str());
-        }
+            directory = outputFile->GetDirectory(directoryName.c_str());
+            if(!directory)
+                throw std::runtime_error("Unable to create analyzer data directory.");
+        } else
+            directory = outputFile;
+        cd();
     }
 
     virtual ~AnalyzerData()
     {
-        if(outputFile) {
-            cd();
-            for(const auto& iter : data) {
+        cd();
+        for(const auto& iter : data) {
+            if(directory)
                 iter.second->WriteRootObject();
-                delete iter.second;
-            }
-            if(ownOutputFile)
-                delete outputFile;
+            delete iter.second;
         }
+        if(ownOutputFile)
+            delete outputFile;
     }
 
-    TFile& getOutputFile(){return *outputFile;}
+    TFile& getOutputFile() { return *outputFile; }
+
     void cd() const
     {
-        if(outputFile)
-            outputFile->cd();
-        if(directoryName.size())
-            outputFile->cd(directoryName.c_str());
+        if(directory && !directory->cd())
+            throw std::runtime_error("Unable to cd to analyzer data directory.");
     }
 
-    bool Contains(const std::string& name) const
-    {
-        return data.find(name) != data.end();
-    }
+    bool Contains(const std::string& name) const { return data.find(name) != data.end(); }
 
     void Erase(const std::string& name)
     {
@@ -141,7 +189,23 @@ public:
         if(iter != data.end()) {
             delete iter->second;
             data.erase(iter);
+            auto index_iter = IndexMap().find(name);
+            if(index_iter != IndexMap().end() && index_iter->second < MaxIndex)
+                data_vector.at(index_iter->second) = nullptr;
         }
+    }
+
+    template<typename ValueType>
+    bool CheckType(const std::string& name) const
+    {
+        const auto iter = data.find(name);
+        if(iter == data.end()) {
+            std::ostringstream ss;
+            ss << "Histogram '" << name << "' not found.";
+            throw std::runtime_error(ss.str());
+        }
+        SmartHistogram<ValueType>* result = dynamic_cast< SmartHistogram<ValueType>* >(iter->second);
+        return result;
     }
 
     std::vector<std::string> KeysCollection() const
@@ -153,23 +217,14 @@ public:
     }
 
     template<typename ValueType, typename KeySuffix, typename ...Args>
-    SmartHistogram<ValueType>& Get(const ValueType*, const std::string& name, const KeySuffix& suffix, Args... args)
+    SmartHistogram<ValueType>& Get(const ValueType* ptr, const std::string& name, const KeySuffix& suffix, Args... args)
     {
+
         std::ostringstream ss_suffix;
         ss_suffix << suffix;
-        std::string full_name =  name;
-        if(ss_suffix.str().size())
-            full_name += "_" + ss_suffix.str();
-        if(!data.count(full_name)) {
-            cd();
-            AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
-            data[full_name] = h;
-            HistogramNames().insert(h->Name());
-            OriginalHistogramNames().insert(name);
-            if(!outputFile)
-                h->DetachFromFile();
-        }
-        return *static_cast< SmartHistogram<ValueType>* >(data[full_name]);
+        const std::string s_suffix = ss_suffix.str();
+        const std::string full_name = s_suffix.size() ? name + "_" + s_suffix : name;
+        return GetByFullName(ptr, name, full_name, args...);
     }
 
     template<typename ValueType>
@@ -178,7 +233,6 @@ public:
         return Get(null_value, name, "");
     }
 
-
     template<typename ValueType>
     SmartHistogram<ValueType>& Get(const std::string& name)
     {
@@ -186,10 +240,10 @@ public:
     }
 
     template<typename ValueType>
-    SmartHistogram<ValueType>* GetPtr(const std::string& name)
+    SmartHistogram<ValueType>* GetPtr(const std::string& name) const
     {
-        if(!Contains(name)) return nullptr;
-        return &Get<ValueType>(name);
+        if(!Contains(name) || !CheckType<ValueType>(name)) return nullptr;
+        return &GetAt<ValueType>(data.find(name));
     }
 
     template<typename ValueType>
@@ -198,20 +252,67 @@ public:
         if(data.count(original.Name()))
             throw std::runtime_error("histogram already exists");
         cd();
-        AbstractHistogram* h = new SmartHistogram<ValueType>(original);
+        SmartHistogram<ValueType>* h = new SmartHistogram<ValueType>(original);
         data[h->Name()] = h;
-        HistogramNames().insert(h->Name());
-        if(!outputFile)
-            h->DetachFromFile();
-        return *static_cast< SmartHistogram<ValueType>* >(h);
+        HistogramNames<ValueType>().insert(h->Name());
+        h->SetOutputDirectory(directory);
+        auto index_iter = IndexMap().find(h->Name());
+        if(index_iter != IndexMap().end() && index_iter->second < MaxIndex)
+            data_vector.at(index_iter->second) = h;
+        return *h;
+    }
+
+protected:
+    template<typename ValueType, typename ...Args>
+    SmartHistogram<ValueType>& GetFast(const ValueType* ptr, const std::string& name, size_t index, Args... args)
+    {
+        if(index < MaxIndex && data_vector[index] != nullptr)
+            return *static_cast< SmartHistogram<ValueType>* >(data_vector[index]);
+        return GetByFullName(ptr, name, name, args...);
     }
 
 private:
-    typedef std::map< std::string, AbstractHistogram* > DataMap;
-    DataMap data;
+    template<typename ValueType, typename ...Args>
+    SmartHistogram<ValueType>& GetByFullName(const ValueType*, const std::string& name, const std::string& full_name,
+                                             Args... args)
+    {
+        auto iter = data.find(full_name);
+        if(iter == data.end()) {
+            cd();
+            AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
+            data[full_name] = h;
+            HistogramNames<ValueType>().insert(h->Name());
+            OriginalHistogramNames<ValueType>().insert(name);
+            h->SetOutputDirectory(directory);
+            iter = data.find(full_name);
+            auto index_iter = IndexMap().find(full_name);
+            if(index_iter != IndexMap().end() && index_iter->second < MaxIndex)
+                data_vector.at(index_iter->second) = h;
+        }
+        return GetAt<ValueType>(iter);
+    }
 
+    template<typename ValueType>
+    SmartHistogram<ValueType>& GetAt(const DataMap::const_iterator& iter) const
+    {
+        if(iter == data.end())
+            throw std::runtime_error("Invalid iterator to of a histogram collection.");
+
+        SmartHistogram<ValueType>* result = dynamic_cast< SmartHistogram<ValueType>* >(iter->second);
+        if(!result) {
+            std::ostringstream ss;
+            ss << "Wrong type for histogram '" << iter->first << "'.";
+            throw std::runtime_error(ss.str());
+        }
+        return *result;
+    }
+
+private:
     TFile* outputFile;
     bool ownOutputFile;
-    std::string directoryName;
+    TDirectory* directory;
+
+    DataMap data;
+    DataVector data_vector;
 };
 } // root_ext

@@ -295,7 +295,6 @@ PatProduction/crab/multicrab_InclusiveJets.cfg
 Analysis/studies/EventSelectionStudy.C
 PrintTools/source/compareDataCard.C
 PrintTools/source/runDataCardComparison.pl
-Analysis/config/dyjets_old.cfg
 Analysis/source/SyncTreeProducer.C
 Analysis/config/Wjets_old.cfg
 Analysis/include/JetEnergyUncertainty.h
@@ -344,3 +343,11 @@ Analysis/studies/AnalyzeBKGShape.C
 Analysis/studies/AnalyzeQCDShape.C
 Analysis/studies/AnalyzeEMBShape.C
 Analysis/studies/AnalyzeESshape.C
+Analysis/studies/AnalyzeQCDshapeSyst.C
+Analysis/studies/AnalyzeZTTshape.C
+Analysis/source/LimitConfigurationProducer.C
+Analysis/config/uncertainties.cfg
+AnalysisBase/include/ConfigReader.h
+Analysis/include/UncertaintyCalculatorCollection.h
+Analysis/include/UncertaintyConfiguration.h
+Analysis/include/FlatAnalyzerDataCollection.h

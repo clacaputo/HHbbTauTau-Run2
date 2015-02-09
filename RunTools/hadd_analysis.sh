@@ -54,7 +54,7 @@ for FOLDER in $ANA_FOLDERS ; do
         if [ $SUB_FOLDER = "Radion" ] ; then
             cp $FOLDER/$SUB_FOLDER/*.root $OUTPUT_PATH/$FOLDER/
         else
-            hadd $OUTPUT_PATH/$FOLDER/${SUB_FOLDER}.root $FOLDER/$SUB_FOLDER/*.root
+            hadd -f9 $OUTPUT_PATH/$FOLDER/${SUB_FOLDER}.root $FOLDER/$SUB_FOLDER/*.root
         fi
 	done
 done

@@ -48,7 +48,7 @@ public:
     virtual ~AbstractHistogram() {}
 
     virtual void WriteRootObject() = 0;
-    virtual void DetachFromFile() {}
+    virtual void SetOutputDirectory(TDirectory* directory) {}
 
     const std::string& Name() const { return name; }
 
@@ -195,39 +195,41 @@ template<>
 class SmartHistogram<TH1D> : public TH1D, public AbstractHistogram {
 public:
     SmartHistogram(const std::string& name, size_t nbins, double low, double high)
-        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), use_log_y(false),
+        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), store(true), use_log_y(false),
           max_y_sf(1) {}
 
     SmartHistogram(const std::string& name, const std::vector<double>& bins)
         : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
-          use_log_y(false), max_y_sf(1) {}
+          store(true), use_log_y(false), max_y_sf(1) {}
 
     SmartHistogram(const std::string& name, size_t nbins, double low, double high, const std::string& x_axis_title,
-                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf)
-        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), use_log_y(_use_log_y),
-          max_y_sf(_max_y_sf)
-    {
-        SetXTitle(x_axis_title.c_str());
-        SetYTitle(y_axis_title.c_str());
-    }
-
-    SmartHistogram(const std::string& name, const std::vector<double>& bins, const std::string& x_axis_title,
-                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf)
-        : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
+                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf, bool _store)
+        : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), store(_store),
           use_log_y(_use_log_y), max_y_sf(_max_y_sf)
     {
         SetXTitle(x_axis_title.c_str());
         SetYTitle(y_axis_title.c_str());
     }
 
-    virtual void WriteRootObject()
+    SmartHistogram(const std::string& name, const std::vector<double>& bins, const std::string& x_axis_title,
+                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf, bool _store)
+        : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
+          store(_store), use_log_y(_use_log_y), max_y_sf(_max_y_sf)
     {
-        this->Write();
+        SetXTitle(x_axis_title.c_str());
+        SetYTitle(y_axis_title.c_str());
     }
 
-    virtual void DetachFromFile()
+    virtual void WriteRootObject() override
     {
-        this->SetDirectory(nullptr);
+        if(store)
+            Write(Name().c_str(), TObject::kOverwrite);
+    }
+
+    virtual void SetOutputDirectory(TDirectory* directory) override
+    {
+        TDirectory* dir = store ? directory : nullptr;
+        SetDirectory(dir);
     }
 
     bool UseLogY() const { return use_log_y; }
@@ -236,6 +238,7 @@ public:
     std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
 
 private:
+    bool store;
     bool use_log_y;
     double max_y_sf;
 };
@@ -246,17 +249,40 @@ public:
     SmartHistogram(const std::string& name,
                    size_t nbinsx, double xlow, double xup,
                    size_t nbinsy, double ylow, double yup)
-        : TH2D(name.c_str(), name.c_str(), nbinsx, xlow, xup, nbinsy, ylow, yup), AbstractHistogram(name) {}
+        : TH2D(name.c_str(), name.c_str(), nbinsx, xlow, xup, nbinsy, ylow, yup), AbstractHistogram(name), store(true),
+          use_log_y(false), max_y_sf(1) {}
 
-    virtual void WriteRootObject()
+    SmartHistogram(const std::string& name, size_t nbinsx, double xlow, double xup, size_t nbinsy, double ylow,
+                   double yup, const std::string& x_axis_title, const std::string& y_axis_title, bool _use_log_y,
+                   double _max_y_sf, bool _store)
+        : TH2D(name.c_str(), name.c_str(), nbinsx, xlow, xup, nbinsy, ylow, yup), AbstractHistogram(name),
+          store(_store), use_log_y(_use_log_y), max_y_sf(_max_y_sf)
     {
-        this->Write();
+        SetXTitle(x_axis_title.c_str());
+        SetYTitle(y_axis_title.c_str());
     }
 
-    virtual void DetachFromFile()
+    virtual void WriteRootObject() override
     {
-        this->SetDirectory(nullptr);
+        if(store)
+            Write(Name().c_str(), TObject::kOverwrite);
     }
+
+    virtual void SetOutputDirectory(TDirectory* directory) override
+    {
+        TDirectory* dir = store ? directory : nullptr;
+        SetDirectory(dir);
+    }
+
+    bool UseLogY() const { return use_log_y; }
+    double MaxYDrawScaleFactor() const { return max_y_sf; }
+    std::string GetXTitle() const { return GetXaxis()->GetTitle(); }
+    std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
+
+private:
+    bool store;
+    bool use_log_y;
+    double max_y_sf;
 };
 
 template<typename ValueType>
@@ -334,8 +360,6 @@ public:
         const HistogramParameters& params = GetParameters(name);
         return new SmartHistogram<TH1D>(name, params.nbins, params.low, params.high);
     }
-
 };
-
 
 } // root_ext
