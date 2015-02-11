@@ -177,6 +177,20 @@ private:
        const PhysicalValue total_unc(scale_factor.error/scale_factor.value,0);
        std::cout << "total unc: " << total_unc << std::endl;
 
+       const PhysicalValue DY_cat_mod(DY_cat.value, 0);
+       const PhysicalValue TT_cat_mod(TT_cat.value, 0);
+       const PhysicalValue DY_incl_mod(DY_incl.value, 0);
+       const PhysicalValue TT_incl_mod(TT_incl.value, 0);
+
+       const PhysicalValue sf_DY_only = (DY_cat - TT_cat_mod)/(DY_incl - TT_incl_mod);
+       const PhysicalValue dy_unc(sf_DY_only.error/sf_DY_only.value,0);
+       std::cout << "dy unc: " << dy_unc << ", contrib: " << dy_unc / total_unc << std::endl;
+
+       const PhysicalValue sf_TT_only = (DY_cat_mod - TT_cat)/(DY_incl_mod - TT_incl);
+       const PhysicalValue tt_unc(sf_TT_only.error/sf_TT_only.value,0);
+       std::cout << "tt unc: " << tt_unc << ", contrib: " << tt_unc / total_unc << std::endl;
+
+
        return UncertaintyInterval(one - total_unc, one + total_unc);
     }
 
