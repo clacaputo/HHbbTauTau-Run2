@@ -166,10 +166,10 @@ private:
        const PhysicalValue TT_cat = Integral(*hist_TTemb_cat, true);
        const PhysicalValue DY_incl = Integral(*hist_DYemb_incl, true);
        const PhysicalValue TT_incl = Integral(*hist_TTemb_incl, true);
-       std::cout << "DY_cat: " << DY_cat << std::endl;
-       std::cout << "TT_cat: " << TT_cat << std::endl;
-       std::cout << "DY_incl: " << DY_incl << std::endl;
-       std::cout << "TT_incl: " << TT_incl << std::endl;
+//       std::cout << "DY_cat: " << DY_cat << std::endl;
+//       std::cout << "TT_cat: " << TT_cat << std::endl;
+//       std::cout << "DY_incl: " << DY_incl << std::endl;
+//       std::cout << "TT_incl: " << TT_incl << std::endl;
 
        const PhysicalValue scale_factor = (DY_cat - TT_cat)/(DY_incl - TT_incl);
        std::cout << "scale factor: " << scale_factor.value << ", error: " << scale_factor.error <<
