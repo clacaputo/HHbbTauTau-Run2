@@ -33,7 +33,7 @@
 #include "KinFit.h"
 
 #define SELECTION_ENTRY(name) \
-    ENTRY_1D(cuts::ObjectSelector, name) \
+    ANA_DATA_ENTRY(cuts::ObjectSelector, name) \
     /**/
 
 #define X(name) \
