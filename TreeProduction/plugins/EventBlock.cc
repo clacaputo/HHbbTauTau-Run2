@@ -138,10 +138,11 @@ void EventBlock::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup
         throw std::runtime_error("Failed to get VertexCollection for label.");
     }
 
+
     // Access PU information
     if (!iEvent.isRealData()) {
         edm::Handle<std::vector<PileupSummaryInfo> > PupInfo;
-        iEvent.getByLabel("addPileupInfo", PupInfo);
+        iEvent.getByLabel(edm::InputTag("addPileupInfo","","HLT"), PupInfo);
 
         std::vector<PileupSummaryInfo>::const_iterator PVI;
         for (PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
