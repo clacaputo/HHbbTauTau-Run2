@@ -312,7 +312,7 @@ protected:
         const auto data_yield = Integral(*hist_data, true);
         const PhysicalValue yield = data_yield - bkg_yield;
         s_out << "Data yield = " << data_yield << "\nData-MC yield = " << yield << std::endl;
-        if(yield.value < 0) {
+        if(yield.GetValue() < 0) {
             std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
             throw exception("Negative QCD yield for histogram '") << hist_name << "' in " << anaDataMetaId.eventCategory
                                                                   << " " << eventRegion << ".";
@@ -697,9 +697,9 @@ protected:
         }
 
         const PhysicalValue original_Integral = Integral(histogram, true);
-        ss_debug << "Integral after bkg subtraction: " << original_Integral.value << ".\n";
+        ss_debug << "Integral after bkg subtraction: " << original_Integral << ".\n";
         debug_info = ss_debug.str();
-        if (original_Integral.value < 0) {
+        if (original_Integral.GetValue() < 0) {
             std::cout << debug_info << std::endl;
             throw exception("Integral after bkg subtraction is negative for histogram '")
                 << histogram.GetName() << "' in event category " << anaDataMetaId.eventCategory
@@ -721,9 +721,7 @@ protected:
             histogram.SetBinContent(n, correction_factor);
             histogram.SetBinError(n, new_error);
         }
-        const PhysicalValue new_Integral = Integral(histogram, true);
-        const PhysicalValue correctionSF = original_Integral/new_Integral;
-        histogram.Scale(correctionSF.value);
+        RenormalizeHistogram(histogram, original_Integral, true);
         negative_bins_info = ss_negative.str();
     }
 
@@ -881,7 +879,7 @@ private:
 
                 if( TH1D* histogram = GetSignalHistogram(meta_id, dataCategory->name, hist_name) ) {
                     const PhysicalValue integral = Integral(*histogram, includeOverflow);
-                    of << integral.ToString<wchar_t>(includeError) << sep;
+                    of << integral.ToString<wchar_t>(includeError, false) << sep;
                 }
                 else
                     of << "not found" << sep;

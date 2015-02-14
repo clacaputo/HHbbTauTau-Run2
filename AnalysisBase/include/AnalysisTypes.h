@@ -1,5 +1,5 @@
 /*!
- * \file AnalysisMath.h
+ * \file AnalysisTypes.h
  * \brief Common simple types for analysis purposes.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
@@ -26,16 +26,10 @@
 
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-#include <map>
-#include <cmath>
-
 #include <TLorentzVector.h>
 #include <TMatrixD.h>
 
-#include "exception.h"
-#include "Tools.h"
+#include "PhysicalValue.h"
 
 namespace analysis {
 
@@ -89,137 +83,6 @@ std::istream& operator>> (std::istream& s, Channel& c)
 std::ostream& operator<< (std::ostream& s, const EventEnergyScale& es)
 {
     s << detail::EventEnergyScaleNameMap.at(es);
-    return s;
-}
-
-template<typename T>
-T sqr(const T& x) { return x * x; }
-
-namespace detail {
-template<typename char_type>
-struct PhysicalValueErrorSeparator;
-
-template<>
-struct PhysicalValueErrorSeparator<char> {
-    static std::string Get() { return " +/- "; }
-};
-
-template<>
-struct PhysicalValueErrorSeparator<wchar_t> {
-    static std::wstring Get() { return L" \u00B1 "; }
-};
-
-} // namespace detail
-
-struct PhysicalValue {
-
-    double value;
-    double error;
-
-    PhysicalValue() : value(0), error(0) {}
-    PhysicalValue(double _value, double _error) : value(_value), error(_error)
-    {
-        if(error < 0)
-            throw exception("Negative error = ") << error << ".";
-    }
-
-    PhysicalValue& operator+=(const PhysicalValue& other)
-    {
-        value += other.value;
-        error = std::sqrt(sqr(error) + sqr(other.error));
-        return *this;
-    }
-
-    PhysicalValue operator+(const PhysicalValue& other) const
-    {
-        PhysicalValue result(*this);
-        result += other;
-        return result;
-    }
-
-    PhysicalValue& operator-=(const PhysicalValue& other)
-    {
-        value -= other.value;
-        error = std::sqrt(sqr(error) + sqr(other.error));
-        return *this;
-    }
-
-    PhysicalValue operator-(const PhysicalValue& other) const
-    {
-        PhysicalValue result(*this);
-        result -= other;
-        return result;
-    }
-
-    PhysicalValue& operator*=(const PhysicalValue& other)
-    {
-        value *= other.value;
-        error = std::sqrt(sqr(other.value * error) + sqr(value * other.error));
-        return *this;
-    }
-
-    PhysicalValue operator*(const PhysicalValue& other) const
-    {
-        PhysicalValue result(*this);
-        result *= other;
-        return result;
-    }
-
-    PhysicalValue& operator/=(const PhysicalValue& other)
-    {
-        value /= other.value;
-        error = std::sqrt(sqr(error) + sqr(value * other.error / other.value)) / std::abs(other.value);
-        return *this;
-    }
-
-    PhysicalValue operator/(const PhysicalValue& other) const
-    {
-        PhysicalValue result(*this);
-        result /= other;
-        return result;
-    }
-
-    bool operator<(const PhysicalValue& other) const { return value < other.value; }
-    bool operator<=(const PhysicalValue& other) const { return value <= other.value; }
-    bool operator>(const PhysicalValue& other) const { return value > other.value; }
-    bool operator>=(const PhysicalValue& other) const { return value >= other.value; }
-
-    bool IsCompatible(const PhysicalValue& other) const
-    {
-        const double delta = std::abs(value - other.value);
-        const double error_sum = error + other.error;
-        return delta < error_sum;
-    }
-
-    PhysicalValue Scale(double sf) const { return PhysicalValue(value * sf, error * sf); }
-
-    template<typename char_type>
-    std::basic_string<char_type> ToString(bool print_error) const
-    {
-        static const int number_of_significant_digits_in_error = 2;
-        const int precision = error ? std::floor(std::log10(error)) - number_of_significant_digits_in_error + 1
-                                    : -15;
-        const double ten_pow_p = std::pow(10.0, precision);
-        const double error_rounded = std::ceil(error / ten_pow_p) * ten_pow_p;
-        const double value_rounded = std::round(value / ten_pow_p) * ten_pow_p;
-        const int decimals_to_print = std::max(0, -precision);
-        std::basic_ostringstream<char_type> ss;
-        ss << std::setprecision(decimals_to_print) << std::fixed << value_rounded;
-        if(print_error)
-            ss << detail::PhysicalValueErrorSeparator<char_type>::Get() << error_rounded;
-        return ss.str();
-    }
-};
-
-std::ostream& operator<<(std::ostream& s, const PhysicalValue& v)
-{
-    s << v.ToString<char>(true);
-    return s;
-}
-
-std::wostream& operator<<(std::wostream& s, const PhysicalValue& v)
-{
-    s << v.ToString<wchar_t>(true);
     return s;
 }
 

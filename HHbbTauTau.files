@@ -351,3 +351,5 @@ AnalysisBase/include/ConfigReader.h
 Analysis/include/UncertaintyCalculatorCollection.h
 Analysis/include/UncertaintyConfiguration.h
 Analysis/include/FlatAnalyzerDataCollection.h
+AnalysisBase/include/PhysicalValue.h
+AnalysisBase/include/ProgressReporter.h

@@ -212,7 +212,7 @@ protected:
 
             const auto data_yield = Integral(*hist_data, true);
             const PhysicalValue yield = data_yield - bkg_yield;
-            if(yield.value < 0) {
+            if(yield.GetValue() < 0) {
                 std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
                 throw exception("Negative Wjets yield for histogram '")
                         << hist_name << "' in " << anaDataMetaId.eventCategory << " " << eventRegion.first << ".";

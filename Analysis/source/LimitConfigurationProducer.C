@@ -161,8 +161,8 @@ private:
                     const auto unc_value = UncertaintyCalculatorCollection::CombineUpDownUncertainties(average_unc);
                     std::cout << sample << ": " << uncertaintyDescriptor->name << " = " << average_unc
                               << " -> " << unc_value << ".\n";
-                    if(std::abs(1. - unc_value.value) >= uncertaintyDescriptor->threshold)
-                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, unc_value.value);
+                    if(std::abs(1. - unc_value.GetValue()) >= uncertaintyDescriptor->threshold)
+                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, unc_value.GetValue());
                 }
             } else {
                 SampleNameSet common_samples;

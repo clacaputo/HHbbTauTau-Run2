@@ -296,7 +296,7 @@ protected:
                 auto vv_hist_shape = GetHistogram(anaDataMetaId_shape, eventRegion, originalVVcategory.name, hist_name);
                 if (vv_hist_shape){
                     TH1D& vv_hist = CloneHistogram(anaDataMetaId, eventRegion, newVVcategory.name, *vv_hist_shape);
-                    RenormalizeHistogram(vv_hist, yield, true);
+                    analysis::RenormalizeHistogram(vv_hist, yield, true);
                 }
             }
         }

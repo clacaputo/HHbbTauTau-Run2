@@ -81,9 +81,9 @@ inline PhysicalValue Integral(const TH1D& histogram, bool include_overflows = tr
     return PhysicalValue(integral, error);
 }
 
-inline void RenormalizeHistogram(TH1D& histogram, const PhysicalValue norm, bool include_overflows = true)
+inline void RenormalizeHistogram(TH1D& histogram, const PhysicalValue& norm, bool include_overflows = true)
 {
-    histogram.Scale(norm.value/Integral(histogram,include_overflows).value);
+    histogram.Scale(norm.GetValue() / Integral(histogram,include_overflows).GetValue());
 }
 
 } // namespace analysis

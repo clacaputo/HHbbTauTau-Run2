@@ -33,26 +33,57 @@
 namespace analysis {
 namespace limits {
 
+namespace uncertainties {
+
+namespace names {
+
+const std::string Btag_efficiency = "eff_b";
+const std::string Btag_fake = "fake_b";
+const std::string TTbar_normalization = "ttbarNorm";
+const std::string ZTT_extrapolation = "extrap_ztt";
+const std::string ZLL_FakeTau = "ZLL_FakeTau";
+const std::string JetFakeTau = "JetFakeTau";
+const std::string LeptonFakeTau = "LeptonFakeTau";
+const std::string QCD = "QCDSyst";
+
+} // namespace names
+
+
+const double TTbar_CrossSection = 0.10;
+const double JetFakeTau = 0.20;
+const double LeptonFakeTau = 0.30;
+
+const std::map<std::string, double> QCD = {
+    { "tauTau_2jet0tag", 0.1 }, { "tauTau_2jet1tag", 0.2 }, { "tauTau_2jet2tag", 0.4 }
+};
+
+} // namespace uncertainties
+
+
 class UncertaintyCalculatorCollection {
 private:
     typedef std::function< UncertaintyInterval (const std::string&, const std::string&) > UncertaintyCalculator;
     typedef std::map<std::string, UncertaintyCalculator> UncertaintyCalculatorMap;
 
+    template<typename MethodPtr>
+    UncertaintyCalculator Bind(MethodPtr method_ptr) const
+    {
+        using namespace std::placeholders;
+        return std::bind(method_ptr, this, _1, _2);
+    }
+
 public:
     UncertaintyCalculatorCollection(std::shared_ptr<TFile> _shape_file)
         : shape_file(_shape_file)
     {
-        using namespace std::placeholders;
+        using namespace uncertainties::names;
 
-        calculator_map["eff_b"] = std::bind(&UncertaintyCalculatorCollection::CalculateBtagEfficiencyUnc, this, _1, _2);
-        calculator_map["fake_b"] = std::bind(&UncertaintyCalculatorCollection::CalculateBtagFakeUnc, this, _1, _2);
-        calculator_map["ttbarNorm"] = std::bind(&UncertaintyCalculatorCollection::CalculateTTUnc, this, _1, _2);
-        calculator_map["extrap_ztt"] = std::bind(&UncertaintyCalculatorCollection::CalculateZTTextrapUnc, this, _1, _2);
-        calculator_map["ZLL_FakeTau"] = std::bind(&UncertaintyCalculatorCollection::CalculateZFakeTauUnc, this, _1, _2);
-        //calculator_map["ZJetFakeTau"] = std::bind(&UncertaintyCalculatorCollection::CalculateZJetFakeTauUnc, this, _1, _2);
-        //calculator_map["ZLeptonFakeTau"] = std::bind(&UncertaintyCalculatorCollection::CalculateZLeptonFakeTauUnc, this, _1, _2);
-        calculator_map["QCDSyst"] = std::bind(&UncertaintyCalculatorCollection::CalculateQCDUnc, this, _1, _2);
-
+        calculator_map[Btag_efficiency] = Bind(&UncertaintyCalculatorCollection::CalculateBtagEfficiencyUnc);
+        calculator_map[Btag_fake] = Bind(&UncertaintyCalculatorCollection::CalculateBtagFakeUnc);
+        calculator_map[TTbar_normalization] = Bind(&UncertaintyCalculatorCollection::CalculateTTUnc);
+        calculator_map[ZTT_extrapolation] = Bind(&UncertaintyCalculatorCollection::CalculateZTTextrapUnc);
+        calculator_map[ZLL_FakeTau] = Bind(&UncertaintyCalculatorCollection::CalculateZFakeTauUnc);
+        calculator_map[QCD] = Bind(&UncertaintyCalculatorCollection::CalculateQCDUnc);
     }
 
     UncertaintyInterval Calculate(const std::string& unc_name, const std::string& full_category_name,
@@ -65,8 +96,7 @@ public:
 
     static PhysicalValue CombineUpDownUncertainties(const UncertaintyInterval& unc)
     {
-        static const PhysicalValue two(2, 0);
-        return ( unc.up + (two - unc.down) ) / two;
+        return ( unc.up + (PhysicalValue::Two - unc.down) ) / PhysicalValue::Two;
     }
 
 private:
@@ -116,160 +146,82 @@ private:
         return UncertaintyInterval(n_down/n_central, n_up/n_central);
     }
 
-    UncertaintyInterval CalculateTTUnc(const std::string& full_category_name,
-                                                   const std::string& sample_name) const
+    PhysicalValue CalculateZTT_SF(const std::string& full_category_name) const
     {
-        static const PhysicalValue one(1, 0);
+        const std::string hist_name_DYemb_cat = full_category_name + "/DY_emb";
+        const std::string hist_name_TTemb_cat = full_category_name + "/TT_emb";
+        const std::string hist_name_DYemb_incl = "tauTau_inclusive/DY_emb";
+        const std::string hist_name_TTemb_incl = "tauTau_inclusive/TT_emb";
 
-        PhysicalValue total_unc;
+        auto hist_DYemb_cat = LoadHistogram(hist_name_DYemb_cat);
+        auto hist_TTemb_cat = LoadHistogram(hist_name_TTemb_cat);
+        auto hist_DYemb_incl = LoadHistogram(hist_name_DYemb_incl);
+        auto hist_TTemb_incl = LoadHistogram(hist_name_TTemb_incl);
+
+        PhysicalValue DY_cat = Integral(*hist_DYemb_cat, true);
+        PhysicalValue TT_cat = Integral(*hist_TTemb_cat, true);
+        PhysicalValue DY_incl = Integral(*hist_DYemb_incl, true);
+        PhysicalValue TT_incl = Integral(*hist_TTemb_incl, true);
+
+        TT_cat.AddSystematicUncertainty(uncertainties::names::TTbar_normalization, uncertainties::TTbar_CrossSection);
+        TT_incl.AddSystematicUncertainty(uncertainties::names::TTbar_normalization, uncertainties::TTbar_CrossSection);
+
+        return (DY_cat - TT_cat) / (DY_incl - TT_incl);
+    }
+
+    UncertaintyInterval CalculateTTUnc(const std::string& full_category_name, const std::string& sample_name) const
+    {
+        double unc;
 
         if (sample_name == "TT")
-            total_unc.value = 0.10;
-        else if (sample_name == "ZTT"){
-            const std::string hist_name_DYemb_cat = full_category_name + "/DY_emb";
-            const std::string hist_name_TTemb_cat = full_category_name + "/TT_emb";
-            const std::string hist_name_DYemb_incl = "tauTau_inclusive/DY_emb";
-            const std::string hist_name_TTemb_incl = "tauTau_inclusive/TT_emb";
-
-            auto hist_DYemb_cat = LoadHistogram(hist_name_DYemb_cat);
-            auto hist_TTemb_cat = LoadHistogram(hist_name_TTemb_cat);
-            auto hist_DYemb_incl = LoadHistogram(hist_name_DYemb_incl);
-            auto hist_TTemb_incl = LoadHistogram(hist_name_TTemb_incl);
-
-            const PhysicalValue x_c = Integral(*hist_TTemb_cat, true) / Integral(*hist_DYemb_cat, true);
-            const PhysicalValue x_i = Integral(*hist_TTemb_incl, true) / Integral(*hist_DYemb_incl, true);
-            const PhysicalValue ratio = (x_i - x_c)/((one - x_i)*(one - x_c));
-            total_unc = ratio.Scale(0.1);
+            unc = uncertainties::TTbar_CrossSection;
+        else if (sample_name == "ZTT") {
+            const PhysicalValue sf = CalculateZTT_SF(full_category_name);
+            std::cout << "ZTT SF = " << sf << std::endl;
+            unc = sf.GetRelativeSystematicUncertainty(uncertainties::names::TTbar_normalization);
         }
         else
             throw exception("Not found correct sample on which apply ttNorm uncertainty");
 
-        return UncertaintyInterval(one - total_unc, one + total_unc);
+        return UncertaintyInterval(PhysicalValue(unc));
     }
 
     UncertaintyInterval CalculateZTTextrapUnc(const std::string& full_category_name,
                                               const std::string& sample_name) const
     {
-       static const PhysicalValue one(1, 0);
-
-       const std::string hist_name_DYemb_cat = full_category_name + "/DY_emb";
-       const std::string hist_name_TTemb_cat = full_category_name + "/TT_emb";
-       const std::string hist_name_DYemb_incl = "tauTau_inclusive/DY_emb";
-       const std::string hist_name_TTemb_incl = "tauTau_inclusive/TT_emb";
-
-       auto hist_DYemb_cat = LoadHistogram(hist_name_DYemb_cat);
-       auto hist_TTemb_cat = LoadHistogram(hist_name_TTemb_cat);
-       auto hist_DYemb_incl = LoadHistogram(hist_name_DYemb_incl);
-       auto hist_TTemb_incl = LoadHistogram(hist_name_TTemb_incl);
-
-       const PhysicalValue DY_cat = Integral(*hist_DYemb_cat, true);
-       const PhysicalValue TT_cat = Integral(*hist_TTemb_cat, true);
-       const PhysicalValue DY_incl = Integral(*hist_DYemb_incl, true);
-       const PhysicalValue TT_incl = Integral(*hist_TTemb_incl, true);
-//       std::cout << "DY_cat: " << DY_cat << std::endl;
-//       std::cout << "TT_cat: " << TT_cat << std::endl;
-//       std::cout << "DY_incl: " << DY_incl << std::endl;
-//       std::cout << "TT_incl: " << TT_incl << std::endl;
-
-       const PhysicalValue scale_factor = (DY_cat - TT_cat)/(DY_incl - TT_incl);
-       std::cout << "scale factor: " << scale_factor.value << ", error: " << scale_factor.error <<
-                    ", ratio: " << scale_factor.error/scale_factor.value << std::endl;
-       const PhysicalValue total_unc(scale_factor.error/scale_factor.value,0);
-       std::cout << "total unc: " << total_unc << std::endl;
-
-       const PhysicalValue DY_cat_mod(DY_cat.value, 0);
-       const PhysicalValue TT_cat_mod(TT_cat.value, 0);
-       const PhysicalValue DY_incl_mod(DY_incl.value, 0);
-       const PhysicalValue TT_incl_mod(TT_incl.value, 0);
-
-       const PhysicalValue sf_DY_only = (DY_cat - TT_cat_mod)/(DY_incl - TT_incl_mod);
-       const PhysicalValue dy_unc(sf_DY_only.error/sf_DY_only.value,0);
-       std::cout << "dy unc: " << dy_unc << ", contrib: " << dy_unc / total_unc << std::endl;
-
-       const PhysicalValue sf_TT_only = (DY_cat_mod - TT_cat)/(DY_incl_mod - TT_incl);
-       const PhysicalValue tt_unc(sf_TT_only.error/sf_TT_only.value,0);
-       std::cout << "tt unc: " << tt_unc << ", contrib: " << tt_unc / total_unc << std::endl;
-
-
-       return UncertaintyInterval(one - total_unc, one + total_unc);
+        const PhysicalValue sf = CalculateZTT_SF(full_category_name);
+        std::cout << "ZTT SF = " << sf << std::endl;
+        const double unc = sf.GetRelativeStatisticalError();
+        return UncertaintyInterval(PhysicalValue(unc));
     }
 
     UncertaintyInterval CalculateZFakeTauUnc(const std::string& full_category_name,
                                               const std::string& sample_name) const
     {
-       static const PhysicalValue one(1, 0);
-
        const std::string hist_name_ZJ = full_category_name + "/ZJ";
        const std::string hist_name_ZL = full_category_name + "/ZL";
-       const std::string hist_name_ZLL = full_category_name + "/" + sample_name;
 
        auto hist_ZJ = LoadHistogram(hist_name_ZJ);
        auto hist_ZL = LoadHistogram(hist_name_ZL);
-       auto hist_ZLL = LoadHistogram(hist_name_ZLL);
 
-       const PhysicalValue n_ZJ = Integral(*hist_ZJ, true);
-       const PhysicalValue n_ZL = Integral(*hist_ZL, true);
-       const PhysicalValue n_ZLL = Integral(*hist_ZLL, true);
+       PhysicalValue n_ZJ = Integral(*hist_ZJ, true);
+       PhysicalValue n_ZL = Integral(*hist_ZL, true);
 
-       const double uncertainty = std::sqrt( (sqr(n_ZJ.error) + sqr(0.20 * n_ZJ.value) +
-                                              sqr(n_ZL.error) + sqr(0.30 * n_ZL.value)) / sqr(n_ZLL.value));
+       n_ZJ.AddSystematicUncertainty(uncertainties::names::JetFakeTau, uncertainties::JetFakeTau);
+       n_ZL.AddSystematicUncertainty(uncertainties::names::LeptonFakeTau, uncertainties::LeptonFakeTau);
 
-       const PhysicalValue total_unc(uncertainty,0);
-       return UncertaintyInterval(one - total_unc, one + total_unc);
+       const PhysicalValue n_ZLL = n_ZJ + n_ZL;
+       std::cout << "ZLL yield = " << n_ZLL << std::endl;
+
+       const double unc = n_ZLL.GetRelativeFullError();
+       return UncertaintyInterval(PhysicalValue(unc));
     }
-
-//    UncertaintyInterval CalculateZJetFakeTauUnc(const std::string& full_category_name,
-//                                              const std::string& sample_name) const
-//    {
-//       static const PhysicalValue one(1, 0);
-
-//       const std::string hist_name_ZJ = full_category_name + "/ZJ";
-
-//       auto hist_ZJ = LoadHistogram(hist_name_ZJ);
-
-//       const PhysicalValue n_ZJ = Integral(*hist_ZJ, true);
-
-//       const double uncertainty = std::sqrt( sqr(n_ZJ.error/n_ZJ.value) + sqr(0.20) );
-//       const PhysicalValue total_unc(uncertainty,0);
-
-//       return UncertaintyInterval(one - total_unc, one + total_unc);
-//    }
-
-//    UncertaintyInterval CalculateZLeptonFakeTauUnc(const std::string& full_category_name,
-//                                              const std::string& sample_name) const
-//    {
-//        static const PhysicalValue one(1, 0);
-
-//        const std::string hist_name_ZL = full_category_name + "/ZL";
-
-//        auto hist_ZL = LoadHistogram(hist_name_ZL);
-
-//        const PhysicalValue n_ZL = Integral(*hist_ZL, true);
-//        std::cout << "ZL: " << n_ZL.value << std::endl;
-//        static const double tiny_value = 1e-7;
-//        if (n_ZL.value < tiny_value)
-//            return UncertaintyInterval(one, one);
-
-//        const double uncertainty = std::sqrt( sqr(n_ZL.error/n_ZL.value) + sqr(0.30) );
-//        const PhysicalValue total_unc(uncertainty,0);
-
-//        return UncertaintyInterval(one - total_unc, one + total_unc);
-//    }
 
     UncertaintyInterval CalculateQCDUnc(const std::string& full_category_name,
                                               const std::string& sample_name) const
     {
-        static const PhysicalValue one(1, 0);
-
-        PhysicalValue total_unc;
-        if (full_category_name == "tauTau_2jet0tag")
-            total_unc.value = 0.10;
-        else if (full_category_name == "tauTau_2jet1tag")
-            total_unc.value = 0.20;
-        else if (full_category_name == "tauTau_2jet2tag")
-            total_unc.value = 0.40;
-
-        return UncertaintyInterval(one - total_unc, one + total_unc);
+        const double unc = uncertainties::QCD.at(full_category_name);
+        return UncertaintyInterval(PhysicalValue(unc));
     }
 
 private:
