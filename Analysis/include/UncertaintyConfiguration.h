@@ -186,6 +186,8 @@ public:
     bool Contains(const std::string& descriptorName) const { return uncertainties.count(descriptorName); }
     const UncertaintyDescriptor& Get(const std::string& descriptorName) const
     {
+        if(!Contains(descriptorName))
+            throw exception("Uncertainty descriptor '") << descriptorName << "' not found.";
         return uncertainties.at(descriptorName);
     }
 

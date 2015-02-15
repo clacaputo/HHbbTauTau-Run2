@@ -31,7 +31,8 @@ class LimitConfigurationProducer {
 public:
     LimitConfigurationProducer(const std::string& configName, const std::string& shapeFileName,
                                const std::string& _outputPath)
-        : shapeFile(root_ext::OpenRootFile(shapeFileName)), outputPath(_outputPath), calculators(shapeFile)
+        : shapeFile(root_ext::OpenRootFile(shapeFileName)), outputPath(_outputPath),
+          calculators(uncertainties, shapeFile)
     {
         using namespace analysis;
         using namespace analysis::limits;
@@ -126,7 +127,7 @@ private:
         }
     }
 
-    void ProduceUncValuesConfig(const analysis::limits::CategoryDescriptor& categoryDescriptor) const
+    void ProduceUncValuesConfig(const analysis::limits::CategoryDescriptor& categoryDescriptor)
     {
         using namespace analysis::limits;
 
@@ -138,12 +139,17 @@ private:
 
         cfg << "# unc.vals: specification of uncertainty values by category, sample, and uncertainty name\n";
         cfg << std::left << std::fixed << std::setprecision(3);
+
         for(const UncertaintyDescriptor* uncertaintyDescriptor : uncertainties.GetOrderedCollection()) {
             const std::string full_name = uncertaintyDescriptor->FullName(categoryDescriptor.channel_name,
                                                                           categoryDescriptor.category_name);
-            if(uncertaintyDescriptor->calculate_value) {
-                for(const std::string& sample : uncertaintyDescriptor->samples) {
-                    if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
+            SampleNameSet common_samples;
+            for(const std::string& sample : uncertaintyDescriptor->samples) {
+                if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
+                if(uncertaintyDescriptor->sample_values.count(sample)) {
+                    const double value = uncertaintyDescriptor->sample_values.at(sample);
+                    WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, value);
+                } else if(uncertaintyDescriptor->calculate_value) {
                     std::vector<UncertaintyInterval> unc_vector;
                     const auto samples_to_process = categoryDescriptor.samples.GenerateSampleListToProcess(sample);
                     const bool single_sample = samples_to_process.size() == 1;
@@ -161,21 +167,13 @@ private:
                               << " -> " << unc_value << ".\n";
                     if(std::abs(1. - unc_value.GetValue()) >= uncertaintyDescriptor->threshold)
                         WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, unc_value.GetValue());
+                } else {
+                    common_samples.insert(sample);
                 }
-            } else {
-                SampleNameSet common_samples;
-                for(const std::string& sample : uncertaintyDescriptor->samples) {
-                    if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
-                    if(uncertaintyDescriptor->sample_values.count(sample)) {
-                        const double value = uncertaintyDescriptor->sample_values.at(sample);
-                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, value);
-                    } else
-                        common_samples.insert(sample);
-                }
-                if(common_samples.size()) {
-                    const std::string sample_list = uncertaintyDescriptor->SampleList(common_samples);
-                    WriteUncValue(cfg, categoryDescriptor.name, sample_list, full_name, uncertaintyDescriptor->value);
-                }
+            }
+            if(common_samples.size()) {
+                const std::string sample_list = uncertaintyDescriptor->SampleList(common_samples);
+                WriteUncValue(cfg, categoryDescriptor.name, sample_list, full_name, uncertaintyDescriptor->value);
             }
         }
     }
