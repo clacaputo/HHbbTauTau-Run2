@@ -29,15 +29,19 @@
 
 class LimitConfigurationProducer {
 public:
-    LimitConfigurationProducer(const std::string& configName, const std::string& shapeFileName,
+    LimitConfigurationProducer(const std::string& uncConfigName, const std::string& srcConfigName,
+                               const std::string& anaDataFileName,
                                const std::string& _outputPath)
-        : shapeFile(root_ext::OpenRootFile(shapeFileName)), outputPath(_outputPath),
-          calculators(uncertainties, shapeFile)
+        : anaDataReader(anaDataFileName), outputPath(_outputPath),
+          dataCategories(srcConfigName, "", analysis::Channel::TauTau),
+          calculators(uncertainties, dataCategories, anaDataReader,
+                      analysis::EventSubCategory::KinematicFitConvergedWithMassWindow,
+                      analysis::FlatAnalyzerData::m_ttbb_kinfit_Name())
     {
         using namespace analysis;
         using namespace analysis::limits;
 
-        ConfigReader configReader(configName);
+        ConfigReader configReader(uncConfigName);
         SampleCategoryCollectionReader sampleReader(samples);
         CategoryDescriptorReader categoryReader(samples, categories);
         UncertaintyDescriptorReader uncertaintyReader(uncertainties);
@@ -130,6 +134,14 @@ private:
     void ProduceUncValuesConfig(const analysis::limits::CategoryDescriptor& categoryDescriptor)
     {
         using namespace analysis::limits;
+        using analysis::EventCategory;
+
+        static const std::map<std::string, EventCategory> category_name_map = {
+            { "2jet0tag", EventCategory::TwoJets_ZeroBtag },
+            { "2jet1tag", EventCategory::TwoJets_OneBtag },
+            { "2jet2tag", EventCategory::TwoJets_TwoBtag }
+        };
+        const EventCategory eventCategory = category_name_map.at(categoryDescriptor.category_name);
 
         const std::string cfgFileName = outputPath + "/unc-Hhh-8TeV-" + categoryDescriptor.index + ".vals";
         std::ofstream cfg(cfgFileName);
@@ -144,6 +156,7 @@ private:
             const std::string full_name = uncertaintyDescriptor->FullName(categoryDescriptor.channel_name,
                                                                           categoryDescriptor.category_name);
             SampleNameSet common_samples;
+
             for(const std::string& sample : uncertaintyDescriptor->samples) {
                 if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
                 if(uncertaintyDescriptor->sample_values.count(sample)) {
@@ -154,8 +167,7 @@ private:
                     const auto samples_to_process = categoryDescriptor.samples.GenerateSampleListToProcess(sample);
                     const bool single_sample = samples_to_process.size() == 1;
                     for(const std::string& sub_sample : samples_to_process) {
-                        const auto unc = calculators.Calculate(uncertaintyDescriptor->name,
-                                                                   categoryDescriptor.name, sub_sample);
+                        const auto unc = calculators.Calculate(uncertaintyDescriptor->name, eventCategory, sub_sample);
                         if(!single_sample)
                             std::cout << "    " << sub_sample << ": " << uncertaintyDescriptor->name
                                       << " = " << unc << ".\n";
@@ -190,10 +202,11 @@ private:
     }
 
 private:
-    std::shared_ptr<TFile> shapeFile;
+    analysis::FlatAnalyzerDataCollectionReader anaDataReader;
     std::string outputPath;
     analysis::limits::SampleCategoryCollectionMap samples;
     analysis::limits::CategoryDescriptorMap categories;
     analysis::limits::UncertaintyDescriptorCollection uncertainties;
+    analysis::DataCategoryCollection dataCategories;
     analysis::limits::UncertaintyCalculatorCollection calculators;
 };

@@ -72,8 +72,13 @@ struct FlatAnalyzerDataId {
            << eventEnergyScale << separator << dataCategoryName;
         return ss.str();
     }
-
 };
+
+std::ostream& operator<< (std::ostream& s, const FlatAnalyzerDataId& id)
+{
+    s << id.GetName();
+    return s;
+}
 
 template<typename ...Types>
 struct FlatAnalyzerDataMetaId;
@@ -329,6 +334,28 @@ private:
 private:
     std::shared_ptr<TFile> outputFile;
     FlatAnalyzerDataMap anaDataMap;
+};
+
+class FlatAnalyzerDataCollectionReader {
+public:
+    FlatAnalyzerDataCollectionReader(const std::string& file_name)
+        : file(root_ext::OpenRootFile(file_name)) {}
+
+    template<typename Histogram>
+    Histogram* GetHistogram(const FlatAnalyzerDataId& id, const std::string& name) const
+    {
+        const std::string full_name = id.GetName() + "/" + name;
+        TObject* object = file->Get(full_name.c_str());
+        if(!object)
+            return nullptr;
+        Histogram* hist = dynamic_cast<Histogram*>(object);
+        if(!hist)
+            throw exception("Wrong type for '") << name << "' in " << id << ".";
+        return hist;
+    }
+
+private:
+    std::shared_ptr<TFile> file;
 };
 
 } // namespace analysis

@@ -36,6 +36,7 @@
 
 #include "AnalysisBase/include/AnalysisTypes.h"
 #include "AnalysisBase/include/Tools.h"
+#include "PrintTools/include/RootPrintTools.h"
 
 namespace analysis {
 
@@ -101,6 +102,7 @@ struct DataCategory {
 
 typedef std::map<std::string, DataCategory> DataCategoryMap;
 typedef std::set<const DataCategory*> DataCategoryPtrSet;
+typedef std::map<std::string, const DataCategory*> DataCategoryPtrMap;
 typedef std::set<DataCategoryType> DataCategoryTypeSet;
 typedef std::vector<const DataCategory*> DataCategoryPtrVector;
 typedef std::map<DataCategoryType, DataCategoryPtrSet> DataCategoryTypeMap;
@@ -124,9 +126,12 @@ public:
                 categories_by_type[type].insert(&categories[category.name]);
             for(const auto& source_entry : category.sources_sf)
                 all_sources.insert(source_entry.first);
+            if(category.datacard.size())
+                categories_by_datacard[category.datacard] = &categories[category.name];
         }
         const auto& signal_names = ParseSignalList(signal_list);
         for(const auto& signal_name : signal_names) {
+            if(!signal_name.size()) continue;
             if(!categories.count(signal_name))
                 throw exception("Undefined signal '") << signal_name << "'.";
             categories[signal_name].draw = true;
@@ -162,12 +167,18 @@ public:
         return *(*categories_by_type.at(dataCategoryType).begin());
     }
 
-
     const DataCategory& FindCategory(const std::string& name) const
     {
         if(!categories.count(name))
             throw exception("Data category '") << name << "' not found.";
         return categories.at(name);
+    }
+
+    const DataCategory& FindCategoryForDatacard(const std::string& datacard) const
+    {
+        if(!categories_by_datacard.count(datacard))
+            throw exception("Data category for datacard '") << datacard << "' not found.";
+        return *categories_by_datacard.at(datacard);
     }
 
 private:
@@ -191,6 +202,8 @@ private:
 //            if(all_sources.count(source_entry.first))
 //                throw exception("Source '") << source_entry.first << "' is already part of the other data category.";
 //        }
+        if(category.datacard.size() && categories_by_datacard.count(category.datacard))
+            throw exception("Category for datacard '") << category.datacard << "' is already defined.";
     }
 
     static bool ReadNextCategory(std::istream& cfg, size_t& line_number, DataCategory& category)
@@ -294,6 +307,7 @@ private:
     DataCategoryPtrVector all_categories;
     DataCategoryTypeMap categories_by_type;
     DataCategoryPtrSet empty_category_set;
+    DataCategoryPtrMap categories_by_datacard;
 };
 
 std::ostream& operator<<(std::ostream& s, const DataCategory& category){
