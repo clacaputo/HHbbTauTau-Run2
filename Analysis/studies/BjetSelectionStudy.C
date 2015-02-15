@@ -29,7 +29,7 @@
 
 class BjetSelectionStudyData : public root_ext::AnalyzerData {
 public:
-    BjetSelectionStudyData(TFile& outputFile) : root_ext::AnalyzerData(outputFile) {}
+    BjetSelectionStudyData(std::shared_ptr<TFile> outputFile) : root_ext::AnalyzerData(outputFile) {}
 
     TH1D_ENTRY(MET, 35, 0, 350)
     TH1D_ENTRY(matchedBjets, 3, -0.5, 2.5)

@@ -29,13 +29,14 @@
 #include <fstream>
 #include <sstream>
 
+#include "AnalysisBase/include/RootExt.h"
 #include "../include/RootPrintToPdf.h"
 
 
 struct DataSource {
     std::string file_name;
     double scale_factor;
-    TFile* file;
+    std::shared_ptr<TFile> file;
 };
 
 struct HistogramDescriptor {
@@ -161,12 +162,7 @@ public:
             std::cout << category << std::endl;
             for (DataSource& source : category.sources){
                 const std::string fullFileName = inputPath + "/" + source.file_name;
-                source.file = new TFile(fullFileName.c_str(), "READ");
-                if(source.file->IsZombie()) {
-                    std::ostringstream ss;
-                    ss << "Input file '" << source.file_name << "' not found.";
-                    throw std::runtime_error(ss.str());
-                }
+                source.file = root_ext::OpenRootFile(fullFileName);
             }
         }
 

@@ -32,7 +32,6 @@
 #include <set>
 #include <cmath>
 
-#include <TFile.h>
 #include <Rtypes.h>
 
 #include "AnalysisBase/include/AnalysisTypes.h"

@@ -78,7 +78,7 @@ public:
 
     explicit FlatAnalyzerData(bool _fill_all) : fill_all(_fill_all) {}
 
-    FlatAnalyzerData(TFile& outputFile, const std::string& directoryName, bool _fill_all)
+    FlatAnalyzerData(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool _fill_all)
         : AnalyzerData(outputFile, directoryName), fill_all(_fill_all) {}
 
     typedef root_ext::SmartHistogram<TH1D>& (FlatAnalyzerData::*HistogramAccessor)();
@@ -203,7 +203,7 @@ public:
 
     explicit FlatAnalyzerData_semileptonic(bool _fill_all) : FlatAnalyzerData(_fill_all) {}
 
-    FlatAnalyzerData_semileptonic(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_semileptonic(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool fill_all)
         : FlatAnalyzerData(outputFile, directoryName, fill_all) {}
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight) override
@@ -226,7 +226,8 @@ class FlatAnalyzerData_semileptonic_2tag : public FlatAnalyzerData_semileptonic 
 public:
     explicit FlatAnalyzerData_semileptonic_2tag(bool _fill_all) : FlatAnalyzerData_semileptonic(_fill_all) {}
 
-    FlatAnalyzerData_semileptonic_2tag(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_semileptonic_2tag(std::shared_ptr<TFile> outputFile, const std::string& directoryName,
+                                       bool fill_all)
         : FlatAnalyzerData_semileptonic(outputFile, directoryName, fill_all) {}
 
     virtual const std::vector<double>& M_tt_Bins() const override
@@ -244,7 +245,7 @@ public:
 
     explicit FlatAnalyzerData_tautau(bool _fill_all) : FlatAnalyzerData(_fill_all) {}
 
-    FlatAnalyzerData_tautau(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_tautau(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool fill_all)
         : FlatAnalyzerData(outputFile, directoryName, fill_all) {}
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight) override
@@ -268,7 +269,7 @@ class FlatAnalyzerData_tautau_2tag : public FlatAnalyzerData_tautau {
 public:
     explicit FlatAnalyzerData_tautau_2tag(bool _fill_all) : FlatAnalyzerData_tautau(_fill_all) {}
 
-    FlatAnalyzerData_tautau_2tag(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_tautau_2tag(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool fill_all)
         : FlatAnalyzerData_tautau(outputFile, directoryName, fill_all) {}
 
     virtual const std::vector<double>& M_tt_Bins() const override

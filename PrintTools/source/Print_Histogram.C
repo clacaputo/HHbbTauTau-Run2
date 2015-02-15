@@ -24,8 +24,7 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
+#include "AnalysisBase/include/RootExt.h"
 #include "../include/RootPrintToPdf.h"
 
 class MyHistogramSource : public root_ext::SimpleHistogramSource<TH1D, Double_t> {
@@ -58,12 +57,7 @@ public:
     {
         Initialize(args...);
         for(const FileTagPair& fileTag : inputs) {
-            TFile* file = new TFile(fileTag.first.c_str());
-            if(file->IsZombie()) {
-                std::ostringstream ss;
-                ss << "Input file '" << fileTag.first << "' not found.";
-                throw std::runtime_error(ss.str());
-            }
+            auto file = root_ext::OpenRootFile(fileTag.first);
             source.Add(fileTag.second, file);
         }
     }

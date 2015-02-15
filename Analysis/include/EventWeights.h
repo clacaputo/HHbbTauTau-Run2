@@ -198,9 +198,7 @@ protected:
 private:
     static std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName)
     {
-        std::shared_ptr<TFile> reweightFile(new TFile(reweightFileName.c_str(),"READ"));
-        if(reweightFile->IsZombie())
-            throw exception("reweight file ") << reweightFileName << " not found.";
+        auto reweightFile = root_ext::OpenRootFile(reweightFileName);
         TObject* originalWeights = reweightFile->Get("weights");
         if (!originalWeights)
             throw exception("histograms with weights not found");

@@ -60,9 +60,9 @@ namespace analysis {
 class LightBaseFlatTreeAnalyzer {
 public:
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
-        : inputFile(new TFile(inputFileName.c_str(),"READ")),
-          outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
-          flatTree(new ntuple::FlatTree(*inputFile, "flatTree")), recalc_kinfit(true)
+        : inputFile(root_ext::OpenRootFile(inputFileName)),
+          outputFile(root_ext::CreateRootFile(outputFileName)),
+          flatTree(new ntuple::FlatTree(inputFile, "flatTree")), recalc_kinfit(true)
     {
         TH1::SetDefaultSumw2();
     }
@@ -106,7 +106,7 @@ protected:
                 event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
     }
 
-    TFile& GetOutputFile() { return *outputFile; }
+    std::shared_ptr<TFile> GetOutputFile() { return outputFile; }
 
     analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo, analysis::EventCategory category) const
     {

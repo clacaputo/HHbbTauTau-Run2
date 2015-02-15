@@ -28,7 +28,6 @@
 
 #include <TROOT.h>
 #include <TStyle.h>
-#include <TFile.h>
 #include <Rtypes.h>
 #include <TError.h>
 #include <TH1.h>

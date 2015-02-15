@@ -62,7 +62,7 @@ namespace analysis {
 
 class BaseAnalyzerData : public root_ext::AnalyzerData {
 public:
-    BaseAnalyzerData(TFile& outputFile) : AnalyzerData(outputFile) {}
+    BaseAnalyzerData(std::shared_ptr<TFile> outputFile) : AnalyzerData(outputFile) {}
 
     SELECTION_ENTRY(Selection)
 
@@ -76,9 +76,9 @@ public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName),
-          outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
-          anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          anaDataFinalSelection(*outputFile, "final_selection"),
+          outputFile(root_ext::CreateRootFile(outputFileName)),
+          anaDataBeforeCut(outputFile, "before_cut"), anaDataAfterCut(outputFile, "after_cut"),
+          anaDataFinalSelection(outputFile, "final_selection"),
           maxNumberOfEvents(_maxNumberOfEvents),
           mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
@@ -161,7 +161,7 @@ private:
         }
 
         event = _event;
-        GetAnaData().getOutputFile().cd();
+        GetAnaData().getOutputFile()->cd();
         GetEventWeights().Reset();
         if(config.ApplyPUreweight())
             GetEventWeights().CalculatePuWeight(event->eventInfo());

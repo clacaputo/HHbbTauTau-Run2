@@ -31,29 +31,20 @@
 
 #include <iostream>
 
-#include <TFile.h>
 #include <TROOT.h>
 #include <TKey.h>
 #include <TSystem.h>
 #include <TTree.h>
 #include <memory>
-#include "AnalysisBase/include/exception.h"
+#include "AnalysisBase/include/RootExt.h"
 
 class MergeRootFiles {
 public:
     MergeRootFiles(const std::string& originalFileName , const std::string& referenceFileName,
                   const std::string& outputFileName)
-        : originalFile(new TFile(originalFileName.c_str(), "READ")),
-          referenceFile(new TFile(referenceFileName.c_str(), "READ")),
-          outputFile(new TFile(outputFileName.c_str(),"RECREATE"))
-    {
-        if(originalFile->IsZombie())
-            throw analysis::exception("Original file '") << originalFileName << "' not found.";
-        if(referenceFile->IsZombie())
-            throw analysis::exception("Reference file '") << referenceFileName << "' not found.";
-        if(outputFile->IsZombie())
-            throw analysis::exception("Output file '") << outputFileName << "' can't be opened.";
-    }
+        : originalFile(root_ext::OpenRootFile(originalFileName)),
+          referenceFile(root_ext::OpenRootFile(referenceFileName)),
+          outputFile(root_ext::CreateRootFile(outputFileName)) {}
 
     void Run()
     {

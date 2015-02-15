@@ -26,8 +26,6 @@
 
 #pragma once
 
-#include <TFile.h>
-
 #include "UncertaintyConfiguration.h"
 
 namespace analysis {

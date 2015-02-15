@@ -31,6 +31,7 @@
 #include <TH1.h>
 
 #include "AnalysisBase/include/TreeExtractor.h"
+#include "AnalysisBase/include/RootExt.h"
 
 class PileUp {
 public:
@@ -38,11 +39,11 @@ public:
                  const std::string& histName, const std::string& _mode, const std::string& _prefix = "none",
                         size_t _maxNumberOfEvents = 0)
         : treeExtractor(_prefix == "none" ? "" : _prefix, MC_File_name, false),
-          outputFile(new TFile(reweight_fileName.c_str(),"RECREATE")),
+          outputFile(root_ext::CreateRootFile(reweight_fileName)),
           maxNumberOfEvents(_maxNumberOfEvents), mode(_mode)
     {
 
-        TFile* Data_File = new TFile(Data_File_name.c_str(), "READ");
+        auto Data_File = root_ext::OpenRootFile(Data_File_name);
         outputFile->cd();
         Data_distr = static_cast<TH1D*>(Data_File->Get(histName.c_str())->Clone());
         outputFile->cd();
@@ -86,13 +87,11 @@ public:
         TH1D* weights = static_cast<TH1D*>(Data_distr->Clone("weights"));
         weights->Divide(nPU_MCdistr);
         weights->Write();
-
-        outputFile->Close();
     }
 
 private:
     analysis::TreeExtractor treeExtractor;
-    TFile* outputFile;
+    std::shared_ptr<TFile> outputFile;
     size_t maxNumberOfEvents;
     TH1D* Data_distr;
     TH1D* nPU_MCdistr;

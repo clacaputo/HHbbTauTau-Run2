@@ -32,10 +32,10 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #else
-#include "TFile.h"
+#include <TFile.h>
 #endif
 
-#include "TTree.h"
+#include <TTree.h>
 
 #define SIMPLE_TREE_BRANCH(type, name) \
 private: type _##name; \
@@ -74,8 +74,9 @@ public:  std::vector< type >& name() { return _##name; }
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
         tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         tree_class_name(const std::string& name) : SmartTree(name, "/") { Initialize(); } \
-        tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
-        tree_class_name(TFile& file, const std::string& name) : SmartTree(name, file) { Initialize(); } \
+        tree_class_name(std::shared_ptr<TFile> file) : SmartTree(Name(), file) { Initialize(); } \
+        tree_class_name(std::shared_ptr<TFile> file, const std::string& name) \
+            : SmartTree(name, file) { Initialize(); } \
         data_class_name data; \
         data_macro() \
     private: \
@@ -92,8 +93,9 @@ public:  std::vector< type >& name() { return _##name; }
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
         tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
         tree_class_name(const std::string& name) : SmartTree(name, "/") { Initialize(); } \
-        tree_class_name(TFile& file) : SmartTree(Name(), file) { Initialize(); } \
-        tree_class_name(TFile& file, const std::string& name) : SmartTree(name, file) { Initialize(); } \
+        tree_class_name(std::shared_ptr<TFile> file) : SmartTree(Name(), file) { Initialize(); } \
+        tree_class_name(std::shared_ptr<TFile> file, const std::string& name) \
+            : SmartTree(name, file) { Initialize(); } \
         data_class_name data; \
         SIMPLE_TREE_BRANCH(UInt_t, RunId) \
         SIMPLE_TREE_BRANCH(UInt_t, LumiBlock) \
@@ -149,7 +151,7 @@ namespace detail {
 class SmartTree {
 public:
     explicit SmartTree(const std::string& _name, const std::string& _directory = "", Long64_t maxVirtualSize = 10000000)
-        : name(_name), file(nullptr), readMode(false), directory(_directory)
+        : name(_name), readMode(false), directory(_directory)
     {
 #ifdef SMART_TREE_FOR_CMSSW
         edm::Service<TFileService> tfserv;
@@ -167,9 +169,11 @@ public:
         else
             tree->SetMaxVirtualSize(maxVirtualSize);
     }
-    SmartTree(const std::string& _name, TFile& _file)
-        : name(_name), file(&_file), readMode(true)
+    SmartTree(const std::string& _name, std::shared_ptr<TFile> _file)
+        : name(_name), file(_file), readMode(true)
     {
+        if(!file)
+            throw std::runtime_error("Input file is nullptr");
         tree = static_cast<TTree*>(file->Get(name.c_str()));
         if(!tree)
             throw std::runtime_error("Tree not found.");
@@ -274,7 +278,7 @@ protected:
 
 private:
     std::string name;
-    TFile* file;
+    std::shared_ptr<TFile> file;
     std::map< std::string, std::shared_ptr<detail::BaseSmartTreeEntry> > entries;
     bool readMode;
     TTree* tree;

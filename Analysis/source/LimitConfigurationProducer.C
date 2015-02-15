@@ -24,19 +24,17 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AnalysisBase/include/RootExt.h"
 #include "Analysis/include/UncertaintyCalculatorCollection.h"
 
 class LimitConfigurationProducer {
 public:
     LimitConfigurationProducer(const std::string& configName, const std::string& shapeFileName,
                                const std::string& _outputPath)
-        : shapeFile(new TFile(shapeFileName.c_str(), "READ")), outputPath(_outputPath), calculators(shapeFile)
+        : shapeFile(root_ext::OpenRootFile(shapeFileName)), outputPath(_outputPath), calculators(shapeFile)
     {
         using namespace analysis;
         using namespace analysis::limits;
-
-        if(shapeFile->IsZombie())
-            throw exception("Shape file '") << shapeFileName << "' not found.";
 
         ConfigReader configReader(configName);
         SampleCategoryCollectionReader sampleReader(samples);

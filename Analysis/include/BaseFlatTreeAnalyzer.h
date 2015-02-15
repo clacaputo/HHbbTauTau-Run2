@@ -90,10 +90,8 @@ public:
             std::cout << *dataCategory << std::endl;
             for(const auto& source_entry : dataCategory->sources_sf) {
                 const std::string fullFileName = inputPath + "/" + source_entry.first;
-                std::shared_ptr<TFile> file(new TFile(fullFileName.c_str(), "READ"));
-                if(file->IsZombie())
-                    throw exception("Input file '") << source_entry.first << "' not found.";
-                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree(*file, "flatTree"));
+                auto file = root_ext::OpenRootFile(fullFileName);
+                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree(file, "flatTree"));
                 ProcessDataSource(*dataCategory, tree, source_entry.second);
             }
         }
@@ -604,7 +602,7 @@ protected:
         s_file_name << ".root";
         const std::string file_name = s_file_name.str();
 
-        std::shared_ptr<TFile> outputFile(new TFile(file_name.c_str(), "RECREATE"));
+        auto outputFile = root_ext::CreateRootFile(file_name);
         outputFile->cd();
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
@@ -669,7 +667,6 @@ protected:
                 }
             }
         }
-        outputFile->Close();
     }
 
     void SubtractBackgroundHistograms(const FlatAnalyzerDataMetaId_noRegion_noName& anaDataMetaId,

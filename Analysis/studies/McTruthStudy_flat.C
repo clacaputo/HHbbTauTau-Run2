@@ -29,7 +29,7 @@
 
 class McTruthStudyData : public analysis::LightFlatAnalyzerData {
 public:
-    McTruthStudyData(TFile& outputFile) : LightFlatAnalyzerData(outputFile) {}
+    McTruthStudyData(std::shared_ptr<TFile> outputFile) : LightFlatAnalyzerData(outputFile) {}
 
     TH1D_ENTRY(Delta_Pt, 40, -200, 200)
     TH1D_ENTRY(Pt_Delta, 20, 0, 200)

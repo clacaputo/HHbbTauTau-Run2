@@ -25,8 +25,6 @@
 
 #include <string>
 
-#include <TFile.h>
-
 #include "RootPrintTools.h"
 
 namespace root_ext {
@@ -184,7 +182,7 @@ public:
     }
 
 public:
-    void Add(const std::string& display_name, TFile* source_file, const PlotOptions* plot_options = 0)
+    void Add(const std::string& display_name, std::shared_ptr<TFile> source_file, const PlotOptions* plot_options = 0)
     {
         if(!plot_options)
             plot_options = &GetDefaultPlotOptions(display_names.size());
@@ -234,7 +232,7 @@ protected:
     }
 
 private:
-    std::vector<TFile*> source_files;
+    std::vector< std::shared_ptr<TFile> > source_files;
     std::vector<std::string> display_names;
     std::vector<PlotOptions> plot_options_vector;
 };

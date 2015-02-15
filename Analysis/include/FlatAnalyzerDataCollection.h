@@ -234,7 +234,7 @@ public:
     FlatAnalyzerDataCollection(const std::string& outputFileName, bool store)
     {
         if(store)
-            outputFile = std::shared_ptr<TFile>(root_ext::AnalyzerData::CreateFile(outputFileName));
+            outputFile = root_ext::CreateRootFile(outputFileName);
     }
 
     FlatAnalyzerData& Get(const FlatAnalyzerDataId& id, Channel channel)
@@ -321,7 +321,7 @@ private:
         const bool fill_all = id.eventEnergyScale == EventEnergyScale::Central;
         if(outputFile) {
             const std::string dir_name = id.GetName();
-            return FlatAnalyzerDataPtr(new AnaData(*outputFile, dir_name, fill_all));
+            return FlatAnalyzerDataPtr(new AnaData(outputFile, dir_name, fill_all));
         }
         return FlatAnalyzerDataPtr(new AnaData(fill_all));
     }

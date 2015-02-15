@@ -31,7 +31,7 @@
 
 class KinFitStudyData : public root_ext::AnalyzerData {
 public:
-    KinFitStudyData(TFile& outputFile) : AnalyzerData(outputFile) {}
+    KinFitStudyData(std::shared_ptr<TFile> outputFile) : AnalyzerData(outputFile) {}
 
     TH1D_ENTRY(HHKinFit_convergence, 10, -3.5, 6.5)
     TH1D_ENTRY(HHKinFit_M_bbtt, 30, 0, 600)

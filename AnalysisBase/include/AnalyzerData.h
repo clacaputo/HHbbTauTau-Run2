@@ -5,8 +5,8 @@
  * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \date 2013-03-29 created
  *
- * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
- *                Maria Teresa Grippo <grippomariateresa@gmail.com>
+ * Copyright 2013-2015 Konstantin Androsov <konstantin.androsov@gmail.com>,
+ *                     Maria Teresa Grippo <grippomariateresa@gmail.com>
  *
  * This file is part of X->HH->bbTauTau.
  *
@@ -32,11 +32,10 @@
 #include <sstream>
 #include <typeindex>
 
-#include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include <Compression.h>
 
+#include "RootExt.h"
 #include "SmartHistogram.h"
 
 #define ANA_DATA_ENTRY(type, name, ...) \
@@ -122,42 +121,33 @@ public:
         return index;
     }
 
-    static TFile* CreateFile(const std::string& fileName)
-    {
-        TFile* file = new TFile(fileName.c_str(), "RECREATE", "", ROOT::kZLIB * 100 + 9);
-        if(file->IsZombie()) {
-            std::ostringstream ss;
-            ss << "File '" << fileName << "' not created.";
-            throw std::runtime_error(ss.str());
-        }
-        return file;
-    }
-
 public:
-    AnalyzerData() : outputFile(nullptr), ownOutputFile(false), directory(nullptr)
+    AnalyzerData() : directory(nullptr)
     {
         data_vector.assign(MaxIndex, nullptr);
     }
 
-    AnalyzerData(const std::string& outputFileName)
-        : outputFile(CreateFile(outputFileName)), ownOutputFile(true)
+    explicit AnalyzerData(const std::string& outputFileName)
+        : outputFile(CreateRootFile(outputFileName))
     {
         data_vector.assign(MaxIndex, nullptr);
-        directory = outputFile;
+        directory = outputFile.get();
         cd();
     }
 
-    AnalyzerData(TFile& _outputFile, const std::string& directoryName = "")
-        : outputFile(&_outputFile), ownOutputFile(false)
+    explicit AnalyzerData(std::shared_ptr<TFile> _outputFile, const std::string& directoryName = "")
+        : outputFile(_outputFile)
     {
+        if(!outputFile)
+            throw analysis::exception("Output file is nullptr.");
         data_vector.assign(MaxIndex, nullptr);
         if (directoryName.size()){
             outputFile->mkdir(directoryName.c_str());
             directory = outputFile->GetDirectory(directoryName.c_str());
             if(!directory)
-                throw std::runtime_error("Unable to create analyzer data directory.");
+                throw analysis::exception("Unable to create analyzer data directory.");
         } else
-            directory = outputFile;
+            directory = outputFile.get();
         cd();
     }
 
@@ -169,16 +159,14 @@ public:
                 iter.second->WriteRootObject();
             delete iter.second;
         }
-        if(ownOutputFile)
-            delete outputFile;
     }
 
-    TFile& getOutputFile() { return *outputFile; }
+    std::shared_ptr<TFile> getOutputFile() { return outputFile; }
 
     void cd() const
     {
         if(directory && !directory->cd())
-            throw std::runtime_error("Unable to cd to analyzer data directory.");
+            throw analysis::exception("Unable to cd to analyzer data directory.");
     }
 
     bool Contains(const std::string& name) const { return data.find(name) != data.end(); }
@@ -199,11 +187,8 @@ public:
     bool CheckType(const std::string& name) const
     {
         const auto iter = data.find(name);
-        if(iter == data.end()) {
-            std::ostringstream ss;
-            ss << "Histogram '" << name << "' not found.";
-            throw std::runtime_error(ss.str());
-        }
+        if(iter == data.end())
+            analysis::exception("Histogram '") << name << "' not found.";
         SmartHistogram<ValueType>* result = dynamic_cast< SmartHistogram<ValueType>* >(iter->second);
         return result;
     }
@@ -250,7 +235,7 @@ public:
     SmartHistogram<ValueType>& Clone(const SmartHistogram<ValueType>& original)
     {
         if(data.count(original.Name()))
-            throw std::runtime_error("histogram already exists");
+            throw analysis::exception("histogram already exists");
         cd();
         SmartHistogram<ValueType>* h = new SmartHistogram<ValueType>(original);
         data[h->Name()] = h;
@@ -296,20 +281,16 @@ private:
     SmartHistogram<ValueType>& GetAt(const DataMap::const_iterator& iter) const
     {
         if(iter == data.end())
-            throw std::runtime_error("Invalid iterator to of a histogram collection.");
+            throw analysis::exception("Invalid iterator to of a histogram collection.");
 
         SmartHistogram<ValueType>* result = dynamic_cast< SmartHistogram<ValueType>* >(iter->second);
-        if(!result) {
-            std::ostringstream ss;
-            ss << "Wrong type for histogram '" << iter->first << "'.";
-            throw std::runtime_error(ss.str());
-        }
+        if(!result)
+            throw analysis::exception("Wrong type for histogram '") << iter->first << "'.";
         return *result;
     }
 
 private:
-    TFile* outputFile;
-    bool ownOutputFile;
+    std::shared_ptr<TFile> outputFile;
     TDirectory* directory;
 
     DataMap data;

@@ -26,6 +26,7 @@
 
 #include <iostream>
 
+#include "AnalysisBase/include/RootExt.h"
 #include "../include/RootPrintToPdf.h"
 
 class Print_Selection {
@@ -40,12 +41,7 @@ public:
     {
         Initialize(args...);
         for(const FileTagPair& fileTag : inputs) {
-            TFile* file = new TFile(fileTag.first.c_str());
-            if(file->IsZombie()) {
-                std::ostringstream ss;
-                ss << "Input file '" << fileTag.first << "' not found.";
-                throw std::runtime_error(ss.str());
-            }
+            auto file = root_ext::OpenRootFile(fileTag.first);
             source.Add(fileTag.second, file);
         }
     }
