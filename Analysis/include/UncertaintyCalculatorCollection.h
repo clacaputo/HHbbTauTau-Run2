@@ -245,7 +245,7 @@ private:
                                                                             eventRegion, up, down, false);
             const PhysicalValue es_unc = CombineUpDownUncertainties(es_interval);
             if(!std::isnan(es_unc.GetValue()))
-                value.AddSystematicUncertainty(name, es_unc.GetValue());
+                value.AddSystematicUncertainty(name, es_unc.GetValue() - 1);
         };
 
         apply_es_unc(uncertainty_names::TauES, EventEnergyScale::TauUp, EventEnergyScale::TauDown);
@@ -305,7 +305,7 @@ private:
             refEventCategory = MediumToLoose_EventCategoryMap.at(eventCategory);
 
 
-        const PhysicalValue yield_OSAntiIso = CalculateQcdYield(eventCategory, EventRegion::OS_AntiIsolated, false);
+        const PhysicalValue yield_OSAntiIso = CalculateQcdYield(eventCategory, EventRegion::OS_AntiIsolated, true);
         const PhysicalValue yield_SSIso_ref = CalculateQcdYield(refEventCategory, EventRegion::SS_Isolated, true);
         const PhysicalValue yield_SSAntiIso = CalculateQcdYield(refEventCategory, EventRegion::SS_AntiIsolated, true);
 
@@ -319,7 +319,7 @@ private:
 
         const PhysicalValue yield_OSAntiIso_ref = CalculateQcdYield(refEventCategory, EventRegion::OS_AntiIsolated,
                                                                     true);
-        const PhysicalValue yield_SSIso = CalculateQcdYield(eventCategory, EventRegion::SS_Isolated, false);
+        const PhysicalValue yield_SSIso = CalculateQcdYield(eventCategory, EventRegion::SS_Isolated, true);
 
         const PhysicalValue os_ss_sf = yield_OSAntiIso_ref / yield_SSAntiIso;
         const PhysicalValue alt_qcd_yield = yield_SSIso * os_ss_sf;
