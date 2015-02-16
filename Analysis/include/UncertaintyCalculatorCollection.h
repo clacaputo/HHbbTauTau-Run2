@@ -306,16 +306,30 @@ private:
 
 
         const PhysicalValue yield_OSAntiIso = CalculateQcdYield(eventCategory, EventRegion::OS_AntiIsolated, false);
-        const PhysicalValue yield_SSIso = CalculateQcdYield(refEventCategory, EventRegion::SS_Isolated, true);
+        const PhysicalValue yield_SSIso_ref = CalculateQcdYield(refEventCategory, EventRegion::SS_Isolated, true);
         const PhysicalValue yield_SSAntiIso = CalculateQcdYield(refEventCategory, EventRegion::SS_AntiIsolated, true);
 
-        const PhysicalValue iso_antiIso_sf = yield_SSIso / yield_SSAntiIso;
+        const PhysicalValue iso_antiIso_sf = yield_SSIso_ref / yield_SSAntiIso;
         const PhysicalValue qcd_yield = yield_OSAntiIso * iso_antiIso_sf;
         const double qcd_unc = qcd_yield.GetRelativeFullError();
 
         std::cout << "QCD iso/anti_iso SF: " << iso_antiIso_sf << ".\n"
                   << "QCD signal yiled: " << qcd_yield << ".\n"
                   << "QCD full uncertainty: " << qcd_unc << ".\n";
+
+        const PhysicalValue yield_OSAntiIso_ref = CalculateQcdYield(refEventCategory, EventRegion::OS_AntiIsolated,
+                                                                    true);
+        const PhysicalValue yield_SSIso = CalculateQcdYield(eventCategory, EventRegion::SS_Isolated, false);
+
+        const PhysicalValue os_ss_sf = yield_OSAntiIso_ref / yield_SSAntiIso;
+        const PhysicalValue alt_qcd_yield = yield_SSIso * os_ss_sf;
+        const double alt_qcd_unc = alt_qcd_yield.GetRelativeFullError();
+        const PhysicalValue delta_qcd = qcd_yield - alt_qcd_yield;
+
+        std::cout << "Alt QCD os/ss SF: " << os_ss_sf << ".\n"
+                  << "Alt QCD signal yiled: " << alt_qcd_yield << ".\n"
+                  << "Alt QCD full uncertainty: " << alt_qcd_unc << ".\n"
+                  << "Delta QCD methods: " << delta_qcd << ".\n";
 
         return UncertaintyInterval(PhysicalValue(qcd_unc, DefaultPrecision()));
     }
