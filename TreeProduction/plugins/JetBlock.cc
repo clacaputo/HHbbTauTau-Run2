@@ -49,7 +49,6 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "PhysicsTools/SelectorUtils/interface/PFJetIDSelectionFunctor.h"
  
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Jet.h"
 #include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
@@ -64,7 +63,8 @@ pat::strbitset retpf = pfjetIDLoose.getBitTemplate();
 class JetBlock : public edm::EDAnalyzer {
 public:
     explicit JetBlock(const edm::ParameterSet& iConfig) :
-        _inputTag(iConfig.getParameter<edm::InputTag>("jetSrc")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("jetSrc")),
+        jetTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { jetTree.Write(); }

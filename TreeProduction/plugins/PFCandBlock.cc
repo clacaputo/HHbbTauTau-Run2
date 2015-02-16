@@ -49,14 +49,14 @@
 
 #include "Utilities/General/interface/FileInPath.h"
 
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/PFCand.h"
 #include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
 class PFCandBlock : public edm::EDAnalyzer {
 public:
     explicit PFCandBlock(const edm::ParameterSet& iConfig) :
-        _inputTag(iConfig.getParameter<edm::InputTag>("srcPFCandidates")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("srcPFCandidates")),
+        pfCandTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { pfCandTree.Write(); }

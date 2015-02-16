@@ -44,16 +44,14 @@ public:
     {
 
         auto Data_File = root_ext::OpenRootFile(Data_File_name);
-        outputFile->cd();
         Data_distr = static_cast<TH1D*>(Data_File->Get(histName.c_str())->Clone());
-        outputFile->cd();
-        Data_distr->Write();
+        root_ext::WriteObject(*Data_distr, outputFile.get());
         Data_distr->Scale( 1.0/ Data_distr->Integral() );
         Data_File->Close();
-        outputFile->cd();
         nPU_MCdistr = new TH1D("MC_pileup", "MC nPU distribution", Data_distr->GetNbinsX(),
                                Data_distr->GetBinLowEdge(1),
                                Data_distr->GetBinLowEdge(Data_distr->GetNbinsX() + 1));
+        nPU_MCdistr->SetDirectory(outputFile.get());
     }
 
 
@@ -78,15 +76,12 @@ public:
             }
         }
 
-        outputFile->cd();
-
-        nPU_MCdistr->Write();
+        root_ext::WriteObject(*nPU_MCdistr);
         nPU_MCdistr->Scale( 1.0 / nPU_MCdistr->Integral() );
-
 
         TH1D* weights = static_cast<TH1D*>(Data_distr->Clone("weights"));
         weights->Divide(nPU_MCdistr);
-        weights->Write();
+        root_ext::WriteObject(*weights, outputFile.get());
     }
 
 private:

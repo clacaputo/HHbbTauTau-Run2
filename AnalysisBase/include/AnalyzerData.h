@@ -132,7 +132,6 @@ public:
     {
         data_vector.assign(MaxIndex, nullptr);
         directory = outputFile.get();
-        cd();
     }
 
     explicit AnalyzerData(std::shared_ptr<TFile> _outputFile, const std::string& directoryName = "")
@@ -148,12 +147,10 @@ public:
                 throw analysis::exception("Unable to create analyzer data directory.");
         } else
             directory = outputFile.get();
-        cd();
     }
 
     virtual ~AnalyzerData()
     {
-        cd();
         for(const auto& iter : data) {
             if(directory)
                 iter.second->WriteRootObject();
@@ -162,13 +159,6 @@ public:
     }
 
     std::shared_ptr<TFile> getOutputFile() { return outputFile; }
-
-    void cd() const
-    {
-        if(directory && !directory->cd())
-            throw analysis::exception("Unable to cd to analyzer data directory.");
-    }
-
     bool Contains(const std::string& name) const { return data.find(name) != data.end(); }
 
     void Erase(const std::string& name)
@@ -236,7 +226,6 @@ public:
     {
         if(data.count(original.Name()))
             throw analysis::exception("histogram already exists");
-        cd();
         SmartHistogram<ValueType>* h = new SmartHistogram<ValueType>(original);
         data[h->Name()] = h;
         HistogramNames<ValueType>().insert(h->Name());
@@ -263,7 +252,6 @@ private:
     {
         auto iter = data.find(full_name);
         if(iter == data.end()) {
-            cd();
             AbstractHistogram* h = HistogramFactory<ValueType>::Make(full_name, args...);
             data[full_name] = h;
             HistogramNames<ValueType>().insert(h->Name());

@@ -40,7 +40,6 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "Math/GenVector/VectorUtil.h"
 
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Track.h"
 
 class TrackBlock : public edm::EDAnalyzer {
@@ -48,7 +47,8 @@ public:
     explicit TrackBlock(const edm::ParameterSet& iConfig) :
         _verbosity(iConfig.getParameter<int>("verbosity")),
         _inputTag(iConfig.getParameter<edm::InputTag>("trackSrc")),
-        _beamSpot(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")) {}
+        _beamSpot(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")),
+        trackTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { trackTree.Write(); }

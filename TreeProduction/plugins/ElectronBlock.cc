@@ -49,11 +49,9 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Provenance/interface/EventID.h"
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "HHbbTauTau/PatProduction/interface/PatVertex.h"
-
-#define SMART_TREE_FOR_CMSSW
-
 #include "HHbbTauTau/TreeProduction/interface/Electron.h"
 #include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
@@ -64,7 +62,8 @@ public:
         _bsInputTag(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")),
         _trkInputTag(iConfig.getParameter<edm::InputTag>("trackSrc")),
         _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")),
-        _electronInputTag(iConfig.getParameter<edm::InputTag>("electronSrc")) {}
+        _electronInputTag(iConfig.getParameter<edm::InputTag>("electronSrc")),
+        electronTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { electronTree.Write(); }

@@ -37,14 +37,11 @@ public:
     SyncTreeProducer(const std::string& inputFileName, const std::string& outputFileName)
          : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), inclusive(0), passed(0)
     {
-        GetOutputFile().cd();
         syncTree = std::shared_ptr<ntuple::SyncTree>(new ntuple::SyncTree("syncTree"));
         recalc_kinfit = false;
     }
 
-    virtual ~SyncTreeProducer() {
-        syncTree->Write();
-    }
+    virtual ~SyncTreeProducer() { syncTree->Write(); }
 
 protected:
     static bool PassSyncTreeSelection(const analysis::FlatEventInfo& eventInfo)

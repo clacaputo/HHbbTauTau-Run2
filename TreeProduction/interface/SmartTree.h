@@ -28,14 +28,9 @@
 #include <memory>
 #include <iostream>
 
-#ifdef SMART_TREE_FOR_CMSSW
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-#else
 #include <TFile.h>
-#endif
-
 #include <TTree.h>
+#include <Rtypes.h>
 
 #define SIMPLE_TREE_BRANCH(type, name) \
 private: type _##name; \
@@ -72,11 +67,10 @@ public:  std::vector< type >& name() { return _##name; }
     public: \
         static bool IsMCtruth() { return is_mc_truth; } \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
-        tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
-        tree_class_name(const std::string& name) : SmartTree(name, "/") { Initialize(); } \
-        tree_class_name(std::shared_ptr<TFile> file) : SmartTree(Name(), file) { Initialize(); } \
-        tree_class_name(std::shared_ptr<TFile> file, const std::string& name) \
-            : SmartTree(name, file) { Initialize(); } \
+        tree_class_name(TDirectory* directory, bool readMode) \
+            : SmartTree(Name(), directory, readMode) { Initialize(); } \
+        tree_class_name(const std::string& name, TDirectory* directory, bool readMode) \
+            : SmartTree(name, directory, readMode) { Initialize(); } \
         data_class_name data; \
         data_macro() \
     private: \
@@ -91,11 +85,10 @@ public:  std::vector< type >& name() { return _##name; }
     public: \
         static bool IsMCtruth() { return is_mc_truth; } \
         static const std::string& Name() { static const std::string name = tree_name; return name; } \
-        tree_class_name() : SmartTree(Name(), "/") { Initialize(); } \
-        tree_class_name(const std::string& name) : SmartTree(name, "/") { Initialize(); } \
-        tree_class_name(std::shared_ptr<TFile> file) : SmartTree(Name(), file) { Initialize(); } \
-        tree_class_name(std::shared_ptr<TFile> file, const std::string& name) \
-            : SmartTree(name, file) { Initialize(); } \
+        tree_class_name(TDirectory* directory, bool readMode) \
+            : SmartTree(Name(), directory, readMode) { Initialize(); } \
+        tree_class_name(const std::string& name, TDirectory* directory, bool readMode) \
+            : SmartTree(name, directory, readMode) { Initialize(); } \
         data_class_name data; \
         SIMPLE_TREE_BRANCH(UInt_t, RunId) \
         SIMPLE_TREE_BRANCH(UInt_t, LumiBlock) \
@@ -150,52 +143,39 @@ namespace detail {
 
 class SmartTree {
 public:
-    explicit SmartTree(const std::string& _name, const std::string& _directory = "", Long64_t maxVirtualSize = 10000000)
-        : name(_name), readMode(false), directory(_directory)
+    SmartTree(const std::string& _name, TDirectory* _directory, bool _readMode)
+        : name(_name), directory(_directory), readMode(_readMode)
     {
-#ifdef SMART_TREE_FOR_CMSSW
-        edm::Service<TFileService> tfserv;
-        if(directory.size()) {
-            tfserv->file().cd(directory.c_str());
-			tree = new TTree(name.c_str(), name.c_str());
-		}
-		else
-			tree = tfserv->make<TTree>(name.c_str(), name.c_str());
-#else
-        tree = new TTree(name.c_str(), name.c_str());
-#endif
-        if(maxVirtualSize < 0)
-            tree->SetDirectory(0); // detach tree from directory making it "in memory".
-        else
-            tree->SetMaxVirtualSize(maxVirtualSize);
-    }
-    SmartTree(const std::string& _name, std::shared_ptr<TFile> _file)
-        : name(_name), file(_file), readMode(true)
-    {
-        if(!file)
-            throw std::runtime_error("Input file is nullptr");
-        tree = static_cast<TTree*>(file->Get(name.c_str()));
-        if(!tree)
-            throw std::runtime_error("Tree not found.");
-        if(tree->GetNbranches())
-            tree->SetBranchStatus("*", 0);
-    }
-    SmartTree(const SmartTree& other)
-    {
-        throw std::runtime_error("Can't copy a smart tree");
+        static const Long64_t maxVirtualSize = 10000000;
+
+        if(readMode) {
+            if(!directory)
+                throw std::runtime_error("Can't read tree from nonexistent directory.");
+            tree = dynamic_cast<TTree*>(directory->Get(name.c_str()));
+            if(!tree)
+                throw std::runtime_error("Tree not found.");
+            if(tree->GetNbranches())
+                tree->SetBranchStatus("*", 0);
+        } else {
+            tree = new TTree(name.c_str(), name.c_str());
+            tree->SetDirectory(directory);
+            if(directory)
+                tree->SetMaxVirtualSize(maxVirtualSize);
+        }
     }
 
     SmartTree(const SmartTree&& other)
     {
+        name = other.name;
+        directory = other.directory;
         entries = other.entries;
         readMode = other.readMode;
         tree = other.tree;
-        directory = other.directory;
     }
 
     virtual ~SmartTree()
     {
-        if(readMode) file->Delete(name.c_str());
+        if(directory) directory->Delete(name.c_str());
         else delete tree;
     }
 
@@ -211,29 +191,25 @@ public:
     Int_t GetEntry(Long64_t entry) { return tree->GetEntry(entry); }
     void Write()
     {
-#ifdef SMART_TREE_FOR_CMSSW
-        edm::Service<TFileService> tfserv;
-        if(directory.size())
-            tfserv->file().cd(directory.c_str());
-#endif
-        tree->Write("", TObject::kWriteDelete);
+        if(directory)
+            directory->WriteTObject(tree, tree->GetName(), "WriteDelete");
     }
 
 protected:
     template<typename DataType>
-    void AddSimpleBranch(const std::string& name, DataType& value)
+    void AddSimpleBranch(const std::string& branch_name, DataType& value)
     {
         if(readMode) {
             try {
-                EnableBranch(name);
-                tree->SetBranchAddress(name.c_str(), &value);
+                EnableBranch(branch_name);
+                tree->SetBranchAddress(branch_name.c_str(), &value);
                 if(tree->GetReadEntry() >= 0)
-                    tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
+                    tree->GetBranch(branch_name.c_str())->GetEntry(tree->GetReadEntry());
             } catch(std::runtime_error& error) {
                 std::cerr << "ERROR: " << error.what() << std::endl;
             }
         } else {
-            TBranch* branch = tree->Branch(name.c_str(), &value);
+            TBranch* branch = tree->Branch(branch_name.c_str(), &value);
             const Long64_t n_entries = tree->GetEntries();
             for(Long64_t n = 0; n < n_entries; ++n)
                 branch->Fill();
@@ -241,48 +217,50 @@ protected:
     }
 
     template<typename DataType>
-    void AddVectorBranch(const std::string& name, std::vector<DataType>& value)
+    void AddVectorBranch(const std::string& branch_name, std::vector<DataType>& value)
     {
         typedef detail::SmartTreeVectorPtrEntry<DataType> PtrEntry;
         auto entry = std::shared_ptr<PtrEntry>( new PtrEntry(value) );
-        if(entries.count(name))
+        if(entries.count(branch_name))
             throw std::runtime_error("Entry is already defined.");
-        entries[name] = entry;
+        entries[branch_name] = entry;
         if(readMode) {
             try {
-                EnableBranch(name);
-                tree->SetBranchAddress(name.c_str(), &entry->value);
+                EnableBranch(branch_name);
+                tree->SetBranchAddress(branch_name.c_str(), &entry->value);
                 if(tree->GetReadEntry() >= 0)
-                    tree->GetBranch(name.c_str())->GetEntry(tree->GetReadEntry());
+                    tree->GetBranch(branch_name.c_str())->GetEntry(tree->GetReadEntry());
             } catch(std::runtime_error& error) {
                 std::cerr << "ERROR: " << error.what() << std::endl;
             }
         } else {
-            TBranch* branch = tree->Branch(name.c_str(), entry->value);
+            TBranch* branch = tree->Branch(branch_name.c_str(), entry->value);
             const Long64_t n_entries = tree->GetEntries();
             for(Long64_t n = 0; n < n_entries; ++n)
                 branch->Fill();
         }
     }
 
-    void EnableBranch(const std::string& name)
+    void EnableBranch(const std::string& branch_name)
     {
         UInt_t n_found = 0;
-        tree->SetBranchStatus(name.c_str(), 1, &n_found);
+        tree->SetBranchStatus(branch_name.c_str(), 1, &n_found);
         if(n_found != 1) {
             std::ostringstream ss;
-            ss << "Branch '" << name << "' is not found.";
+            ss << "Branch '" << branch_name << "' is not found.";
             throw std::runtime_error(ss.str());
         }
     }
 
 private:
+    SmartTree(const SmartTree& other) { throw std::runtime_error("Can't copy a smart tree"); }
+
+private:
     std::string name;
-    std::shared_ptr<TFile> file;
+    TDirectory* directory;
     std::map< std::string, std::shared_ptr<detail::BaseSmartTreeEntry> > entries;
     bool readMode;
     TTree* tree;
-    std::string directory;
 };
 
 } // root_ext
