@@ -73,9 +73,9 @@ public:
     const DataCategoryTypeSet& DataCategoryTypeToProcessForQCD() const { return dataCategoryTypeForQCD; }
 
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
-                         const std::string& _outputFileName, bool _applyPostFitCorrections = false)
+                         const std::string& _outputFileName, bool _applyPostFitCorrections, bool saveFullOutput)
         : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection),
-          anaDataCollection(outputFileName + "_full.root", true),
+          anaDataCollection(outputFileName + "_full.root", saveFullOutput),
           applyPostFitCorrections(_applyPostFitCorrections)
     {
         TH1::SetDefaultSumw2();
@@ -171,6 +171,9 @@ public:
         std::cout << "Saving datacards... " << std::endl;
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts,
                                         &FlatAnalyzerData::m_sv);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
+                                        EventSubCategory::KinematicFitConverged,
+                                        &FlatAnalyzerData::m_ttbb_kinfit);
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
                                         EventSubCategory::KinematicFitConvergedWithMassWindow,
                                         &FlatAnalyzerData::m_ttbb_kinfit);

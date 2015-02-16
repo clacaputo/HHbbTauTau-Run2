@@ -33,9 +33,10 @@
 class FlatTreeAnalyzer_etau : public analysis::SemileptonicFlatTreeAnalyzer {
 public:
     FlatTreeAnalyzer_etau(const std::string& source_cfg, const std::string& _inputPath,
-                          const std::string& outputFileName, const std::string& signal_list)
+                          const std::string& outputFileName, const std::string& signal_list,
+                          bool applyPostFitCorrections = false, bool saveFullOutput = false)
         : SemileptonicFlatTreeAnalyzer(analysis::DataCategoryCollection(source_cfg, signal_list, ChannelId()),
-                                       _inputPath, outputFileName)
+                                       _inputPath, outputFileName, applyPostFitCorrections, saveFullOutput)
     {
     }
 

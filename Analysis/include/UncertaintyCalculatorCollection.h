@@ -324,7 +324,8 @@ private:
         const PhysicalValue os_ss_sf = yield_OSAntiIso_ref / yield_SSAntiIso;
         const PhysicalValue alt_qcd_yield = yield_SSIso * os_ss_sf;
         const double alt_qcd_unc = alt_qcd_yield.GetRelativeFullError();
-        const PhysicalValue delta_qcd = qcd_yield - alt_qcd_yield;
+        const PhysicalValue delta_qcd =
+                (yield_OSAntiIso * yield_SSIso_ref - yield_OSAntiIso_ref * yield_SSIso) / yield_SSAntiIso;
 
         std::cout << "Alt QCD os/ss SF: " << os_ss_sf << ".\n"
                   << "Alt QCD signal yiled: " << alt_qcd_yield << ".\n"
