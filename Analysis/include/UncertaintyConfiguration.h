@@ -464,27 +464,21 @@ public:
 
     static UncertaintyInterval WeightedAverage(const std::vector<UncertaintyInterval>& intervals)
     {
-        const PhysicalValue new_down = WeightedAverage(intervals, &UncertaintyInterval::down);
-        const PhysicalValue new_up = WeightedAverage(intervals, &UncertaintyInterval::up);
+        const auto down_collection = CollectValues(intervals, &UncertaintyInterval::down);
+        const auto up_collection = CollectValues(intervals, &UncertaintyInterval::up);
+        const PhysicalValue new_down = PhysicalValue::WeightedAverage(down_collection);
+        const PhysicalValue new_up = PhysicalValue::WeightedAverage(up_collection);
         return UncertaintyInterval(new_down, new_up);
     }
 
 private:
-    static PhysicalValue WeightedAverage(const std::vector<UncertaintyInterval>& intervals, ValuePtr value_ptr)
+    static std::vector<PhysicalValue> CollectValues(const std::vector<UncertaintyInterval>& intervals,
+                                                    ValuePtr value_ptr)
     {
-        double total_weight = 0;
-        if (intervals.size() == 1)
-            return intervals.at(0).*value_ptr;
-        PhysicalValue weighted_sum;
-        for(const UncertaintyInterval& unc : intervals) {
-            const PhysicalValue& value = unc.*value_ptr;
-            if(!value.GetStatisticalError())
-                throw exception("Error equal zero!");
-            const double weight =  1. / sqr(value.GetStatisticalError());
-            total_weight += weight;
-            weighted_sum += value * PhysicalValue(weight);
-        }
-        return weighted_sum / PhysicalValue(total_weight);
+        std::vector<PhysicalValue> result;
+        for(const UncertaintyInterval& unc : intervals)
+            result.push_back(unc.*value_ptr);
+        return result;
     }
 };
 

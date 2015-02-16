@@ -327,10 +327,15 @@ private:
         const PhysicalValue delta_qcd =
                 (yield_OSAntiIso * yield_SSIso_ref - yield_OSAntiIso_ref * yield_SSIso) / yield_SSAntiIso;
 
+        const PhysicalValue average_qcd = PhysicalValue::WeightedAverage({qcd_yield, alt_qcd_yield});
+        const double qcd_cov = qcd_yield.Covariance(alt_qcd_yield);
+
         std::cout << "Alt QCD os/ss SF: " << os_ss_sf << ".\n"
                   << "Alt QCD signal yiled: " << alt_qcd_yield << ".\n"
                   << "Alt QCD full uncertainty: " << alt_qcd_unc << ".\n"
-                  << "Delta QCD methods: " << delta_qcd << ".\n";
+                  << "Delta QCD methods: " << delta_qcd << ".\n"
+                  << "Average QCD signal value: " << average_qcd << ".\n"
+                  << "QCD covariance: " << qcd_cov << ".\n";
 
         return UncertaintyInterval(PhysicalValue(qcd_unc, DefaultPrecision()));
     }

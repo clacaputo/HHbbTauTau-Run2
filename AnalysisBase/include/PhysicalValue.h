@@ -61,6 +61,26 @@ public:
     static const PhysicalValue<ValueType> One;
     static const PhysicalValue<ValueType> Two;
 
+    template<typename Collection = std::vector<PhysicalValue<ValueType>>>
+    static PhysicalValue<ValueType> WeightedAverage(const Collection& values)
+    {
+        if(!values.size())
+            throw exception("Can't calculate weighted average for an empty collection.");
+        ValueType total_weight = 0;
+        if (values.size() == 1)
+            return *values.begin();
+        PhysicalValue<ValueType> weighted_sum;
+        for(const auto& value : values) {
+            const ValueType full_error = value.GetFullError();
+            if(!full_error)
+                throw exception("Can't calculate weighted average. One of the errors equals zero.");
+            const double weight =  1. / sqr(full_error);
+            total_weight += weight;
+            weighted_sum += value * PhysicalValue<ValueType>(weight);
+        }
+        return weighted_sum / PhysicalValue(total_weight);
+    }
+
     PhysicalValue() : value(0), stat_error(0) {}
 
     explicit PhysicalValue(const ValueType& _value, const ValueType& _stat_error = 0)
@@ -124,6 +144,17 @@ public:
     }
 
     ValueType GetRelativeFullError() const { return GetFullError() / value; }
+
+    ValueType Covariance(const PhysicalValue<ValueType>& other) const
+    {
+        ValueType cov = 0;
+        SystematicNameSet all_systematic_names = systematic_names;
+        all_systematic_names.insert(other.systematic_names.begin(), other.systematic_names.end());
+        for(const std::string& unc_name : all_systematic_names) {
+            cov += std::abs(GetSystematicUncertainty(unc_name) * other.GetSystematicUncertainty(unc_name));
+        }
+        return cov;
+    }
 
     PhysicalValue<ValueType> operator+(const PhysicalValue<ValueType>& other) const
     {
