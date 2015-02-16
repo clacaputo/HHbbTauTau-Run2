@@ -90,6 +90,7 @@ struct DataCategory {
     std::set<std::string> sub_categories;
     DataSourceScaleFactorMap sources_sf;
     std::map<unsigned, double> exclusive_sf;
+    std::set<std::string> uncertainties;
 
     DataCategory()
         : color(kBlack), limits_sf(1.0), draw(false), draw_sf(1), isCategoryToSubtract(true) {}
@@ -274,6 +275,8 @@ private:
             ss >> category.datacard;
         } else if(param_name == "subcategory") {
             category.sub_categories.insert(param_value);
+        } else if(param_name == "uncertainty") {
+            category.uncertainties.insert(param_value);
         } else if(param_name == "exclusive_sf") {
             unsigned n_jets;
             double scale_factor;
