@@ -277,15 +277,16 @@ protected:
 
             static const EventCategorySet categoriesToRelax = {
                 EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
-            const EventCategory shapeEventCategory = categoriesToRelax.count(anaDataMetaId.eventCategory)
-                    ? MediumToLoose_EventCategoryMap.at(anaDataMetaId.eventCategory) : anaDataMetaId.eventCategory;
-            const FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId_shape(shapeEventCategory,
-                                                                             anaDataMetaId.eventSubCategory,
-                                                                             anaDataMetaId.eventEnergyScale);
 
             for(const auto& yield_iter : valueMap) {
                 const EventRegion eventRegion = yield_iter.first;
                 const PhysicalValue& yield = yield_iter.second;
+                const EventCategory shapeEventCategory = (categoriesToRelax.count(anaDataMetaId.eventCategory) &&
+                        eventRegion == analysis::EventRegion::OS_Isolated)
+                        ? MediumToLoose_EventCategoryMap.at(anaDataMetaId.eventCategory) : anaDataMetaId.eventCategory;
+                const FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId_shape(shapeEventCategory,
+                                                                                 anaDataMetaId.eventSubCategory,
+                                                                                 anaDataMetaId.eventEnergyScale);
                 auto z_hist_shape = GetHistogram(anaDataMetaId_shape, eventRegion, originalZcategory.name, hist_name);
                 if (z_hist_shape){
                     TH1D& z_hist = CloneHistogram(anaDataMetaId, eventRegion, newZcategory.name, *z_hist_shape);
