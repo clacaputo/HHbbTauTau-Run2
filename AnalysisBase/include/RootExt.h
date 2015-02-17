@@ -85,6 +85,15 @@ Object* ReadObject(TFile& file, const std::string& name)
 }
 
 template<typename Object>
+Object* TryReadObject(TFile& file, const std::string& name)
+{
+    try {
+        return ReadObject<Object>(file, name);
+    } catch(analysis::exception&) {}
+    return nullptr;
+}
+
+template<typename Object>
 Object* CloneObject(const Object& original_object, const std::string& new_name = "", bool detach_from_file = false)
 {
     const std::string new_object_name = new_name.size() ? new_name : original_object.GetName();
