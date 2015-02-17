@@ -179,8 +179,10 @@ public:
                                         &FlatAnalyzerData::m_ttbb_kinfit);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        PrintStackedPlots(EventRegion::OS_Isolated, true, true);
+        //PrintStackedPlots(EventRegion::OS_Isolated, true, true);
         PrintStackedPlots(EventRegion::OS_Isolated, false, true);
+        //if (applyPostFitCorrections)
+        PrintStackedPlots(EventRegion::OS_Isolated, false, false);
 
         std::cout << "Saving output file..." << std::endl;
     }
@@ -530,7 +532,7 @@ protected:
                     if(subCategory != EventSubCategory::NoCuts)
                         ss_title << " " << subCategory;
                     ss_title << ": " << hist_name;
-                    StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(), drawRatio);
+                    StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(), drawRatio,applyPostFitCorrections);
 
                     for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                         if(!category->draw) continue;
@@ -921,15 +923,15 @@ private:
 
         if(!scaleFactors.size()) {
             uncertainties[EventSubCategory::KinematicFitConverged] = {
-                { EventCategory::TwoJets_ZeroBtag, 0.08235 },
-                { EventCategory::TwoJets_OneBtag, 0.12865 },
-                { EventCategory::TwoJets_TwoBtag, 0.17155 }
+                { EventCategory::TwoJets_ZeroBtag, 0.07178 },
+                { EventCategory::TwoJets_OneBtag, 0.11307 },
+                { EventCategory::TwoJets_TwoBtag, 0.16057 }
             };
 
             uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow] = {
-                { EventCategory::TwoJets_ZeroBtag, 0.07615 },
-                { EventCategory::TwoJets_OneBtag, 0.14487 },
-                { EventCategory::TwoJets_TwoBtag, 0.18952 }
+                { EventCategory::TwoJets_ZeroBtag, 0.07097 },
+                { EventCategory::TwoJets_OneBtag, 0.12763 },
+                { EventCategory::TwoJets_TwoBtag, 0.16699 }
             };
 
             uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
@@ -938,29 +940,29 @@ private:
 
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag] = {
-                { "QCD", 0.98941 }, { "TT", 1.12182 }, { "VV", 1.12569 }, { "W", 1.01300 }, { "ZLL", 0.99556 },
-                { "ZTT", 1.27644 }
+                { "QCD", 1.01213 }, { "TT", 1.14485 }, { "VV", 1.13313 }, { "W", 1.09412 }, { "ZLL", 1.00462 },
+                { "ZTT", 1.29769 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 1.03465 }, { "TT", 1.08095 }, { "VV", 1.08546 }, { "ZLL", 1.00888 }, { "ZTT", 1.19203 }
+                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_TwoBtag] = {
-                { "QCD", 0.97828 }, { "TT", 1.05903 }, { "VV", 1.04112 }, { "ZLL", 1.00152 }, { "ZTT", 1.04694 }
+                { "QCD", 0.94037 }, { "TT", 1.15275 }, { "VV", 1.13286 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag] = {
-                { "QCD", 1.01377 }, { "TT", 1.05496 }, { "VV", 1.05401 }, { "W", 1.00883 }, { "ZLL", 1.01078 },
-                { "ZTT", 1.10411 }
+                { "QCD", 1.05700 }, { "TT", 1.04612 }, { "VV", 1.05031 }, { "W", 1.03562 }, { "ZLL", 1.01775 },
+                { "ZTT", 1.07601 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 0.92723 }, { "TT", 0.98397 }, { "VV", 0.99815 }, { "ZLL", 0.99512 }, { "ZTT", 1.08041 }
+                { "QCD", 1.09063 }, { "TT", 1.05456 }, { "VV", 1.04395 }, { "ZLL", 1.01457 }, { "ZTT", 1.11958 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_TwoBtag] = {
-                { "QCD", 1.05262 }, { "TT", 1.23052 }, { "VV", 1.13869 }, { "ZLL", 0.99945 }, { "ZTT", 1.30434 }
+                { "QCD", 0.92167 }, { "TT", 1.05792 }, { "VV", 1.04335 }, { "ZLL", 0.99016 }, { "ZTT", 0.88457 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =

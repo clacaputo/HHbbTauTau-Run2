@@ -73,6 +73,8 @@ public:
     TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1, SaveAll)
     TH2D_ENTRY_EX(csv_b1_vs_ptb1, 20, 0, 200, 25, 0, 1, "P_{T}[GeV](leading_jet)", "CSV(leading_jet)", false, 1, SaveAll)
+    TH2D_ENTRY_EX(chi2_vs_ptb1, 20, 0, 200, 20, 0, 100, "P_{T}[GeV](leading_jet)", "#chi^{2}", false, 1, SaveAll)
+    TH2D_ENTRY_EX(mH_vs_chi2, 20, 0, 100, 50, 200, 700, "#chi^{2}", "M_{#tau#taubb}[GeV]", false, 1, SaveAll)
 
     static constexpr bool SaveAll = true;
 
@@ -158,6 +160,11 @@ public:
 
         csv_b1_vs_ptb1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
                               eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
+        if (eventInfo.fitResults.has_valid_mass){
+            chi2_vs_ptb1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
+                                eventInfo.fitResults.chi2,weight);
+            mH_vs_chi2().Fill(eventInfo.fitResults.chi2,eventInfo.fitResults.mass, weight);
+        }
     }
 
 protected:

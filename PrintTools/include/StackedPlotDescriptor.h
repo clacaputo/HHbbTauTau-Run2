@@ -48,9 +48,9 @@ public:
     typedef std::vector<hist_ptr> hist_ptr_vector;
 
     StackedPlotDescriptor(const std::string& page_title, bool draw_title, const std::string& channelNameLatex,
-                          bool _draw_ratio)
+                          bool _draw_ratio, bool _drawBKGerrors)
         : text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")), channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")),
-          channelName(channelNameLatex), draw_ratio(_draw_ratio)
+          channelName(channelNameLatex), draw_ratio(_draw_ratio), drawBKGerrors(_drawBKGerrors)
     {
         page.side.fit_range_x = false;
         page.title = page_title;
@@ -212,11 +212,13 @@ public:
             stack->GetYaxis()->SetLabelSize(0.04);
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
 
-            sum_backgound_histogram->SetMarkerSize(0);
-            sum_backgound_histogram->SetFillColor(13);
-            sum_backgound_histogram->SetFillStyle(3013);
-            sum_backgound_histogram->SetLineWidth(1);
-            sum_backgound_histogram->Draw("e2same");
+            if (drawBKGerrors){
+                sum_backgound_histogram->SetMarkerSize(0);
+                sum_backgound_histogram->SetFillColor(13);
+                sum_backgound_histogram->SetFillStyle(3013);
+                sum_backgound_histogram->SetLineWidth(1);
+                sum_backgound_histogram->Draw("e2same");
+            }
         }
 
         for(const hist_ptr& signal : signal_histograms)
@@ -340,6 +342,7 @@ private:
     std::shared_ptr<TPad> main_pad, ratio_pad;
     std::string channelName;
     bool draw_ratio;
+    bool drawBKGerrors;
 };
 
 } // namespace analysis
