@@ -345,7 +345,7 @@ public:
     Histogram* GetHistogram(const FlatAnalyzerDataId& id, const std::string& name) const
     {
         const std::string full_name = id.GetName() + "/" + name;
-        return root_ext::ReadObject<Histogram>(*file, full_name);
+        return root_ext::TryReadObject<Histogram>(*file, full_name);
     }
 
 private:
