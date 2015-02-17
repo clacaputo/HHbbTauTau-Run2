@@ -284,16 +284,17 @@ protected:
                     valueMap[eventRegion] = analysis::Integral(*vv_hist_yield, true);
             }
 
-            const EventCategory shapeEventCategory = categoriesToRelax.count(anaDataMetaId.eventCategory)
-                    ? analysis::MediumToLoose_EventCategoryMap.at(anaDataMetaId.eventCategory)
-                    : anaDataMetaId.eventCategory;
-            const analysis::FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId_shape(shapeEventCategory,
-                                                                                       anaDataMetaId.eventSubCategory,
-                                                                                       anaDataMetaId.eventEnergyScale);
 
             for(const auto& yield_iter : valueMap) {
                 const analysis::EventRegion eventRegion = yield_iter.first;
                 const analysis::PhysicalValue& yield = yield_iter.second;
+                const EventCategory shapeEventCategory = (categoriesToRelax.count(anaDataMetaId.eventCategory) &&
+                                                          eventRegion == analysis::EventRegion::OS_Isolated)
+                        ? analysis::MediumToLoose_EventCategoryMap.at(anaDataMetaId.eventCategory)
+                        : anaDataMetaId.eventCategory;
+                const analysis::FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId_shape(shapeEventCategory,
+                                                                                           anaDataMetaId.eventSubCategory,
+                                                                                           anaDataMetaId.eventEnergyScale);
                 auto vv_hist_shape = GetHistogram(anaDataMetaId_shape, eventRegion, originalVVcategory.name, hist_name);
                 if (vv_hist_shape){
                     TH1D& vv_hist = CloneHistogram(anaDataMetaId, eventRegion, newVVcategory.name, *vv_hist_shape);
