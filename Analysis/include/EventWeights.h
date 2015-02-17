@@ -199,11 +199,8 @@ private:
     static std::shared_ptr<TH1D> LoadPUWeights(const std::string& reweightFileName)
     {
         auto reweightFile = root_ext::OpenRootFile(reweightFileName);
-        TObject* originalWeights = reweightFile->Get("weights");
-        if (!originalWeights)
-            throw exception("histograms with weights not found");
-        std::shared_ptr<TH1D> weights_clone(static_cast<TH1D*>(originalWeights->Clone("PUweights")));
-        weights_clone->SetDirectory(nullptr);
+        TH1D* originalWeights = root_ext::ReadObject<TH1D>(*reweightFile, "weights");
+        std::shared_ptr<TH1D> weights_clone(root_ext::CloneObject(*originalWeights, "PUweights", true));
         return weights_clone;
     }
 

@@ -26,6 +26,7 @@
 #include <string>
 
 #include "RootPrintTools.h"
+#include "AnalysisBase/include/RootExt.h"
 
 namespace root_ext {
 
@@ -199,13 +200,7 @@ public:
         if(!source_files[id])
             return Entry(0, plot_options_vector[id]);
         std::string realName = GenerateName(id, name);
-        OriginalHistogram* original_histogram
-                = static_cast<OriginalHistogram*>(source_files[id]->Get(realName.c_str()));
-        if(!original_histogram) {
-            std::ostringstream ss;
-            ss << "original histogram '" << realName << "' not found in file '" << source_files[id]->GetPath() << "'.";
-            throw std::runtime_error(ss.str());
-        }
+        OriginalHistogram* original_histogram = root_ext::ReadObject<OriginalHistogram>(*source_files[id], realName);
         Histogram* histogram = Convert(original_histogram);
         if(!histogram)
             throw std::runtime_error("source histogram not found.");
@@ -242,7 +237,7 @@ class SimpleHistogramSource : public HistogramSource<Histogram, ValueType, Histo
 protected:
     virtual Histogram* Convert(Histogram* original_histogram) const
     {
-        return static_cast<Histogram*>(original_histogram->Clone());
+        return root_ext::CloneObject(*original_histogram);
     }
 };
 

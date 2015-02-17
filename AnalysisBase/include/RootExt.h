@@ -69,6 +69,41 @@ void WriteObject(const Object& object, TDirectory* dir, const std::string& name 
     dir->WriteTObject(&object, name_to_write.c_str(), "WriteDelete");
 }
 
+template<typename Object>
+Object* ReadObject(TFile& file, const std::string& name)
+{
+    if(!name.size())
+        throw analysis::exception("Can't read nameless object.");
+    TObject* root_object = file.Get(name.c_str());
+    if(!root_object)
+        throw analysis::exception("Object '") << name << "' not found in '" << file.GetName() << "'.";
+    Object* object = dynamic_cast<Object*>(root_object);
+    if(!object)
+        throw analysis::exception("Wrong object type '") << typeid(Object).name() << "' for object '" << name
+                                                         << "' in '" << file.GetName() << "'.";
+    return object;
+}
+
+template<typename Object>
+Object* CloneObject(const Object& original_object, const std::string& new_name = "", bool detach_from_file = false)
+{
+    const std::string new_object_name = new_name.size() ? new_name : original_object.GetName();
+    Object* new_object = dynamic_cast<Object*>(original_object.Clone(new_object_name.c_str()));
+    if(!new_object)
+        throw analysis::exception("Type error while cloning object '") << original_object.GetName() << "'.";
+    if(detach_from_file)
+        new_object->SetDirectory(nullptr);
+    return new_object;
+}
+
+template<typename Object>
+Object* ReadCloneObject(TFile& file, const std::string& original_name, const std::string& new_name = "",
+                        bool detach_from_file = false)
+{
+    Object* original_object = ReadObject<Object>(file, original_name);
+    return CloneObject(*original_object, new_name, detach_from_file);
+}
+
 } // namespace root_ext
 
 

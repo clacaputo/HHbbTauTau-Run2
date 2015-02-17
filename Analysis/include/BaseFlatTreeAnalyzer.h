@@ -623,7 +623,7 @@ protected:
                                                                          eventEnergyScale);
                     std::shared_ptr<TH1D> hist;
                     if(auto hist_orig = GetSignalHistogram(meta_id, dataCategory->name, hist_name))
-                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+                        hist = std::shared_ptr<TH1D>(new TH1D(*hist_orig));
                     else {
                         std::cout << "Warning - Datacard histogram '" << hist_name
                                   << "' not found for data category '" << dataCategory->name << "' in '"
@@ -633,7 +633,7 @@ protected:
                         FlatAnalyzerData& anaData = GetAnaData(meta_id.MakeId(EventRegion::OS_Isolated,
                                                                               dataCategory->name));
                         auto& new_hist = (anaData.*histogramAccessor)();
-                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(new_hist.Clone()));
+                        hist = std::shared_ptr<TH1D>(new TH1D(new_hist));
                         const Int_t central_bin = hist->GetNbinsX() / 2;
                         hist->SetBinContent(central_bin, tiny_value);
                         hist->SetBinError(central_bin, tiny_value_error);
@@ -649,10 +649,10 @@ protected:
                                 + dataCategory->datacard + "Scale_" + channel_name + "_8TeV";
                         const std::string name_syst_up = name_syst_prefix + "Up";
                         const std::string name_syst_down = name_syst_prefix + "Down";
-                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                        std::shared_ptr<TH1D> hist_syst_up(new TH1D(*hist));
                         hist_syst_up->Scale(1.02);
                         root_ext::WriteObject(*hist_syst_up, directory, name_syst_up);
-                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
+                        std::shared_ptr<TH1D> hist_syst_down(new TH1D(*hist));
                         hist_syst_down->Scale(0.98);
                         root_ext::WriteObject(*hist_syst_down, directory, name_syst_down);
                     }
@@ -664,9 +664,9 @@ protected:
                                 + "Shape_" + channel_name + "_8TeV";
                         const std::string name_syst_up = name_syst_prefix + "Up";
                         const std::string name_syst_down = name_syst_prefix + "Down";
-                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                        std::shared_ptr<TH1D> hist_syst_up(new TH1D(*hist));
                         root_ext::WriteObject(*hist_syst_up, directory, name_syst_up);
-                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
+                        std::shared_ptr<TH1D> hist_syst_down(new TH1D(*hist));
                         root_ext::WriteObject(*hist_syst_down, directory, name_syst_down);
                     }
                 }
