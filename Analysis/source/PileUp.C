@@ -44,7 +44,7 @@ public:
     {
 
         auto Data_File = root_ext::OpenRootFile(Data_File_name);
-        Data_distr = static_cast<TH1D*>(Data_File->Get(histName.c_str())->Clone());
+        Data_distr = root_ext::ReadCloneObject(*Data_File, histName);
         root_ext::WriteObject(*Data_distr, outputFile.get());
         Data_distr->Scale( 1.0/ Data_distr->Integral() );
         Data_File->Close();
@@ -79,7 +79,7 @@ public:
         root_ext::WriteObject(*nPU_MCdistr);
         nPU_MCdistr->Scale( 1.0 / nPU_MCdistr->Integral() );
 
-        TH1D* weights = static_cast<TH1D*>(Data_distr->Clone("weights"));
+        TH1D* weights = root_ext::CloneObject(*Data_distr, "weights");
         weights->Divide(nPU_MCdistr);
         root_ext::WriteObject(*weights, outputFile.get());
     }

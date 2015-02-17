@@ -35,6 +35,8 @@
 #include <TLegend.h>
 #include <TColor.h>
 
+#include "AnalysisBase/include/RootExt.h"
+
 namespace root_ext {
 
 static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"black",kBlack}, {"gray",kGray},
@@ -250,7 +252,7 @@ public:
             stat_pad->cd();
             TPaveStats *pave_stats = (TPaveStats*)h->GetListOfFunctions()->FindObject("stats");
 
-            TPaveStats *pave_stats_copy = (TPaveStats *) pave_stats->Clone();
+            TPaveStats *pave_stats_copy = root_ext::CloneObject(*pave_stats);
             h->SetStats(0);
 
             pave_stats_copy->SetX1NDC(o.pave_stats_box.left_bottom.x);

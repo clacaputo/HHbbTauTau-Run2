@@ -130,9 +130,7 @@ public:
     static TH1D* Convert(const DataSource& source, const HistogramDescriptor& hist, const std::string& treeName,
                          const std::string& weightBranchName = "")
     {
-        TTree* tree = static_cast<TTree*>(source.file->Get(treeName.c_str()));;
-        if(!tree)
-            throw std::runtime_error("tree not found.");
+        TTree* tree = root_ext::ReadObject<TTree>(*source.file, treeName);
         std::ostringstream name;
         name << source.file_name << "_" << hist.name << "_hist";
         std::ostringstream command;

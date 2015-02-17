@@ -345,13 +345,7 @@ public:
     Histogram* GetHistogram(const FlatAnalyzerDataId& id, const std::string& name) const
     {
         const std::string full_name = id.GetName() + "/" + name;
-        TObject* object = file->Get(full_name.c_str());
-        if(!object)
-            return nullptr;
-        Histogram* hist = dynamic_cast<Histogram*>(object);
-        if(!hist)
-            throw exception("Wrong type for '") << name << "' in " << id << ".";
-        return hist;
+        return root_ext::ReadObject<Histogram>(*file, full_name);
     }
 
 private:
