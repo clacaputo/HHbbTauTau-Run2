@@ -48,7 +48,6 @@ public:
          : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile())
     {
         recalc_kinfit = true;
-        anaData.getOutputFile().cd();
     }
 
 protected:

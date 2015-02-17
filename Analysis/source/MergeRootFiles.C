@@ -59,7 +59,6 @@ private:
     /// Copy all objects and subdirs of the source directory to the destination directory.
     static void CopyDirectory(TDirectory *source, TDirectory *destination, bool isReference)
     {
-        destination->cd();
         std::cout<< "CopyDir. Current direcotry: " << destination->GetName() << std::endl;
 
         TIter nextkey(source->GetListOfKeys());
@@ -84,21 +83,17 @@ private:
                     subdir_destination = destination->mkdir(subdir_source->GetName());
 
                 CopyDirectory(subdir_source, subdir_destination, isReference);
-                destination->cd();
             } else if(destination->Get(key->GetName())) {
 
             } else if (cl->InheritsFrom("TTree")) {
                 TTree *T = (TTree*)source->Get(key->GetName());
-                destination->cd();
                 TTree *newT = T->CloneTree();
-                newT->Write(key->GetName());
+                destination->WriteTObject(newT, key->GetName(), "WriteDelete");
                 objectWritten = true;
             } else {
-                source->cd();
                 std::unique_ptr<TObject> original_obj(key->ReadObj());
                 std::unique_ptr<TObject> obj(original_obj->Clone());
-                destination->cd();
-                obj->Write(key->GetName());
+                destination->WriteTObject(obj, key->GetName(), "WriteDelete");
                 objectWritten = true;
             }
 

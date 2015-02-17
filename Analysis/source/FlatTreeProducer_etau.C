@@ -176,7 +176,6 @@ public:
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight(), config.ApplyJetToTauFakeRate(), config.ApplyEtoTauFakeRate())
     {
-        baseAnaData.getOutputFile()->cd();
         if(config.ApplyRecoilCorrection())
             recoilCorrectionProducer_etau = std::shared_ptr<analysis::RecoilCorrectionProducer>(
                         new analysis::RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo_ETau(),

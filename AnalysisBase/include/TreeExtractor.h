@@ -74,7 +74,7 @@ inline void CreateTree(std::shared_ptr<Tree>& tree, std::shared_ptr<TFile> input
                        const std::string& treeName, bool extractMCtruth, unsigned maxVersion)
 {
     const bool createTree = TreeVersionTag<Tree>::GetVersion() <= maxVersion && (!Tree::IsMCtruth() || extractMCtruth);
-    tree = createTree ? std::shared_ptr<Tree>( new Tree(inputFile, treeName) ) : std::shared_ptr<Tree>();
+    tree = createTree ? std::shared_ptr<Tree>( new Tree(treeName, inputFile.get(), true) ) : std::shared_ptr<Tree>();
 }
 
 template<size_t N = 0>
@@ -177,8 +177,6 @@ private:
     std::shared_ptr<detail::Forest> forest;
     Long64_t current_entry;
     std::string prefix;
-
-
 
     bool OpenNextFile()
     {

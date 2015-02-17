@@ -52,10 +52,7 @@ public:
 class BjetSelectionStudy : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     BjetSelectionStudy(const std::string& _inputFileName, const std::string& _outputFileName)
-         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile())
-    {
-        anaData.getOutputFile().cd();
-    }
+         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile()) {}
 
 protected:
     //virtual analysis::FlatAnalyzerData& GetAnaData() override { return anaData; }

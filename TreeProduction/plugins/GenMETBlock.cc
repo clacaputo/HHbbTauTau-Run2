@@ -37,14 +37,14 @@
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
 
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/GenMET.h"
 
 class GenMETBlock : public edm::EDAnalyzer {
 public:
     explicit GenMETBlock(const edm::ParameterSet& iConfig) :
         _verbosity(iConfig.getParameter<int>("verbosity")),
-        _inputTag(iConfig.getParameter<edm::InputTag>("genMETSrc")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("genMETSrc")),
+        genMETTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { genMETTree.Write(); }

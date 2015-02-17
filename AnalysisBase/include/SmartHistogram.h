@@ -38,22 +38,26 @@
 #include <TH2.h>
 #include <TTree.h>
 
+#include "AnalysisBase/include/RootExt.h"
+
 namespace root_ext {
 
 class AbstractHistogram {
 public:
     AbstractHistogram(const std::string& _name)
-        : name(_name) {}
+        : name(_name), outputDirectory(nullptr) {}
 
     virtual ~AbstractHistogram() {}
 
     virtual void WriteRootObject() = 0;
-    virtual void SetOutputDirectory(TDirectory* directory) {}
+    virtual void SetOutputDirectory(TDirectory* directory) { outputDirectory = directory; }
 
+    TDirectory* GetOutputDirectory() const { return outputDirectory; }
     const std::string& Name() const { return name; }
 
 private:
     std::string name;
+    TDirectory* outputDirectory;
 };
 
 namespace detail {
@@ -77,14 +81,16 @@ public:
 
     virtual void WriteRootObject()
     {
+        if(!GetOutputDirectory()) return;
         std::unique_ptr<TTree> rootTree(new TTree(Name().c_str(), Name().c_str()));
+        rootTree->SetDirectory(GetOutputDirectory());
         ValueType branch_value;
         rootTree->Branch("values", &branch_value);
         for(const ValueType& value : data) {
             branch_value = value;
             rootTree->Fill();
         }
-        rootTree->Write("", TObject::kWriteDelete);
+        root_ext::WriteObject(*rootTree);
     }
 
 private:
@@ -116,7 +122,9 @@ public:
 
     virtual void WriteRootObject()
     {
+        if(!GetOutputDirectory()) return;
         std::unique_ptr<TTree> rootTree(new TTree(Name().c_str(), Name().c_str()));
+        rootTree->SetDirectory(GetOutputDirectory());
         NumberType branch_value_x, branch_value_y;
         rootTree->Branch("x", &branch_value_x);
         rootTree->Branch("y", &branch_value_y);
@@ -125,7 +133,7 @@ public:
             branch_value_y = value.y;
             rootTree->Fill();
         }
-        rootTree->Write("", TObject::kWriteDelete);
+        root_ext::WriteObject(*rootTree);
     }
 
 private:
@@ -222,13 +230,14 @@ public:
 
     virtual void WriteRootObject() override
     {
-        if(store)
-            Write(Name().c_str(), TObject::kOverwrite);
+        if(store && GetOutputDirectory())
+            root_ext::WriteObject(*this);
     }
 
     virtual void SetOutputDirectory(TDirectory* directory) override
     {
         TDirectory* dir = store ? directory : nullptr;
+        AbstractHistogram::SetOutputDirectory(dir);
         SetDirectory(dir);
     }
 
@@ -264,13 +273,14 @@ public:
 
     virtual void WriteRootObject() override
     {
-        if(store)
-            Write(Name().c_str(), TObject::kOverwrite);
+        if(store && GetOutputDirectory())
+            root_ext::WriteObject(*this);
     }
 
     virtual void SetOutputDirectory(TDirectory* directory) override
     {
         TDirectory* dir = store ? directory : nullptr;
+        AbstractHistogram::SetOutputDirectory(dir);
         SetDirectory(dir);
     }
 

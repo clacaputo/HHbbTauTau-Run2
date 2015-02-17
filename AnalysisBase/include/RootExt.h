@@ -51,6 +51,24 @@ std::shared_ptr<TFile> OpenRootFile(const std::string& file_name)
     return file;
 }
 
+template<typename Object>
+void WriteObject(const Object& object)
+{
+    TDirectory* dir = object.GetDirectory();
+    if(!dir)
+        throw analysis::exception("Can't write object to nullptr.");
+    dir->WriteTObject(&object, object.GetName(), "WriteDelete");
+}
+
+template<typename Object>
+void WriteObject(const Object& object, TDirectory* dir, const std::string& name = "")
+{
+    if(!dir)
+        throw analysis::exception("Can't write object to nullptr.");
+    const std::string name_to_write = name.size() ? name : object.GetName();
+    dir->WriteTObject(&object, name_to_write.c_str(), "WriteDelete");
+}
+
 } // namespace root_ext
 
 

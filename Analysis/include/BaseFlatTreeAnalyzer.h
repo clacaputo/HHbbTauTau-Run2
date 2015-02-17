@@ -91,7 +91,7 @@ public:
             for(const auto& source_entry : dataCategory->sources_sf) {
                 const std::string fullFileName = inputPath + "/" + source_entry.first;
                 auto file = root_ext::OpenRootFile(fullFileName);
-                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree(file, "flatTree"));
+                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree("flatTree", file.get(), true));
                 ProcessDataSource(*dataCategory, tree, source_entry.second);
             }
         }
@@ -607,13 +607,12 @@ protected:
         const std::string file_name = s_file_name.str();
 
         auto outputFile = root_ext::CreateRootFile(file_name);
-        outputFile->cd();
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
             const std::string directoryName = channelNameForFolder.at(ChannelName()) + "_"
                     + categoryToDirectoryNameSuffix.at(eventCategory);
             outputFile->mkdir(directoryName.c_str());
-            outputFile->cd(directoryName.c_str());
+            TDirectory* directory = outputFile->GetDirectory(directoryName.c_str());
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
@@ -639,7 +638,7 @@ protected:
                     }
                     const std::string full_datacard_name = FullDataCardName(dataCategory->datacard, eventEnergyScale);
                     hist->Scale(dataCategory->limits_sf);
-                    hist->Write(full_datacard_name.c_str());
+                    root_ext::WriteObject(*hist, directory, full_datacard_name);
 
                     if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "ZL") {
                         std::string channel_name = ChannelName();
@@ -650,10 +649,10 @@ protected:
                         const std::string name_syst_down = name_syst_prefix + "Down";
                         std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
                         hist_syst_up->Scale(1.02);
-                        hist_syst_up->Write(name_syst_up.c_str());
+                        root_ext::WriteObject(*hist_syst_up, directory, name_syst_up);
                         std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
                         hist_syst_down->Scale(0.98);
-                        hist_syst_down->Write(name_syst_down.c_str());
+                        root_ext::WriteObject(*hist_syst_down, directory, name_syst_down);
                     }
                     //added shape systematics for QCD
                     if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "QCD_alternative") {
@@ -664,9 +663,9 @@ protected:
                         const std::string name_syst_up = name_syst_prefix + "Up";
                         const std::string name_syst_down = name_syst_prefix + "Down";
                         std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
-                        hist_syst_up->Write(name_syst_up.c_str());
+                        root_ext::WriteObject(*hist_syst_up, directory, name_syst_up);
                         std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
-                        hist_syst_down->Write(name_syst_down.c_str());
+                        root_ext::WriteObject(*hist_syst_down, directory, name_syst_down);
                     }
                 }
             }

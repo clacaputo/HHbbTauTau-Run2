@@ -50,8 +50,6 @@
 
 #include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 
-#define SMART_TREE_FOR_CMSSW
-
 #include "HHbbTauTau/TreeProduction/interface/Muon.h"
 #include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
 
@@ -62,7 +60,8 @@ public:
         _vtxInputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")),
         _beamSpotInputTag(iConfig.getParameter<edm::InputTag>("offlineBeamSpot")),
         _beamSpotCorr(iConfig.getParameter<bool>("beamSpotCorr")),
-        _muonID(iConfig.getParameter<std::string>("muonID")) {}
+        _muonID(iConfig.getParameter<std::string>("muonID")),
+        muonTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { muonTree.Write(); }

@@ -39,10 +39,7 @@ public:
 class McTruthStudy_flat : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     McTruthStudy_flat(const std::string& inputFileName, const std::string& outputFileName)
-         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile())
-    {
-        anaData.getOutputFile().cd();
-    }
+         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile()) {}
 
 protected:
     virtual analysis::LightFlatAnalyzerData& GetAnaData() override { return anaData; }

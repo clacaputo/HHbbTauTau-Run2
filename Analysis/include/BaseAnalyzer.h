@@ -92,6 +92,8 @@ public:
 
         }
         TH1::SetDefaultSumw2();
+        TH1::AddDirectory(kFALSE);
+        TH2::AddDirectory(kFALSE);
         if(config.EstimateJetEnergyUncertainties()) {
             jetEnergyUncertaintyCorrector = std::shared_ptr<JetEnergyUncertaintyCorrector>(
                         new JetEnergyUncertaintyCorrector(config.JetEnergyUncertainties_inputFile(),
@@ -161,7 +163,6 @@ private:
         }
 
         event = _event;
-        GetAnaData().getOutputFile()->cd();
         GetEventWeights().Reset();
         if(config.ApplyPUreweight())
             GetEventWeights().CalculatePuWeight(event->eventInfo());

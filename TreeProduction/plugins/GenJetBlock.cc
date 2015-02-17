@@ -37,14 +37,15 @@
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/GenJet.h"
 
 class GenJetBlock : public edm::EDAnalyzer {
 public:
     explicit GenJetBlock(const edm::ParameterSet& iConfig) :
         _verbosity(iConfig.getParameter<int>("verbosity")),
-        _inputTag(iConfig.getParameter<edm::InputTag>("genJetSrc")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("genJetSrc")),
+        genJetTree(&edm::Service<TFileService>()->file(), false) {}
+
 private:
     virtual void endJob() { genJetTree.Write(); }
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);

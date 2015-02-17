@@ -32,7 +32,6 @@ public:
          : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName)
     {
         recalc_kinfit = false;
-        GetOutputFile().cd();
     }
 
 protected:
