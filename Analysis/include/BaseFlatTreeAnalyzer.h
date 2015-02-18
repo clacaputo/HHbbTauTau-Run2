@@ -945,7 +945,7 @@ private:
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
+                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00809 }, { "ZTT",  1.34234 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_TwoBtag] = {

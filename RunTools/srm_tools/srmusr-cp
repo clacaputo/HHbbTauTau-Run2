@@ -32,7 +32,8 @@ for NAME in $FILES ; do
 				continue
 			fi
 			echo "Removing partially transfered file $SRM_NAME from SRM..."
-			srmrm -2 "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$SRM_NAME"
+			#srmrm -2 "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$SRM_NAME"
+			lcg-del -b -l -D srmv2 "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$SRM_NAME"
 		fi
 		( lcg-cp --srm-timeout=$TIMEOUT --connect-timeout=$TIMEOUT -b -D srmv2 -v -n $NUMBER_OF_STREAMS\
 			"file:///$LOCAL_DIR_PATH/$NAME" "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$SRM_NAME" ) & LCG_PID=$!

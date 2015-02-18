@@ -16,5 +16,5 @@ LOCAL_DIR=$LOCAL_SRM_PATH/$REMOTE_DIR
 cd $LOCAL_DIR
 
 find . -type f -name "$FILE_NAME_PATTERN" -printf "srm://stormfe1.pi.infn.it:8444/srm/managerv2?SFN=/cms/$REMOTE_DIR/%p\\0" \
-	| xargs -0 -r srmrm -2
+	| xargs -0 -r lcg-del -b -l -D srmv2
 
