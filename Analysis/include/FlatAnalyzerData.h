@@ -35,26 +35,23 @@ namespace analysis {
 
 class FlatAnalyzerData : public root_ext::AnalyzerData {
 public:
-    TH1D_ENTRY_CUSTOM_EX(m_sv, M_tt_Bins(), "M_{#tau#tau}[GeV]", "dN/dm_{#tau#tau}[1/GeV]", false, 1.5, true)
+    TH1D_ENTRY_CUSTOM_EX(m_sv, M_tt_Bins(), "M_{#tau#tau} [GeV]", "dN/dm_{#tau#tau} [1/GeV]", false, 1.5, true)
     TH1D_ENTRY_CUSTOM_EX(m_vis, M_tt_Bins(), "M_{vis}[GeV]", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_CUSTOM_EX(m_bb_slice, M_tt_bbSlice_Bins(), "2DM_{sv}[GeV]", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_CUSTOM_EX(m_ttbb, M_ttbb_Bins(), "M_{#tau#taubb}[GeV]", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_CUSTOM_EX(m_ttbb_kinfit, M_ttbb_Bins(), "M_{#tau#taubb}[GeV]", "Events", false, 1.1, true)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb, M_ttbb_Bins(), "M_{#tau#tau+jj} [GeV]", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb_kinfit, M_ttbb_Bins(), "M_{H}^{kinfit} [GeV]", "Events", false, 1.1, true)
 
-    TH1D_ENTRY_EX(pt_1, 20, 0, 200, "P_{T}(leading#tau_{h})[GeV]", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_EX(eta_1, 25, -2.5, 2.5, "#eta(leading#tau_{h})", "Events", false, 2, SaveAll)
-    TH1D_ENTRY_EX(pt_2, 20, 0, 200, "P_{T}(subleading#tau_{h})[GeV]", "Events", false, 1, SaveAll)
-    TH1D_ENTRY_EX(eta_2, 25, -2.5, 2.5, "#eta(subleading#tau_{h})", "Events", false, 2, SaveAll)
-    TH1D_ENTRY_EX(pt_b1, 20, 0, 200, "P_{T}[GeV](leading_jet)", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_EX(eta_b1, 25, -2.5, 2.5, "#eta(leading_jet)", "Events", false, 2, SaveAll)
-    TH1D_ENTRY_EX(csv_b1, 25, 0, 1, "CSV(leading_jet)", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_EX(pt_b2, 20, 0, 200, "P_{T}[GeV](subleading_jet)", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_EX(eta_b2, 25, -2.5, 2.5, "#eta(subleading_jet)", "Events", false, 2, SaveAll)
-    TH1D_ENTRY_EX(csv_b2, 25, 0, 1, "CSV(subleading_jet)", "Events", false, 1.1, SaveAll)
+
+    TH1D_ENTRY_EX(pt_b1, 20, 0, 200, "Leading selected jet p_{T} [GeV]", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(eta_b1, 25, -2.5, 2.5, "Leading selected jet #eta", "Events", false, 2, SaveAll)
+    TH1D_ENTRY_EX(csv_b1, 25, 0, 1, "Leading selected jet CSV", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(pt_b2, 20, 0, 200, "Subleading selected jet p_{T} [GeV]", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(eta_b2, 25, -2.5, 2.5, "Subleading selected jet #eta", "Events", false, 2, SaveAll)
+    TH1D_ENTRY_EX(csv_b2, 25, 0, 1, "Subleading selected jet CSV", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(pt_H_tt, 20, 0, 300, "P_{T}[GeV]", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(pt_H_bb, 20, 0, 300, "P_{T}[GeV]", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(pt_H_hh, 20, 0, 300, "P_{T}[GeV]", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_EX(m_bb, 30, 0, 600, "M_{jj}[GeV]", "dN/dm_{bb}[1/GeV]", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(m_bb, 30, 0, 600, "M_{jj} [GeV]", "dN/dm_{jj} [1/GeV]", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(DeltaPhi_tt, 22, 0., 3.3, "#Delta#Phi_{#tau#tau}[rad]", "Events", false, 1.3, SaveAll)
     TH1D_ENTRY_EX(DeltaPhi_bb, 22, 0., 3.3, "#Delta#Phi_{bb}[rad]", "Events", false, 1.8, SaveAll)
     TH1D_ENTRY_EX(DeltaPhi_bb_MET, 22, 0., 3.3, "#Delta#Phi_{bb,MET}[rad]", "Events", false, 1.5, SaveAll)
@@ -71,7 +68,7 @@ public:
     TH1D_ENTRY_EX(pull_balance, 20, -10, 10, "pull_balance", "Events", false, 2, SaveAll)
     TH1D_ENTRY_EX(pull_balance_1, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss} [GeV]", "Events", false, 1.1, SaveAll)
     TH2D_ENTRY_EX(csv_b1_vs_ptb1, 20, 0, 200, 25, 0, 1, "P_{T}[GeV](leading_jet)", "CSV(leading_jet)", false, 1, SaveAll)
     TH2D_ENTRY_EX(chi2_vs_ptb1, 20, 0, 200, 20, 0, 100, "P_{T}[GeV](leading_jet)", "#chi^{2}", false, 1, SaveAll)
     TH2D_ENTRY_EX(mH_vs_chi2, 20, 0, 100, 50, 200, 700, "#chi^{2}", "M_{#tau#taubb}[GeV]", false, 1, SaveAll)
@@ -118,10 +115,7 @@ public:
 
         if(!fill_all) return;
 
-        pt_1().Fill(event.pt_1, weight);
-        eta_1().Fill(event.eta_1, weight);
-        pt_2().Fill(event.pt_2, weight);
-        eta_2().Fill(event.eta_2, weight);
+
         DeltaPhi_tt().Fill(std::abs(eventInfo.lepton_momentums.at(0).DeltaPhi(eventInfo.lepton_momentums.at(1))), weight);
         DeltaR_tt().Fill(eventInfo.lepton_momentums.at(0).DeltaR(eventInfo.lepton_momentums.at(1)), weight);
         pt_H_tt().Fill(eventInfo.Htt.Pt(),weight);
@@ -206,6 +200,11 @@ protected:
 
 class FlatAnalyzerData_semileptonic : public FlatAnalyzerData {
 public:
+    TH1D_ENTRY_EX(pt_1, 20, 0, 200, "P_{T}(leading#tau_{h})[GeV]", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(eta_1, 25, -2.5, 2.5, "#eta(leading#tau_{h})", "Events", false, 2, SaveAll)
+    TH1D_ENTRY_EX(pt_2, 20, 0, 200, "P_{T}(subleading#tau_{h})[GeV]", "Events", false, 1, SaveAll)
+    TH1D_ENTRY_EX(eta_2, 25, -2.5, 2.5, "#eta(subleading#tau_{h})", "Events", false, 2, SaveAll)
+
     TH1D_ENTRY_EX(mt_1, 50, 0, 50, "M_{T}[GeV]", "Events", false, 1.1, SaveAll)
 
     explicit FlatAnalyzerData_semileptonic(bool _fill_all) : FlatAnalyzerData(_fill_all) {}
@@ -218,6 +217,10 @@ public:
         FlatAnalyzerData::Fill(eventInfo, weight);
         if(!fill_all) return;
         const ntuple::Flat& event = *eventInfo.event;
+        pt_1().Fill(event.pt_1, weight);
+        eta_1().Fill(event.eta_1, weight);
+        pt_2().Fill(event.pt_2, weight);
+        eta_2().Fill(event.eta_2, weight);
         mt_1().Fill(event.mt_1, weight);
     }
 
@@ -246,6 +249,11 @@ public:
 
 class FlatAnalyzerData_tautau : public FlatAnalyzerData {
 public:
+    TH1D_ENTRY_EX(pt_1, 20, 0, 200, "Leading tau p_{T} [GeV]", "Events", false, 1.1, SaveAll)
+    TH1D_ENTRY_EX(eta_1, 25, -2.5, 2.5, "Leading tau #eta", "Events", false, 2, SaveAll)
+    TH1D_ENTRY_EX(pt_2, 20, 0, 200, "Subleading tau p_{T} [GeV]", "Events", false, 1, SaveAll)
+    TH1D_ENTRY_EX(eta_2, 25, -2.5, 2.5, "Subleading tau #eta", "Events", false, 2, SaveAll)
+
     TH1D_ENTRY_EX(mt_1, 20, 0, 200, "M_{T}[GeV]", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(iso_tau1, 100, 0, 10, "Iso#tau_{1}", "Events", false, 1, SaveAll)
     TH1D_ENTRY_EX(iso_tau2, 100, 0, 10, "Iso#tau_{2}", "Events", false, 1, SaveAll)
@@ -260,6 +268,10 @@ public:
         FlatAnalyzerData::Fill(eventInfo, weight);
         if(!fill_all) return;
         const ntuple::Flat& event = *eventInfo.event;
+        pt_1().Fill(event.pt_1, weight);
+        eta_1().Fill(event.eta_1, weight);
+        pt_2().Fill(event.pt_2, weight);
+        eta_2().Fill(event.eta_2, weight);
         mt_1().Fill(event.mt_1, weight);
         iso_tau1().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1,weight);
         iso_tau2().Fill(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2,weight);
