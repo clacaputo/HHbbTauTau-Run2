@@ -43,9 +43,11 @@ public:
     Print_Stack(const std::string& source_cfg, const std::string& anaDataFileName, const std::string& output_path,
                 const std::string& channel_name, const std::string& id_selection, const std::string& _hist_name,
                 const std::string& signal_list, bool _is_blind = false, bool _draw_ratio = true,
-                bool _draw_bkg_errors = false, bool _use_log_y = false, double _max_y_sf = 1.1)
+                bool _draw_bkg_errors = false, bool _use_log_y = false, bool _divide_by_BinWidth = true,
+                double _max_y_sf = 1.1)
         : anaDataReader(anaDataFileName), hist_name(_hist_name), is_blind(_is_blind), draw_ratio(_draw_ratio),
-          draw_bkg_errors(_draw_bkg_errors), use_log_y(_use_log_y), max_y_sf(_max_y_sf)
+          draw_bkg_errors(_draw_bkg_errors), use_log_y(_use_log_y), divide_by_BinWidth(_divide_by_BinWidth),
+          max_y_sf(_max_y_sf)
     {
         gROOT->SetMustClean(kFALSE);
 
@@ -94,7 +96,7 @@ private:
 
         analysis::StackedPlotDescriptor stackDescriptor(ss_title.str(), false,
                                                         analysis::detail::ChannelNameMapLatex.at(channel),
-                                                        draw_ratio, draw_bkg_errors);
+                                                        draw_ratio, draw_bkg_errors,divide_by_BinWidth);
 
         for(const analysis::DataCategory* category : dataCategories->GetAllCategories()) {
             if(!category->draw) continue;
@@ -219,6 +221,6 @@ private:
     analysis::FlatAnalyzerDataMetaId_noName meta_id;
     LoopOptions loop_options;
     std::string hist_name;
-    bool is_blind, draw_ratio, draw_bkg_errors, use_log_y;
+    bool is_blind, draw_ratio, draw_bkg_errors, use_log_y, divide_by_BinWidth;
     double max_y_sf;
 };
