@@ -40,7 +40,10 @@ public:
     {
         std::ostringstream ss;
         const std::time_t time_t_point = clock::to_time_t(time_point);
-        ss << "[" << std::put_time(std::localtime(&time_t_point), "%F %T") << "] ";
+		//ss << "[" << std::put_time(std::localtime(&time_t_point), "%F %T") << "] ";
+		char mbstr[100];
+		if (std::strftime(mbstr,sizeof(mbstr),"%F %T",std::localtime(&time_t_point)))
+			ss << "[" << mbstr << "] ";
         return ss.str();
     }
 
