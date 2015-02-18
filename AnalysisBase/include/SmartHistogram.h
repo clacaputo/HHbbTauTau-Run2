@@ -248,6 +248,8 @@ public:
     double MaxYDrawScaleFactor() const { return max_y_sf; }
     std::string GetXTitle() const { return GetXaxis()->GetTitle(); }
     std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
+    void SetLegendTitle(const std::string _legend_title) { legend_title = _legend_title; }
+    const std::string& GetLegendTitle() const { return legend_title; }
 
     void CopyContent(const TH1D& other)
     {
@@ -267,6 +269,7 @@ private:
     bool store;
     bool use_log_y;
     double max_y_sf;
+    std::string legend_title;
 };
 
 template<>

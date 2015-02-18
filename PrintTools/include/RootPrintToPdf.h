@@ -44,7 +44,7 @@ namespace root_ext {
 class PdfPrinter {
 public:
     PdfPrinter(const std::string& _output_file_name)
-        : canvas(new TCanvas("","",700,700)), output_file_name(_output_file_name)
+        : canvas(new TCanvas("","",700,700)), output_file_name(_output_file_name), n_pages(0)
     {
         canvas->Print((output_file_name + "[").c_str());
     }
@@ -75,6 +75,7 @@ public:
         std::ostringstream print_options;
         print_options << "Title:" << page.title;
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());
+        ++n_pages;
     }
 
     void PrintStack(analysis::StackedPlotDescriptor& stackDescriptor)
@@ -92,14 +93,17 @@ public:
         gErrorIgnoreLevel = kWarning;
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());
         gErrorIgnoreLevel = old_gErrorIgnoreLevel;
+        ++n_pages;
     }
 
     ~PdfPrinter()
     {
         const Int_t old_gErrorIgnoreLevel = gErrorIgnoreLevel;
         gErrorIgnoreLevel = kWarning;
-        canvas->Clear();
-        canvas->Print(output_file_name.c_str());
+        if (n_pages > 1){
+            canvas->Clear();
+            canvas->Print(output_file_name.c_str());
+        }
         canvas->Print((output_file_name+"]").c_str());
         gErrorIgnoreLevel = old_gErrorIgnoreLevel;
         std::cout << "Info in <TCanvas::Print>: pdf file " << output_file_name << " has been closed" << std::endl;
@@ -142,6 +146,7 @@ private:
 private:
     std::shared_ptr<TCanvas> canvas;
     std::string output_file_name;
+    size_t n_pages;
 };
 
 } // namespace root_ext

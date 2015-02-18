@@ -108,11 +108,14 @@ public:
     {
         hist_ptr histogram = PrepareHistogram(original_histogram);
         histogram->SetFillColor(color);
+        histogram->SetLegendTitle(legend_title);
         background_histograms.push_back(histogram);
         //stack->Add(histogram.get());
-        legend->AddEntry(histogram.get(), legend_title.c_str(), "f");
-        if(!sum_backgound_histogram)
+
+        if(!sum_backgound_histogram){
             sum_backgound_histogram = hist_ptr(new Histogram(*histogram));
+            sum_backgound_histogram->SetLegendTitle("Bkg. uncertainty");
+        }
         else
             sum_backgound_histogram->Add(histogram.get());
     }
@@ -131,7 +134,7 @@ public:
         if(scale_factor != 1)
             ss << scale_factor << "x ";
         ss << legend_title;
-        legend->AddEntry(histogram.get(), ss.str().c_str(), "F");
+        histogram->SetLegendTitle(ss.str());
     }
 
     void AddDataHistogram(const Histogram& original_data, const std::string& legend_title,
@@ -141,7 +144,7 @@ public:
             throw std::runtime_error("Only one data histogram per stack is supported.");
 
         data_histogram = PrepareHistogram(original_data);
-        legend->AddEntry(data_histogram.get(), legend_title.c_str(), "LP");
+        data_histogram->SetLegendTitle(legend_title);
 
         if(blind)
             BlindHistogram(data_histogram, blind_regions);
@@ -168,6 +171,16 @@ public:
             main_pad->SetLogy();
         main_pad->Draw();
         main_pad->cd();
+
+        if (data_histogram)
+            legend->AddEntry(data_histogram.get(), data_histogram->GetLegendTitle().c_str(), "LP");
+        if (drawBKGerrors && sum_backgound_histogram)
+            legend->AddEntry(sum_backgound_histogram.get(),sum_backgound_histogram->GetLegendTitle().c_str(), "f");
+        for(const hist_ptr& signal : signal_histograms)
+            legend->AddEntry(signal.get(), signal->GetLegendTitle().c_str(), "F");
+        for(const hist_ptr& background : background_histograms)
+            legend->AddEntry(background.get(), background->GetLegendTitle().c_str(), "F");
+
 
 
         if (background_histograms.size()) {
@@ -218,7 +231,6 @@ public:
                 sum_backgound_histogram->SetFillStyle(3013);
                 sum_backgound_histogram->SetLineWidth(1);
                 sum_backgound_histogram->Draw("e2same");
-                legend->AddEntry(sum_backgound_histogram.get(),"Bkg. uncertainty", "f");
             }
         }
 
