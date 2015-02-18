@@ -83,4 +83,18 @@ std::ostream& operator<< (std::ostream& s, const EventEnergyScale& es)
     return s;
 }
 
+std::istream& operator>> (std::istream& s, EventEnergyScale& es)
+{
+    std::string name;
+    s >> name;
+    for(const auto& map_entry : detail::EventEnergyScaleNameMap) {
+        if(map_entry.second == name) {
+            es = map_entry.first;
+            return s;
+        }
+    }
+    throw exception("Unknown event energy scale '") << name << "'.";
+}
+
+
 } // namespace analysis

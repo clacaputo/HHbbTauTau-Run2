@@ -228,6 +228,9 @@ public:
         SetYTitle(y_axis_title.c_str());
     }
 
+    SmartHistogram(const TH1D& other, bool _use_log_y, double _max_y_sf)
+        : TH1D(other), AbstractHistogram(other.GetName()), store(false), use_log_y(_use_log_y), max_y_sf(_max_y_sf) {}
+
     virtual void WriteRootObject() override
     {
         if(store && GetOutputDirectory())
@@ -245,6 +248,20 @@ public:
     double MaxYDrawScaleFactor() const { return max_y_sf; }
     std::string GetXTitle() const { return GetXaxis()->GetTitle(); }
     std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
+
+    void CopyContent(const TH1D& other)
+    {
+        if(other.GetNbinsX() != GetNbinsX())
+            throw analysis::exception("Unable to copy histogram content: source and destination")
+                << " have different number of bins.";
+        for(Int_t n = 0; n <= other.GetNbinsX() + 1; ++n) {
+            if(GetBinLowEdge(n) != other.GetBinLowEdge(n) || GetBinWidth(n) != other.GetBinWidth(n))
+                throw analysis::exception("Unable to copy histogram content: bin ")
+                    << n << " is not compatible between the source and destination.";
+            SetBinContent(n, other.GetBinContent(n));
+            SetBinError(n, other.GetBinError(n));
+        }
+    }
 
 private:
     bool store;

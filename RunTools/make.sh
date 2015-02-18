@@ -37,7 +37,7 @@ SCRIPT_RUN_PATH=$1
 JOB_NAME=$2
 COMPILE_FLAGS=$3
 NAME=$4
-ARGS=($*)
+ARGS=("$@")
 
 if [ "$CMSSW_BASE/" = "/" ] ; then
     SCRIPT_PATH="."

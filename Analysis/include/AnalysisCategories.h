@@ -418,14 +418,53 @@ std::wostream& operator<<(std::wostream& s, const EventCategory& eventCategory) 
     return s;
 }
 
+std::istream& operator>> (std::istream& s, EventCategory& eventCategory)
+{
+    std::string name;
+    s >> name;
+    for(const auto& map_entry : detail::eventCategoryNamesMap) {
+        if(map_entry.second == name) {
+            eventCategory = map_entry.first;
+            return s;
+        }
+    }
+    throw exception("Unknown event category '") << name << "'.";
+}
+
 std::ostream& operator<<(std::ostream& s, const EventRegion& eventRegion) {
     s << detail::eventRegionNamesMap.at(eventRegion);
     return s;
 }
 
+std::istream& operator>> (std::istream& s, EventRegion& eventRegion)
+{
+    std::string name;
+    s >> name;
+    for(const auto& map_entry : detail::eventRegionNamesMap) {
+        if(map_entry.second == name) {
+            eventRegion = map_entry.first;
+            return s;
+        }
+    }
+    throw exception("Unknown event region '") << name << "'.";
+}
+
 std::ostream& operator<<(std::ostream& s, const EventSubCategory& eventSubCategory) {
     s << detail::eventSubCategoryNamesMap.at(eventSubCategory);
     return s;
+}
+
+std::istream& operator>> (std::istream& s, EventSubCategory& eventSubCategory)
+{
+    std::string name;
+    s >> name;
+    for(const auto& map_entry : detail::eventSubCategoryNamesMap) {
+        if(map_entry.second == name) {
+            eventSubCategory = map_entry.first;
+            return s;
+        }
+    }
+    throw exception("Unknown event sub-category '") << name << "'.";
 }
 
 EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, Int_t nBjets_retagged, double CSVL,

@@ -352,3 +352,12 @@ Analysis/include/FlatAnalyzerDataCollection.h
 AnalysisBase/include/PhysicalValue.h
 AnalysisBase/include/ProgressReporter.h
 AnalysisBase/include/RootExt.h
+RunTools/srm_tools/srmusr-cd
+RunTools/srm_tools/srmusr-cp
+RunTools/srm_tools/srmusr-local
+RunTools/srm_tools/srmusr-ls
+RunTools/srm_tools/srmusr-mkdir
+RunTools/srm_tools/srmusr-mv
+RunTools/srm_tools/srmusr-rm
+RunTools/srm_tools/srmusr-rmdir
+RunTools/srm_tools/srmusr-rmfiles

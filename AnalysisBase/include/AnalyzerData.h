@@ -28,6 +28,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <sstream>
 #include <typeindex>
