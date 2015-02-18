@@ -179,10 +179,7 @@ public:
                                         &FlatAnalyzerData::m_ttbb_kinfit);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        //PrintStackedPlots(EventRegion::OS_Isolated, true, true);
         PrintStackedPlots(EventRegion::OS_Isolated, false, true);
-        //if (applyPostFitCorrections)
-        PrintStackedPlots(EventRegion::OS_Isolated, false, false);
 
         std::cout << "Saving output file..." << std::endl;
     }

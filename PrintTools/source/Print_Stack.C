@@ -33,12 +33,10 @@
 #include "AnalysisBase/include/ConfigReader.h"
 #include "../include/RootPrintToPdf.h"
 
-
 struct LoopOptions {
     bool eventCategory, eventSubCategory, eventRegion, eventEnergyScale;
     LoopOptions() : eventCategory(true), eventSubCategory(true), eventRegion(true), eventEnergyScale(true) {}
 };
-
 
 class Print_Stack {
 public:
@@ -131,19 +129,19 @@ private:
             throw analysis::exception(error_message);
         try {
             if(id_vector.at(0) != wildcard) {
-                meta_id.eventCategory = Parse<analysis::EventCategory>(id_vector.at(0));
+                Parse(id_vector.at(0), meta_id.eventCategory);
                 loop_options.eventCategory = false;
             }
             if(id_vector.at(1) != wildcard) {
-                meta_id.eventSubCategory = Parse<analysis::EventSubCategory>(id_vector.at(1));
+                Parse(id_vector.at(1), meta_id.eventSubCategory);
                 loop_options.eventSubCategory = false;
             }
             if(id_vector.at(2) != wildcard) {
-                meta_id.eventRegion = Parse<analysis::EventRegion>(id_vector.at(2));
+                Parse(id_vector.at(2), meta_id.eventRegion);
                 loop_options.eventRegion = false;
             }
             if(id_vector.at(3) != wildcard) {
-                meta_id.eventEnergyScale = Parse<analysis::EventEnergyScale>(id_vector.at(3));
+                Parse(id_vector.at(3), meta_id.eventEnergyScale);
                 loop_options.eventEnergyScale = false;
             }
         } catch(analysis::exception& e) {
@@ -152,12 +150,10 @@ private:
     }
 
     template<typename Type>
-    Type Parse(const std::string& str)
+    static void Parse(const std::string& str, Type& t)
     {
         std::istringstream ss(str);
-        Type t;
         ss >> t;
-        return t;
     }
 
     std::string GenerateOutputFileName(const std::string& output_path) const
