@@ -107,7 +107,7 @@ private:
             SmartHistogramPtr histogram(new SmartHistogram(*original_histogram, use_log_y, max_y_sf));
             histogram_set.insert(histogram);
 
-            if(category->IsSignal())
+            if(category->IsSignal() && id.eventCategory != analysis::EventCategory::TwoJets_Inclusive)
                 stackDescriptor.AddSignalHistogram(*histogram, category->title, category->color,
                                                    category->draw_sf);
             else if(category->IsBackground())

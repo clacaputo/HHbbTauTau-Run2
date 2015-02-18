@@ -540,7 +540,8 @@ protected:
                         const auto histogram = GetHistogram(anaDataMetaId, eventRegion, category->name, hist_name);
                         if(!histogram) continue;
 
-                        if(category->IsSignal())
+                        if(category->IsSignal() && eventCategory == EventCategory::TwoJets_Inclusive) continue;
+                        else if(category->IsSignal())
                             stackDescriptor.AddSignalHistogram(*histogram, category->title, category->color,
                                                                category->draw_sf);
                         else if(category->IsBackground())

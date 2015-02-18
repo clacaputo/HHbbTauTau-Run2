@@ -41,7 +41,7 @@ const std::map<Channel, std::string> ChannelNameMap = {
 };
 
 const std::map<Channel, std::string> ChannelNameMapLatex = {
-    { Channel::ETau, "e#tau" }, { Channel::MuTau, "#mu#tau" }, { Channel::TauTau, "#tau#tau" }
+    { Channel::ETau, "e#tau_{h}" }, { Channel::MuTau, "#mu#tau_{h}" }, { Channel::TauTau, "#tau_{h}#tau_{h}" }
 };
 
 const std::map<EventEnergyScale, std::string> EventEnergyScaleNameMap = {

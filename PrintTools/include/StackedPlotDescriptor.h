@@ -218,6 +218,7 @@ public:
                 sum_backgound_histogram->SetFillStyle(3013);
                 sum_backgound_histogram->SetLineWidth(1);
                 sum_backgound_histogram->Draw("e2same");
+                legend->AddEntry(sum_backgound_histogram.get(),"Bkg. uncertainty", "f");
             }
         }
 
