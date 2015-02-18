@@ -1,1 +1,1 @@
-/store/user/kandroso/TT_Embedded/TauTau/TREE/Tree_21_1_WIP.root
+/store/user/kandroso/TT_Embedded/TauTau/TREE/Tree_24_1_kRs.root
