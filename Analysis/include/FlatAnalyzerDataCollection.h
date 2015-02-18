@@ -72,8 +72,13 @@ struct FlatAnalyzerDataId {
            << eventEnergyScale << separator << dataCategoryName;
         return ss.str();
     }
-
 };
+
+std::ostream& operator<< (std::ostream& s, const FlatAnalyzerDataId& id)
+{
+    s << id.GetName();
+    return s;
+}
 
 template<typename ...Types>
 struct FlatAnalyzerDataMetaId;
@@ -234,7 +239,7 @@ public:
     FlatAnalyzerDataCollection(const std::string& outputFileName, bool store)
     {
         if(store)
-            outputFile = std::shared_ptr<TFile>(root_ext::AnalyzerData::CreateFile(outputFileName));
+            outputFile = root_ext::CreateRootFile(outputFileName);
     }
 
     FlatAnalyzerData& Get(const FlatAnalyzerDataId& id, Channel channel)
@@ -321,7 +326,7 @@ private:
         const bool fill_all = id.eventEnergyScale == EventEnergyScale::Central;
         if(outputFile) {
             const std::string dir_name = id.GetName();
-            return FlatAnalyzerDataPtr(new AnaData(*outputFile, dir_name, fill_all));
+            return FlatAnalyzerDataPtr(new AnaData(outputFile, dir_name, fill_all));
         }
         return FlatAnalyzerDataPtr(new AnaData(fill_all));
     }
@@ -329,6 +334,22 @@ private:
 private:
     std::shared_ptr<TFile> outputFile;
     FlatAnalyzerDataMap anaDataMap;
+};
+
+class FlatAnalyzerDataCollectionReader {
+public:
+    FlatAnalyzerDataCollectionReader(const std::string& file_name)
+        : file(root_ext::OpenRootFile(file_name)) {}
+
+    template<typename Histogram>
+    Histogram* GetHistogram(const FlatAnalyzerDataId& id, const std::string& name) const
+    {
+        const std::string full_name = id.GetName() + "/" + name;
+        return root_ext::TryReadObject<Histogram>(*file, full_name);
+    }
+
+private:
+    std::shared_ptr<TFile> file;
 };
 
 } // namespace analysis

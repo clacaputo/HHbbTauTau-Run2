@@ -44,6 +44,8 @@
 #include "AnalysisBase/include/AnalysisTools.h"
 #include "AnalysisBase/include/AnalysisTypes.h"
 #include "AnalysisBase/include/FlatTree.h"
+#include "AnalysisBase/include/ProgressReporter.h"
+
 
 #include "Htautau_Summer13.h"
 #include "Htautau_TriggerEfficiency.h"
@@ -60,7 +62,7 @@ namespace analysis {
 
 class BaseAnalyzerData : public root_ext::AnalyzerData {
 public:
-    BaseAnalyzerData(TFile& outputFile) : AnalyzerData(outputFile) {}
+    BaseAnalyzerData(std::shared_ptr<TFile> outputFile) : AnalyzerData(outputFile) {}
 
     SELECTION_ENTRY(Selection)
 
@@ -74,21 +76,24 @@ public:
     BaseAnalyzer(const std::string& inputFileName, const std::string& outputFileName, const std::string& configFileName,
                  const std::string& _prefix = "none", size_t _maxNumberOfEvents = 0)
         : config(configFileName),
-          outputFile(new TFile(outputFileName.c_str(), "RECREATE")),
-          anaDataBeforeCut(*outputFile, "before_cut"), anaDataAfterCut(*outputFile, "after_cut"),
-          anaDataFinalSelection(*outputFile, "final_selection"),
+          outputFile(root_ext::CreateRootFile(outputFileName)),
+          anaDataBeforeCut(outputFile, "before_cut"), anaDataAfterCut(outputFile, "after_cut"),
+          anaDataFinalSelection(outputFile, "final_selection"),
           maxNumberOfEvents(_maxNumberOfEvents),
           mvaMetProducer(config.MvaMet_dZcut(), config.MvaMet_inputFileNameU(), config.MvaMet_inputFileNameDPhi(),
                          config.MvaMet_inputFileNameCovU1(), config.MvaMet_inputFileNameCovU2())
     {
         if ( _prefix != "external" ){
-            timer = std::shared_ptr<tools::Timer>(new tools::Timer(config.ReportInterval()));
+            progressReporter = std::shared_ptr<tools::ProgressReporter>(
+                        new tools::ProgressReporter(config.ReportInterval(), std::cout));
             treeExtractor = std::shared_ptr<TreeExtractor>(
                         new TreeExtractor(_prefix == "none" ? "" : _prefix, inputFileName, config.extractMCtruth(),
                                           config.MaxTreeVersion()));
 
         }
         TH1::SetDefaultSumw2();
+        TH1::AddDirectory(kFALSE);
+        TH2::AddDirectory(kFALSE);
         if(config.EstimateJetEnergyUncertainties()) {
             jetEnergyUncertaintyCorrector = std::shared_ptr<JetEnergyUncertaintyCorrector>(
                         new JetEnergyUncertaintyCorrector(config.JetEnergyUncertainties_inputFile(),
@@ -102,16 +107,16 @@ public:
     {
         size_t n = 0;
         auto _event = std::shared_ptr<EventDescriptor>(new EventDescriptor());
-        if (!treeExtractor || !timer)
+        if (!treeExtractor || !progressReporter)
             throw exception("treeExtractor not initialized");
         for(; ( !maxNumberOfEvents || n < maxNumberOfEvents ) && treeExtractor->ExtractNext(*_event); ++n) {
-            timer->Report(n);
+            progressReporter->Report(n);
 //            std::cout << "event = " << _event->eventId().eventId << std::endl;
             if(config.RunSingleEvent() && _event->eventId().eventId != config.SingleEventId()) continue;
             ProcessEventWithEnergyUncertainties(_event);
             if(config.RunSingleEvent()) break;
         }
-        timer->Report(n, true);
+        progressReporter->Report(n, true);
     }
 
     void ProcessEventWithEnergyUncertainties(std::shared_ptr<const EventDescriptor> _event)
@@ -158,7 +163,6 @@ private:
         }
 
         event = _event;
-        GetAnaData().getOutputFile().cd();
         GetEventWeights().Reset();
         if(config.ApplyPUreweight())
             GetEventWeights().CalculatePuWeight(event->eventInfo());
@@ -911,7 +915,7 @@ protected:
 
 protected:
     Config config;
-    std::shared_ptr<tools::Timer> timer;
+    std::shared_ptr<tools::ProgressReporter> progressReporter;
     std::shared_ptr<const EventDescriptor> event;
     std::shared_ptr<TreeExtractor> treeExtractor;
     std::shared_ptr<TFile> outputFile;

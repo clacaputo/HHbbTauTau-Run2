@@ -24,21 +24,24 @@
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AnalysisBase/include/RootExt.h"
 #include "Analysis/include/UncertaintyCalculatorCollection.h"
 
 class LimitConfigurationProducer {
 public:
-    LimitConfigurationProducer(const std::string& configName, const std::string& shapeFileName,
+    LimitConfigurationProducer(const std::string& uncConfigName, const std::string& srcConfigName,
+                               const std::string& anaDataFileName,
                                const std::string& _outputPath)
-        : shapeFile(new TFile(shapeFileName.c_str(), "READ")), outputPath(_outputPath), calculators(shapeFile)
+        : anaDataReader(anaDataFileName), outputPath(_outputPath),
+          dataCategories(srcConfigName, "", analysis::Channel::TauTau),
+          calculators(uncertainties, dataCategories, anaDataReader,
+                      analysis::EventSubCategory::KinematicFitConvergedWithMassWindow,
+                      analysis::FlatAnalyzerData::m_ttbb_kinfit_Name())
     {
         using namespace analysis;
         using namespace analysis::limits;
 
-        if(shapeFile->IsZombie())
-            throw exception("Shape file '") << shapeFileName << "' not found.";
-
-        ConfigReader configReader(configName);
+        ConfigReader configReader(uncConfigName);
         SampleCategoryCollectionReader sampleReader(samples);
         CategoryDescriptorReader categoryReader(samples, categories);
         UncertaintyDescriptorReader uncertaintyReader(uncertainties);
@@ -128,9 +131,17 @@ private:
         }
     }
 
-    void ProduceUncValuesConfig(const analysis::limits::CategoryDescriptor& categoryDescriptor) const
+    void ProduceUncValuesConfig(const analysis::limits::CategoryDescriptor& categoryDescriptor)
     {
         using namespace analysis::limits;
+        using analysis::EventCategory;
+
+        static const std::map<std::string, EventCategory> category_name_map = {
+            { "2jet0tag", EventCategory::TwoJets_ZeroBtag },
+            { "2jet1tag", EventCategory::TwoJets_OneBtag },
+            { "2jet2tag", EventCategory::TwoJets_TwoBtag }
+        };
+        const EventCategory eventCategory = category_name_map.at(categoryDescriptor.category_name);
 
         const std::string cfgFileName = outputPath + "/unc-Hhh-8TeV-" + categoryDescriptor.index + ".vals";
         std::ofstream cfg(cfgFileName);
@@ -140,18 +151,23 @@ private:
 
         cfg << "# unc.vals: specification of uncertainty values by category, sample, and uncertainty name\n";
         cfg << std::left << std::fixed << std::setprecision(3);
+
         for(const UncertaintyDescriptor* uncertaintyDescriptor : uncertainties.GetOrderedCollection()) {
             const std::string full_name = uncertaintyDescriptor->FullName(categoryDescriptor.channel_name,
                                                                           categoryDescriptor.category_name);
-            if(uncertaintyDescriptor->calculate_value) {
-                for(const std::string& sample : uncertaintyDescriptor->samples) {
-                    if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
+            SampleNameSet common_samples;
+
+            for(const std::string& sample : uncertaintyDescriptor->samples) {
+                if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
+                if(uncertaintyDescriptor->sample_values.count(sample)) {
+                    const double value = uncertaintyDescriptor->sample_values.at(sample);
+                    WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, value);
+                } else if(uncertaintyDescriptor->calculate_value) {
                     std::vector<UncertaintyInterval> unc_vector;
                     const auto samples_to_process = categoryDescriptor.samples.GenerateSampleListToProcess(sample);
                     const bool single_sample = samples_to_process.size() == 1;
                     for(const std::string& sub_sample : samples_to_process) {
-                        const auto unc = calculators.Calculate(uncertaintyDescriptor->name,
-                                                                   categoryDescriptor.name, sub_sample);
+                        const auto unc = calculators.Calculate(uncertaintyDescriptor->name, eventCategory, sub_sample);
                         if(!single_sample)
                             std::cout << "    " << sub_sample << ": " << uncertaintyDescriptor->name
                                       << " = " << unc << ".\n";
@@ -161,23 +177,15 @@ private:
                     const auto unc_value = UncertaintyCalculatorCollection::CombineUpDownUncertainties(average_unc);
                     std::cout << sample << ": " << uncertaintyDescriptor->name << " = " << average_unc
                               << " -> " << unc_value << ".\n";
-                    if(std::abs(1. - unc_value.value) >= uncertaintyDescriptor->threshold)
-                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, unc_value.value);
+                    if(std::abs(1. - unc_value.GetValue()) >= uncertaintyDescriptor->threshold)
+                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, unc_value.GetValue());
+                } else {
+                    common_samples.insert(sample);
                 }
-            } else {
-                SampleNameSet common_samples;
-                for(const std::string& sample : uncertaintyDescriptor->samples) {
-                    if(!categoryDescriptor.samples.GetAllSamples().count(sample)) continue;
-                    if(uncertaintyDescriptor->sample_values.count(sample)) {
-                        const double value = uncertaintyDescriptor->sample_values.at(sample);
-                        WriteUncValue(cfg, categoryDescriptor.name, sample, full_name, value);
-                    } else
-                        common_samples.insert(sample);
-                }
-                if(common_samples.size()) {
-                    const std::string sample_list = uncertaintyDescriptor->SampleList(common_samples);
-                    WriteUncValue(cfg, categoryDescriptor.name, sample_list, full_name, uncertaintyDescriptor->value);
-                }
+            }
+            if(common_samples.size()) {
+                const std::string sample_list = uncertaintyDescriptor->SampleList(common_samples);
+                WriteUncValue(cfg, categoryDescriptor.name, sample_list, full_name, uncertaintyDescriptor->value);
             }
         }
     }
@@ -194,10 +202,11 @@ private:
     }
 
 private:
-    std::shared_ptr<TFile> shapeFile;
+    analysis::FlatAnalyzerDataCollectionReader anaDataReader;
     std::string outputPath;
     analysis::limits::SampleCategoryCollectionMap samples;
     analysis::limits::CategoryDescriptorMap categories;
     analysis::limits::UncertaintyDescriptorCollection uncertainties;
+    analysis::DataCategoryCollection dataCategories;
     analysis::limits::UncertaintyCalculatorCollection calculators;
 };

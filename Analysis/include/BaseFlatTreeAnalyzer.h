@@ -73,9 +73,9 @@ public:
     const DataCategoryTypeSet& DataCategoryTypeToProcessForQCD() const { return dataCategoryTypeForQCD; }
 
     BaseFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
-                         const std::string& _outputFileName, bool _applyPostFitCorrections = false)
+                         const std::string& _outputFileName, bool _applyPostFitCorrections, bool saveFullOutput)
         : inputPath(_inputPath), outputFileName(_outputFileName), dataCategoryCollection(_dataCategoryCollection),
-          anaDataCollection(outputFileName + "_full.root", true),
+          anaDataCollection(outputFileName + "_full.root", saveFullOutput),
           applyPostFitCorrections(_applyPostFitCorrections)
     {
         TH1::SetDefaultSumw2();
@@ -90,10 +90,8 @@ public:
             std::cout << *dataCategory << std::endl;
             for(const auto& source_entry : dataCategory->sources_sf) {
                 const std::string fullFileName = inputPath + "/" + source_entry.first;
-                std::shared_ptr<TFile> file(new TFile(fullFileName.c_str(), "READ"));
-                if(file->IsZombie())
-                    throw exception("Input file '") << source_entry.first << "' not found.";
-                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree(*file, "flatTree"));
+                auto file = root_ext::OpenRootFile(fullFileName);
+                std::shared_ptr<ntuple::FlatTree> tree(new ntuple::FlatTree("flatTree", file.get(), true));
                 ProcessDataSource(*dataCategory, tree, source_entry.second);
             }
         }
@@ -174,12 +172,17 @@ public:
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts,
                                         &FlatAnalyzerData::m_sv);
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
+                                        EventSubCategory::KinematicFitConverged,
+                                        &FlatAnalyzerData::m_ttbb_kinfit);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
                                         EventSubCategory::KinematicFitConvergedWithMassWindow,
                                         &FlatAnalyzerData::m_ttbb_kinfit);
 
         std::cout << "Printing stacked plots... " << std::endl;
-        PrintStackedPlots(EventRegion::OS_Isolated, true, true);
+        //PrintStackedPlots(EventRegion::OS_Isolated, true, true);
         PrintStackedPlots(EventRegion::OS_Isolated, false, true);
+        //if (applyPostFitCorrections)
+        PrintStackedPlots(EventRegion::OS_Isolated, false, false);
 
         std::cout << "Saving output file..." << std::endl;
     }
@@ -276,15 +279,16 @@ protected:
 
             static const EventCategorySet categoriesToRelax = {
                 EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
-            const EventCategory shapeEventCategory = categoriesToRelax.count(anaDataMetaId.eventCategory)
-                    ? MediumToLoose_EventCategoryMap.at(anaDataMetaId.eventCategory) : anaDataMetaId.eventCategory;
-            const FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId_shape(shapeEventCategory,
-                                                                             anaDataMetaId.eventSubCategory,
-                                                                             anaDataMetaId.eventEnergyScale);
 
             for(const auto& yield_iter : valueMap) {
                 const EventRegion eventRegion = yield_iter.first;
                 const PhysicalValue& yield = yield_iter.second;
+                const EventCategory shapeEventCategory = (categoriesToRelax.count(anaDataMetaId.eventCategory) &&
+                        eventRegion == analysis::EventRegion::OS_Isolated)
+                        ? MediumToLoose_EventCategoryMap.at(anaDataMetaId.eventCategory) : anaDataMetaId.eventCategory;
+                const FlatAnalyzerDataMetaId_noRegion_noName anaDataMetaId_shape(shapeEventCategory,
+                                                                                 anaDataMetaId.eventSubCategory,
+                                                                                 anaDataMetaId.eventEnergyScale);
                 auto z_hist_shape = GetHistogram(anaDataMetaId_shape, eventRegion, originalZcategory.name, hist_name);
                 if (z_hist_shape){
                     TH1D& z_hist = CloneHistogram(anaDataMetaId, eventRegion, newZcategory.name, *z_hist_shape);
@@ -312,7 +316,7 @@ protected:
         const auto data_yield = Integral(*hist_data, true);
         const PhysicalValue yield = data_yield - bkg_yield;
         s_out << "Data yield = " << data_yield << "\nData-MC yield = " << yield << std::endl;
-        if(yield.value < 0) {
+        if(yield.GetValue() < 0) {
             std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
             throw exception("Negative QCD yield for histogram '") << hist_name << "' in " << anaDataMetaId.eventCategory
                                                                   << " " << eventRegion << ".";
@@ -528,7 +532,7 @@ protected:
                     if(subCategory != EventSubCategory::NoCuts)
                         ss_title << " " << subCategory;
                     ss_title << ": " << hist_name;
-                    StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(), drawRatio);
+                    StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(), drawRatio,applyPostFitCorrections);
 
                     for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                         if(!category->draw) continue;
@@ -604,14 +608,13 @@ protected:
         s_file_name << ".root";
         const std::string file_name = s_file_name.str();
 
-        std::shared_ptr<TFile> outputFile(new TFile(file_name.c_str(), "RECREATE"));
-        outputFile->cd();
+        auto outputFile = root_ext::CreateRootFile(file_name);
         for(EventCategory eventCategory : EventCategoriesToProcess()) {
             if(!categoryToDirectoryNameSuffix.count(eventCategory)) continue;
             const std::string directoryName = channelNameForFolder.at(ChannelName()) + "_"
                     + categoryToDirectoryNameSuffix.at(eventCategory);
             outputFile->mkdir(directoryName.c_str());
-            outputFile->cd(directoryName.c_str());
+            TDirectory* directory = outputFile->GetDirectory(directoryName.c_str());
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(!dataCategory->datacard.size())
                     throw exception("Empty datacard name for data category '") << dataCategory->name << "'.";
@@ -620,7 +623,7 @@ protected:
                                                                          eventEnergyScale);
                     std::shared_ptr<TH1D> hist;
                     if(auto hist_orig = GetSignalHistogram(meta_id, dataCategory->name, hist_name))
-                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(hist_orig->Clone()));
+                        hist = std::shared_ptr<TH1D>(new TH1D(*hist_orig));
                     else {
                         std::cout << "Warning - Datacard histogram '" << hist_name
                                   << "' not found for data category '" << dataCategory->name << "' in '"
@@ -630,14 +633,14 @@ protected:
                         FlatAnalyzerData& anaData = GetAnaData(meta_id.MakeId(EventRegion::OS_Isolated,
                                                                               dataCategory->name));
                         auto& new_hist = (anaData.*histogramAccessor)();
-                        hist = std::shared_ptr<TH1D>(static_cast<TH1D*>(new_hist.Clone()));
+                        hist = std::shared_ptr<TH1D>(new TH1D(new_hist));
                         const Int_t central_bin = hist->GetNbinsX() / 2;
                         hist->SetBinContent(central_bin, tiny_value);
                         hist->SetBinError(central_bin, tiny_value_error);
                     }
                     const std::string full_datacard_name = FullDataCardName(dataCategory->datacard, eventEnergyScale);
                     hist->Scale(dataCategory->limits_sf);
-                    hist->Write(full_datacard_name.c_str());
+                    root_ext::WriteObject(*hist, directory, full_datacard_name);
 
                     if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "ZL") {
                         std::string channel_name = ChannelName();
@@ -646,12 +649,12 @@ protected:
                                 + dataCategory->datacard + "Scale_" + channel_name + "_8TeV";
                         const std::string name_syst_up = name_syst_prefix + "Up";
                         const std::string name_syst_down = name_syst_prefix + "Down";
-                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
+                        std::shared_ptr<TH1D> hist_syst_up(new TH1D(*hist));
                         hist_syst_up->Scale(1.02);
-                        hist_syst_up->Write(name_syst_up.c_str());
-                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
+                        root_ext::WriteObject(*hist_syst_up, directory, name_syst_up);
+                        std::shared_ptr<TH1D> hist_syst_down(new TH1D(*hist));
                         hist_syst_down->Scale(0.98);
-                        hist_syst_down->Write(name_syst_down.c_str());
+                        root_ext::WriteObject(*hist_syst_down, directory, name_syst_down);
                     }
                     //added shape systematics for QCD
                     if(eventEnergyScale == EventEnergyScale::Central && dataCategory->datacard == "QCD_alternative") {
@@ -661,15 +664,14 @@ protected:
                                 + "Shape_" + channel_name + "_8TeV";
                         const std::string name_syst_up = name_syst_prefix + "Up";
                         const std::string name_syst_down = name_syst_prefix + "Down";
-                        std::shared_ptr<TH1D> hist_syst_up(static_cast<TH1D*>(hist->Clone()));
-                        hist_syst_up->Write(name_syst_up.c_str());
-                        std::shared_ptr<TH1D> hist_syst_down(static_cast<TH1D*>(hist->Clone()));
-                        hist_syst_down->Write(name_syst_down.c_str());
+                        std::shared_ptr<TH1D> hist_syst_up(new TH1D(*hist));
+                        root_ext::WriteObject(*hist_syst_up, directory, name_syst_up);
+                        std::shared_ptr<TH1D> hist_syst_down(new TH1D(*hist));
+                        root_ext::WriteObject(*hist_syst_down, directory, name_syst_down);
                     }
                 }
             }
         }
-        outputFile->Close();
     }
 
     void SubtractBackgroundHistograms(const FlatAnalyzerDataMetaId_noRegion_noName& anaDataMetaId,
@@ -697,9 +699,9 @@ protected:
         }
 
         const PhysicalValue original_Integral = Integral(histogram, true);
-        ss_debug << "Integral after bkg subtraction: " << original_Integral.value << ".\n";
+        ss_debug << "Integral after bkg subtraction: " << original_Integral << ".\n";
         debug_info = ss_debug.str();
-        if (original_Integral.value < 0) {
+        if (original_Integral.GetValue() < 0) {
             std::cout << debug_info << std::endl;
             throw exception("Integral after bkg subtraction is negative for histogram '")
                 << histogram.GetName() << "' in event category " << anaDataMetaId.eventCategory
@@ -721,9 +723,7 @@ protected:
             histogram.SetBinContent(n, correction_factor);
             histogram.SetBinError(n, new_error);
         }
-        const PhysicalValue new_Integral = Integral(histogram, true);
-        const PhysicalValue correctionSF = original_Integral/new_Integral;
-        histogram.Scale(correctionSF.value);
+        RenormalizeHistogram(histogram, original_Integral, true);
         negative_bins_info = ss_negative.str();
     }
 
@@ -881,7 +881,7 @@ private:
 
                 if( TH1D* histogram = GetSignalHistogram(meta_id, dataCategory->name, hist_name) ) {
                     const PhysicalValue integral = Integral(*histogram, includeOverflow);
-                    of << integral.ToString<wchar_t>(includeError) << sep;
+                    of << integral.ToString<wchar_t>(includeError, false) << sep;
                 }
                 else
                     of << "not found" << sep;
@@ -923,15 +923,15 @@ private:
 
         if(!scaleFactors.size()) {
             uncertainties[EventSubCategory::KinematicFitConverged] = {
-                { EventCategory::TwoJets_ZeroBtag, 0.08235 },
-                { EventCategory::TwoJets_OneBtag, 0.12865 },
-                { EventCategory::TwoJets_TwoBtag, 0.17155 }
+                { EventCategory::TwoJets_ZeroBtag, 0.07178 },
+                { EventCategory::TwoJets_OneBtag, 0.11307 },
+                { EventCategory::TwoJets_TwoBtag, 0.16057 }
             };
 
             uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow] = {
-                { EventCategory::TwoJets_ZeroBtag, 0.07615 },
-                { EventCategory::TwoJets_OneBtag, 0.14487 },
-                { EventCategory::TwoJets_TwoBtag, 0.18952 }
+                { EventCategory::TwoJets_ZeroBtag, 0.07097 },
+                { EventCategory::TwoJets_OneBtag, 0.12763 },
+                { EventCategory::TwoJets_TwoBtag, 0.16699 }
             };
 
             uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
@@ -940,29 +940,29 @@ private:
 
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag] = {
-                { "QCD", 0.98941 }, { "TT", 1.12182 }, { "VV", 1.12569 }, { "W", 1.01300 }, { "ZLL", 0.99556 },
-                { "ZTT", 1.27644 }
+                { "QCD", 1.01213 }, { "TT", 1.14485 }, { "VV", 1.13313 }, { "W", 1.09412 }, { "ZLL", 1.00462 },
+                { "ZTT", 1.29769 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 1.03465 }, { "TT", 1.08095 }, { "VV", 1.08546 }, { "ZLL", 1.00888 }, { "ZTT", 1.19203 }
+                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00809 }, { "ZTT",  1.34234 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_TwoBtag] = {
-                { "QCD", 0.97828 }, { "TT", 1.05903 }, { "VV", 1.04112 }, { "ZLL", 1.00152 }, { "ZTT", 1.04694 }
+                { "QCD", 0.94037 }, { "TT", 1.15275 }, { "VV", 1.13286 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag] = {
-                { "QCD", 1.01377 }, { "TT", 1.05496 }, { "VV", 1.05401 }, { "W", 1.00883 }, { "ZLL", 1.01078 },
-                { "ZTT", 1.10411 }
+                { "QCD", 1.05700 }, { "TT", 1.04612 }, { "VV", 1.05031 }, { "W", 1.03562 }, { "ZLL", 1.01775 },
+                { "ZTT", 1.07601 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 0.92723 }, { "TT", 0.98397 }, { "VV", 0.99815 }, { "ZLL", 0.99512 }, { "ZTT", 1.08041 }
+                { "QCD", 1.09063 }, { "TT", 1.05456 }, { "VV", 1.04395 }, { "ZLL", 1.01457 }, { "ZTT", 1.11958 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_TwoBtag] = {
-                { "QCD", 1.05262 }, { "TT", 1.23052 }, { "VV", 1.13869 }, { "ZLL", 0.99945 }, { "ZTT", 1.30434 }
+                { "QCD", 0.92167 }, { "TT", 1.05792 }, { "VV", 1.04335 }, { "ZLL", 0.99016 }, { "ZTT", 0.88457 }
             };
 
             scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =

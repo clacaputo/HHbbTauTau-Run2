@@ -130,19 +130,6 @@ protected:
         return scaleFactors.at(pt_bin).at(eta_bin);
     }
 
-//    virtual double CalculateDecayModeWeight(CandidatePtr leg) override
-//    {
-//        using namespace cuts::Htautau_Summer13::tauCorrections;
-
-//        if(leg->GetType() == Candidate::Type::Electron)
-//            return 1;
-//        if(leg->GetType() != Candidate::Type::Tau)
-//            throw exception("Bad leg type ") << leg->GetType();
-
-//        const ntuple::Tau& tau_leg = leg->GetNtupleObject<ntuple::Tau>();
-//        return tau_leg.decayMode == ntuple::tau_id::kOneProng0PiZero ? DecayModeWeight : 1;
-//    }
-
     virtual double CalculateFakeWeight(CandidatePtr leg) override
     {
         using namespace cuts::Htautau_Summer13::DrellYannCategorization;
@@ -184,12 +171,11 @@ public:
                           size_t _maxNumberOfEvents = 0,
                           std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
-          baseAnaData(*outputFile),
+          baseAnaData(outputFile),
           eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(), config.ApplyDMweight(),
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight(), config.ApplyJetToTauFakeRate(), config.ApplyEtoTauFakeRate())
     {
-        baseAnaData.getOutputFile().cd();
         if(config.ApplyRecoilCorrection())
             recoilCorrectionProducer_etau = std::shared_ptr<analysis::RecoilCorrectionProducer>(
                         new analysis::RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo_ETau(),

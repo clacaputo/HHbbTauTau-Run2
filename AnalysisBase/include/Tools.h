@@ -2,11 +2,9 @@
  * \file Tools.h
  * \brief Common tools and definitions suitable for general purposes.
  * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
  * \date 2014-05-05 created
  *
- * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
- *                Maria Teresa Grippo <grippomariateresa@gmail.com>
+ * Copyright 2014, 2015 Konstantin Androsov <konstantin.androsov@gmail.com>
  *
  * This file is part of X->HH->bbTauTau.
  *
@@ -28,42 +26,14 @@
 
 #include <vector>
 #include <set>
-#include <chrono>
-#include <iostream>
-#include <iomanip>
 #include <algorithm>
 
+namespace analysis {
+
+template<typename T>
+T sqr(const T& x) { return x * x; }
+
 namespace tools {
-
-class Timer {
-public:
-    typedef std::chrono::high_resolution_clock clock;
-    Timer(unsigned _report_interval)
-        : start(clock::now()), block_start(start), report_interval(_report_interval)
-    {
-        std::cout << "Starting analyzer..." << std::endl;
-    }
-
-    void Report(size_t event_id, bool final_report = false)
-    {
-        using namespace std::chrono;
-        const auto now = clock::now();
-        const auto since_last_report = duration_cast<seconds>(now - block_start).count();
-        if(!final_report && since_last_report < report_interval) return;
-
-        const auto since_start = duration_cast<seconds>(now - start).count();
-        const double speed = ((double) event_id) / since_start;
-        if(final_report)
-            std::cout << "Total: ";
-        std::cout << "time = " << since_start << " seconds, events processed = " << event_id
-                  << ", average speed = " << std::setprecision(1) << std::fixed << speed << " events/s" << std::endl;
-        block_start = now;
-    }
-
-private:
-    clock::time_point start, block_start;
-    unsigned report_interval;
-};
 
 template<typename Type>
 std::vector<Type> join_vectors(const std::vector< const std::vector<Type>* >& inputVectors)
@@ -108,4 +78,5 @@ std::set< typename Map::mapped_type > collect_map_values(const Map& map)
     return result;
 }
 
-} // tools
+} // namespace tools
+} // namespace analysis

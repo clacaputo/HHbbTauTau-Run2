@@ -51,7 +51,6 @@
 #include "TMath.h"
 #include "TPRegexp.h"
 
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/TriggerObject.h"
 
 class TriggerObjectBlock : public edm::EDAnalyzer {
@@ -62,7 +61,8 @@ public:
         _triggerEventTag(iConfig.getParameter<edm::InputTag>("triggerEventTag")),
         _hltPathsOfInterest(iConfig.getParameter<std::vector<std::string> > ("hltPathsOfInterest")),
         _may10ReRecoData(iConfig.getParameter<bool>("May10ReRecoData")),
-        _firingFlag(_may10ReRecoData) {}
+        _firingFlag(_may10ReRecoData),
+        triggerObjectTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { triggerObjectTree.Write(); }

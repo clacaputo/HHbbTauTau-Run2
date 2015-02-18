@@ -29,7 +29,7 @@
 
 class BjetSelectionStudyData : public root_ext::AnalyzerData {
 public:
-    BjetSelectionStudyData(TFile& outputFile) : root_ext::AnalyzerData(outputFile) {}
+    BjetSelectionStudyData(std::shared_ptr<TFile> outputFile) : root_ext::AnalyzerData(outputFile) {}
 
     TH1D_ENTRY(MET, 35, 0, 350)
     TH1D_ENTRY(matchedBjets, 3, -0.5, 2.5)
@@ -52,10 +52,7 @@ public:
 class BjetSelectionStudy : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     BjetSelectionStudy(const std::string& _inputFileName, const std::string& _outputFileName)
-         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile())
-    {
-        anaData.getOutputFile().cd();
-    }
+         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile()) {}
 
 protected:
     //virtual analysis::FlatAnalyzerData& GetAnaData() override { return anaData; }

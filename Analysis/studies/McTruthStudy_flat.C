@@ -29,7 +29,7 @@
 
 class McTruthStudyData : public analysis::LightFlatAnalyzerData {
 public:
-    McTruthStudyData(TFile& outputFile) : LightFlatAnalyzerData(outputFile) {}
+    McTruthStudyData(std::shared_ptr<TFile> outputFile) : LightFlatAnalyzerData(outputFile) {}
 
     TH1D_ENTRY(Delta_Pt, 40, -200, 200)
     TH1D_ENTRY(Pt_Delta, 20, 0, 200)
@@ -39,10 +39,7 @@ public:
 class McTruthStudy_flat : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     McTruthStudy_flat(const std::string& inputFileName, const std::string& outputFileName)
-         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile())
-    {
-        anaData.getOutputFile().cd();
-    }
+         : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName), anaData(GetOutputFile()) {}
 
 protected:
     virtual analysis::LightFlatAnalyzerData& GetAnaData() override { return anaData; }

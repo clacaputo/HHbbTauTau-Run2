@@ -31,6 +31,7 @@
 #include <TH1.h>
 
 #include "AnalysisBase/include/TreeExtractor.h"
+#include "AnalysisBase/include/RootExt.h"
 
 class PileUp {
 public:
@@ -38,21 +39,19 @@ public:
                  const std::string& histName, const std::string& _mode, const std::string& _prefix = "none",
                         size_t _maxNumberOfEvents = 0)
         : treeExtractor(_prefix == "none" ? "" : _prefix, MC_File_name, false),
-          outputFile(new TFile(reweight_fileName.c_str(),"RECREATE")),
+          outputFile(root_ext::CreateRootFile(reweight_fileName)),
           maxNumberOfEvents(_maxNumberOfEvents), mode(_mode)
     {
 
-        TFile* Data_File = new TFile(Data_File_name.c_str(), "READ");
-        outputFile->cd();
-        Data_distr = static_cast<TH1D*>(Data_File->Get(histName.c_str())->Clone());
-        outputFile->cd();
-        Data_distr->Write();
+        auto Data_File = root_ext::OpenRootFile(Data_File_name);
+        Data_distr = root_ext::ReadCloneObject(*Data_File, histName);
+        root_ext::WriteObject(*Data_distr, outputFile.get());
         Data_distr->Scale( 1.0/ Data_distr->Integral() );
         Data_File->Close();
-        outputFile->cd();
         nPU_MCdistr = new TH1D("MC_pileup", "MC nPU distribution", Data_distr->GetNbinsX(),
                                Data_distr->GetBinLowEdge(1),
                                Data_distr->GetBinLowEdge(Data_distr->GetNbinsX() + 1));
+        nPU_MCdistr->SetDirectory(outputFile.get());
     }
 
 
@@ -77,22 +76,17 @@ public:
             }
         }
 
-        outputFile->cd();
-
-        nPU_MCdistr->Write();
+        root_ext::WriteObject(*nPU_MCdistr);
         nPU_MCdistr->Scale( 1.0 / nPU_MCdistr->Integral() );
 
-
-        TH1D* weights = static_cast<TH1D*>(Data_distr->Clone("weights"));
+        TH1D* weights = root_ext::CloneObject(*Data_distr, "weights");
         weights->Divide(nPU_MCdistr);
-        weights->Write();
-
-        outputFile->Close();
+        root_ext::WriteObject(*weights, outputFile.get());
     }
 
 private:
     analysis::TreeExtractor treeExtractor;
-    TFile* outputFile;
+    std::shared_ptr<TFile> outputFile;
     size_t maxNumberOfEvents;
     TH1D* Data_distr;
     TH1D* nPU_MCdistr;

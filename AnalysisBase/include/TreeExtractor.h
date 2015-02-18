@@ -32,6 +32,7 @@
 #include <fstream>
 
 #include "EventDescriptor.h"
+#include "RootExt.h"
 
 namespace analysis {
 
@@ -69,20 +70,20 @@ typedef std::tuple< std::shared_ptr<ntuple::EventTree>,
                     std::shared_ptr<ntuple::GenEventTree> > Forest;
 
 template<typename Tree>
-inline void CreateTree(std::shared_ptr<Tree>& tree, TFile& inputFile,
+inline void CreateTree(std::shared_ptr<Tree>& tree, std::shared_ptr<TFile> inputFile,
                        const std::string& treeName, bool extractMCtruth, unsigned maxVersion)
 {
     const bool createTree = TreeVersionTag<Tree>::GetVersion() <= maxVersion && (!Tree::IsMCtruth() || extractMCtruth);
-    tree = createTree ? std::shared_ptr<Tree>( new Tree(inputFile, treeName) ) : std::shared_ptr<Tree>();
+    tree = createTree ? std::shared_ptr<Tree>( new Tree(treeName, inputFile.get(), true) ) : std::shared_ptr<Tree>();
 }
 
 template<size_t N = 0>
 inline typename std::enable_if< N == std::tuple_size<Forest>::value >::type
-CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth, unsigned maxVersion) {}
+CreateForest(Forest& forest, std::shared_ptr<TFile> inputFile, bool extractMCtruth, unsigned maxVersion) {}
 
 template<size_t N = 0>
 inline typename std::enable_if< (N < std::tuple_size<Forest>::value) >::type
-CreateForest(Forest& forest, TFile& inputFile, bool extractMCtruth, unsigned maxVersion)
+CreateForest(Forest& forest, std::shared_ptr<TFile> inputFile, bool extractMCtruth, unsigned maxVersion)
 {
     CreateTree(std::get<N>(forest), inputFile, treeNames.at(N), extractMCtruth, maxVersion);
     CreateForest<N + 1>(forest, inputFile, extractMCtruth, maxVersion);
@@ -177,23 +178,16 @@ private:
     Long64_t current_entry;
     std::string prefix;
 
-
-
     bool OpenNextFile()
     {
         if (inputFileNames.empty()) return false;
         const std::string fileName = inputFileNames.front();
         inputFileNames.pop();
         forest = std::shared_ptr<detail::Forest>(new detail::Forest());
-        inputFile = std::shared_ptr<TFile>(new TFile(fileName.c_str(), "READ"));
-        if(inputFile->IsZombie()){
-            std::ostringstream ss;
-            ss << "Input file " << fileName << " not found." ;
-            throw std::runtime_error(ss.str());
-        }
+        inputFile = root_ext::OpenRootFile(fileName);
         std::cout << "File " << fileName << " is opened." << std::endl;
         current_entry = -1;
-        detail::CreateForest(*forest, *inputFile, extractMCtruth, maxTreeVersion);
+        detail::CreateForest(*forest, inputFile, extractMCtruth, maxTreeVersion);
         return true;
     }
 };

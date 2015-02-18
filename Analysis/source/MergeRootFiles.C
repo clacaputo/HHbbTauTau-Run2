@@ -31,29 +31,20 @@
 
 #include <iostream>
 
-#include <TFile.h>
 #include <TROOT.h>
 #include <TKey.h>
 #include <TSystem.h>
 #include <TTree.h>
 #include <memory>
-#include "AnalysisBase/include/exception.h"
+#include "AnalysisBase/include/RootExt.h"
 
 class MergeRootFiles {
 public:
     MergeRootFiles(const std::string& originalFileName , const std::string& referenceFileName,
                   const std::string& outputFileName)
-        : originalFile(new TFile(originalFileName.c_str(), "READ")),
-          referenceFile(new TFile(referenceFileName.c_str(), "READ")),
-          outputFile(new TFile(outputFileName.c_str(),"RECREATE"))
-    {
-        if(originalFile->IsZombie())
-            throw analysis::exception("Original file '") << originalFileName << "' not found.";
-        if(referenceFile->IsZombie())
-            throw analysis::exception("Reference file '") << referenceFileName << "' not found.";
-        if(outputFile->IsZombie())
-            throw analysis::exception("Output file '") << outputFileName << "' can't be opened.";
-    }
+        : originalFile(root_ext::OpenRootFile(originalFileName)),
+          referenceFile(root_ext::OpenRootFile(referenceFileName)),
+          outputFile(root_ext::CreateRootFile(outputFileName)) {}
 
     void Run()
     {
@@ -68,7 +59,6 @@ private:
     /// Copy all objects and subdirs of the source directory to the destination directory.
     static void CopyDirectory(TDirectory *source, TDirectory *destination, bool isReference)
     {
-        destination->cd();
         std::cout<< "CopyDir. Current direcotry: " << destination->GetName() << std::endl;
 
         TIter nextkey(source->GetListOfKeys());
@@ -93,21 +83,17 @@ private:
                     subdir_destination = destination->mkdir(subdir_source->GetName());
 
                 CopyDirectory(subdir_source, subdir_destination, isReference);
-                destination->cd();
             } else if(destination->Get(key->GetName())) {
 
             } else if (cl->InheritsFrom("TTree")) {
                 TTree *T = (TTree*)source->Get(key->GetName());
-                destination->cd();
                 TTree *newT = T->CloneTree();
-                newT->Write(key->GetName());
+                destination->WriteTObject(newT, key->GetName(), "WriteDelete");
                 objectWritten = true;
             } else {
-                source->cd();
                 std::unique_ptr<TObject> original_obj(key->ReadObj());
                 std::unique_ptr<TObject> obj(original_obj->Clone());
-                destination->cd();
-                obj->Write(key->GetName());
+                destination->WriteTObject(obj, key->GetName(), "WriteDelete");
                 objectWritten = true;
             }
 

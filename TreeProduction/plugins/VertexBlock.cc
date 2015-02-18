@@ -33,20 +33,17 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 
-#define SMART_TREE_FOR_CMSSW
 #include "HHbbTauTau/TreeProduction/interface/Vertex.h"
 
 class VertexBlock : public edm::EDAnalyzer {
 public:
     explicit VertexBlock(const edm::ParameterSet& iConfig) :
         _verbosity(iConfig.getParameter<int>("verbosity")),
-        _inputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")) {}
+        _inputTag(iConfig.getParameter<edm::InputTag>("vertexSrc")),
+        vertexTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
-    virtual void endJob()
-    {
-        vertexTree.Write();
-    }
+    virtual void endJob() { vertexTree.Write(); }
     virtual void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 private:

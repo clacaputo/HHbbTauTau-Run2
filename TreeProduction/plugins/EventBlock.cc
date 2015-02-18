@@ -42,9 +42,8 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
-#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 
-#define SMART_TREE_FOR_CMSSW
+#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 #include "HHbbTauTau/TreeProduction/interface/Event.h"
 
 class EventBlock : public edm::EDAnalyzer {
@@ -55,7 +54,8 @@ public:
         _vtxMinNDOF(iConfig.getParameter<unsigned int>("vertexMinimumNDOF")),
         _vtxMaxAbsZ(iConfig.getParameter<double>("vertexMaxAbsZ")),
         _vtxMaxd0(iConfig.getParameter<double>("vertexMaxd0")),
-        _hpTrackThreshold(iConfig.getParameter<double>("hpTrackThreshold")) {}
+        _hpTrackThreshold(iConfig.getParameter<double>("hpTrackThreshold")),
+        eventTree(&edm::Service<TFileService>()->file(), false) {}
 
 private:
     virtual void endJob() { eventTree.Write(); }

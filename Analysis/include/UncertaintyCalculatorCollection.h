@@ -26,255 +26,329 @@
 
 #pragma once
 
-#include <TFile.h>
-
 #include "UncertaintyConfiguration.h"
+#include "FlatAnalyzerDataCollection.h"
 
 namespace analysis {
 namespace limits {
 
+namespace uncertainty_names {
+
+const std::string TauES = "scale_t";
+const std::string JetES = "scale_j";
+const std::string Btag_efficiency = "eff_b";
+const std::string Btag_fake = "fake_b";
+const std::string TTbar_normalization = "ttbarNorm";
+const std::string ZTT_extrapolation = "extrap_ztt";
+const std::string ZLL_FakeTau = "ZLL_FakeTau";
+const std::string JetFakeTau = "JetFakeTau";
+const std::string LeptonFakeTau = "LeptonFakeTau";
+const std::string QCD = "QCDSyst";
+
+} // namespace uncertainty_names
+
 class UncertaintyCalculatorCollection {
 private:
-    typedef std::function< UncertaintyInterval (const std::string&, const std::string&) > UncertaintyCalculator;
+    typedef std::function< UncertaintyInterval (EventCategory, const std::string&) > UncertaintyCalculator;
     typedef std::map<std::string, UncertaintyCalculator> UncertaintyCalculatorMap;
 
-public:
-    UncertaintyCalculatorCollection(std::shared_ptr<TFile> _shape_file)
-        : shape_file(_shape_file)
+    template<typename MethodPtr>
+    void Bind(const std::string& name, MethodPtr method_ptr)
     {
         using namespace std::placeholders;
-
-        calculator_map["eff_b"] = std::bind(&UncertaintyCalculatorCollection::CalculateBtagEfficiencyUnc, this, _1, _2);
-        calculator_map["fake_b"] = std::bind(&UncertaintyCalculatorCollection::CalculateBtagFakeUnc, this, _1, _2);
-        calculator_map["ttbarNorm"] = std::bind(&UncertaintyCalculatorCollection::CalculateTTUnc, this, _1, _2);
-        calculator_map["extrap_ztt"] = std::bind(&UncertaintyCalculatorCollection::CalculateZTTextrapUnc, this, _1, _2);
-        calculator_map["ZLL_FakeTau"] = std::bind(&UncertaintyCalculatorCollection::CalculateZFakeTauUnc, this, _1, _2);
-        //calculator_map["ZJetFakeTau"] = std::bind(&UncertaintyCalculatorCollection::CalculateZJetFakeTauUnc, this, _1, _2);
-        //calculator_map["ZLeptonFakeTau"] = std::bind(&UncertaintyCalculatorCollection::CalculateZLeptonFakeTauUnc, this, _1, _2);
-        calculator_map["QCDSyst"] = std::bind(&UncertaintyCalculatorCollection::CalculateQCDUnc, this, _1, _2);
-
+        calculator_map[name] = std::bind(method_ptr, this, _1, _2);
     }
 
-    UncertaintyInterval Calculate(const std::string& unc_name, const std::string& full_category_name,
-                                  const std::string& sample_name) const
+    static double DefaultPrecision() { return 0.001; }
+
+public:
+    UncertaintyCalculatorCollection(const UncertaintyDescriptorCollection& _uncertainties,
+                                    const DataCategoryCollection& _dataCategories,
+                                    const FlatAnalyzerDataCollectionReader& _reader,
+                                    EventSubCategory _eventSubCategory, const std::string& _referenceHistName)
+        : uncertainties(&_uncertainties), dataCategories(&_dataCategories), reader(&_reader),
+          eventSubCategory(_eventSubCategory), referenceHistName(_referenceHistName)
+    {
+        using namespace uncertainty_names;
+
+        Bind(Btag_efficiency, &UncertaintyCalculatorCollection::CalculateBtagEfficiencyUnc);
+        Bind(Btag_fake, &UncertaintyCalculatorCollection::CalculateBtagFakeUnc);
+        Bind(TTbar_normalization, &UncertaintyCalculatorCollection::CalculateTTUnc);
+        Bind(ZTT_extrapolation, &UncertaintyCalculatorCollection::CalculateZTTextrapUnc);
+        Bind(ZLL_FakeTau, &UncertaintyCalculatorCollection::CalculateZFakeTauUnc);
+        Bind(QCD, &UncertaintyCalculatorCollection::CalculateQCDUnc);
+    }
+
+    UncertaintyInterval Calculate(const std::string& unc_name, EventCategory event_category,
+                                  const std::string& sample_name)
     {
         if(!calculator_map.count(unc_name))
             throw exception("Calculator for uncertainty '") << unc_name << "' not found.";
-        return calculator_map.at(unc_name)(full_category_name, sample_name);
+        return calculator_map.at(unc_name)(event_category, sample_name);
     }
 
     static PhysicalValue CombineUpDownUncertainties(const UncertaintyInterval& unc)
     {
-        static const PhysicalValue two(2, 0);
-        return ( unc.up + (two - unc.down) ) / two;
+        return ( unc.up + (PhysicalValue::Two - unc.down) ) / PhysicalValue::Two;
     }
 
 private:
-    std::shared_ptr<TH1D> LoadHistogram(const std::string& hist_name) const
+    PhysicalValue GetYield(EventCategory eventCategory, const std::string& dataCategoryName,
+                           EventRegion eventRegion = EventRegion::OS_Isolated,
+                           EventEnergyScale eventEnergyScale = EventEnergyScale::Central, bool expect_hist = true) const
     {
-        std::shared_ptr<TH1D> hist(static_cast<TH1D*>(shape_file->Get(hist_name.c_str())));
-        if(!hist)
-            throw exception("Histogram '") << hist_name << "' not found.";
-        return hist;
+        const FlatAnalyzerDataId id(eventCategory, eventSubCategory, eventRegion, eventEnergyScale, dataCategoryName);
+        auto hist = reader->GetHistogram<TH1D>(id, referenceHistName);
+        if(hist)
+            return Integral(*hist, true);
+        if(expect_hist)
+            std::cout << "Histogram '" << referenceHistName << "' in " << id << " not found. Considering zero yield.\n";
+        return PhysicalValue::Zero;
     }
 
-    UncertaintyInterval CalculateBtagEfficiencyUnc(const std::string& full_category_name,
-                                                   const std::string& sample_name) const
+    const std::string& GetDataCategoryName(const std::string& datacard) const
     {
-        const std::string hist_name = full_category_name + "/" + sample_name;
-        const std::string hist_name_scale_prefix = hist_name + "_CMS_scale_btagEff_8TeV";
-        const std::string hist_up_name = hist_name_scale_prefix + "Up";
-        const std::string hist_down_name = hist_name_scale_prefix + "Down";
-
-        auto hist = LoadHistogram(hist_name);
-        auto hist_up = LoadHistogram(hist_up_name);
-        auto hist_down = LoadHistogram(hist_down_name);
-
-        const PhysicalValue n_central = Integral(*hist, true);
-        const PhysicalValue n_up = Integral(*hist_up, true);
-        const PhysicalValue n_down = Integral(*hist_down, true);
-
-        return UncertaintyInterval(n_down/n_central, n_up/n_central);
+        return dataCategories->FindCategoryForDatacard(datacard).name;
     }
 
-    UncertaintyInterval CalculateBtagFakeUnc(const std::string& full_category_name,
-                                                   const std::string& sample_name) const
+    void AddUncertainty(PhysicalValue& physicalValue, const std::string& unc_name,
+                        const std::string& sample_name = "") const
     {
-        const std::string hist_name = full_category_name + "/" + sample_name;
-        const std::string hist_name_scale_prefix = hist_name + "_CMS_scale_btagFake_8TeV";
-        const std::string hist_up_name = hist_name_scale_prefix + "Up";
-        const std::string hist_down_name = hist_name_scale_prefix + "Down";
-
-        auto hist = LoadHistogram(hist_name);
-        auto hist_up = LoadHistogram(hist_up_name);
-        auto hist_down = LoadHistogram(hist_down_name);
-
-        const PhysicalValue n_central = Integral(*hist, true);
-        const PhysicalValue n_up = Integral(*hist_up, true);
-        const PhysicalValue n_down = Integral(*hist_down, true);
-
-        return UncertaintyInterval(n_down/n_central, n_up/n_central);
+        const auto& unc_desc = uncertainties->Get(unc_name);
+        const double value = sample_name.size() && unc_desc.sample_values.count(sample_name)
+                ? unc_desc.sample_values.at(sample_name) : unc_desc.value;
+        physicalValue.AddSystematicUncertainty(unc_name, value - 1);
     }
 
-    UncertaintyInterval CalculateTTUnc(const std::string& full_category_name,
+    UncertaintyInterval CalculateEnergyScaleRelatedUncertainty(EventCategory eventCategory,
+                                                               const std::string& dataCategoryName,
+                                                               EventRegion eventRegion,
+                                                               EventEnergyScale up_energy_scale,
+                                                               EventEnergyScale down_energy_scale,
+                                                               bool expect_hist = true) const
+    {
+        const PhysicalValue n_central = GetYield(eventCategory, dataCategoryName, eventRegion,
+                                                 EventEnergyScale::Central, expect_hist);
+        const PhysicalValue n_up = GetYield(eventCategory, dataCategoryName, eventRegion, up_energy_scale, expect_hist);
+        const PhysicalValue n_down = GetYield(eventCategory, dataCategoryName, eventRegion, down_energy_scale,
+                                              expect_hist);
+
+        return UncertaintyInterval(n_down / n_central, n_up / n_central);
+    }
+
+
+    UncertaintyInterval CalculateBtagEfficiencyUnc(EventCategory eventCategory,
                                                    const std::string& sample_name) const
     {
-        static const PhysicalValue one(1, 0);
+        const auto& dataCategoryName = GetDataCategoryName(sample_name);
+        return CalculateEnergyScaleRelatedUncertainty(eventCategory, dataCategoryName, EventRegion::OS_Isolated,
+                                                      EventEnergyScale::BtagEfficiencyUp,
+                                                      EventEnergyScale::BtagEfficiencyDown);
+    }
 
-        PhysicalValue total_unc;
+    UncertaintyInterval CalculateBtagFakeUnc(EventCategory eventCategory,
+                                             const std::string& sample_name) const
+    {
+        const auto& dataCategoryName = GetDataCategoryName(sample_name);
+        return CalculateEnergyScaleRelatedUncertainty(eventCategory, dataCategoryName, EventRegion::OS_Isolated,
+                                                      EventEnergyScale::BtagFakeUp,
+                                                      EventEnergyScale::BtagFakeDown);
+    }
 
-        if (sample_name == "TT")
-            total_unc.value = 0.10;
-        else if (sample_name == "ZTT"){
-            const std::string hist_name_DYemb_cat = full_category_name + "/DY_emb";
-            const std::string hist_name_TTemb_cat = full_category_name + "/TT_emb";
-            const std::string hist_name_DYemb_incl = "tauTau_inclusive/DY_emb";
-            const std::string hist_name_TTemb_incl = "tauTau_inclusive/TT_emb";
+    const PhysicalValue& GetZTT_SF(EventCategory eventCategory)
+    {
+        if(!ztt_sf_map.count(eventCategory)) {
+            const std::string& DY_emb_name = dataCategories->GetUniqueCategory(DataCategoryType::Embedded).name;
+            const std::string& TT_emb_name = dataCategories->GetUniqueCategory(DataCategoryType::TT_Embedded).name;
 
-            auto hist_DYemb_cat = LoadHistogram(hist_name_DYemb_cat);
-            auto hist_TTemb_cat = LoadHistogram(hist_name_TTemb_cat);
-            auto hist_DYemb_incl = LoadHistogram(hist_name_DYemb_incl);
-            auto hist_TTemb_incl = LoadHistogram(hist_name_TTemb_incl);
+            PhysicalValue DY_cat = GetYield(eventCategory, DY_emb_name);
+            PhysicalValue TT_cat = GetYield(eventCategory, TT_emb_name);
+            PhysicalValue DY_incl = GetYield(EventCategory::Inclusive, DY_emb_name);
+            PhysicalValue TT_incl = GetYield(EventCategory::Inclusive, TT_emb_name);
 
-            const PhysicalValue x_c = Integral(*hist_TTemb_cat, true) / Integral(*hist_DYemb_cat, true);
-            const PhysicalValue x_i = Integral(*hist_TTemb_incl, true) / Integral(*hist_DYemb_incl, true);
-            const PhysicalValue ratio = (x_i - x_c)/((one - x_i)*(one - x_c));
-            total_unc = ratio.Scale(0.1);
+            AddUncertainty(TT_cat, uncertainty_names::TTbar_normalization);
+            AddUncertainty(TT_incl, uncertainty_names::TTbar_normalization);
+
+            const PhysicalValue sf = (DY_cat - TT_cat) / (DY_incl - TT_incl);
+            std::cout << "ZTT SF = " << sf << std::endl;
+            ztt_sf_map[eventCategory] = sf;
         }
-        else
-            throw exception("Not found correct sample on which apply ttNorm uncertainty");
-
-        return UncertaintyInterval(one - total_unc, one + total_unc);
+        return ztt_sf_map.at(eventCategory);
     }
 
-    UncertaintyInterval CalculateZTTextrapUnc(const std::string& full_category_name,
-                                              const std::string& sample_name) const
+    UncertaintyInterval CalculateTTUnc(EventCategory eventCategory, const std::string& sample_name)
     {
-       static const PhysicalValue one(1, 0);
+        if(sample_name != "ZTT")
+            throw exception("Sample '") << sample_name << "' not supported by "
+                                        << uncertainty_names::TTbar_normalization << " uncertainty calculator.";
 
-       const std::string hist_name_DYemb_cat = full_category_name + "/DY_emb";
-       const std::string hist_name_TTemb_cat = full_category_name + "/TT_emb";
-       const std::string hist_name_DYemb_incl = "tauTau_inclusive/DY_emb";
-       const std::string hist_name_TTemb_incl = "tauTau_inclusive/TT_emb";
-
-       auto hist_DYemb_cat = LoadHistogram(hist_name_DYemb_cat);
-       auto hist_TTemb_cat = LoadHistogram(hist_name_TTemb_cat);
-       auto hist_DYemb_incl = LoadHistogram(hist_name_DYemb_incl);
-       auto hist_TTemb_incl = LoadHistogram(hist_name_TTemb_incl);
-
-       const PhysicalValue DY_cat = Integral(*hist_DYemb_cat, true);
-       const PhysicalValue TT_cat = Integral(*hist_TTemb_cat, true);
-       const PhysicalValue DY_incl = Integral(*hist_DYemb_incl, true);
-       const PhysicalValue TT_incl = Integral(*hist_TTemb_incl, true);
-//       std::cout << "DY_cat: " << DY_cat << std::endl;
-//       std::cout << "TT_cat: " << TT_cat << std::endl;
-//       std::cout << "DY_incl: " << DY_incl << std::endl;
-//       std::cout << "TT_incl: " << TT_incl << std::endl;
-
-       const PhysicalValue scale_factor = (DY_cat - TT_cat)/(DY_incl - TT_incl);
-       std::cout << "scale factor: " << scale_factor.value << ", error: " << scale_factor.error <<
-                    ", ratio: " << scale_factor.error/scale_factor.value << std::endl;
-       const PhysicalValue total_unc(scale_factor.error/scale_factor.value,0);
-       std::cout << "total unc: " << total_unc << std::endl;
-
-       const PhysicalValue DY_cat_mod(DY_cat.value, 0);
-       const PhysicalValue TT_cat_mod(TT_cat.value, 0);
-       const PhysicalValue DY_incl_mod(DY_incl.value, 0);
-       const PhysicalValue TT_incl_mod(TT_incl.value, 0);
-
-       const PhysicalValue sf_DY_only = (DY_cat - TT_cat_mod)/(DY_incl - TT_incl_mod);
-       const PhysicalValue dy_unc(sf_DY_only.error/sf_DY_only.value,0);
-       std::cout << "dy unc: " << dy_unc << ", contrib: " << dy_unc / total_unc << std::endl;
-
-       const PhysicalValue sf_TT_only = (DY_cat_mod - TT_cat)/(DY_incl_mod - TT_incl);
-       const PhysicalValue tt_unc(sf_TT_only.error/sf_TT_only.value,0);
-       std::cout << "tt unc: " << tt_unc << ", contrib: " << tt_unc / total_unc << std::endl;
-
-
-       return UncertaintyInterval(one - total_unc, one + total_unc);
+        const PhysicalValue& sf = GetZTT_SF(eventCategory);
+        const double unc = sf.GetRelativeSystematicUncertainty(uncertainty_names::TTbar_normalization);
+        return UncertaintyInterval(PhysicalValue(unc, DefaultPrecision()));
     }
 
-    UncertaintyInterval CalculateZFakeTauUnc(const std::string& full_category_name,
-                                              const std::string& sample_name) const
+    UncertaintyInterval CalculateZTTextrapUnc(EventCategory eventCategory, const std::string& sample_name)
     {
-       static const PhysicalValue one(1, 0);
+        if(sample_name != "ZTT")
+            throw exception("Sample '") << sample_name << "' not supported by "
+                                        << uncertainty_names::ZTT_extrapolation << " uncertainty calculator.";
 
-       const std::string hist_name_ZJ = full_category_name + "/ZJ";
-       const std::string hist_name_ZL = full_category_name + "/ZL";
-       const std::string hist_name_ZLL = full_category_name + "/" + sample_name;
-
-       auto hist_ZJ = LoadHistogram(hist_name_ZJ);
-       auto hist_ZL = LoadHistogram(hist_name_ZL);
-       auto hist_ZLL = LoadHistogram(hist_name_ZLL);
-
-       const PhysicalValue n_ZJ = Integral(*hist_ZJ, true);
-       const PhysicalValue n_ZL = Integral(*hist_ZL, true);
-       const PhysicalValue n_ZLL = Integral(*hist_ZLL, true);
-
-       const double uncertainty = std::sqrt( (sqr(n_ZJ.error) + sqr(0.20 * n_ZJ.value) +
-                                              sqr(n_ZL.error) + sqr(0.30 * n_ZL.value)) / sqr(n_ZLL.value));
-
-       const PhysicalValue total_unc(uncertainty,0);
-       return UncertaintyInterval(one - total_unc, one + total_unc);
+        const PhysicalValue& sf = GetZTT_SF(eventCategory);
+        const double unc = sf.GetRelativeStatisticalError();
+        return UncertaintyInterval(PhysicalValue(unc, DefaultPrecision()));
     }
 
-//    UncertaintyInterval CalculateZJetFakeTauUnc(const std::string& full_category_name,
-//                                              const std::string& sample_name) const
-//    {
-//       static const PhysicalValue one(1, 0);
-
-//       const std::string hist_name_ZJ = full_category_name + "/ZJ";
-
-//       auto hist_ZJ = LoadHistogram(hist_name_ZJ);
-
-//       const PhysicalValue n_ZJ = Integral(*hist_ZJ, true);
-
-//       const double uncertainty = std::sqrt( sqr(n_ZJ.error/n_ZJ.value) + sqr(0.20) );
-//       const PhysicalValue total_unc(uncertainty,0);
-
-//       return UncertaintyInterval(one - total_unc, one + total_unc);
-//    }
-
-//    UncertaintyInterval CalculateZLeptonFakeTauUnc(const std::string& full_category_name,
-//                                              const std::string& sample_name) const
-//    {
-//        static const PhysicalValue one(1, 0);
-
-//        const std::string hist_name_ZL = full_category_name + "/ZL";
-
-//        auto hist_ZL = LoadHistogram(hist_name_ZL);
-
-//        const PhysicalValue n_ZL = Integral(*hist_ZL, true);
-//        std::cout << "ZL: " << n_ZL.value << std::endl;
-//        static const double tiny_value = 1e-7;
-//        if (n_ZL.value < tiny_value)
-//            return UncertaintyInterval(one, one);
-
-//        const double uncertainty = std::sqrt( sqr(n_ZL.error/n_ZL.value) + sqr(0.30) );
-//        const PhysicalValue total_unc(uncertainty,0);
-
-//        return UncertaintyInterval(one - total_unc, one + total_unc);
-//    }
-
-    UncertaintyInterval CalculateQCDUnc(const std::string& full_category_name,
-                                              const std::string& sample_name) const
+    UncertaintyInterval CalculateZFakeTauUnc(EventCategory eventCategory, const std::string& sample_name) const
     {
-        static const PhysicalValue one(1, 0);
+        if(sample_name != "ZLL")
+            throw exception("Sample '") << sample_name << "' not supported by "
+                                        << uncertainty_names::ZLL_FakeTau << " uncertainty calculator.";
 
-        PhysicalValue total_unc;
-        if (full_category_name == "tauTau_2jet0tag")
-            total_unc.value = 0.10;
-        else if (full_category_name == "tauTau_2jet1tag")
-            total_unc.value = 0.20;
-        else if (full_category_name == "tauTau_2jet2tag")
-            total_unc.value = 0.40;
+        const std::string ZJ_name = dataCategories->GetUniqueCategory(DataCategoryType::ZJ_MC).name;
+        const std::string ZL_name = dataCategories->GetUniqueCategory(DataCategoryType::ZL_MC).name;
 
-        return UncertaintyInterval(one - total_unc, one + total_unc);
+        PhysicalValue n_ZJ = GetYield(eventCategory, ZJ_name);
+        PhysicalValue n_ZL = GetYield(eventCategory, ZL_name);
+
+        AddUncertainty(n_ZJ, uncertainty_names::JetFakeTau);
+        AddUncertainty(n_ZL, uncertainty_names::LeptonFakeTau);
+
+        const PhysicalValue n_ZLL = n_ZJ + n_ZL;
+        std::cout << "ZLL yield = " << n_ZLL << std::endl;
+
+        const double unc = n_ZLL.GetRelativeFullError();
+        return UncertaintyInterval(PhysicalValue(unc, DefaultPrecision()));
+    }
+
+    const std::set<std::string>& GetBackgroundNames()
+    {
+        if(!bkg_names.size()) {
+            const std::set<std::string> qcd_names = {
+                dataCategories->GetUniqueCategory(DataCategoryType::QCD).name,
+                dataCategories->GetUniqueCategory(DataCategoryType::QCD_alternative).name
+            };
+
+            for (auto category : dataCategories->GetCategories(DataCategoryType::Background)) {
+                if(category->IsComposit() || qcd_names.count(category->name) || !category->isCategoryToSubtract )
+                    continue;
+                bkg_names.insert(category->name);
+            }
+        }
+        return bkg_names;
+    }
+
+    void AddAllUncertainties(PhysicalValue& value, EventCategory eventCategory, const std::string& dataCategoryName,
+                             EventRegion eventRegion) const
+    {
+        const auto apply_es_unc = [&] (const std::string& name, EventEnergyScale up, EventEnergyScale down) -> void {
+            const auto es_interval = CalculateEnergyScaleRelatedUncertainty(eventCategory, dataCategoryName,
+                                                                            eventRegion, up, down, false);
+            const PhysicalValue es_unc = CombineUpDownUncertainties(es_interval);
+            if(!std::isnan(es_unc.GetValue()))
+                value.AddSystematicUncertainty(name, es_unc.GetValue() - 1);
+        };
+
+        apply_es_unc(uncertainty_names::TauES, EventEnergyScale::TauUp, EventEnergyScale::TauDown);
+        apply_es_unc(uncertainty_names::JetES, EventEnergyScale::JetUp, EventEnergyScale::JetDown);
+        apply_es_unc(uncertainty_names::Btag_efficiency, EventEnergyScale::BtagEfficiencyUp,
+                     EventEnergyScale::BtagEfficiencyDown);
+        apply_es_unc(uncertainty_names::Btag_fake, EventEnergyScale::BtagFakeUp, EventEnergyScale::BtagFakeDown);
+
+        const DataCategory& dataCategory = dataCategories->FindCategory(dataCategoryName);
+        for(const std::string& unc_name : dataCategory.uncertainties)
+            AddUncertainty(value, unc_name, dataCategory.datacard);
+    }
+
+    PhysicalValue CalculateBackgroundYield(EventCategory eventCategory, EventRegion eventRegion)
+    {
+        PhysicalValue total_yield;
+
+        for(const std::string& bkg_name : GetBackgroundNames()) {
+            PhysicalValue bkg_yield = GetYield(eventCategory, bkg_name, eventRegion, EventEnergyScale::Central, false);
+            AddAllUncertainties(bkg_yield, eventCategory, bkg_name, eventRegion);
+            std::cout << "  " << bkg_name << ": " << bkg_yield << ".\n";
+            total_yield += bkg_yield;
+        }
+        std::cout << "Total bkg yield: " << total_yield << ".\n";
+        return total_yield;
+    }
+
+    PhysicalValue CalculateQcdYield(EventCategory eventCategory, EventRegion eventRegion, bool consider_data_stat)
+    {
+
+        std::cout << eventCategory << "/" << eventRegion << "\n";
+        const std::string& data_name = dataCategories->GetUniqueCategory(DataCategoryType::Data).name;
+        const PhysicalValue data_yield_stat = GetYield(eventCategory, data_name, eventRegion);
+        const PhysicalValue data_yield = consider_data_stat
+                ? data_yield_stat : PhysicalValue(data_yield_stat.GetValue());
+        const PhysicalValue bkg_yield = CalculateBackgroundYield(eventCategory, eventRegion);
+        const PhysicalValue qcd_yield = data_yield - bkg_yield;
+
+        std::cout << "Data yield: " << data_yield_stat << ".\n"
+                  << "QCD yield: " << qcd_yield << ".\n";
+
+        return qcd_yield;
+    }
+
+    UncertaintyInterval CalculateQCDUnc(EventCategory eventCategory, const std::string& sample_name)
+    {
+        if(sample_name != "QCD")
+            throw exception("Sample '") << sample_name << "' not supported by "
+                                        << uncertainty_names::QCD << " uncertainty calculator.";
+
+        static const analysis::EventCategorySet categories_to_loose = {
+            EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag
+        };
+
+        EventCategory refEventCategory = eventCategory;
+        if(categories_to_loose.count(eventCategory))
+            refEventCategory = MediumToLoose_EventCategoryMap.at(eventCategory);
+
+
+        const PhysicalValue yield_OSAntiIso = CalculateQcdYield(eventCategory, EventRegion::OS_AntiIsolated, true);
+        const PhysicalValue yield_SSIso_ref = CalculateQcdYield(refEventCategory, EventRegion::SS_Isolated, true);
+        const PhysicalValue yield_SSAntiIso = CalculateQcdYield(refEventCategory, EventRegion::SS_AntiIsolated, true);
+
+        const PhysicalValue iso_antiIso_sf = yield_SSIso_ref / yield_SSAntiIso;
+        const PhysicalValue qcd_yield = yield_OSAntiIso * iso_antiIso_sf;
+        const double qcd_unc = qcd_yield.GetRelativeFullError();
+
+        std::cout << "QCD iso/anti_iso SF: " << iso_antiIso_sf << ".\n"
+                  << "QCD signal yiled: " << qcd_yield << ".\n"
+                  << "QCD full uncertainty: " << qcd_unc << ".\n";
+
+        const PhysicalValue yield_OSAntiIso_ref = CalculateQcdYield(refEventCategory, EventRegion::OS_AntiIsolated,
+                                                                    true);
+        const PhysicalValue yield_SSIso = CalculateQcdYield(eventCategory, EventRegion::SS_Isolated, true);
+
+        const PhysicalValue os_ss_sf = yield_OSAntiIso_ref / yield_SSAntiIso;
+        const PhysicalValue alt_qcd_yield = yield_SSIso * os_ss_sf;
+        const double alt_qcd_unc = alt_qcd_yield.GetRelativeFullError();
+        const PhysicalValue delta_qcd =
+                (yield_OSAntiIso * yield_SSIso_ref - yield_OSAntiIso_ref * yield_SSIso) / yield_SSAntiIso;
+
+        const PhysicalValue average_qcd = PhysicalValue::WeightedAverage({qcd_yield, alt_qcd_yield});
+        const double qcd_cov = qcd_yield.Covariance(alt_qcd_yield);
+
+        std::cout << "Alt QCD os/ss SF: " << os_ss_sf << ".\n"
+                  << "Alt QCD signal yiled: " << alt_qcd_yield << ".\n"
+                  << "Alt QCD full uncertainty: " << alt_qcd_unc << ".\n"
+                  << "Delta QCD methods: " << delta_qcd << ".\n"
+                  << "Average QCD signal value: " << average_qcd << ".\n"
+                  << "QCD covariance: " << qcd_cov << ".\n";
+
+        return UncertaintyInterval(PhysicalValue(qcd_unc, DefaultPrecision()));
     }
 
 private:
-    std::shared_ptr<TFile> shape_file;
+    const UncertaintyDescriptorCollection* uncertainties;
+    const DataCategoryCollection* dataCategories;
+    const FlatAnalyzerDataCollectionReader* reader;
+    EventSubCategory eventSubCategory;
+    std::string referenceHistName;
     UncertaintyCalculatorMap calculator_map;
+    std::map<EventCategory, PhysicalValue> ztt_sf_map;
+    std::set<std::string> bkg_names;
 };
 
 } // namespace limits

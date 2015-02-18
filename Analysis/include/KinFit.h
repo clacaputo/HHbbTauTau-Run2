@@ -42,6 +42,7 @@
 
 #include "TreeProduction/interface/MET.h"
 #include "AnalysisBase/include/Candidate.h"
+#include "AnalysisBase/include/RootExt.h"
 
 namespace analysis {
 

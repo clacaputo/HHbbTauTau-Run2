@@ -33,8 +33,9 @@ namespace analysis {
 class SemileptonicFlatTreeAnalyzer : public BaseFlatTreeAnalyzer {
 public:
     SemileptonicFlatTreeAnalyzer(const DataCategoryCollection& _dataCategoryCollection, const std::string& _inputPath,
-                                 const std::string& _outputFileName)
-         : BaseFlatTreeAnalyzer(_dataCategoryCollection, _inputPath, _outputFileName)
+                                 const std::string& _outputFileName, bool applyPostFitCorrections, bool saveFullOutput)
+         : BaseFlatTreeAnalyzer(_dataCategoryCollection, _inputPath, _outputFileName, applyPostFitCorrections,
+                                saveFullOutput)
     {
     }
 
@@ -212,7 +213,7 @@ protected:
 
             const auto data_yield = Integral(*hist_data, true);
             const PhysicalValue yield = data_yield - bkg_yield;
-            if(yield.value < 0) {
+            if(yield.GetValue() < 0) {
                 std::cout << bkg_yield_debug << "\nData yield = " << data_yield << std::endl;
                 throw exception("Negative Wjets yield for histogram '")
                         << hist_name << "' in " << anaDataMetaId.eventCategory << " " << eventRegion.first << ".";

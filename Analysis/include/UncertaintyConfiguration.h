@@ -186,6 +186,8 @@ public:
     bool Contains(const std::string& descriptorName) const { return uncertainties.count(descriptorName); }
     const UncertaintyDescriptor& Get(const std::string& descriptorName) const
     {
+        if(!Contains(descriptorName))
+            throw exception("Uncertainty descriptor '") << descriptorName << "' not found.";
         return uncertainties.at(descriptorName);
     }
 
@@ -455,32 +457,28 @@ private:
 public:
     PhysicalValue down, up;
 
-    UncertaintyInterval() : down(1, 0), up(1, 0) {}
+    UncertaintyInterval() : down(PhysicalValue::One), up(PhysicalValue::One) {}
+    explicit UncertaintyInterval(const PhysicalValue& unc)
+        : down(PhysicalValue::One - unc), up(PhysicalValue::One + unc) {}
     UncertaintyInterval(const PhysicalValue& _down, const PhysicalValue& _up) : down(_down), up(_up) {}
 
     static UncertaintyInterval WeightedAverage(const std::vector<UncertaintyInterval>& intervals)
     {
-        const PhysicalValue new_down = WeightedAverage(intervals, &UncertaintyInterval::down);
-        const PhysicalValue new_up = WeightedAverage(intervals, &UncertaintyInterval::up);
+        const auto down_collection = CollectValues(intervals, &UncertaintyInterval::down);
+        const auto up_collection = CollectValues(intervals, &UncertaintyInterval::up);
+        const PhysicalValue new_down = PhysicalValue::WeightedAverage(down_collection);
+        const PhysicalValue new_up = PhysicalValue::WeightedAverage(up_collection);
         return UncertaintyInterval(new_down, new_up);
     }
 
 private:
-    static PhysicalValue WeightedAverage(const std::vector<UncertaintyInterval>& intervals, ValuePtr value_ptr)
+    static std::vector<PhysicalValue> CollectValues(const std::vector<UncertaintyInterval>& intervals,
+                                                    ValuePtr value_ptr)
     {
-        double total_weight = 0;
-        if (intervals.size() == 1)
-            return intervals.at(0).*value_ptr;
-        PhysicalValue weighted_sum;
-        for(const UncertaintyInterval& unc : intervals) {
-            const PhysicalValue& value = unc.*value_ptr;
-            if(!value.error)
-                throw exception("Error equal zero!");
-            const double weight =  1. / sqr(value.error);
-            total_weight += weight;
-            weighted_sum += value.Scale(weight);
-        }
-        return weighted_sum.Scale(1. / total_weight);
+        std::vector<PhysicalValue> result;
+        for(const UncertaintyInterval& unc : intervals)
+            result.push_back(unc.*value_ptr);
+        return result;
     }
 };
 

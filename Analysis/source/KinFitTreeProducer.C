@@ -34,7 +34,6 @@ public:
     KinFitTreeProducer(const std::string& inputFileName, const std::string& outputFileName)
          : LightBaseFlatTreeAnalyzer(inputFileName, outputFileName)
     {
-        GetOutputFile().cd();
         recalc_kinfit = true;
         kinFitTree = std::shared_ptr<ntuple::KinFitTree>(new ntuple::KinFitTree("kinFitTree"));
     }

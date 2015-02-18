@@ -73,12 +73,14 @@ public:
     TH1D_ENTRY_EX(pull_balance_2, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_EX(MET, 20, 0, 100, "E_{T}^{miss}[GeV]", "Events", false, 1.1, SaveAll)
     TH2D_ENTRY_EX(csv_b1_vs_ptb1, 20, 0, 200, 25, 0, 1, "P_{T}[GeV](leading_jet)", "CSV(leading_jet)", false, 1, SaveAll)
+    TH2D_ENTRY_EX(chi2_vs_ptb1, 20, 0, 200, 20, 0, 100, "P_{T}[GeV](leading_jet)", "#chi^{2}", false, 1, SaveAll)
+    TH2D_ENTRY_EX(mH_vs_chi2, 20, 0, 100, 50, 200, 700, "#chi^{2}", "M_{#tau#taubb}[GeV]", false, 1, SaveAll)
 
     static constexpr bool SaveAll = true;
 
     explicit FlatAnalyzerData(bool _fill_all) : fill_all(_fill_all) {}
 
-    FlatAnalyzerData(TFile& outputFile, const std::string& directoryName, bool _fill_all)
+    FlatAnalyzerData(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool _fill_all)
         : AnalyzerData(outputFile, directoryName), fill_all(_fill_all) {}
 
     typedef root_ext::SmartHistogram<TH1D>& (FlatAnalyzerData::*HistogramAccessor)();
@@ -158,6 +160,11 @@ public:
 
         csv_b1_vs_ptb1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
                               eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first), weight);
+        if (eventInfo.fitResults.has_valid_mass){
+            chi2_vs_ptb1().Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
+                                eventInfo.fitResults.chi2,weight);
+            mH_vs_chi2().Fill(eventInfo.fitResults.chi2,eventInfo.fitResults.mass, weight);
+        }
     }
 
 protected:
@@ -203,7 +210,7 @@ public:
 
     explicit FlatAnalyzerData_semileptonic(bool _fill_all) : FlatAnalyzerData(_fill_all) {}
 
-    FlatAnalyzerData_semileptonic(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_semileptonic(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool fill_all)
         : FlatAnalyzerData(outputFile, directoryName, fill_all) {}
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight) override
@@ -226,7 +233,8 @@ class FlatAnalyzerData_semileptonic_2tag : public FlatAnalyzerData_semileptonic 
 public:
     explicit FlatAnalyzerData_semileptonic_2tag(bool _fill_all) : FlatAnalyzerData_semileptonic(_fill_all) {}
 
-    FlatAnalyzerData_semileptonic_2tag(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_semileptonic_2tag(std::shared_ptr<TFile> outputFile, const std::string& directoryName,
+                                       bool fill_all)
         : FlatAnalyzerData_semileptonic(outputFile, directoryName, fill_all) {}
 
     virtual const std::vector<double>& M_tt_Bins() const override
@@ -244,7 +252,7 @@ public:
 
     explicit FlatAnalyzerData_tautau(bool _fill_all) : FlatAnalyzerData(_fill_all) {}
 
-    FlatAnalyzerData_tautau(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_tautau(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool fill_all)
         : FlatAnalyzerData(outputFile, directoryName, fill_all) {}
 
     virtual void Fill(const FlatEventInfo& eventInfo, double weight) override
@@ -268,7 +276,7 @@ class FlatAnalyzerData_tautau_2tag : public FlatAnalyzerData_tautau {
 public:
     explicit FlatAnalyzerData_tautau_2tag(bool _fill_all) : FlatAnalyzerData_tautau(_fill_all) {}
 
-    FlatAnalyzerData_tautau_2tag(TFile& outputFile, const std::string& directoryName, bool fill_all)
+    FlatAnalyzerData_tautau_2tag(std::shared_ptr<TFile> outputFile, const std::string& directoryName, bool fill_all)
         : FlatAnalyzerData_tautau(outputFile, directoryName, fill_all) {}
 
     virtual const std::vector<double>& M_tt_Bins() const override

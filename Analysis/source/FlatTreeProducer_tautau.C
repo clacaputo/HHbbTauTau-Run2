@@ -117,12 +117,11 @@ public:
                             size_t _maxNumberOfEvents = 0,
                             std::shared_ptr<ntuple::FlatTree> _flatTree = std::shared_ptr<ntuple::FlatTree>())
         : BaseFlatTreeProducer(inputFileName, outputFileName, configFileName, _prefix, _maxNumberOfEvents, _flatTree),
-          baseAnaData(*outputFile),
+          baseAnaData(outputFile),
           eventWeights(!config.isMC(), config.IsEmbeddedSample(), config.ApplyPUreweight(), config.ApplyDMweight(),
                        config.PUreweight_fileName(), config.PUreweight_maxAvailablePU(),
                        config.PUreweight_defaultWeight())
     {
-        baseAnaData.getOutputFile().cd();
         if(config.ApplyRecoilCorrection())
             recoilCorrectionProducer_tautau = std::shared_ptr<analysis::RecoilCorrectionProducer>(
                         new analysis::RecoilCorrectionProducer(config.RecoilCorrection_fileCorrectTo_TauTau(),

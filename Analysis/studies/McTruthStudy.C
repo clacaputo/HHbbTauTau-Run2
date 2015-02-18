@@ -28,7 +28,7 @@
 
 class McTruthStudyData : public analysis::BaseAnalyzerData {
 public:
-    McTruthStudyData(TFile& outputFile) : BaseAnalyzerData(outputFile) {}
+    McTruthStudyData(std::shared_ptr<TFile> outputFile) : BaseAnalyzerData(outputFile) {}
 
     TH1D_ENTRY(MC_visible_pt, 20, 0, 200)
     TH1D_ENTRY(MC_visible_eta, 20, 0, 5)

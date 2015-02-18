@@ -29,13 +29,14 @@
 #include <fstream>
 #include <sstream>
 
+#include "AnalysisBase/include/RootExt.h"
 #include "../include/RootPrintToPdf.h"
 
 
 struct DataSource {
     std::string file_name;
     double scale_factor;
-    TFile* file;
+    std::shared_ptr<TFile> file;
 };
 
 struct HistogramDescriptor {
@@ -129,9 +130,7 @@ public:
     static TH1D* Convert(const DataSource& source, const HistogramDescriptor& hist, const std::string& treeName,
                          const std::string& weightBranchName = "")
     {
-        TTree* tree = static_cast<TTree*>(source.file->Get(treeName.c_str()));;
-        if(!tree)
-            throw std::runtime_error("tree not found.");
+        TTree* tree = root_ext::ReadObject<TTree>(*source.file, treeName);
         std::ostringstream name;
         name << source.file_name << "_" << hist.name << "_hist";
         std::ostringstream command;
@@ -161,12 +160,7 @@ public:
             std::cout << category << std::endl;
             for (DataSource& source : category.sources){
                 const std::string fullFileName = inputPath + "/" + source.file_name;
-                source.file = new TFile(fullFileName.c_str(), "READ");
-                if(source.file->IsZombie()) {
-                    std::ostringstream ss;
-                    ss << "Input file '" << source.file_name << "' not found.";
-                    throw std::runtime_error(ss.str());
-                }
+                source.file = root_ext::OpenRootFile(fullFileName);
             }
         }
 

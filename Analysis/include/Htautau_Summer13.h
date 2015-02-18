@@ -213,7 +213,7 @@ namespace TauTau {
          {"HLT_DoubleMediumIsoPFTau35_Trk5_eta2p1", false},
          {"HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1",false} };
 
-        const std::set<std::string> hltPaths = tools::collect_map_keys(hltPathsMap);
+        const std::set<std::string> hltPaths = analysis::tools::collect_map_keys(hltPathsMap);
 
         const double jet_pt = 50; // > GeV twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state
         const double jet_eta = 3.0; // < twiki HiggsToTauTauWorkingSummer2013#Tau_Tau_Final_state

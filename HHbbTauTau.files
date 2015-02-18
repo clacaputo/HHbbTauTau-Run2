@@ -173,8 +173,6 @@ TreeProduction/interface/Trigger.h
 TreeProduction/interface/TriggerObject.h
 TreeProduction/interface/TriggerTools.h
 TreeProduction/interface/Vertex.h
-TreeProduction/legacy/compareSync.C
-TreeProduction/legacy/test.py
 TreeProduction/plugins/BuildFile.xml
 TreeProduction/plugins/ElectronBlock.cc
 TreeProduction/plugins/EventBlock.cc
@@ -351,3 +349,6 @@ AnalysisBase/include/ConfigReader.h
 Analysis/include/UncertaintyCalculatorCollection.h
 Analysis/include/UncertaintyConfiguration.h
 Analysis/include/FlatAnalyzerDataCollection.h
+AnalysisBase/include/PhysicalValue.h
+AnalysisBase/include/ProgressReporter.h
+AnalysisBase/include/RootExt.h

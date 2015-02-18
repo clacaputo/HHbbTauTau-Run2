@@ -180,7 +180,7 @@ public:
 
     virtual void WriteRootObject()
     {
-        if(!selections.size())
+        if(!selections.size() || !GetOutputDirectory())
             return;
         std::unique_ptr<TH1D> selection_histogram(
                     new TH1D(Name().c_str(), Name().c_str(),selections.size(),-0.5,-0.5+selections.size()));
@@ -190,21 +190,21 @@ public:
             selection_histogram->SetBinContent(n+1,selections.at(n));
             selection_histogram->SetBinError(n+1,std::sqrt(selectionsSquaredErros.at(n)));
         }
-        selection_histogram->Write();
+        root_ext::WriteObject(*selection_histogram, GetOutputDirectory());
 
         std::string effAbs_name = Name() + "_effAbs";
         std::unique_ptr<TH1D> effAbs_histogram(
                     new TH1D(effAbs_name.c_str(), effAbs_name.c_str(),selections.size(),-0.5,-0.5+selections.size()));
 
         fill_relative_selection_histogram(*effAbs_histogram,0);
-        effAbs_histogram->Write();
+        root_ext::WriteObject(*effAbs_histogram, GetOutputDirectory());
 
         std::string effRel_name = Name() + "_effRel";
         std::unique_ptr<TH1D> effRel_histogram(
                     new TH1D(effRel_name.c_str(), effRel_name.c_str(),selections.size(),-0.5,-0.5+selections.size()));
 
         fill_relative_selection_histogram(*effRel_histogram);
-        effRel_histogram->Write();
+        root_ext::WriteObject(*effRel_histogram, GetOutputDirectory());
     }
 
 private:
@@ -219,8 +219,6 @@ private:
             relative_selection_histogram.SetBinContent(n+1, ratio);
         }
     }
-
-
 };
 
 }
