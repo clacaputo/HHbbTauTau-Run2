@@ -104,29 +104,29 @@ protected:
                                                                                  anaDataMetaId.eventEnergyScale);
 
         auto hist_shape_data = GetHistogram(anaDataMetaId_ref, eventRegion, data.name, hist_name);
-        if(!hist_shape_data) return;
+        //if(!hist_shape_data) return;
 
-        //if(hist_shape_data){
-        TH1D& histogram = CloneHistogram(anaDataMetaId, EventRegion::OS_Isolated, qcd.name, *hist_shape_data);
-        std::string debug_info, negative_bins_info;
-        SubtractBackgroundHistograms(anaDataMetaId_ref, eventRegion, histogram, qcd.name, debug_info,
-                                     negative_bins_info);
-        if(negative_bins_info.size())
-            std::cerr << negative_bins_info;
-        analysis::RenormalizeHistogram(histogram, yield, true);
-        //}
+        if(hist_shape_data){
+            TH1D& histogram = CloneHistogram(anaDataMetaId, EventRegion::OS_Isolated, qcd.name, *hist_shape_data);
+            std::string debug_info, negative_bins_info;
+            SubtractBackgroundHistograms(anaDataMetaId_ref, eventRegion, histogram, qcd.name, debug_info,
+                                         negative_bins_info);
+            if(negative_bins_info.size())
+                std::cerr << negative_bins_info;
+            analysis::RenormalizeHistogram(histogram, yield, true);
+        }
 
-//        for (const EventRegion eventRegion_iter : analysis::AllEventRegions){
-//            if (eventRegion_iter == EventRegion::OS_Isolated) continue;
-//            auto hist_shape_data_sideBand = GetHistogram(anaDataMetaId, eventRegion_iter, data.name, hist_name);
-//            if (!hist_shape_data_sideBand) continue;
-//            TH1D& histogram_sideBand = CloneHistogram(anaDataMetaId, eventRegion_iter, qcd.name, *hist_shape_data_sideBand);
-//            std::string debug_info_sideBand, negative_bins_info_sideBand;
-//            SubtractBackgroundHistograms(anaDataMetaId, eventRegion_iter, histogram_sideBand, qcd.name, debug_info_sideBand,
-//                                         negative_bins_info_sideBand);
-//            if(negative_bins_info_sideBand.size())
-//                std::cerr << negative_bins_info_sideBand;
-//        }
+        for (const EventRegion eventRegion_iter : analysis::AllEventRegions){
+            if (eventRegion_iter == EventRegion::OS_Isolated) continue;
+            auto hist_shape_data_sideBand = GetHistogram(anaDataMetaId, eventRegion_iter, data.name, hist_name);
+            if (!hist_shape_data_sideBand) continue;
+            TH1D& histogram_sideBand = CloneHistogram(anaDataMetaId, eventRegion_iter, qcd.name, *hist_shape_data_sideBand);
+            std::string debug_info_sideBand, negative_bins_info_sideBand;
+            SubtractBackgroundHistograms(anaDataMetaId, eventRegion_iter, histogram_sideBand, qcd.name, debug_info_sideBand,
+                                         negative_bins_info_sideBand);
+            if(negative_bins_info_sideBand.size())
+                std::cerr << negative_bins_info_sideBand;
+        }
     }
 
     virtual analysis::PhysicalValue CalculateQCDYield_base(
