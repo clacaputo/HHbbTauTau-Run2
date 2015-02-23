@@ -96,15 +96,25 @@ protected:
     {
         using analysis::EventCategory;
 
-//        if (category != EventCategory::TwoJets_TwoBtag) return;
+        if (category != EventCategory::Inclusive) return;
         ++inclusive;
+
+        const ntuple::Flat& event = *eventInfo.event;
+        if(event.evt == 2823968 && event.eventEnergyScale == 0){
+            std::cout << "event: " << event.evt << std::endl;
+            std::cout << "b1: " << eventInfo.bjet_momentums.at(0)<< ", csv1: " <<
+                         event.csv_Bjets.at(eventInfo.selected_bjets.first) << std::endl;
+            std::cout << "b2: " << eventInfo.bjet_momentums.at(1) << ", csv2: " <<
+                         event.csv_Bjets.at(eventInfo.selected_bjets.second) << std::endl;
+            std::cout << "msv= " << eventInfo.event->m_sv_MC << std::endl;
+        }
 
         if (!PassSyncTreeSelection(eventInfo)) return;
         ++passed;
-//        if (eventInfo.eventType != ntuple::EventType::ZL) return;
+        if (eventInfo.eventType != ntuple::EventType::ZTT) return;
         ++passedEventType;
 
-        const ntuple::Flat& event = *eventInfo.event;
+
         const analysis::EventId eventId(event.run,event.lumi,event.evt);
         eventId_ToES_Map[eventId][static_cast<analysis::EventEnergyScale>(event.eventEnergyScale)] = event;
     }
@@ -136,7 +146,7 @@ protected:
             syncTree->isoweight_1() = event.isoweight_1;
             syncTree->isoweight_2() = event.isoweight_2;
             syncTree->fakeweight() = event.fakeweight_2;
-//            double DYweight = 1;
+            double DYweight = 1;
             //inclusive sample
 //            if (event.n_extraJets_MC == 6)
 //                DYweight = 0.1941324;
@@ -151,7 +161,7 @@ protected:
 //            DYweight = 0.0787854; //2jets
 //            DYweight = 0.0457089; //3jets
 //            DYweight = 0.0357635; //4jets
-//            syncTree->DYweight() = DYweight;
+            syncTree->DYweight() = DYweight;
 //            double correct_weight = event.weight * DYweight / event.fakeweight_2;
 //            if (event.decayMode_2 == ntuple::tau_id::kOneProng0PiZero)
 //                correct_weight = correct_weight/0.88;
@@ -162,7 +172,7 @@ protected:
 //            syncTree->etau_fakerate() = fakeWeight;
 //            syncTree->weight() = correct_weight * fakeWeight;
             //without DYweight and decayMode weight correction
-            syncTree->weight() = event.weight;
+            syncTree->weight() = event.weight * DYweight;
             syncTree->embeddedWeight() = event.embeddedWeight;
             syncTree->decayModeWeight_1() = event.decayMode_1 == ntuple::tau_id::kOneProng0PiZero
                     ? cuts::Htautau_Summer13::tauCorrections::DecayModeWeight : 1;

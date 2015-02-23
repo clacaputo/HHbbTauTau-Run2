@@ -150,7 +150,8 @@ public:
         drawHistos("weight", 30, .0, 1.2);
 //        drawHistos("weight", 30, .8, 1.1);
 //        drawHistos("embeddedWeight", 50, 0, 1);
-//        drawHistos("signalWeight", 30, 0, 2.0);
+        drawHistos("decayModeWeight_1", 30, 0, 2.0);
+        drawHistos("decayModeWeight_2", 30, 0, 2.0);
 
         //SV Fit variables
         drawHistos("mvis", 20, 0, 200);

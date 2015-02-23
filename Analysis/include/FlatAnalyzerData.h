@@ -38,8 +38,8 @@ public:
     TH1D_ENTRY_CUSTOM_EX(m_sv, M_tt_Bins(), "M_{#tau#tau} [GeV]", "dN/dm_{#tau#tau} [1/GeV]", false, 1.5, true)
     TH1D_ENTRY_CUSTOM_EX(m_vis, M_tt_Bins(), "M_{vis}[GeV]", "Events", false, 1.1, SaveAll)
     TH1D_ENTRY_CUSTOM_EX(m_bb_slice, M_tt_bbSlice_Bins(), "2DM_{sv}[GeV]", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_CUSTOM_EX(m_ttbb, M_ttbb_Bins(), "M_{#tau#tau+jj} [GeV]", "Events", false, 1.1, SaveAll)
-    TH1D_ENTRY_CUSTOM_EX(m_ttbb_kinfit, M_ttbb_Bins(), "M_{H}^{kinfit} [GeV]", "Events", false, 1.1, true)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb, M_ttbb_Bins(), "M_{#tau#tau+jj} [GeV]", "dN/dm_{#tau#tau+jj} [1/GeV]", false, 1.1, SaveAll)
+    TH1D_ENTRY_CUSTOM_EX(m_ttbb_kinfit, M_ttbb_Bins(), "M_{H}^{kinfit} [GeV]", "dN/dm_{H}^{kinfit} [1/GeV]", false, 1.1, true)
 
 
     TH1D_ENTRY_EX(pt_b1, 20, 0, 200, "Leading selected jet p_{T} [GeV]", "Events", false, 1.1, SaveAll)
