@@ -37,6 +37,7 @@
 #include "AnalysisBase/include/AnalysisTypes.h"
 #include "AnalysisBase/include/Tools.h"
 #include "PrintTools/include/RootPrintTools.h"
+#include "AnalysisBase/include/FlatEventInfo.h"
 
 namespace analysis {
 
@@ -467,8 +468,9 @@ std::istream& operator>> (std::istream& s, EventSubCategory& eventSubCategory)
     throw exception("Unknown event sub-category '") << name << "'.";
 }
 
-EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets, Int_t nBjets_retagged, double CSVL,
-                                             double CSVM, bool doRetag = false)
+EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets,
+                                             const FlatEventInfo::BjetPair& selected_bjets, Int_t nBjets_retagged,
+                                             double CSVL, double CSVM, bool doRetag = false)
 {
     EventCategoryVector categories;
     categories.push_back(EventCategory::Inclusive);
@@ -483,15 +485,15 @@ EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets
         { 2 , EventCategory::TwoJets_TwoLooseBtag }
     };
 
-    if (csv_Bjets.size() >= 2){
+    if (selected_bjets.first < csv_Bjets.size() && selected_bjets.second < csv_Bjets.size()){
         categories.push_back(EventCategory::TwoJets_Inclusive);
 
         size_t n_mediumBtag = 0;
         if(doRetag) {
             n_mediumBtag = std::min<size_t>(nBjets_retagged, 2);
         } else {
-            if(csv_Bjets.at(0) > CSVM) ++n_mediumBtag;
-            if(csv_Bjets.at(1) > CSVM) ++n_mediumBtag;
+            if(csv_Bjets.at(selected_bjets.first) > CSVM) ++n_mediumBtag;
+            if(csv_Bjets.at(selected_bjets.second) > CSVM) ++n_mediumBtag;
         }
 
         if(mediumCategories_map.count(n_mediumBtag))
@@ -500,8 +502,8 @@ EventCategoryVector DetermineEventCategories(const std::vector<float>& csv_Bjets
             categories.push_back(EventCategory::TwoJets_AtLeastOneBtag);
 
         size_t n_looseBtag = 0;
-        if(csv_Bjets.at(0) > CSVL) ++n_looseBtag;
-        if(csv_Bjets.at(1) > CSVL) ++n_looseBtag;
+        if(csv_Bjets.at(selected_bjets.first) > CSVL) ++n_looseBtag;
+        if(csv_Bjets.at(selected_bjets.second) > CSVL) ++n_looseBtag;
 
         if(looseCategories_map.count(n_looseBtag))
             categories.push_back(looseCategories_map.at(n_looseBtag));

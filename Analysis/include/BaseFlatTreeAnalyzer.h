@@ -404,11 +404,31 @@ protected:
         return CloneHistogram(anaDataMetaId, EventRegion::OS_Isolated, dataCategoryName, originalHistogram);
     }
 
+    static FlatEventInfo::BjetPair SelectBjetPair(const ntuple::Flat& event, bool apply_cuts_on_bjets)
+    {
+        if(!apply_cuts_on_bjets)
+            return FlatEventInfo::BjetPair(0, 1);
+        std::vector<size_t> selected_jet_ids;
+        for(size_t n = 0; n < event.csv_Bjets.size(); ++n) {
+            if(event.pt_Bjets.at(n) > 30)
+                selected_jet_ids.push_back(n);
+        }
+
+        FlatEventInfo::BjetPair selected_pair(event.csv_Bjets.size(), event.csv_Bjets.size() + 1);
+        if(selected_jet_ids.size() > 0)
+            selected_pair.first = selected_jet_ids.at(0);
+        if(selected_jet_ids.size() > 1)
+            selected_pair.second = selected_jet_ids.at(1);
+        return selected_pair;
+    }
+
     void ProcessDataSource(const DataCategory& dataCategory, std::shared_ptr<ntuple::FlatTree> tree,
                            double scale_factor)
     {
 
         static const bool applyMVAcut = false;
+        static const bool apply_cuts_on_bjets = false;
+        static const bool recalculate_kinFit = false;
 
         const DataCategory& DYJets_incl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_incl);
         const DataCategory& DYJets_excl = dataCategoryCollection.GetUniqueCategory(DataCategoryType::DYJets_excl);
@@ -417,9 +437,11 @@ protected:
         for(Long64_t current_entry = 0; current_entry < tree->GetEntries(); ++current_entry) {
             tree->GetEntry(current_entry);
             const ntuple::Flat& event = tree->data;
+            const FlatEventInfo::BjetPair selected_bjet_pair = SelectBjetPair(event, apply_cuts_on_bjets);
             const bool useRetag = dataCategory.IsData() || dataCategory.name == DY_Embedded.name  ? false : true;
             const EventCategoryVector eventCategories = DetermineEventCategories(event.csv_Bjets,
-                                                                                 event.nBjets_retagged,
+                                                                                 selected_bjet_pair,
+                                                                                 event.nBjets_retagged,                                                                                 
                                                                                  cuts::Htautau_Summer13::btag::CSVL,
                                                                                  cuts::Htautau_Summer13::btag::CSVM,
                                                                                  useRetag);
@@ -441,8 +463,8 @@ protected:
                 if(eventRegion == EventRegion::Unknown) continue;
 
                 if(!eventInfo)
-                    eventInfo = std::shared_ptr<FlatEventInfo>(new FlatEventInfo(event, FlatEventInfo::BjetPair(0, 1),
-                                                                                 false));
+                    eventInfo = std::shared_ptr<FlatEventInfo>(new FlatEventInfo(event, selected_bjet_pair,
+                                                                                 recalculate_kinFit));
 
                 UpdateMvaInfo(*eventInfo, eventCategory, false, false, false);
                 if(applyMVAcut && !PassMvaCut(*eventInfo, eventCategory)) continue;
