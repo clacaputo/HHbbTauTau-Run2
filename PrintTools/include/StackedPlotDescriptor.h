@@ -227,7 +227,7 @@ public:
             }
 
             stack->GetYaxis()->SetTitleSize(0.05);
-            stack->GetYaxis()->SetTitleOffset(1.2);
+            stack->GetYaxis()->SetTitleOffset(1.45);
             stack->GetYaxis()->SetLabelSize(0.04);
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
             stack->GetYaxis()->SetTitleFont(62);
