@@ -954,11 +954,17 @@ private:
                 { EventCategory::TwoJets_TwoBtag, 0.16699 }
             };
 
+            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
+                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
+
+            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
+                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
+
             uncertainties[EventSubCategory::KinematicFitConverged] =
                     uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow];
 
-            uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
-                    uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
+//            uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
+//                    uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
             uncertainties[EventSubCategory::NoCuts] = uncertainties[EventSubCategory::KinematicFitConverged];
 
 
@@ -1016,7 +1022,8 @@ private:
                 if(auto hist = GetHistogram(anaDataMetaId, eventRegion, dataCategory->name, hist_name)) {
                     hist->Scale(scaleFactor);
                     for (Int_t n = 0; n <= hist->GetNbinsX() + 1; ++n) {
-                        const double error = hist->GetBinError(n) * std::sqrt(1 + sqr(uncertainty));
+                        const double error = std::sqrt(sqr(hist->GetBinError(n))
+                                                       + sqr(hist->GetBinContent(n) * uncertainty));
                         hist->SetBinError(n, error);
                     }
                 }
