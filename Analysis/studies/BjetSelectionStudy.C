@@ -32,8 +32,8 @@ public:
     BjetSelectionStudyData(std::shared_ptr<TFile> outputFile) : root_ext::AnalyzerData(outputFile) {}
 
     TH1D_ENTRY(MET, 35, 0, 350)
+    TH1D_ENTRY(totalMatchedBjets, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjets, 3, -0.5, 2.5)
-    TH1D_ENTRY(matchedBjetsByCSV, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByPt, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjetsByChi2, 3, -0.5, 2.5)
     TH1D_ENTRY(matchedBjets_byMassPair, 3, -0.5, 2.5)
@@ -52,39 +52,63 @@ public:
 class BjetSelectionStudy : public analysis::LightBaseFlatTreeAnalyzer {
 public:
     BjetSelectionStudy(const std::string& _inputFileName, const std::string& _outputFileName)
-         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile()) {}
+         : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile())
+    {
+        recalc_kinfit = true;
+        do_retag = false;
+    }
 
 protected:
-    //virtual analysis::FlatAnalyzerData& GetAnaData() override { return anaData; }
+    virtual PairSelectionMap SelectBjetPairs(const ntuple::Flat& event) override
+    {
+        PairSelectionMap pairMap;
+        pairMap["CSV"] = DefaultPair();
+        pairMap["Pt"] = SelectBestPtPair(event);
+        pairMap["Chi2"] = SelectBestChi2Pair(event);
+        return pairMap;
+    }
 
-    virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category) override
+    virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category,
+                              const std::string& selectionLabel) override
     {
         using analysis::EventCategory;
-        if(!PassSelection(eventInfo)) return;
-        anaData.MET(category).Fill(eventInfo.MET.Pt());
-        if (category != EventCategory::TwoJets_ZeroBtag && category != EventCategory::TwoJets_OneBtag
-                && category != EventCategory::TwoJets_TwoBtag) return;
-        anaData.csv_b1_vs_ptb1(category).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
-                                              eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first));
+        static const std::set<EventCategory> categoriesToProcess = {
+            EventCategory::TwoJets_Inclusive, EventCategory::TwoJets_ZeroBtag,
+            EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag
+        };
 
-        unsigned matchedBjets = 0;
-        std::vector<unsigned> indexes;
+        if(DetermineEventRegion(eventInfo, category) != analysis::EventRegion::OS_Isolated) return;
+        if (!categoriesToProcess.count(category)) return;
+
+        std::ostringstream ss_label;
+        ss_label << selectionLabel << "_" << category;
+        const std::string label = ss_label.str();
+
+        anaData.MET(label).Fill(eventInfo.MET.Pt());
+
+        anaData.csv_b1_vs_ptb1(label).Fill(eventInfo.bjet_momentums.at(eventInfo.selected_bjets.first).Pt(),
+                                           eventInfo.event->csv_Bjets.at(eventInfo.selected_bjets.first));
+
+        size_t totalMatchedBjets = 0;
+        std::vector<size_t> indexes;
         TLorentzVector Hbb_true;
 
-        for (unsigned k = 0; k < eventInfo.event->energy_Bjets.size(); ++k){
-
+        for (size_t k = 0; k < eventInfo.event->energy_Bjets.size(); ++k) {
             if (eventInfo.event->isBjet_MC_Bjet.at(k)){
                 Hbb_true += eventInfo.bjet_momentums.at(k);
-                ++matchedBjets;
+                ++totalMatchedBjets;
                 indexes.push_back(k);
             }
         }
-        anaData.matchedBjets(category).Fill(matchedBjets);
+        if(totalMatchedBjets > 2)
+            throw analysis::exception("Too many matched b-jets.");
+        anaData.totalMatchedBjets(label).Fill(totalMatchedBjets);
 
-//        if (matchedBjets < 2) return;
-//        anaData.Hbb_trueM(category).Fill(Hbb_true.M());
-//        unsigned matchedBjets_byCSV = MatchedBjetsByCSV(eventInfo);
-//        anaData.matchedBjetsByCSV(category).Fill(matchedBjets_byCSV);
+        if (totalMatchedBjets < 2) return;
+
+        anaData.Hbb_trueM(label).Fill(Hbb_true.M());
+        const size_t matchedBjets = N_SelectedMatchedBjets(*eventInfo.event, eventInfo.selected_bjets);
+        anaData.matchedBjets(label).Fill(matchedBjets);
 //        TLorentzVector Hbb_CSV = eventInfo.bjet_momentums.at(0) + eventInfo.bjet_momentums.at(1);
 //        if (matchedBjets_byCSV < 2){
 //            //std::cout << "csv fail (" << indexes.at(0) << "," << indexes.at(1) << ")" << std::endl;
@@ -146,67 +170,59 @@ protected:
     }
 
 private:
-
-    bool PassSelection(const analysis::FlatEventInfo& eventInfo)
+    static size_t N_SelectedMatchedBjets(const ntuple::Flat& event, const analysis::FlatEventInfo::BjetPair& bjet_pair)
     {
-        using analysis::EventRegion;
-        const ntuple::Flat& event = *eventInfo.event;
-        if (eventInfo.channel == analysis::Channel::MuTau){
-            using namespace cuts::Htautau_Summer13::MuTau;
-
-            return !(!event.againstMuonTight_2
-                || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || event.pfRelIso_1 >= muonID::pFRelIso || event.q_1 * event.q_2 == +1);
+        size_t matchedBjets = 0;
+        const std::vector<size_t> bjet_indexes = { bjet_pair.first, bjet_pair.second };
+        for(size_t index : bjet_indexes) {
+            if(index < event.isBjet_MC_Bjet.size() && event.isBjet_MC_Bjet.at(index))
+                ++matchedBjets;
         }
-        if (eventInfo.channel == analysis::Channel::ETau){
-            using namespace cuts::Htautau_Summer13::ETau;
-
-            return !(event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || event.pfRelIso_1 >= electronID::pFRelIso || event.q_1 * event.q_2 == +1);
-        }
-        if (eventInfo.channel == analysis::Channel::TauTau){
-            using namespace cuts::Htautau_Summer13::TauTau::tauID;
-
-            if(!event.againstElectronLooseMVA_2
-                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= BackgroundEstimation::Isolation_upperLimit
-                    || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= BackgroundEstimation::Isolation_upperLimit
-                    || (event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 >= byCombinedIsolationDeltaBetaCorrRaw3Hits
-                        && event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= byCombinedIsolationDeltaBetaCorrRaw3Hits))
-                return false;
-
-            const bool os = event.q_1 * event.q_2 == -1;
-            const bool iso = event.byCombinedIsolationDeltaBetaCorrRaw3Hits_1 < byCombinedIsolationDeltaBetaCorrRaw3Hits &&
-                             event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < byCombinedIsolationDeltaBetaCorrRaw3Hits;
-
-            if(eventInfo.bjet_momentums.size() < 2 || !eventInfo.fitResults.has_valid_mass)
-                return false;
-
-            using namespace cuts::massWindow;
-            const double mass_tautau = eventInfo.event->m_sv_MC;
-            const double mass_bb = eventInfo.Hbb.M();
-            const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
-                    && mass_bb > m_bb_low && mass_bb < m_bb_high;
-
-            return os && iso && inside_mass_window;
-        }
-        throw analysis::exception("unsupported channel ") << eventInfo.channel;
+        return matchedBjets;
     }
 
-//    std::vector<size_t> SortBjetsByPt(const analysis::FlatEventInfo& eventInfo)
-//    {
-//        std::vector<size_t> bjet_indexes(eventInfo.bjet_momentums.size());
-//        std::iota(bjet_indexes.begin(), bjet_indexes.end(), 0);
+    template<typename Comparator>
+    static std::vector<size_t> SortBjets(size_t n_bjets, const Comparator& comparator)
+    {
+        std::vector<size_t> bjet_indexes(n_bjets);
+        std::iota(bjet_indexes.begin(), bjet_indexes.end(), 0);
+        std::sort(bjet_indexes.begin(), bjet_indexes.end(), comparator);
+        return bjet_indexes;
+    }
 
-//        const auto bjetsSelector = [&] (const size_t& first, const size_t& second) -> bool
-//        {
-//            const TLorentzVector first_bjet = eventInfo.bjet_momentums.at(first);
-//            const TLorentzVector second_bjet = eventInfo.bjet_momentums.at(second);
-//            return first_bjet.Pt() > second_bjet.Pt();
-//        };
+    static analysis::FlatEventInfo::BjetPair DefaultPair() { return analysis::FlatEventInfo::BjetPair(0, 1); }
 
-//        std::sort(bjet_indexes.begin(), bjet_indexes.end(), bjetsSelector);
-//        return bjet_indexes;
-//    }
+    template<typename Comparator>
+    static analysis::FlatEventInfo::BjetPair SelectBestPair(const ntuple::Flat& event, const Comparator& comparator)
+    {
+        if(event.pt_Bjets.size() < 2) return DefaultPair();
+        const auto bjet_indexes = SortBjets(event.pt_Bjets.size(), comparator);
+        return analysis::FlatEventInfo::BjetPair(bjet_indexes.at(0), bjet_indexes.at(1));
+    }
+
+
+    analysis::FlatEventInfo::BjetPair SelectBestPtPair(const ntuple::Flat& event)
+    {
+        const auto comparator = [&] (size_t first, size_t second) -> bool
+        {
+            return event.pt_Bjets.at(first) > event.pt_Bjets.at(second);
+        };
+
+        return SelectBestPair(event, comparator);
+    }
+
+    analysis::FlatEventInfo::BjetPair SelectBestChi2Pair(const ntuple::Flat& event)
+    {
+        if(event.pt_Bjets.size() < 2) return DefaultPair();
+
+        const auto comparator = [&] (size_t first, size_t second) -> bool
+        {
+            return event.pt_Bjets.at(first) > event.pt_Bjets.at(second);
+        };
+
+        return SelectBestPair(event, comparator);
+    }
+
 
 //    std::vector<size_t> SortBjetsByChiSquare(const analysis::FlatEventInfo& eventInfo)
 //    {
@@ -348,16 +364,6 @@ private:
 //            }
 //        }
 //        return candidatePair;
-//    }
-
-//    unsigned MatchedBjetsByCSV(const analysis::FlatEventInfo& eventInfo)
-//    {
-//        unsigned matchedBjets = 0;
-//        if (eventInfo.event->isBjet_MC_Bjet.at(0))
-//            ++matchedBjets;
-//        if (eventInfo.event->isBjet_MC_Bjet.at(1))
-//            ++matchedBjets;
-//        return matchedBjets;
 //    }
 
 //    unsigned MatchedBjetsByPt(const analysis::FlatEventInfo& eventInfo, const std::vector<size_t>& indexes)
