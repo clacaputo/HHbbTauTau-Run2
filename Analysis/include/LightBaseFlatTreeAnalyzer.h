@@ -59,10 +59,12 @@ namespace analysis {
 
 class LightBaseFlatTreeAnalyzer {
 public:
+    typedef std::map<std::string, FlatEventInfo::BjetPair> PairSelectionMap;
+
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
         : inputFile(root_ext::OpenRootFile(inputFileName)),
           outputFile(root_ext::CreateRootFile(outputFileName)),
-          flatTree(new ntuple::FlatTree("flatTree", inputFile.get(), true)), recalc_kinfit(true)
+          flatTree(new ntuple::FlatTree("flatTree", inputFile.get(), true)), recalc_kinfit(false), do_retag(true)
     {
         TH1::SetDefaultSumw2();
     }
@@ -75,20 +77,37 @@ public:
         for(Long64_t current_entry = 0; current_entry < flatTree->GetEntries(); ++current_entry) {
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
-            const EventCategoryVector eventCategories =
-                    DetermineEventCategories(event.csv_Bjets, FlatEventInfo::BjetPair(0, 1),
-                                             event.nBjets_retagged, CSVL, CSVM,true);
-            FlatEventInfo eventInfo(event, FlatEventInfo::BjetPair(0, 1), recalc_kinfit);
-            for (EventCategory eventCategory : eventCategories)
-                AnalyzeEvent(eventInfo, eventCategory);
+            const auto& pairSelectionMap = SelectBjetPairs(event);
+            for(const auto& selection_entry : pairSelectionMap) {
+                const std::string& selection_label = selection_entry.first;
+                const FlatEventInfo::BjetPair& bjet_pair = selection_entry.second;
+                const EventCategoryVector eventCategories =
+                        DetermineEventCategories(event.csv_Bjets, bjet_pair, event.nBjets_retagged, CSVL, CSVM,
+                                                 do_retag);
+                const FlatEventInfo eventInfo(event, bjet_pair, recalc_kinfit);
+                for (EventCategory eventCategory : eventCategories)
+                    AnalyzeEvent(eventInfo, eventCategory, selection_label);
+            }
         }
         EndOfRun();
     }
 
 protected:
-    virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) = 0;
-    virtual void EndOfRun(){}
+    virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) {}
+    virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory,
+                              const std::string& /*selectionLabel*/)
+    {
+        AnalyzeEvent(eventInfo, eventCategory);
+    }
 
+    virtual void EndOfRun() {}
+
+    virtual PairSelectionMap SelectBjetPairs(const ntuple::Flat& /*event*/)
+    {
+        PairSelectionMap pairMap;
+        pairMap["CSV"] = FlatEventInfo::BjetPair(0, 1);
+        return pairMap;
+    }
 
     bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory) const
     {
@@ -179,6 +198,7 @@ private:
 
 protected:
     bool recalc_kinfit;
+    bool do_retag;
 };
 
 } // namespace analysis
