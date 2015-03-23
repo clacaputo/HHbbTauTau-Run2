@@ -551,7 +551,10 @@ protected:
                     if(subCategory != EventSubCategory::NoCuts)
                         ss_title << " " << subCategory;
                     ss_title << ": " << hist_name;
-                    StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(), drawRatio,applyPostFitCorrections);
+
+                    StackedPlotDescriptor stackDescriptor(ss_title.str(), false, ChannelNameLatex(),
+                                                          detail::eventCategoryNamesMap.at(eventCategory), drawRatio,
+                                                          applyPostFitCorrections);
 
                     for(const DataCategory* category : dataCategoryCollection.GetAllCategories()) {
                         if(!category->draw) continue;
@@ -942,11 +945,11 @@ private:
         static ScaleFactorMap scaleFactors;
 
         if(!scaleFactors.size()) {
-//            uncertainties[EventSubCategory::KinematicFitConverged] = {
-//                { EventCategory::TwoJets_ZeroBtag, 0.07178 },
-//                { EventCategory::TwoJets_OneBtag, 0.11307 },
-//                { EventCategory::TwoJets_TwoBtag, 0.16057 }
-//            };
+            uncertainties[EventSubCategory::KinematicFitConverged] = {
+                { EventCategory::TwoJets_ZeroBtag, 0.07178 },
+                { EventCategory::TwoJets_OneBtag, 0.11307 },
+                { EventCategory::TwoJets_TwoBtag, 0.16057 }
+            };
 
             uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow] = {
                 { EventCategory::TwoJets_ZeroBtag, 0.07097 },
@@ -954,32 +957,32 @@ private:
                 { EventCategory::TwoJets_TwoBtag, 0.16699 }
             };
 
-            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
-                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
+//            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
+//                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
 
-            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
-                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
+//            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
+//                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
 
-            uncertainties[EventSubCategory::KinematicFitConverged] =
-                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow];
+//            uncertainties[EventSubCategory::KinematicFitConverged] =
+//                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow];
 
-//            uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
-//                    uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
+            uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
+                    uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
             uncertainties[EventSubCategory::NoCuts] = uncertainties[EventSubCategory::KinematicFitConverged];
 
 
-//            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag] = {
-//                { "QCD", 1.01213 }, { "TT", 1.14485 }, { "VV", 1.13313 }, { "W", 1.09412 }, { "ZLL", 1.00462 },
-//                { "ZTT", 1.29769 }
-//            };
+            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag] = {
+                { "QCD", 1.01213 }, { "TT", 1.14485 }, { "VV", 1.13313 }, { "W", 1.09412 }, { "ZLL", 1.00462 },
+                { "ZTT", 1.29769 }
+            };
 
-//            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_OneBtag] = {
-//                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00809 }, { "ZTT",  1.34234 }
-//            };
+            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_OneBtag] = {
+                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00809 }, { "ZTT",  1.34234 }
+            };
 
-//            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_TwoBtag] = {
-//                { "QCD", 0.94037 }, { "TT", 1.15275 }, { "VV", 1.13286 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
-//            };
+            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_TwoBtag] = {
+                { "QCD", 0.94037 }, { "TT", 1.15275 }, { "VV", 1.13286 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
+            };
 
             scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag] = {
                 { "QCD", 1.05700 }, { "TT", 1.04612 }, { "VV", 1.05031 }, { "W", 1.03562 }, { "ZLL", 1.01775 },
@@ -994,17 +997,17 @@ private:
                 { "QCD", 0.92167 }, { "TT", 1.05792 }, { "VV", 1.04335 }, { "ZLL", 0.99016 }, { "ZTT", 0.88457 }
             };
 
-            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
-                   scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
+//            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
+//                   scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
 
-            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
-                   scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
+//            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
+//                   scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
 
-            scaleFactors[EventSubCategory::KinematicFitConverged] =
-                    scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow];
+//            scaleFactors[EventSubCategory::KinematicFitConverged] =
+//                    scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow];
 
-//            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
-//                    scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
+            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
+                    scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
             scaleFactors[EventSubCategory::NoCuts] = scaleFactors[EventSubCategory::KinematicFitConverged];
         }
 

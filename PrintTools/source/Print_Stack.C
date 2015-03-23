@@ -38,6 +38,18 @@ struct LoopOptions {
     LoopOptions() : eventCategory(true), eventSubCategory(true), eventRegion(true), eventEnergyScale(true) {}
 };
 
+static const std::map<analysis::EventCategory, std::string> eventCategoryMap =
+          { { analysis::EventCategory::Inclusive, "Inclusive" },
+            { analysis::EventCategory::TwoJets_Inclusive, "2jet-Inclusive" },
+            { analysis::EventCategory::TwoJets_ZeroBtag, "2jet-0tag" },
+            { analysis::EventCategory::TwoJets_OneBtag, "2jet-1tag"},
+            { analysis::EventCategory::TwoJets_TwoBtag, "2jet-2tag" },
+            { analysis::EventCategory::TwoJets_ZeroLooseBtag, "2jet-0Loosebtag" },
+            { analysis::EventCategory::TwoJets_OneLooseBtag, "2jet-1Loosebtag" },
+            { analysis::EventCategory::TwoJets_TwoLooseBtag, "2jet-2Loosebtag" },
+            { analysis::EventCategory::TwoJets_AtLeastOneBtag, "2jets_at_least_1btag" },
+          { analysis::EventCategory::TwoJets_AtLeastOneLooseBtag, "2jets_at_least_1Loosebtag" }};
+
 class Print_Stack {
 public:
     Print_Stack(const std::string& source_cfg, const std::string& anaDataFileName, const std::string& output_path,
@@ -77,7 +89,7 @@ public:
 
                         const analysis::FlatAnalyzerDataMetaId_noName id(eventCategory, eventSubCategory, eventRegion,
                                                                          eventEnergyScale);
-                        PrintStackedPlots(id);
+                        PrintStackedPlots(id, eventCategory);
                     }
                 }
             }
@@ -85,7 +97,7 @@ public:
     }
 
 private:
-    void PrintStackedPlots(const analysis::FlatAnalyzerDataMetaId_noName& id)
+    void PrintStackedPlots(const analysis::FlatAnalyzerDataMetaId_noName& id, analysis::EventCategory eventCategory)
     {
         typedef root_ext::SmartHistogram<TH1D> SmartHistogram;
         typedef std::shared_ptr<const SmartHistogram> SmartHistogramPtr;
@@ -96,6 +108,8 @@ private:
 
         analysis::StackedPlotDescriptor stackDescriptor(ss_title.str(), false,
                                                         analysis::detail::ChannelNameMapLatex.at(channel),
+                                                        //analysis::detail::eventCategoryNamesMap.at(eventCategory),
+                                                        eventCategoryMap.at(eventCategory),
                                                         draw_ratio, draw_bkg_errors,divide_by_BinWidth);
 
         for(const analysis::DataCategory* category : dataCategories->GetAllCategories()) {
