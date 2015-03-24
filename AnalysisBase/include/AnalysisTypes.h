@@ -56,6 +56,8 @@ const std::map<EventEnergyScale, std::string> EventEnergyScaleNameMap = {
 
 } // namespace detail
 
+typedef std::set<EventEnergyScale> EventEnergyScaleSet;
+
 const std::set<EventEnergyScale> AllEventEnergyScales = tools::collect_map_keys(detail::EventEnergyScaleNameMap);
 
 std::ostream& operator<< (std::ostream& s, const Channel& c)

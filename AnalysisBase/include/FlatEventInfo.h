@@ -42,6 +42,11 @@ namespace analysis {
 struct FlatEventInfo {
     typedef std::pair<size_t, size_t> BjetPair;
 
+    static size_t NumberOfCombinationPairs(size_t n_bjets)
+    {
+        return n_bjets * (n_bjets - 1) / 2;
+    }
+
     static size_t CombinationPairToIndex(const BjetPair& pair, size_t n_bjets)
     {
         const size_t min = std::min(pair.first, pair.second);
@@ -130,5 +135,7 @@ struct FlatEventInfo {
         }
     }
 };
+
+typedef std::shared_ptr<FlatEventInfo> FlatEventInfoPtr;
 
 } // namespace analysis

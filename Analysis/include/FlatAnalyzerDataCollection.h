@@ -104,6 +104,17 @@ struct FlatAnalyzerDataMetaId<EventCategory, EventRegion, EventEnergyScale, std:
         return FlatAnalyzerDataId(eventCategory, eventSubCategory, eventRegion, eventEnergyScale, dataCategoryName);
     }
 
+    bool operator<(const FlatAnalyzerDataMetaId<EventCategory, EventRegion, EventEnergyScale, std::string>& other) const
+    {
+        if(eventCategory < other.eventCategory) return true;
+        if(eventCategory > other.eventCategory) return false;
+        if(eventRegion < other.eventRegion) return true;
+        if(eventRegion > other.eventRegion) return false;
+        if(eventEnergyScale < other.eventEnergyScale) return true;
+        if(eventEnergyScale > other.eventEnergyScale) return false;
+        return dataCategoryName < other.dataCategoryName;
+    }
+
     std::string GetName() const
     {
         static const std::string separator = "/";
@@ -139,6 +150,15 @@ struct FlatAnalyzerDataMetaId<EventCategory, EventRegion, std::string> {
         return FlatAnalyzerDataMetaId_noSub(eventCategory, eventRegion, eventEnergyScale, dataCategoryName);
     }
 
+    bool operator< (const FlatAnalyzerDataMetaId<EventCategory, EventRegion, std::string>& other) const
+    {
+        if(eventCategory < other.eventCategory) return true;
+        if(eventCategory > other.eventCategory) return false;
+        if(eventRegion < other.eventRegion) return true;
+        if(eventRegion > other.eventRegion) return false;
+        return dataCategoryName < other.dataCategoryName;
+    }
+
     std::string GetName() const
     {
         static const std::string separator = "/";
@@ -171,6 +191,18 @@ struct FlatAnalyzerDataMetaId<EventCategory, EventSubCategory, EventRegion, Even
     FlatAnalyzerDataId MakeId(const std::string& dataCategoryName) const
     {
         return FlatAnalyzerDataId(eventCategory, eventSubCategory, eventRegion, eventEnergyScale, dataCategoryName);
+    }
+
+    bool operator< (const FlatAnalyzerDataMetaId<EventCategory, EventSubCategory, EventRegion,
+                                                 EventEnergyScale>& other) const
+    {
+        if(eventCategory < other.eventCategory) return true;
+        if(eventCategory > other.eventCategory) return false;
+        if(eventSubCategory < other.eventSubCategory) return true;
+        if(eventSubCategory > other.eventSubCategory) return false;
+        if(eventRegion < other.eventRegion) return true;
+        if(eventRegion > other.eventRegion) return false;
+        return eventEnergyScale < other.eventEnergyScale;
     }
 
     std::string GetName() const
@@ -208,6 +240,15 @@ struct FlatAnalyzerDataMetaId<EventCategory, EventSubCategory, EventEnergyScale>
     FlatAnalyzerDataMetaId_noName MakeMetaId(EventRegion eventRegion) const
     {
         return FlatAnalyzerDataMetaId_noName(eventCategory, eventSubCategory, eventRegion, eventEnergyScale);
+    }
+
+    bool operator< (const FlatAnalyzerDataMetaId<EventCategory, EventSubCategory, EventEnergyScale>& other) const
+    {
+        if(eventCategory < other.eventCategory) return true;
+        if(eventCategory > other.eventCategory) return false;
+        if(eventSubCategory < other.eventSubCategory) return true;
+        if(eventSubCategory > other.eventSubCategory) return false;
+        return eventEnergyScale < other.eventEnergyScale;
     }
 
     std::string GetName() const

@@ -52,14 +52,16 @@
 
 #include "MVASelections/include/MvaReader.h"
 
-#include "Htautau_Summer13.h"
-#include "AnalysisCategories.h"
+#include "FlatAnalyzerDataCollection.h"
 
 namespace analysis {
 
 class LightBaseFlatTreeAnalyzer {
 public:
     typedef std::map<std::string, FlatEventInfo::BjetPair> PairSelectionMap;
+    typedef FlatAnalyzerDataMetaId_noName MetaId;
+    typedef std::set<MetaId> MetaIdSet;
+    typedef std::map<FlatEventInfo::BjetPair, FlatEventInfoPtr> FlatEventInfoMap;
 
     LightBaseFlatTreeAnalyzer(const std::string& inputFileName, const std::string& outputFileName)
         : inputFile(root_ext::OpenRootFile(inputFileName)),
@@ -73,32 +75,27 @@ public:
 
     void Run()
     {
-        using namespace cuts::Htautau_Summer13::btag;
         for(Long64_t current_entry = 0; current_entry < flatTree->GetEntries(); ++current_entry) {
+            eventInfoMap.clear();
             flatTree->GetEntry(current_entry);
             const ntuple::Flat& event = flatTree->data;
             const auto& pairSelectionMap = SelectBjetPairs(event);
             for(const auto& selection_entry : pairSelectionMap) {
                 const std::string& selection_label = selection_entry.first;
                 const FlatEventInfo::BjetPair& bjet_pair = selection_entry.second;
-                const EventCategoryVector eventCategories =
-                        DetermineEventCategories(event.csv_Bjets, bjet_pair, event.nBjets_retagged, CSVL, CSVM,
-                                                 do_retag);
-                const FlatEventInfo eventInfo(event, bjet_pair, recalc_kinfit);
-                for (EventCategory eventCategory : eventCategories)
-                    AnalyzeEvent(eventInfo, eventCategory, selection_label);
+                const MetaIdSet metaIds = CreateMetaIdSet(event, bjet_pair);
+                for (const auto& metaId : metaIds) {
+                    const FlatEventInfo& eventInfo = GetFlatEventInfo(event, bjet_pair);
+                    AnalyzeEvent(eventInfo, metaId, selection_label);
+                }
             }
         }
         EndOfRun();
     }
 
 protected:
-    virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory) {}
-    virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, EventCategory eventCategory,
-                              const std::string& /*selectionLabel*/)
-    {
-        AnalyzeEvent(eventInfo, eventCategory);
-    }
+    virtual void AnalyzeEvent(const FlatEventInfo& eventInfo, const MetaId& metaId,
+                              const std::string& selectionLabel) = 0;
 
     virtual void EndOfRun() {}
 
@@ -109,7 +106,64 @@ protected:
         return pairMap;
     }
 
-    bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory) const
+    virtual const EventEnergyScaleSet GetEnergyScalesToProcess() const { return AllEventEnergyScales; }
+    virtual const EventCategorySet& GetCategoriesToProcess() const { return AllEventCategories; }
+    virtual const EventRegionSet& GetRegionsToProcess() const { return AllEventRegions; }
+    virtual const EventSubCategorySet GetSubCategoriesToProcess() const { return AllEventSubCategories; }
+
+    MetaIdSet CreateMetaIdSet(const ntuple::Flat& event, const FlatEventInfo::BjetPair& bjet_pair)
+    {
+        using namespace cuts::Htautau_Summer13::btag;
+
+        MetaIdSet result;
+
+        const EventEnergyScale energyScale = static_cast<EventEnergyScale>(event.eventEnergyScale);
+        if(GetEnergyScalesToProcess().count(energyScale)) return result;
+
+        const EventCategoryVector categories =
+                DetermineEventCategories(event.csv_Bjets, bjet_pair, event.nBjets_retagged, CSVL, CSVM, do_retag);
+        for(EventCategory category : categories) {
+            if(!GetCategoriesToProcess().count(category)) continue;
+            const EventRegion region = DetermineEventRegion(event, category);
+            if(!GetRegionsToProcess().count(region)) continue;
+
+            const auto subCategories = DetermineEventSubCategories(GetFlatEventInfo(event, bjet_pair));
+            for(EventSubCategory subCategory : subCategories) {
+                if(!GetSubCategoriesToProcess().count(subCategory)) continue;
+                result.insert(MetaId(category, subCategory, region, energyScale));
+            }
+        }
+
+        return result;
+    }
+
+    static EventSubCategorySet DetermineEventSubCategories(const FlatEventInfo& eventInfo)
+    {
+        using namespace cuts::massWindow;
+
+        EventSubCategorySet result;
+        result.insert(EventSubCategory::NoCuts);
+
+        const double mass_tautau = eventInfo.event->m_sv_MC;
+        const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
+                && eventInfo.Hbb.M() > m_bb_low && eventInfo.Hbb.M() < m_bb_high;
+
+        if(inside_mass_window)
+            result.insert(EventSubCategory::MassWindow);
+        else
+            result.insert(EventSubCategory::OutsideMassWindow);
+
+        if(eventInfo.fitResults.has_valid_mass)
+            result.insert(EventSubCategory::KinematicFitConverged);
+        if(eventInfo.fitResults.has_valid_mass && inside_mass_window)
+            result.insert(EventSubCategory::KinematicFitConvergedWithMassWindow);
+        if(eventInfo.fitResults.has_valid_mass && !inside_mass_window)
+            result.insert(EventSubCategory::KinematicFitConvergedOutsideMassWindow);
+
+        return result;
+    }
+
+    static bool IsHighMtRegion(const ntuple::Flat& event, analysis::EventCategory eventCategory)
     {
         using namespace cuts;
         if (eventCategory == analysis::EventCategory::TwoJets_TwoBtag)
@@ -119,7 +173,7 @@ protected:
             return event.mt_1 > WjetsBackgroundEstimation::HighMtRegion;
     }
 
-    bool IsAntiIsolatedRegion(const ntuple::Flat& event) const
+    static bool IsAntiIsolatedRegion(const ntuple::Flat& event)
     {
         using namespace cuts;
         return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
@@ -128,11 +182,11 @@ protected:
 
     std::shared_ptr<TFile> GetOutputFile() { return outputFile; }
 
-    analysis::EventRegion DetermineEventRegion(const FlatEventInfo& eventInfo, analysis::EventCategory category) const
+    static EventRegion DetermineEventRegion(const ntuple::Flat& event, EventCategory category)
     {
-        using analysis::EventRegion;
-        const ntuple::Flat& event = *eventInfo.event;
-        if (eventInfo.channel == Channel::MuTau){
+        const Channel channel = static_cast<analysis::Channel>(event.channel);
+
+        if (channel == Channel::MuTau){
             using namespace cuts::Htautau_Summer13::MuTau;
 
             if(!event.againstMuonTight_2
@@ -151,7 +205,7 @@ protected:
             if(os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
             return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
-        if (eventInfo.channel == Channel::ETau){
+        if (channel == Channel::ETau){
 
             using namespace cuts::Htautau_Summer13::ETau;
 
@@ -170,7 +224,7 @@ protected:
             if(os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
             return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
         }
-        if (eventInfo.channel == Channel::TauTau){
+        if (channel == Channel::TauTau){
 
             using namespace cuts::Htautau_Summer13::TauTau::tauID;
 
@@ -188,13 +242,20 @@ protected:
             if(iso) return os ? EventRegion::OS_Isolated : EventRegion::SS_Isolated;
             return os ? EventRegion::OS_AntiIsolated : EventRegion::SS_AntiIsolated;
         }
-        throw analysis::exception("unsupported channel ") << eventInfo.channel;
+        throw exception("unsupported channel ") << channel;
+    }
+
+    const FlatEventInfo& GetFlatEventInfo(const ntuple::Flat& event, const FlatEventInfo::BjetPair& bjet_pair)
+    {
+        if(!eventInfoMap.count(bjet_pair))
+            eventInfoMap[bjet_pair] = FlatEventInfoPtr(new FlatEventInfo(event, bjet_pair, recalc_kinfit));
+        return *eventInfoMap.at(bjet_pair);
     }
 
 private:
     std::shared_ptr<TFile> inputFile, outputFile;
     std::shared_ptr<ntuple::FlatTree> flatTree;
-
+    FlatEventInfoMap eventInfoMap;
 
 protected:
     bool recalc_kinfit;

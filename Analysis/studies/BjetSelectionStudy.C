@@ -55,33 +55,58 @@ public:
          : LightBaseFlatTreeAnalyzer(_inputFileName,_outputFileName), anaData(GetOutputFile())
     {
         recalc_kinfit = true;
-        do_retag = false;
+        do_retag = true;
     }
 
 protected:
     virtual PairSelectionMap SelectBjetPairs(const ntuple::Flat& event) override
     {
         PairSelectionMap pairMap;
-        pairMap["CSV"] = DefaultPair();
+        pairMap["CSV"] = SelectBestCsvPair(event);
         pairMap["Pt"] = SelectBestPtPair(event);
         pairMap["Chi2"] = SelectBestChi2Pair(event);
         return pairMap;
     }
 
-    virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, analysis::EventCategory category,
-                              const std::string& selectionLabel) override
+    virtual const analysis::EventEnergyScaleSet GetEnergyScalesToProcess() const override
+    {
+        using analysis::EventEnergyScale;
+        static const analysis::EventEnergyScaleSet energyScalesToProcess = { EventEnergyScale::Central };
+        return energyScalesToProcess;
+    }
+
+    virtual const analysis::EventCategorySet& GetCategoriesToProcess() const override
     {
         using analysis::EventCategory;
-        static const std::set<EventCategory> categoriesToProcess = {
+        static const analysis::EventCategorySet categoriesToProcess = {
             EventCategory::TwoJets_Inclusive, EventCategory::TwoJets_ZeroBtag,
             EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag
         };
 
-        if(DetermineEventRegion(eventInfo, category) != analysis::EventRegion::OS_Isolated) return;
-        if (!categoriesToProcess.count(category)) return;
+        return categoriesToProcess;
+    }
 
+    virtual const analysis::EventRegionSet& GetRegionsToProcess() const override
+    {
+        using analysis::EventRegion;
+        static const analysis::EventRegionSet regionsToProcess = { EventRegion::OS_Isolated };
+        return regionsToProcess;
+    }
+
+    virtual const analysis::EventSubCategorySet GetSubCategoriesToProcess() const override
+    {
+        using analysis::EventSubCategory;
+        static const analysis::EventSubCategorySet subCategoriesToProcess = {
+            EventSubCategory::KinematicFitConvergedWithMassWindow
+        };
+        return subCategoriesToProcess;
+    }
+
+    virtual void AnalyzeEvent(const analysis::FlatEventInfo& eventInfo, const MetaId& metaId,
+                              const std::string& selectionLabel) override
+    {
         std::ostringstream ss_label;
-        ss_label << selectionLabel << "_" << category;
+        ss_label << selectionLabel << "_" << metaId.eventCategory;
         const std::string label = ss_label.str();
 
         anaData.MET(label).Fill(eventInfo.MET.Pt());
@@ -182,24 +207,38 @@ private:
     }
 
     template<typename Comparator>
-    static std::vector<size_t> SortBjets(size_t n_bjets, const Comparator& comparator)
+    static std::vector<size_t> SortObjects(size_t n_objects, const Comparator& comparator)
     {
-        std::vector<size_t> bjet_indexes(n_bjets);
-        std::iota(bjet_indexes.begin(), bjet_indexes.end(), 0);
-        std::sort(bjet_indexes.begin(), bjet_indexes.end(), comparator);
-        return bjet_indexes;
+        std::vector<size_t> indexes(n_objects);
+        std::iota(indexes.begin(), indexes.end(), 0);
+        std::sort(indexes.begin(), indexes.end(), comparator);
+        return indexes;
     }
 
     static analysis::FlatEventInfo::BjetPair DefaultPair() { return analysis::FlatEventInfo::BjetPair(0, 1); }
 
     template<typename Comparator>
-    static analysis::FlatEventInfo::BjetPair SelectBestPair(const ntuple::Flat& event, const Comparator& comparator)
+    static analysis::FlatEventInfo::BjetPair SelectBestPair(const ntuple::Flat& event, const Comparator& comparator,
+                                                            bool sort_pairs)
     {
-        if(event.pt_Bjets.size() < 2) return DefaultPair();
-        const auto bjet_indexes = SortBjets(event.pt_Bjets.size(), comparator);
-        return analysis::FlatEventInfo::BjetPair(bjet_indexes.at(0), bjet_indexes.at(1));
+        using analysis::FlatEventInfo;
+        const size_t n_bjets = event.pt_Bjets.size();
+        if(n_bjets < 2) return DefaultPair();
+        const size_t n_objects = sort_pairs ? FlatEventInfo::NumberOfCombinationPairs(n_bjets) : n_bjets;
+        const auto indexes = SortObjects(n_objects, comparator);
+        return sort_pairs ? FlatEventInfo::CombinationIndexToPair(indexes.at(0), n_bjets)
+                          : FlatEventInfo::BjetPair(indexes.at(0), indexes.at(1));
     }
 
+    analysis::FlatEventInfo::BjetPair SelectBestCsvPair(const ntuple::Flat& event)
+    {
+        const auto comparator = [&] (size_t first, size_t second) -> bool
+        {
+            return event.csv_Bjets.at(first) > event.csv_Bjets.at(second);
+        };
+
+        return SelectBestPair(event, comparator, false);
+    }
 
     analysis::FlatEventInfo::BjetPair SelectBestPtPair(const ntuple::Flat& event)
     {
@@ -208,19 +247,31 @@ private:
             return event.pt_Bjets.at(first) > event.pt_Bjets.at(second);
         };
 
-        return SelectBestPair(event, comparator);
+        return SelectBestPair(event, comparator, false);
     }
 
     analysis::FlatEventInfo::BjetPair SelectBestChi2Pair(const ntuple::Flat& event)
     {
-        if(event.pt_Bjets.size() < 2) return DefaultPair();
+        using analysis::FlatEventInfo;
+        using analysis::kinematic_fit::four_body::FitResults;
+
+        const size_t n_bjets = event.pt_Bjets.size();
 
         const auto comparator = [&] (size_t first, size_t second) -> bool
         {
-            return event.pt_Bjets.at(first) > event.pt_Bjets.at(second);
+            const auto first_pair = FlatEventInfo::CombinationIndexToPair(first, n_bjets);
+            const auto second_pair = FlatEventInfo::CombinationIndexToPair(second, n_bjets);
+            const FlatEventInfo& first_info = GetFlatEventInfo(event, first_pair);
+            const FlatEventInfo& second_info = GetFlatEventInfo(event, second_pair);
+            const FitResults& first_fit = first_info.fitResults;
+            const FitResults& second_fit = second_info.fitResults;
+
+            if(first_fit.has_valid_mass && !second_fit.has_valid_mass) return true;
+            if(!first_fit.has_valid_mass) return false;
+            return first_fit.chi2 < second_fit.chi2;
         };
 
-        return SelectBestPair(event, comparator);
+        return SelectBestPair(event, comparator, true);
     }
 
 
