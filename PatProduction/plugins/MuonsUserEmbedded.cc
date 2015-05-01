@@ -2,8 +2,8 @@
  * \file MuonsUserEmbedded.cc
  * \author Original author: Cesare Calabria
  * \date Tue Nov 22 12:02:59 CET 2011 created
- * \author Contributing author: Konstantin Androsov (Siena University, INFN Pisa)
- * \author Contributing author: Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Contributing author: Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Contributing author: Maria Teresa Grippo (University of Siena, INFN Pisa)
  *
  * Copyright 2011 Cesare Calabria
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

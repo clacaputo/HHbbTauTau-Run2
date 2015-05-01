@@ -1,7 +1,7 @@
 /*!
  * \file ProgressReporter.h
  * \brief Definition of the class to report current execution progress.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  * \date 2014-05-05 created
  * \date 2015-02-14 separated from Tools.h
  *

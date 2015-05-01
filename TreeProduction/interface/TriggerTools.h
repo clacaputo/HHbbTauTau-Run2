@@ -1,8 +1,8 @@
 /*!
  * \file TriggerTools.h
  * \brief Definiton of tools to work with embedded trigger information.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-04-29 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

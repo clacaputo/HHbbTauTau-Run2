@@ -1,8 +1,8 @@
 /*!
  * \file FlatAnalyzerDataCollection.h
  * \brief Collection of histogram containers for flat tree analyzers.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2015-02-07 created
  *
  * Copyright 2015 Konstantin Androsov <konstantin.androsov@gmail.com>,
@@ -281,6 +281,10 @@ public:
     {
         if(store)
             outputFile = root_ext::CreateRootFile(outputFileName);
+
+        TH1::SetDefaultSumw2();
+        TH1::AddDirectory(kFALSE);
+        TH2::AddDirectory(kFALSE);
     }
 
     FlatAnalyzerData& Get(const FlatAnalyzerDataId& id, Channel channel)
@@ -355,7 +359,7 @@ private:
             if(id.eventCategory == analysis::EventCategory::TwoJets_TwoBtag
                     || id.eventCategory == analysis::EventCategory::TwoJets_TwoLooseBtag)
                 return Make<FlatAnalyzerData_tautau_2tag>(id);
-            return Make<FlatAnalyzerData_tautau>(id);
+            return Make<FlatAnalyzerData_tautau_other_tag>(id);
         }
 
         throw exception("Can't make analyzer data for ") << channel << " channel.";
@@ -379,18 +383,36 @@ private:
 
 class FlatAnalyzerDataCollectionReader {
 public:
+
+    typedef std::map<std::string, const root_ext::AbstractHistogram*> HistogramMap;
+
     FlatAnalyzerDataCollectionReader(const std::string& file_name)
-        : file(root_ext::OpenRootFile(file_name)) {}
+        : file(root_ext::OpenRootFile(file_name)), anaDataCollection("", false) {}
 
     template<typename Histogram>
-    Histogram* GetHistogram(const FlatAnalyzerDataId& id, const std::string& name) const
+    const root_ext::SmartHistogram<Histogram>* GetHistogram(const FlatAnalyzerDataId& id, Channel channel,
+                                                      const std::string& name)
     {
         const std::string full_name = id.GetName() + "/" + name;
-        return root_ext::TryReadObject<Histogram>(*file, full_name);
+        if(!histograms.count(full_name)) {
+            Histogram* original_histogram = root_ext::TryReadObject<Histogram>(*file, full_name);
+            if(!original_histogram)
+            histograms[full_name] = nullptr;
+            FlatAnalyzerData& anaData = anaDataCollection.Get(id, channel);
+            anaData.CreateAll();
+            root_ext::SmartHistogram<Histogram>* smart_hist = anaData.GetPtr<Histogram>(name);
+            if(!smart_hist)
+                throw exception("Histogram '") << name << "' not found.";
+            smart_hist->CopyContent(*original_histogram);
+            histograms[full_name] = smart_hist;
+        }
+        return dynamic_cast< const root_ext::SmartHistogram<Histogram>* >(histograms.at(full_name));
     }
 
 private:
     std::shared_ptr<TFile> file;
+    FlatAnalyzerDataCollection anaDataCollection;
+    HistogramMap histograms;
 };
 
 } // namespace analysis

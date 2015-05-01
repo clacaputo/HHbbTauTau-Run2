@@ -1,7 +1,7 @@
 /*!
  * \file Tools.h
  * \brief Common tools and definitions suitable for general purposes.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  * \date 2014-05-05 created
  *
  * Copyright 2014, 2015 Konstantin Androsov <konstantin.androsov@gmail.com>

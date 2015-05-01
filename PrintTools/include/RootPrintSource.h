@@ -1,7 +1,7 @@
 /*!
  * \file RootPrintSource.h
  * \brief Definition of histogram source classes and page layot options that are used to print ROOT histograms.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  *
  * Copyright 2013, 2014 Konstantin Androsov <konstantin.androsov@gmail.com>
  *

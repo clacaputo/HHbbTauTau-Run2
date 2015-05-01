@@ -1,8 +1,8 @@
 /*!
  * \file SmartHistogram.h
  * \brief Definition of class SmartHistogram that allows to create ROOT-compatible histograms.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-02-20 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
@@ -204,32 +204,35 @@ class SmartHistogram<TH1D> : public TH1D, public AbstractHistogram {
 public:
     SmartHistogram(const std::string& name, size_t nbins, double low, double high)
         : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), store(true), use_log_y(false),
-          max_y_sf(1) {}
+          max_y_sf(1), divide_by_bin_width(false) {}
 
     SmartHistogram(const std::string& name, const std::vector<double>& bins)
         : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
-          store(true), use_log_y(false), max_y_sf(1) {}
+          store(true), use_log_y(false), max_y_sf(1), divide_by_bin_width(false) {}
 
     SmartHistogram(const std::string& name, size_t nbins, double low, double high, const std::string& x_axis_title,
-                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf, bool _store)
+                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf, bool _divide_by_bin_width,
+                   bool _store)
         : TH1D(name.c_str(), name.c_str(), nbins, low, high), AbstractHistogram(name), store(_store),
-          use_log_y(_use_log_y), max_y_sf(_max_y_sf)
+          use_log_y(_use_log_y), max_y_sf(_max_y_sf), divide_by_bin_width(_divide_by_bin_width)
     {
         SetXTitle(x_axis_title.c_str());
         SetYTitle(y_axis_title.c_str());
     }
 
     SmartHistogram(const std::string& name, const std::vector<double>& bins, const std::string& x_axis_title,
-                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf, bool _store)
+                   const std::string& y_axis_title, bool _use_log_y, double _max_y_sf, bool _divide_by_bin_width,
+                   bool _store)
         : TH1D(name.c_str(), name.c_str(), static_cast<int>(bins.size()) - 1, bins.data()), AbstractHistogram(name),
-          store(_store), use_log_y(_use_log_y), max_y_sf(_max_y_sf)
+          store(_store), use_log_y(_use_log_y), max_y_sf(_max_y_sf), divide_by_bin_width(_divide_by_bin_width)
     {
         SetXTitle(x_axis_title.c_str());
         SetYTitle(y_axis_title.c_str());
     }
 
-    SmartHistogram(const TH1D& other, bool _use_log_y, double _max_y_sf)
-        : TH1D(other), AbstractHistogram(other.GetName()), store(false), use_log_y(_use_log_y), max_y_sf(_max_y_sf) {}
+    SmartHistogram(const TH1D& other, bool _use_log_y, double _max_y_sf, bool _divide_by_bin_width)
+        : TH1D(other), AbstractHistogram(other.GetName()), store(false), use_log_y(_use_log_y), max_y_sf(_max_y_sf),
+          divide_by_bin_width(_divide_by_bin_width) {}
 
     virtual void WriteRootObject() override
     {
@@ -248,6 +251,7 @@ public:
     double MaxYDrawScaleFactor() const { return max_y_sf; }
     std::string GetXTitle() const { return GetXaxis()->GetTitle(); }
     std::string GetYTitle() const { return GetYaxis()->GetTitle(); }
+    bool NeedToDivideByBinWidth() const { return divide_by_bin_width; }
     void SetLegendTitle(const std::string _legend_title) { legend_title = _legend_title; }
     const std::string& GetLegendTitle() const { return legend_title; }
 
@@ -269,6 +273,7 @@ private:
     bool store;
     bool use_log_y;
     double max_y_sf;
+    bool divide_by_bin_width;
     std::string legend_title;
 };
 

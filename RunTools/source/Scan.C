@@ -1,7 +1,7 @@
 /*!
  * \file Scan.C
  * \brief ROOT macro to scan analysis tree file for the specified event.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  * \date 2014-11-25 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>

@@ -1,8 +1,8 @@
 /*!
  * \file EventId.h
  * \brief Definition of EventId class which represent unique CMS event identifier.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-04-16 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

@@ -4,8 +4,8 @@
  *
  * Some parts of the code are taken from copyFile.C written by Rene Brun.
  *
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2013-09-10 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

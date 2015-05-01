@@ -2,7 +2,7 @@
 #
 #  \file scan_trees.sh
 #  \brief Scan root files in the given directory for the specified event.
-#  \author Konstantin Androsov (Siena University, INFN Pisa)
+#  \author Konstantin Androsov (University of Siena, INFN Pisa)
 #  \date 2014-11-25 created
 #
 #  Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>

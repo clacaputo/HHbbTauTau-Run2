@@ -1,8 +1,8 @@
 /*!
  * \file BaseFlatTreeAnalyzer.h
  * \brief Definition of BaseFlatTreeAnalyzer class, the base class for flat tree analyzers.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-09-03 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

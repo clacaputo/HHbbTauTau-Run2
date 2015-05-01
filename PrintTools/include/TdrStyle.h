@@ -3,18 +3,21 @@
 #include <TStyle.h>
 
 namespace cms_tdr {
+
 // tdrGrid: Turns the grid lines on (true) or off (false)
 
-//void tdrGrid(bool gridOn) {
-//  tdrStyle->SetPadGridX(gridOn);
-//  tdrStyle->SetPadGridY(gridOn);
-//}
+/*
+void tdrGrid(bool gridOn) {
+  tdrStyle->SetPadGridX(gridOn);
+  tdrStyle->SetPadGridY(gridOn);
+}
 
-//// fixOverlay: Redraws the axis
+// fixOverlay: Redraws the axis
 
-//void fixOverlay() {
-//  gPad->RedrawAxis();
-//}
+void fixOverlay() {
+  gPad->RedrawAxis();
+}
+*/
 
 void setTDRStyle() {
   TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
@@ -56,9 +59,9 @@ void setTDRStyle() {
   // tdrStyle->SetNumberContours(Int_t number = 20);
 
   tdrStyle->SetEndErrorSize(2);
-//  tdrStyle->SetErrorMarker(20);
-  tdrStyle->SetErrorX(0.5);
-  
+  // tdrStyle->SetErrorMarker(20);
+  //tdrStyle->SetErrorX(0.);
+
   tdrStyle->SetMarkerStyle(20);
 
 //For the fit/function:
@@ -92,7 +95,7 @@ void setTDRStyle() {
   tdrStyle->SetPadTopMargin(0.05);
   tdrStyle->SetPadBottomMargin(0.13);
   tdrStyle->SetPadLeftMargin(0.16);
-  tdrStyle->SetPadRightMargin(0.05);
+  tdrStyle->SetPadRightMargin(0.02);
 
 // For the Global title:
 
@@ -154,6 +157,9 @@ void setTDRStyle() {
   // tdrStyle->SetPalette(Int_t ncolors = 0, Int_t* colors = 0);
   // tdrStyle->SetTimeOffset(Double_t toffset);
   // tdrStyle->SetHistMinimumZero(kTRUE);
+
+  tdrStyle->SetHatchesLineWidth(5);
+  tdrStyle->SetHatchesSpacing(0.05);
 
   tdrStyle->cd();
 

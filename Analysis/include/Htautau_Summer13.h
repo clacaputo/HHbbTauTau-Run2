@@ -2,8 +2,8 @@
  * \file Htautau_Summer13.h
  * \brief Higgs in tautau recommended baseline selection cuts for Summer13
  *        see https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-02-13 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

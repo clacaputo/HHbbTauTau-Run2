@@ -2,8 +2,8 @@
 #
 #  \file make_withFactory.sh
 #  \brief Compile program executable for a given C++ file, creating the main object using make_tools::Factory class.
-#  \author Konstantin Androsov (Siena University, INFN Pisa)
-#  \author Maria Teresa Grippo (Siena University, INFN Pisa)
+#  \author Konstantin Androsov (University of Siena, INFN Pisa)
+#  \author Maria Teresa Grippo (University of Siena, INFN Pisa)
 #
 #  Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
 #                 Maria Teresa Grippo <grippomariateresa@gmail.com>
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
 g++ -std=c++0x -Wall -O3 \
         -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
-        $( root-config --libs ) -lMathMore -lGenVector \
+        $( root-config --libs ) -lMathMore -lGenVector -lASImage \
         -o $EXE_NAME $CODE_OUT
 
 RESULT=$?

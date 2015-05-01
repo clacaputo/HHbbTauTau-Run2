@@ -1,8 +1,8 @@
 /*!
  * \file FlatTreeAnalyzer_mutau.C
  * \brief Analyze flat-tree for mu-tau channel for HHbbtautau analysis.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \author Rosamaria Venditti (INFN Bari, Bari University)
  * \author Claudio Caputo (INFN Bari, Bari University)
  * \date 2014-09-03 created

@@ -1,8 +1,8 @@
 /*!
  * \file Print_Stack.C
  * \brief Print stack with specified name superimposing several files.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-04-03 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
@@ -55,11 +55,9 @@ public:
     Print_Stack(const std::string& source_cfg, const std::string& anaDataFileName, const std::string& output_path,
                 const std::string& channel_name, const std::string& id_selection, const std::string& _hist_name,
                 const std::string& signal_list, bool _is_blind = false, bool _draw_ratio = true,
-                bool _draw_bkg_errors = false, bool _use_log_y = false, bool _divide_by_BinWidth = true,
-                double _max_y_sf = 1.1)
+                bool _draw_bkg_errors = false)
         : anaDataReader(anaDataFileName), hist_name(_hist_name), is_blind(_is_blind), draw_ratio(_draw_ratio),
-          draw_bkg_errors(_draw_bkg_errors), use_log_y(_use_log_y), divide_by_BinWidth(_divide_by_BinWidth),
-          max_y_sf(_max_y_sf)
+          draw_bkg_errors(_draw_bkg_errors)
     {
         gROOT->SetMustClean(kFALSE);
 
@@ -99,27 +97,20 @@ public:
 private:
     void PrintStackedPlots(const analysis::FlatAnalyzerDataMetaId_noName& id, analysis::EventCategory eventCategory)
     {
-        typedef root_ext::SmartHistogram<TH1D> SmartHistogram;
-        typedef std::shared_ptr<const SmartHistogram> SmartHistogramPtr;
-        std::set<SmartHistogramPtr> histogram_set;
-
         std::ostringstream ss_title;
         ss_title << id << ": " << hist_name;
 
         analysis::StackedPlotDescriptor stackDescriptor(ss_title.str(), false,
                                                         analysis::detail::ChannelNameMapLatex.at(channel),
-                                                        //analysis::detail::eventCategoryNamesMap.at(eventCategory),
                                                         eventCategoryMap.at(eventCategory),
-                                                        draw_ratio, draw_bkg_errors,divide_by_BinWidth);
+                                                        draw_ratio, draw_bkg_errors);
 
         for(const analysis::DataCategory* category : dataCategories->GetAllCategories()) {
             if(!category->draw) continue;
 
             const analysis::FlatAnalyzerDataId full_id = id.MakeId(category->name);
-            const TH1D* original_histogram = anaDataReader.GetHistogram<TH1D>(full_id, hist_name);
-            if(!original_histogram) continue;
-            SmartHistogramPtr histogram(new SmartHistogram(*original_histogram, use_log_y, max_y_sf));
-            histogram_set.insert(histogram);
+            const auto histogram = anaDataReader.GetHistogram<TH1D>(full_id, channel, hist_name);
+            if(!histogram) continue;
 
             if(category->IsSignal() && id.eventCategory != analysis::EventCategory::TwoJets_Inclusive)
                 stackDescriptor.AddSignalHistogram(*histogram, category->title, category->color,
@@ -197,6 +188,7 @@ private:
     {
         using analysis::EventSubCategory;
         using analysis::FlatAnalyzerData;
+        using analysis::FlatAnalyzerData_semileptonic;
 
         static const std::vector< std::vector< std::pair<double, double> > > blindingRegions = {
             { { std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest() } },
@@ -206,7 +198,7 @@ private:
         };
 
         static const std::map<std::string, size_t> histogramsToBlind = {
-            { FlatAnalyzerData::m_sv_Name(), 1 }, { FlatAnalyzerData::m_vis_Name(), 1 },
+            { FlatAnalyzerData_semileptonic::m_sv_Name(), 1 }, { FlatAnalyzerData::m_vis_Name(), 1 },
             { FlatAnalyzerData::m_bb_Name(), 1 }, { FlatAnalyzerData::m_ttbb_Name(), 2 },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), 2 }, { FlatAnalyzerData::m_bb_slice_Name(), 3 }
         };
@@ -235,6 +227,58 @@ private:
     analysis::FlatAnalyzerDataMetaId_noName meta_id;
     LoopOptions loop_options;
     std::string hist_name;
-    bool is_blind, draw_ratio, draw_bkg_errors, use_log_y, divide_by_BinWidth;
-    double max_y_sf;
+    bool is_blind, draw_ratio, draw_bkg_errors;
 };
+
+
+namespace make_tools {
+template<typename T>
+struct Factory;
+
+template<>
+struct Factory<Print_Stack> {
+    static Print_Stack* Make(int argc, char *argv[])
+    {
+        if(argc != 11)
+            throw std::runtime_error("Invalid number of command line arguments.");
+
+        int n = 0;
+        const std::string source_cfg = argv[++n];
+        const std::string anaDataFileName = argv[++n];
+        const std::string output_path = argv[++n];
+        const std::string channel_name = argv[++n];
+        const std::string id_selection = argv[++n];
+        const std::string hist_name = argv[++n];
+        const std::string signal_list = argv[++n];
+        const bool is_blind = ReadParameter<bool>(argv[++n], "is_blind");
+        const bool draw_ratio = ReadParameter<bool>(argv[++n], "draw_ratio");
+        const bool draw_bkg_errors = ReadParameter<bool>(argv[++n], "draw_bkg_errors");
+
+        return new Print_Stack(source_cfg, anaDataFileName, output_path, channel_name, id_selection, hist_name,
+                               signal_list, is_blind, draw_ratio, draw_bkg_errors);
+    }
+
+private:
+    template<typename Param>
+    static Param ReadParameter(const std::string& value, const std::string& param_name)
+    {
+        try {
+            char c;
+            Param param;
+            std::istringstream ss_param(value);
+            ss_param.exceptions(std::istream::failbit | std::istream::badbit);
+            ss_param >> std::boolalpha;
+            ss_param >> c;
+            if(c != '@')
+                throw std::istream::failure("Expected '@' before the parameter value.");
+            ss_param >> param;
+            return param;
+        } catch(std::istream::failure& e) {
+            std::ostringstream ss;
+            ss << "Unable to parse parameter '" << param_name << "' from string '" << value << "'.\n" << e.what();
+            throw std::runtime_error(ss.str());
+        }
+    }
+};
+} // make_tools
+

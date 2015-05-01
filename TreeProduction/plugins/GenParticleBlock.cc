@@ -1,8 +1,8 @@
 /*!
  * \file GenParticleBlock.cc
  * \author Original author: Subir Sarkar
- * \author Contributing author: Konstantin Androsov (Siena University, INFN Pisa)
- * \author Contributing author: Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Contributing author: Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Contributing author: Maria Teresa Grippo (University of Siena, INFN Pisa)
  *
  * Copyright 2011 Subir Sarkar
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

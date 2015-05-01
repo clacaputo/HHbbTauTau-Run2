@@ -2,8 +2,8 @@
 #
 #  \file make.sh
 #  \brief Compile program executable for a given C++ file, passing command line arguments into the main object constructor.
-#  \author Konstantin Androsov (Siena University, INFN Pisa)
-#  \author Maria Teresa Grippo (Siena University, INFN Pisa)
+#  \author Konstantin Androsov (University of Siena, INFN Pisa)
+#  \author Maria Teresa Grippo (University of Siena, INFN Pisa)
 #
 #  Copyright 2013, 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
 #                       Maria Teresa Grippo <grippomariateresa@gmail.com>
@@ -88,7 +88,7 @@ int main()
 
 g++ -std=c++0x -Wall $COMPILE_FLAGS \
         -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
-        $( root-config --libs ) -lMathMore -lGenVector -lTMVA -L$BOOST_BASE/lib  \
+        $( root-config --libs ) -lMathMore -lGenVector -lTMVA -lASImage -L$BOOST_BASE/lib  \
         -o $EXE_NAME $CODE_OUT
 
 RESULT=$?

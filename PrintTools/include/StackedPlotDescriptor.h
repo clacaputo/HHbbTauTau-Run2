@@ -1,8 +1,8 @@
 /*!
  * \file StackedPlotDescriptor.h
  * \brief Code to produce stacked plots using CMS preliminary style.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-09-16 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
@@ -33,12 +33,14 @@
 #include <TH1.h>
 #include <THStack.h>
 #include <TLine.h>
+#include <TFrame.h>
 
 #include "RootPrintSource.h"
-#include "TdrStyle.h"
+#include "../include/TdrStyle.h"
+#include "../include/CMS_lumi.h"
 
 #include "AnalysisBase/include/SmartHistogram.h"
-#include "../source/HttStyles.cc"
+#include "../include/HttStyles.h"
 
 namespace analysis {
 
@@ -49,12 +51,10 @@ public:
     typedef std::vector<hist_ptr> hist_ptr_vector;
 
     StackedPlotDescriptor(const std::string& page_title, bool draw_title, const std::string& channelNameLatex,
-                          const std::string& _categoryName, bool _draw_ratio, bool _drawBKGerrors,
-                          bool _divide_by_BinWidth = true)
+                          const std::string& _categoryName, bool _draw_ratio, bool _drawBKGerrors)
         : text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")), categoryText(new TPaveText(0.45, 0.93, 0.95, 0.97, "NDC")),
           channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")), channelName(channelNameLatex),
-          categoryName(_categoryName), draw_ratio(_draw_ratio), drawBKGerrors(_drawBKGerrors),
-          divide_by_BinWidth(_divide_by_BinWidth)
+          categoryName(_categoryName), draw_ratio(_draw_ratio), drawBKGerrors(_drawBKGerrors)
     {
         page.side.fit_range_x = false;
         page.title = page_title;
@@ -72,7 +72,7 @@ public:
             if (page.layout.has_title) {
                 page.side.layout.main_pad = root_ext::Box(0.02,0.02,0.95,0.94);
             } else {
-                page.side.layout.main_pad = root_ext::Box(0.02,0.02,1,1);
+                page.side.layout.main_pad = root_ext::Box(0.,0., 1, 1);
             }
         }
 
@@ -84,38 +84,40 @@ public:
         }
 
         legend->SetFillColor(0);
-        legend->SetTextSize(0.023);
-        legend->SetTextFont(62);
+        legend->SetTextSize(0.026);
+        legend->SetTextFont(42);
         legend->SetFillStyle (0);
         legend->SetFillColor (0);
         legend->SetBorderSize(0);
 
-        text->SetTextSize(0.03);
+        text->SetTextSize(0.05);
         text->SetTextFont(62);
         text->SetFillColor(0);
         text->SetBorderSize(0);
         text->SetMargin(0.01);
         text->SetTextAlign(12); // align left
-        text->AddText(0.01,0.05, "CMS, 19.7 fb^{-1} at 8 TeV");
+        std::ostringstream ss_text;
+        ss_text << channelName << ", " << categoryName;
+        text->AddText(0.01,0.05, ss_text.str().c_str());
 
         //category
-        categoryText->SetTextSize(0.04);
-        categoryText->SetTextFont(62);
-        categoryText->SetFillColor(0);
-        categoryText->SetBorderSize(0);
-        categoryText->SetMargin(0.01);
-        categoryText->SetTextAlign(32); // align left
-        categoryText->AddText(categoryName.c_str());
+//        categoryText->SetTextSize(0.04);
+//        categoryText->SetTextFont(62);
+//        categoryText->SetFillColor(0);
+//        categoryText->SetBorderSize(0);
+//        categoryText->SetMargin(0.01);
+//        categoryText->SetTextAlign(32); // align left
+//        categoryText->AddText(categoryName.c_str());
 
-        channelText->SetTextSize(0.08); //0.05
-        channelText->SetTextFont(62);
-        channelText->SetFillColor(0);
-        channelText->SetBorderSize(0);
-        channelText->SetMargin(0.01);
-        channelText->SetTextAlign(12); // align left
-        channelText->SetX1(0.21);
-        channelText->SetY1(0.82);
-        channelText->AddText(channelName.c_str());
+//        channelText->SetTextSize(0.08); //0.05
+//        channelText->SetTextFont(62);
+//        channelText->SetFillColor(0);
+//        channelText->SetBorderSize(0);
+//        channelText->SetMargin(0.01);
+//        channelText->SetTextAlign(12); // align left
+//        channelText->SetX1(0.21);
+//        channelText->SetY1(0.82);
+//        channelText->AddText(channelName.c_str());
     }
 
     const std::string& GetTitle() const { return page.title; }
@@ -174,9 +176,9 @@ public:
 
     void Draw(TCanvas& canvas)
     {
-        //cms_tdr::setTDRStyle();
-        SetStyle();
-        gStyle->SetLineStyleString(11,"20 10");
+        cms_tdr::setTDRStyle();
+//        htt_style::SetStyle();
+//        gStyle->SetLineStyleString(11,"20 10");
 
         if(page.layout.has_title) {
             TPaveLabel *title = root_ext::Adapter::NewPaveLabel(page.layout.title_box, page.title);
@@ -188,11 +190,34 @@ public:
             main_pad->SetLogx();
         if(page.side.use_log_scaleY)
             main_pad->SetLogy();
+
+        int W = 700;
+        int H = 700;
+
+        int H_ref = 700;
+        int W_ref = 700;
+
+        float T = 0.08*H_ref;
+        float B = 0.14*H_ref;
+        float L = 0.18*W_ref;
+        float R = 0.05*W_ref;
+
+//        main_pad->SetFillColor(0);
+//        main_pad->SetBorderMode(0);
+//        main_pad->SetFrameFillStyle(0);
+//        main_pad->SetFrameBorderMode(0);
+        main_pad->SetLeftMargin( L/W );
+        main_pad->SetRightMargin( R/W );
+        main_pad->SetTopMargin( T/H );
+        main_pad->SetBottomMargin( B/H );
+        main_pad->SetTickx(0);
+        main_pad->SetTicky(0);
+
         main_pad->Draw();
         main_pad->cd();
 
         if (data_histogram)
-            legend->AddEntry(data_histogram.get(), data_histogram->GetLegendTitle().c_str(), "LP");
+            legend->AddEntry(data_histogram.get(), data_histogram->GetLegendTitle().c_str(), "PE");
         if (drawBKGerrors && sum_backgound_histogram)
             legend->AddEntry(sum_backgound_histogram.get(),sum_backgound_histogram->GetLegendTitle().c_str(), "f");
         for(const hist_ptr& signal : signal_histograms)
@@ -234,17 +259,18 @@ public:
             }
             else {
                 stack->GetXaxis()->SetTitle(page.side.axis_titleX.c_str());
-                stack->GetXaxis()->SetTitleOffset(1.05); //1.05
-                stack->GetXaxis()->SetTitleSize(0.055); //0.04
+                stack->GetXaxis()->SetTitleOffset(1.00); //1.05
+//                stack->GetXaxis()->SetTitleSize(0.055); //0.04
                 stack->GetXaxis()->SetLabelSize(0.04);
-                stack->GetXaxis()->SetTitleFont(62); //62
+                stack->GetXaxis()->SetLabelOffset(0.015);
+//                stack->GetXaxis()->SetTitleFont(42); //62
             }
 
-            stack->GetYaxis()->SetTitleSize(0.055); //0.05
-            stack->GetYaxis()->SetTitleOffset(1.45); //1.45
+//            stack->GetYaxis()->SetTitleSize(0.055); //0.05
+            stack->GetYaxis()->SetTitleOffset(1.4); //1.45
             stack->GetYaxis()->SetLabelSize(0.04);
             stack->GetYaxis()->SetTitle(page.side.axis_titleY.c_str());
-            stack->GetYaxis()->SetTitleFont(62); //62
+//            stack->GetYaxis()->SetTitleFont(42); //62
 
             if (drawBKGerrors){
                 sum_backgound_histogram->SetMarkerSize(0);
@@ -260,13 +286,18 @@ public:
 
         if(data_histogram) {
             data_histogram->SetMarkerStyle(20);
-            data_histogram->SetMarkerSize(1.1);
-            data_histogram->Draw("samepPE0");
+            data_histogram->SetMarkerSize(1);
+            data_histogram->Draw("samepPE0X0");
         }
 
         text->Draw("same");
-        channelText->Draw("same");
-        categoryText->Draw("same");
+//        channelText->Draw("same");
+//        categoryText->Draw("same");
+
+        cms_tdr::writeExtraText = true;
+        cms_tdr::extraText = TString("Unpublished");
+        cms_tdr::CMS_lumi(main_pad.get(), 2, 11);
+
 
         legend->Draw("same");
 
@@ -317,6 +348,8 @@ public:
 
         canvas.cd();
         main_pad->Draw();
+        canvas.RedrawAxis();
+        canvas.GetFrame()->Draw();
 
         canvas.cd();
         if (data_histogram && draw_ratio)
@@ -329,7 +362,7 @@ private:
         hist_ptr histogram(new Histogram(original_histogram));
         histogram->SetLineColor(root_ext::colorMapName.at("black"));
         histogram->SetLineWidth(1.);
-        if (divide_by_BinWidth)
+        if (histogram->NeedToDivideByBinWidth())
             ReweightWithBinWidth(histogram);
         UpdateDrawInfo(histogram);
         return histogram;
@@ -382,7 +415,7 @@ private:
     std::string channelName;
     std::string categoryName;
     bool draw_ratio;
-    bool drawBKGerrors, divide_by_BinWidth;
+    bool drawBKGerrors;
 };
 
 } // namespace analysis

@@ -1,7 +1,7 @@
 /*!
  * \file ConfigReader.h
  * \brief Base class to parse configuration file.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  * \date 2015-02-03 created
  *
  * Copyright 2015 Konstantin Androsov <konstantin.androsov@gmail.com>

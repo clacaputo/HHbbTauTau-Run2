@@ -1,8 +1,8 @@
 /*!
  * \file PatVertex.h
  * \brief Definition of PatVertex class which contains analysis-level definiton of a vertex.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-04-27 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

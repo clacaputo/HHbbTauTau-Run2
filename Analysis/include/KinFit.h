@@ -1,8 +1,8 @@
 /*!
  * \file KinFit.h
  * \brief Definition of wrappers for HHKinFit code.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \author Francesco Brivio (Milano Bicocca University, INFN Milano)
  * \date 2014-09-17 created
  *

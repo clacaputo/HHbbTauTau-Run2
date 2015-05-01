@@ -1,8 +1,8 @@
 /*!
  * \file KinFit_CMSSW.h
  * \brief Definition of wrappers for CMSSW KinFitter code.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-10-15 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

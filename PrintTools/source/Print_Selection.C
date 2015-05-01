@@ -1,8 +1,8 @@
 /*!
  * \file Print_Selection.C
  * \brief Print event selection histograms.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-02-24 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

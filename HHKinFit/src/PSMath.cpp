@@ -339,7 +339,7 @@ PSMath::PSNewtonAnalyzer (Int_t np, Double_t a[], Double_t alimit[][2],
       if (printlevel>0) std::cout << "PSNewton Analyzer check 3" << std::endl;
       //      cout << "ip  " << ip << "  H " << H[ip*np+ip] << "  h " << h[ip] << "  g " << g[ip]
       //	   << "   H[ip*np+ip] * h[ip] " << H[ip*np+ip] * h[ip]
-      //	   << "  0.07 * abs(g[ip]) " << 0.07 * abs(g[ip]) << endl;
+      //	   << "  0.07 * std::abs(g[ip]) " << 0.07 * std::abs(g[ip]) << endl;
       break;
     }
   }

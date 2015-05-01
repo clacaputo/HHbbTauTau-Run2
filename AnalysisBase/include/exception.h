@@ -1,7 +1,7 @@
 /*!
  * \file exception.h
  * \brief Definition of the base exception class for the analysis namespace.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>
  *

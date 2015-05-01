@@ -1,8 +1,8 @@
 /*!
  * \file LightBaseFlatTreeAnalyzer.h
  * \brief Definition of LightBaseFlatTreeAnalyzer class, the base class for separate studies on flat trees.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-10-08 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,

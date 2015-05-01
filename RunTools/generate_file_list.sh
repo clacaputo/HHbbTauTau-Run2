@@ -2,8 +2,8 @@
 #
 #  \file generate_file_list.sh
 #  \brief Generate a set of text files that contain list of all the files from a chosen dataset.
-#  \author Konstantin Androsov (Siena University, INFN Pisa)
-#  \author Maria Teresa Grippo (Siena University, INFN Pisa)
+#  \author Konstantin Androsov (University of Siena, INFN Pisa)
+#  \author Maria Teresa Grippo (University of Siena, INFN Pisa)
 #
 #  Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
 #                 Maria Teresa Grippo <grippomariateresa@gmail.com>

@@ -1,8 +1,8 @@
 /*!
  * \file UncertaintyConfiguration.h
  * \brief Classes to define uncertainties and read these definitions from a configuration file.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2015-02-02 created
  *
  * Copyright 2015 Konstantin Androsov <konstantin.androsov@gmail.com>,

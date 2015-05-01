@@ -2,8 +2,8 @@
  * \file SkimFilter.cc
  * \brief Definition of SkimFilter class which applies skim for X->HH->bbTauTau PAT event selection.
  * \author Rosamaria Venditti (INFN Bari, Bari University)
- * \author Contributing author: Konstantin Androsov (Siena University, INFN Pisa)
- * \author Contributing author: Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Contributing author: Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Contributing author: Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-04-30 created
  *
  * Copyright 2014 Rosamaria Venditti,

@@ -1,8 +1,8 @@
 /*!
  * \class AnalyzerData AnalyzerData.h
  * \brief Base class for Analyzer data containers.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2013-03-29 created
  *
  * Copyright 2013-2015 Konstantin Androsov <konstantin.androsov@gmail.com>,
@@ -56,12 +56,12 @@
 #define TH1D_ENTRY_FIX(name, binsizex, nbinsx, xlow) TH1D_ENTRY(name, nbinsx, xlow, (xlow+binsizex*nbinsx))
 #define TH1D_ENTRY_CUSTOM(name, bins) ANA_DATA_ENTRY(TH1D, name, bins)
 
-#define TH1D_ENTRY_EX(name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
-    ANA_DATA_ENTRY(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
-#define TH1D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
-    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
-#define TH1D_ENTRY_CUSTOM_EX(name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store) \
-    ANA_DATA_ENTRY(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, store)
+#define TH1D_ENTRY_EX(name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, divide, store) \
+    ANA_DATA_ENTRY(TH1D, name, nbinsx, xlow, xup, x_axis_title, y_axis_title, use_log_y, max_y_sf, divide, store)
+#define TH1D_ENTRY_FIX_EX(name, binsizex, nbinsx, xlow, x_axis_title, y_axis_title, use_log_y, max_y_sf, divide, store) \
+    TH1D_ENTRY_EX(name, nbinsx, xlow, (xlow+binsizex*nbinsx), x_axis_title, y_axis_title, use_log_y, max_y_sf, divide, store)
+#define TH1D_ENTRY_CUSTOM_EX(name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, divide, store) \
+    ANA_DATA_ENTRY(TH1D, name, bins, x_axis_title, y_axis_title, use_log_y, max_y_sf, divide, store)
 
 #define TH2D_ENTRY(name, nbinsx, xlow, xup, nbinsy, ylow, yup) \
     ANA_DATA_ENTRY(TH2D, name, nbinsx, xlow, xup, nbinsy, ylow, yup)

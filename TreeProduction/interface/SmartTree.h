@@ -1,7 +1,7 @@
 /*!
  * \file SmartTree.h
  * \brief Definition of SmartTree class.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
  *
  * Copyright 2013, 2014 Konstantin Androsov <konstantin.androsov@gmail.com>
  *

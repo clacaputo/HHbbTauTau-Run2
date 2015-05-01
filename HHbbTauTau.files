@@ -361,3 +361,6 @@ RunTools/srm_tools/srmusr-mv
 RunTools/srm_tools/srmusr-rm
 RunTools/srm_tools/srmusr-rmdir
 RunTools/srm_tools/srmusr-rmfiles
+PrintTools/include/CMS_lumi.h
+PrintTools/include/HttStyles.h
+RunTools/print_control_plots.sh

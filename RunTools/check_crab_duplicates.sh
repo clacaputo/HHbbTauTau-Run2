@@ -2,8 +2,8 @@
 #
 #  \file check_crab_duplicates.sh
 #  \brief Check if there are duplicated files in CRAB output and, if needed, remove older duplicates.
-#  \author Konstantin Androsov (Siena University, INFN Pisa)
-#  \author Maria Teresa Grippo (Siena University, INFN Pisa)
+#  \author Konstantin Androsov (University of Siena, INFN Pisa)
+#  \author Maria Teresa Grippo (University of Siena, INFN Pisa)
 #
 #  Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
 #                 Maria Teresa Grippo <grippomariateresa@gmail.com>

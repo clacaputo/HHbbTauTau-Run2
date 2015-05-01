@@ -1,8 +1,8 @@
 /*!
  * \file SelectionResults.h
  * \brief Definition of selection results container used in HH->bbTauTau analysis.
- * \author Konstantin Androsov (Siena University, INFN Pisa)
- * \author Maria Teresa Grippo (Siena University, INFN Pisa)
+ * \author Konstantin Androsov (University of Siena, INFN Pisa)
+ * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
  * \date 2014-11-17 created
  *
  * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
