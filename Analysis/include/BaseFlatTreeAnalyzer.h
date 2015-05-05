@@ -52,6 +52,7 @@
 #include "Htautau_Summer13.h"
 #include "AnalysisCategories.h"
 #include "FlatAnalyzerDataCollection.h"
+#include "PostfitConfiguration.h"
 
 namespace analysis {
 
@@ -80,6 +81,14 @@ public:
     {
         TH1::SetDefaultSumw2();
         gROOT->SetMustClean(kFALSE);
+        if(applyPostFitCorrections) {
+            ConfigReader configReader("Analysis/config/postfit_sf.cfg");
+            postfitCorrectionsCollection =
+                    std::shared_ptr<PostfitCorrectionsCollection>(new PostfitCorrectionsCollection());
+            PostfitCorrectionsCollectionReader correctionsReader(*postfitCorrectionsCollection);
+            configReader.AddEntryReader("CORRECTIONS", correctionsReader);
+            configReader.ReadConfig();
+        }
     }
 
     void Run()
@@ -97,14 +106,14 @@ public:
         }
 
         static const std::set< std::pair<std::string, EventSubCategory> > interesting_histograms = {
-            { FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts },
-            { FlatAnalyzerData::m_sv_Name(), EventSubCategory::MassWindow },
+            { FlatAnalyzerData_semileptonic::m_sv_Name(), EventSubCategory::NoCuts },
+            { FlatAnalyzerData_semileptonic::m_sv_Name(), EventSubCategory::MassWindow },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), EventSubCategory::KinematicFitConverged },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), EventSubCategory::KinematicFitConvergedWithMassWindow },
         };
 
         static const std::set<std::string> complete_histogram_names = {
-            FlatAnalyzerData::m_sv_Name(), FlatAnalyzerData::m_ttbb_kinfit_Name()
+            FlatAnalyzerData_semileptonic::m_sv_Name(), FlatAnalyzerData::m_ttbb_kinfit_Name()
         };
 
         for (const auto& hist_name : FlatAnalyzerData::GetOriginalHistogramNames<TH1D>()) {
@@ -169,8 +178,8 @@ public:
         PrintTables("semicolon", L";");
 
         std::cout << "Saving datacards... " << std::endl;
-        ProduceFileForLimitsCalculation(FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts,
-                                        &FlatAnalyzerData::m_sv);
+        ProduceFileForLimitsCalculation(FlatAnalyzerData_semileptonic::m_sv_Name(), EventSubCategory::NoCuts,
+                                        &FlatAnalyzerData::m_sv_base);
         ProduceFileForLimitsCalculation(FlatAnalyzerData::m_ttbb_kinfit_Name(),
                                         EventSubCategory::KinematicFitConverged,
                                         &FlatAnalyzerData::m_ttbb_kinfit);
@@ -839,7 +848,7 @@ private:
         };
 
         static const std::map<std::string, size_t> histogramsToBlind = {
-            { FlatAnalyzerData::m_sv_Name(), 1 }, { FlatAnalyzerData::m_vis_Name(), 1 },
+            { FlatAnalyzerData_semileptonic::m_sv_Name(), 1 }, { FlatAnalyzerData::m_vis_Name(), 1 },
             { FlatAnalyzerData::m_bb_Name(), 1 }, { FlatAnalyzerData::m_ttbb_Name(), 2 },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), 2 }, { FlatAnalyzerData::m_bb_slice_Name(), 3 }
         };
@@ -865,8 +874,8 @@ private:
         std::wofstream of(outputFileName + "_" + name_suffix + ".csv");
 
         static const std::set< std::pair<std::string, EventSubCategory> > interesting_histograms = {
-            { FlatAnalyzerData::m_sv_Name(), EventSubCategory::NoCuts },
-            { FlatAnalyzerData::m_sv_Name(), EventSubCategory::MassWindow },
+            { FlatAnalyzerData_semileptonic::m_sv_Name(), EventSubCategory::NoCuts },
+            { FlatAnalyzerData_semileptonic::m_sv_Name(), EventSubCategory::MassWindow },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), EventSubCategory::KinematicFitConverged },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), EventSubCategory::KinematicFitConvergedWithMassWindow }
         };
@@ -935,92 +944,20 @@ private:
     void ApplyPostFitCorrections(const FlatAnalyzerDataMetaId_noRegion_noName& anaDataMetaId,
                                  const std::string& hist_name, bool compositFlag)
     {
-        typedef std::map<std::string, double> ScaleFactorForDataCategoryMap;
-        typedef std::map<EventCategory, ScaleFactorForDataCategoryMap> ScaleFactorForEventCategoryMap;
-        typedef std::map<EventSubCategory, ScaleFactorForEventCategoryMap> ScaleFactorMap;
-        typedef std::map<EventCategory, double> UncertaintyForEventCategoryMap;
-        typedef std::map<EventSubCategory, UncertaintyForEventCategoryMap> UncertaintyMap;
-
-        static UncertaintyMap uncertainties;
-        static ScaleFactorMap scaleFactors;
-
-        if(!scaleFactors.size()) {
-            uncertainties[EventSubCategory::KinematicFitConverged] = {
-                { EventCategory::TwoJets_ZeroBtag, 0.07178 },
-                { EventCategory::TwoJets_OneBtag, 0.11307 },
-                { EventCategory::TwoJets_TwoBtag, 0.16057 }
-            };
-
-            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow] = {
-                { EventCategory::TwoJets_ZeroBtag, 0.07097 },
-                { EventCategory::TwoJets_OneBtag, 0.12763 },
-                { EventCategory::TwoJets_TwoBtag, 0.16699 }
-            };
-
-//            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
-//                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
-
-//            uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
-//                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
-
-//            uncertainties[EventSubCategory::KinematicFitConverged] =
-//                    uncertainties[EventSubCategory::KinematicFitConvergedWithMassWindow];
-
-            uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
-                    uncertainties[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
-            uncertainties[EventSubCategory::NoCuts] = uncertainties[EventSubCategory::KinematicFitConverged];
-
-
-            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag] = {
-                { "QCD", 1.01213 }, { "TT", 1.14485 }, { "VV", 1.13313 }, { "W", 1.09412 }, { "ZLL", 1.00462 },
-                { "ZTT", 1.29769 }
-            };
-
-            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 1.02141 }, { "TT", 1.14993 }, { "VV", 1.13243 }, { "ZLL", 1.00809 }, { "ZTT",  1.34234 }
-            };
-
-            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_TwoBtag] = {
-                { "QCD", 0.94037 }, { "TT", 1.15275 }, { "VV", 1.13286 }, { "ZLL", 1.00172 }, { "ZTT", 1.12300 }
-            };
-
-            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag] = {
-                { "QCD", 1.05700 }, { "TT", 1.04612 }, { "VV", 1.05031 }, { "W", 1.03562 }, { "ZLL", 1.01775 },
-                { "ZTT", 1.07601 }
-            };
-
-            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_OneBtag] = {
-                { "QCD", 1.09063 }, { "TT", 1.05456 }, { "VV", 1.04395 }, { "ZLL", 1.01457 }, { "ZTT", 1.11958 }
-            };
-
-            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_TwoBtag] = {
-                { "QCD", 0.92167 }, { "TT", 1.05792 }, { "VV", 1.04335 }, { "ZLL", 0.99016 }, { "ZTT", 0.88457 }
-            };
-
-//            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::Inclusive] =
-//                   scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
-
-//            scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_Inclusive] =
-//                   scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow][EventCategory::TwoJets_ZeroBtag];
-
-//            scaleFactors[EventSubCategory::KinematicFitConverged] =
-//                    scaleFactors[EventSubCategory::KinematicFitConvergedWithMassWindow];
-
-            scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_Inclusive] =
-                    scaleFactors[EventSubCategory::KinematicFitConverged][EventCategory::TwoJets_ZeroBtag];
-            scaleFactors[EventSubCategory::NoCuts] = scaleFactors[EventSubCategory::KinematicFitConverged];
-        }
-
         const EventCategory eventCategory = anaDataMetaId.eventCategory;
         const EventSubCategory subCategory = anaDataMetaId.eventSubCategory;
 
         for (EventRegion eventRegion : AllEventRegions) {
             for(const DataCategory* dataCategory : dataCategoryCollection.GetCategories(DataCategoryType::Limits)) {
                 if(dataCategory->IsComposit() != compositFlag) continue;
-                if(!scaleFactors.count(subCategory) || !scaleFactors.at(subCategory).count(eventCategory)
-                        || !scaleFactors.at(subCategory).at(eventCategory).count(dataCategory->datacard)) continue;
-                const double uncertainty = uncertainties.at(subCategory).at(eventCategory);
-                const double scaleFactor = scaleFactors.at(subCategory).at(eventCategory).at(dataCategory->datacard);
+                if(!postfitCorrectionsCollection
+                        || !postfitCorrectionsCollection->HasCorrections(ChannelId(), eventCategory, subCategory))
+                    continue;
+                const PostfitCorrections& corrections =
+                        postfitCorrectionsCollection->GetCorrections(ChannelId(), eventCategory, subCategory);
+                if(!corrections.HasScaleFactor(dataCategory->datacard)) continue;
+                const double uncertainty = corrections.GetUncertainty();
+                const double scaleFactor = corrections.GetScaleFactor(dataCategory->datacard);
 
                 if(auto hist = GetHistogram(anaDataMetaId, eventRegion, dataCategory->name, hist_name)) {
                     hist->Scale(scaleFactor);
@@ -1040,6 +977,7 @@ protected:
     DataCategoryCollection dataCategoryCollection;
     FlatAnalyzerDataCollection anaDataCollection;
     bool applyPostFitCorrections;
+    std::shared_ptr<PostfitCorrectionsCollection> postfitCorrectionsCollection;
 };
 
 } // namespace analysis

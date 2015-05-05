@@ -61,8 +61,8 @@ public:
     TH1D_ENTRY_EX(DeltaR_hh, 40, 0, 6, "#DeltaR_{#tau#taubb}[rad]", "Events", false, 1.5, false, SaveAll)
     TH1D_ENTRY_EX(mt_2, 20, 0, 200, "M_{T}[GeV]", "Events", false, 1.1, false, SaveAll)
     TH1D_ENTRY_EX(pt_H_tt_MET, 20, 0, 300, "P_{T}[GeV]", "Evnets", false, 1.1, false, SaveAll)
-    TH1D_ENTRY_EX(convergence, 10, -3.5, 6.5, "Fit_convergence", "Events", false, 1.1, false, SaveAll)
-    TH1D_ENTRY_EX(chi2, 20, 0, 100, "#chi^{2}", "Events", false, 1.1, false, SaveAll)
+    TH1D_ENTRY_EX(convergence, 10, -3.5, 6.5, "Fit_convergence", "Events", false, 1.6, false, SaveAll)
+    TH1D_ENTRY_EX(chi2, 20, 0, 100, "#chi^{2}", "Events", false, 1.3, false, SaveAll)
     TH1D_ENTRY_EX(fit_probability, 20, 0, 1, "Fit_probability", "Events", false, 1.1, false, SaveAll)
     TH1D_ENTRY_EX(pull_balance, 20, -10, 10, "pull_balance", "Events", false, 2, false, SaveAll)
     TH1D_ENTRY_EX(pull_balance_1, 100, -10, 10, "pull_balance_1", "Events", false, 1.1, false, SaveAll)
@@ -74,6 +74,8 @@ public:
     TH2D_ENTRY_EX(mH_vs_chi2, 20, 0, 100, 50, 200, 700, "#chi^{2}", "M_{#tau#taubb}[GeV]", false, 1, SaveAll)
 
     static constexpr bool SaveAll = true;
+
+    virtual root_ext::SmartHistogram<TH1D>& m_sv_base() = 0;
 
     explicit FlatAnalyzerData(bool _fill_all) : fill_all(_fill_all) {}
 
@@ -234,6 +236,8 @@ public:
         mt_1().Fill(event.mt_1, weight);
     }
 
+    virtual root_ext::SmartHistogram<TH1D>& m_sv_base() override { return m_sv(); }
+
     virtual const std::vector<double>& M_ttbb_Bins() const override
     {
         static const std::vector<double> bins = { 200, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 500, 550,
@@ -321,6 +325,8 @@ public:
         m_sv().Fill(eventInfo.event->m_sv_MC, weight);
     }
 
+    virtual root_ext::SmartHistogram<TH1D>& m_sv_base() override { return m_sv(); }
+
     virtual void CreateAll() override
     {
         FlatAnalyzerData_tautau::CreateAll();
@@ -343,6 +349,8 @@ public:
         FlatAnalyzerData_tautau::Fill(eventInfo, weight);
         m_sv().Fill(eventInfo.event->m_sv_MC, weight);
     }
+
+    virtual root_ext::SmartHistogram<TH1D>& m_sv_base() override { return m_sv(); }
 
     virtual const std::vector<double>& M_tt_Bins() const override
     {
