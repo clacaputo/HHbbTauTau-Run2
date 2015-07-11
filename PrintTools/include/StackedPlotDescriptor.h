@@ -274,10 +274,19 @@ public:
 
             if (drawBKGerrors){
                 sum_backgound_histogram->SetMarkerSize(0);
-                sum_backgound_histogram->SetFillColor(13);
-                sum_backgound_histogram->SetFillStyle(3013);
+                //new
+                int new_idx = root_ext::CreateTransparentColor(12,0.5);
+                sum_backgound_histogram->SetFillColor(new_idx);
+                sum_backgound_histogram->SetFillStyle(3001);
                 sum_backgound_histogram->SetLineWidth(1);
                 sum_backgound_histogram->Draw("e2same");
+//                end new
+
+                  //old style for bkg uncertainties
+//                sum_backgound_histogram->SetFillColor(13);
+//                sum_backgound_histogram->SetFillStyle(3013);
+//                sum_backgound_histogram->SetLineWidth(1);
+//                sum_backgound_histogram->Draw("e2same");
             }
         }
 

@@ -51,6 +51,16 @@ static const std::map<std::string, EColor> colorMapName = {{"white",kWhite}, {"b
                                                            {"violet_custom", (EColor) TColor::GetColor(155,152,204)},
                                                            {"yellow_custom", (EColor) TColor::GetColor(248,206,104)}};
 
+int CreateTransparentColor(int color, float alpha)
+{
+  TColor* adapt = gROOT->GetColor(color);
+  int new_idx = gROOT->GetListOfColors()->GetSize() + 1;
+  TColor* trans = new TColor(new_idx, adapt->GetRed(), adapt->GetGreen(),
+                             adapt->GetBlue(), "", alpha);
+  trans->SetName(Form("userColor%i", new_idx));
+  return new_idx;
+}
+
 struct Range {
     Double_t min, max;
     Range() : min(0), max(0) {}
