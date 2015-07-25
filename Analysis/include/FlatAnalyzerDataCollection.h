@@ -299,6 +299,11 @@ public:
     {
         auto& anaData = Get(id, channel);
         anaData.Fill(eventInfo, weight);
+//        if (id.eventRegion == EventRegion::OS_Isolated && id.eventCategory == EventCategory::TwoJets_TwoBtag &&
+//                id.eventSubCategory == EventSubCategory::KinematicFitConvergedWithMassWindow &&
+//                id.eventEnergyScale == EventEnergyScale::Central)
+//            std::cout << "SIGNAL final eventID: " << eventInfo.event->evt << ", run: " <<
+//                         eventInfo.event->run << ", lumi: " << eventInfo.event->lumi << std::endl;
     }
 
     void FillSubCategories(const FlatAnalyzerDataMetaId_noSub& meta_id, Channel channel,

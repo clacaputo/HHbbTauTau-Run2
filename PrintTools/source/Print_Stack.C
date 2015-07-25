@@ -40,7 +40,8 @@ struct LoopOptions {
 
 static const std::map<analysis::EventCategory, std::string> eventCategoryMap =
           { { analysis::EventCategory::Inclusive, "Inclusive" },
-            { analysis::EventCategory::TwoJets_Inclusive, "2jet-Inclusive" },
+//            { analysis::EventCategory::TwoJets_Inclusive, "2jet-Inclusive" },
+            { analysis::EventCategory::TwoJets_Inclusive, "inclusive" },
             { analysis::EventCategory::TwoJets_ZeroBtag, "2jet-0tag" },
             { analysis::EventCategory::TwoJets_OneBtag, "2jet-1tag"},
             { analysis::EventCategory::TwoJets_TwoBtag, "2jet-2tag" },
