@@ -849,7 +849,7 @@ private:
 
         static const std::map<std::string, size_t> histogramsToBlind = {
             { FlatAnalyzerData_semileptonic::m_sv_Name(), 1 }, { FlatAnalyzerData::m_vis_Name(), 1 },
-            { FlatAnalyzerData::m_bb_Name(), 1 }, { FlatAnalyzerData::m_ttbb_Name(), 2 },
+            { FlatAnalyzerData_semileptonic::m_bb_Name(), 1 }, { FlatAnalyzerData::m_ttbb_Name(), 2 },
             { FlatAnalyzerData::m_ttbb_kinfit_Name(), 2 }, { FlatAnalyzerData::m_bb_slice_Name(), 3 }
         };
 

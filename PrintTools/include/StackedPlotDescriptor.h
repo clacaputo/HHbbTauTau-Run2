@@ -34,6 +34,8 @@
 #include <THStack.h>
 #include <TLine.h>
 #include <TFrame.h>
+#include <TStyle.h>
+#include <TROOT.h>
 
 #include "RootPrintSource.h"
 #include "../include/TdrStyle.h"
@@ -52,10 +54,12 @@ public:
 
     StackedPlotDescriptor(const std::string& page_title, bool draw_title, const std::string& channelNameLatex,
                           const std::string& _categoryName, bool _draw_ratio, bool _drawBKGerrors)
-        : text(new TPaveText(0.15, 0.95, 0.95, 0.99, "NDC")), categoryText(new TPaveText(0.45, 0.93, 0.95, 0.97, "NDC")),
+        : text(new TPaveText(0.18, 0.95, 0.65, 0.99, "NDC")), categoryText(new TPaveText(0.21, 0.71, 0.35, 0.75, "NDC")),
           channelText(new TPaveText(0.2, 0.85, 0.25, 0.89, "NDC")), channelName(channelNameLatex),
           categoryName(_categoryName), draw_ratio(_draw_ratio), drawBKGerrors(_drawBKGerrors)
     {
+
+
         page.side.fit_range_x = false;
         page.title = page_title;
         page.layout.has_title = draw_title;
@@ -90,24 +94,27 @@ public:
         legend->SetFillColor (0);
         legend->SetBorderSize(0);
 
-        text->SetTextSize(0.05);
+        text->SetTextSize(0.035);
         text->SetTextFont(62);
         text->SetFillColor(0);
         text->SetBorderSize(0);
         text->SetMargin(0.01);
         text->SetTextAlign(12); // align left
         std::ostringstream ss_text;
-        ss_text << channelName << ", " << categoryName;
+        ss_text << "H#rightarrowhh#rightarrowbb#tau#tau " ;
         text->AddText(0.01,0.05, ss_text.str().c_str());
 
+
         //category
-//        categoryText->SetTextSize(0.04);
-//        categoryText->SetTextFont(62);
-//        categoryText->SetFillColor(0);
-//        categoryText->SetBorderSize(0);
-//        categoryText->SetMargin(0.01);
-//        categoryText->SetTextAlign(32); // align left
-//        categoryText->AddText(categoryName.c_str());
+        categoryText->SetTextSize(0.035);
+        categoryText->SetTextFont(62);
+        categoryText->SetFillColor(0);
+        categoryText->SetBorderSize(0);
+        categoryText->SetMargin(0.01);
+        categoryText->SetTextAlign(12); // align left
+        std::ostringstream ss_text_2;
+        ss_text_2 << channelName << ", " << categoryName;
+        categoryText->AddText(ss_text_2.str().c_str());
 
 //        channelText->SetTextSize(0.08); //0.05
 //        channelText->SetTextFont(62);
@@ -143,10 +150,18 @@ public:
                             unsigned scale_factor)
     {
         hist_ptr histogram = PrepareHistogram(original_signal);
+        //Reb
+        htt_style::SetStyle();
+        histogram->SetFillStyle(1001);
+        histogram->SetLineStyle(2);
+        histogram->SetFillColor(0);
+        histogram->SetLineColor(kBlue+3);
+        histogram->SetLineWidth(3);
+        //ours
         //histogram->SetLineColor(color);
-        histogram->SetLineColor(4);
-        histogram->SetLineStyle(11); //2
-        histogram->SetLineWidth(2); //3
+        //histogram->SetLineColor(4);
+        //histogram->SetLineStyle(11); //2
+        //histogram->SetLineWidth(2); //3
         histogram->Scale(scale_factor);
         signal_histograms.push_back(histogram);
         std::ostringstream ss;
@@ -210,14 +225,14 @@ public:
         main_pad->SetRightMargin( R/W );
         main_pad->SetTopMargin( T/H );
         main_pad->SetBottomMargin( B/H );
-        main_pad->SetTickx(0);
-        main_pad->SetTicky(0);
+        main_pad->SetTickx(1);
+        main_pad->SetTicky(1);
 
         main_pad->Draw();
         main_pad->cd();
 
         if (data_histogram)
-            legend->AddEntry(data_histogram.get(), data_histogram->GetLegendTitle().c_str(), "PE");
+            legend->AddEntry(data_histogram.get(), data_histogram->GetLegendTitle().c_str(), "PLE");
         if (drawBKGerrors && sum_backgound_histogram)
             legend->AddEntry(sum_backgound_histogram.get(),sum_backgound_histogram->GetLegendTitle().c_str(), "f");
         for(const hist_ptr& signal : signal_histograms)
@@ -278,7 +293,7 @@ public:
                 int new_idx = root_ext::CreateTransparentColor(12,0.5);
                 sum_backgound_histogram->SetFillColor(new_idx);
                 sum_backgound_histogram->SetFillStyle(3001);
-                sum_backgound_histogram->SetLineWidth(1);
+                sum_backgound_histogram->SetLineWidth(0);
                 sum_backgound_histogram->Draw("e2same");
 //                end new
 
@@ -294,14 +309,22 @@ public:
             signal->Draw("SAME HIST");
 
         if(data_histogram) {
+            data_histogram->SetMarkerColor(1);
+            data_histogram->SetLineColor(1);
+            data_histogram->SetFillColor(1);
+            data_histogram->SetFillStyle(0);
+            data_histogram->SetLineWidth(2);
+
+
             data_histogram->SetMarkerStyle(20);
-            data_histogram->SetMarkerSize(1);
-            data_histogram->Draw("samepPE0X0");
+            data_histogram->SetMarkerSize(1.1);
+//            data_histogram->Draw("samepPE0X0");
+            data_histogram->Draw("pesame");
         }
 
         text->Draw("same");
 //        channelText->Draw("same");
-//        categoryText->Draw("same");
+        categoryText->Draw("same");
 
         cms_tdr::writeExtraText = true;
         cms_tdr::extraText = TString("Unpublished");
