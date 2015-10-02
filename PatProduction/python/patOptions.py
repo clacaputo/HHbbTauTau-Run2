@@ -22,6 +22,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
+import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 from HHbbTauTau.RunTools.readFileList import *
 
@@ -46,7 +47,7 @@ def parseAndApplyOptions(process) :
                       VarParsing.varType.bool, "Include Sim information.")
     options.register ('keepPat', False, VarParsing.multiplicity.singleton,
                       VarParsing.varType.bool, "Keep PAT information in the output file.")
-    options.register ('runTree', True, VarParsing.multiplicity.singleton,
+    options.register ('runTree', False, VarParsing.multiplicity.singleton,
                       VarParsing.varType.bool, "Run TREE production sequence.")
     options.register ('treeOutput', 'Tree.root', VarParsing.multiplicity.singleton,
                       VarParsing.varType.string, "Tree root file.")
@@ -61,7 +62,13 @@ def parseAndApplyOptions(process) :
 
     if not options.runOnCrab:
         readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
-        process.out.fileName = options.outputFile
+        ## Output file
+#        from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
+#        process.OUT = cms.OutputModule("PoolOutputModule",
+#            fileName = cms.untracked.string('test.root'),
+#            outputCommands = cms.untracked.vstring(['keep *'])
+#        )
+#        process.endpath= cms.EndPath(process.OUT)
         process.maxEvents.input = options.maxEvents
 
     return

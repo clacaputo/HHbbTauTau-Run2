@@ -1,7 +1,7 @@
 <lcgdict>
     <selection>
-        <class name="pat::Vertex"  ClassVersion="-1">
-            <version ClassVersion="-1" checksum="3650178268"/>
+        <class name="pat::Vertex"  ClassVersion="0">
+            <version ClassVersion="0" checksum="1676559698"/>
         </class>
         <class name="std::vector<pat::Vertex>" />
         <class name="std::vector<pat::Vertex>::const_iterator" />

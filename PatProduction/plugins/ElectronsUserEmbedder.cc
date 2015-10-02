@@ -148,23 +148,23 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
 
     edm::Handle<DcsStatusCollection> dcsHandle;
     iEvent.getByLabel("scalersRawToDigi", dcsHandle);
-    float evt_bField;
+//    float evt_bField;
 
     if (!isMC_) {
         // scale factor = 3.801/18166.0 which are
         // average values taken over a stable two
         // week period
-        float currentToBFieldScaleFactor = 2.09237036221512717e-04;
-        float current = -9999 / currentToBFieldScaleFactor;
-        if( dcsHandle.isValid() && (*dcsHandle).size() > 0 ) {
-            current = (*dcsHandle)[0].magnetCurrent();
-        }
+//        float currentToBFieldScaleFactor = 2.09237036221512717e-04;
+//        float current = -9999 / currentToBFieldScaleFactor;
+//        if( dcsHandle.isValid() && (*dcsHandle).size() > 0 ) {
+//            current = (*dcsHandle)[0].magnetCurrent();
+//        }
 
-        evt_bField = current * currentToBFieldScaleFactor;
-    } else {
-        edm::ESHandle<MagneticField> magneticField;
-        iSetup.get<IdealMagneticFieldRecord>().get(magneticField);
-        evt_bField = magneticField->inTesla(GlobalPoint(0., 0., 0.)).z();
+//        evt_bField = current * currentToBFieldScaleFactor;
+//    } else {
+//        edm::ESHandle<MagneticField> magneticField;
+//        iSetup.get<IdealMagneticFieldRecord>().get(magneticField);
+//        evt_bField = magneticField->inTesla(GlobalPoint(0., 0., 0.)).z();
     }
 
     // PFCandidateMap
@@ -182,7 +182,7 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
 
     edm::ESHandle<TransientTrackBuilder> hTransientTrackBuilder;
     iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", hTransientTrackBuilder);
-    const TransientTrackBuilder *transientTrackBuilder = hTransientTrackBuilder.product();
+//    const TransientTrackBuilder *transientTrackBuilder = hTransientTrackBuilder.product();
 
     std::auto_ptr< pat::ElectronCollection > electronsUserEmbeddedColl( new pat::ElectronCollection() ) ;
 
@@ -204,8 +204,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         int pfId = 1; //pfElePtr.isNonnull();
 
         const reco::Track *el_track = (const reco::Track*)((aElectron).gsfTrack().get());
-        const reco::HitPattern& p_inner = el_track->trackerExpectedHitsInner();
-        float nHits = p_inner.numberOfHits();
+        const reco::HitPattern& p_inner = el_track->hitPattern();
+        float nHits = p_inner.numberOfHits(reco::HitPattern::HitCategory::TRACK_HITS);
 
         ConversionFinder convFinder;
 //        vector<ConversionInfo> v_convInfos = convFinder.getConversionInfos(*(aElectron.core()), tracks_h,
@@ -264,9 +264,9 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
         aElectron.addUserFloat("dxyWrtPV", dxyWrtPV);
         aElectron.addUserFloat("dzWrtPV", dzWrtPV);
 
-        EcalClusterLazyTools lazyTools(iEvent, iSetup,
-                                       edm::InputTag("reducedEcalRecHitsEB"),
-                                       edm::InputTag("reducedEcalRecHitsEE"));
+//        EcalClusterLazyTools lazyTools(iEvent, iSetup,
+//                                       edm::InputTag("reducedEcalRecHitsEB"),
+//                                       edm::InputTag("reducedEcalRecHitsEE"));
 
         int myTrigPresel = 0;
         if(fabs(aGsf->superCluster()->eta()) < 1.485) {
@@ -275,7 +275,7 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
                     aGsf->dr03TkSumPt() / aGsf->pt() < 0.2 &&
                     aGsf->dr03EcalRecHitSumEt() / aGsf->pt() < 0.2 &&
                     aGsf->dr03HcalTowerSumEt() / aGsf->pt() < 0.2 &&
-                    aGsf->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() == 0)
+                    aGsf->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::HitCategory::MISSING_INNER_HITS) == 0)
                 myTrigPresel = 1;
         } else {
             if(aGsf->sigmaIetaIeta() < 0.035 &&
@@ -283,7 +283,7 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
                     aGsf->dr03TkSumPt() / aGsf->pt() < 0.2 &&
                     aGsf->dr03EcalRecHitSumEt() / aGsf->pt() < 0.2 &&
                     aGsf->dr03HcalTowerSumEt() / aGsf->pt() < 0.2 &&
-                    aGsf->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() == 0)
+                    aGsf->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::HitCategory::MISSING_INNER_HITS) == 0)
                 myTrigPresel = 1;
         }
 
@@ -310,8 +310,8 @@ void ElectronsUserEmbedder::produce(edm::Event& iEvent, const edm::EventSetup& i
 
         if(doMVAPOG_) {
             //mva2 = fMVADaniele_->mva(*aGsf, vertexes->size());
-            mva2 = myMVATrig_->mvaValue( *aGsf , (*vertexes)[0], *transientTrackBuilder, lazyTools, false);
-            mva3 = myMVANonTrig_->mvaValue( *aGsf , (*vertexes)[0], *transientTrackBuilder, lazyTools, false);
+//            mva2 = myMVATrig_->mvaValue( *aGsf , (*vertexes)[0], *transientTrackBuilder, lazyTools, false);
+//            mva3 = myMVANonTrig_->mvaValue( *aGsf , (*vertexes)[0], *transientTrackBuilder, lazyTools, false);
             //cout << mva2 << endl;
         }
 

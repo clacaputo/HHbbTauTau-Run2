@@ -92,10 +92,15 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             METTree.pt() = MET.pt();
             METTree.phi() = MET.phi();
             METTree.sumEt()  = MET.sumEt();
-            METTree.pt_uncorrected() = MET.uncorrectedPt(pat::MET::uncorrALL);
-            METTree.phi_uncorrected() = MET.uncorrectedPhi(pat::MET::uncorrALL);
-            METTree.sumEt_uncorrected() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
+            //            METTree.pt_uncorrected() = MET.uncorrectedPt(pat::MET::uncorrALL);
+            //            METTree.phi_uncorrected() = MET.uncorrectedPhi(pat::MET::uncorrALL);
+            //            METTree.sumEt_uncorrected() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
+               //Compatibility with 74X
+            METTree.pt_uncorrected() = MET.uncorrectedPt();
+            METTree.phi_uncorrected() = MET.uncorrectedPhi();
+            METTree.sumEt_uncorrected() = MET.sumEt() - MET.uncorrectedSumEt();
             METTree.significanceMatrix() = ntuple::SignificanceMatrixToVector(MET.getSignificanceMatrix());
+            METTree.Fill();
             METTree.Fill();
         }
     }

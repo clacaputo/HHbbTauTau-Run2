@@ -22,6 +22,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
 
+import FWCore.ParameterSet.Config as cms
+
+process = cms.Process("muAOD")
+
 ## Import skeleton process.
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 process.MessageLogger.cerr.FwkReport.reportEvery = 100

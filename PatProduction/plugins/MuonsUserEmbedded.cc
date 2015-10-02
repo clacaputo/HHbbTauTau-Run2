@@ -282,8 +282,8 @@ void MuonsUserEmbedded::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
             aMuon.isoDeposit(pat::PfGammaIso)->depositAndCountWithin(0.4, vetos2011Photons).first;
         float nhIsoPU04v2 =
             aMuon.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4, vetos2011Neutral).first;
-        float phIsoPU04v2 =
-            aMuon.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4, vetos2011Photons).first;
+//        float phIsoPU04v2 =
+//            aMuon.isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4, vetos2011Photons).first;
 
 
         aMuon.addUserFloat("PFRelIso04v1", (chIso04v1 + nhIso04v1 + phIso04v1) / aMuon.pt());

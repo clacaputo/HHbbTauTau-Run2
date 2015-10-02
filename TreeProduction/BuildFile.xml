@@ -8,6 +8,7 @@
 <use name="DataFormats/HepMCCandidate" />
 <use name="CommonTools/CandUtils" />
 <use name="CommonTools/ParticleFlow" />
+<use name="CommonTools/UtilAlgos" />
 <use name="CondFormats/JetMETObjects" />
 <use name="CondFormats/EgammaObjects" />
 <use name="JetMETCorrections/Objects" />

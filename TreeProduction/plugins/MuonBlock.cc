@@ -163,7 +163,8 @@ void MuonBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
       if(indexVtx >= 0) {
           muonTree.isTightMuon() = patMuon.isTightMuon(primaryVertices->at(indexVtx));
-          muonTree.isHighPtMuon() = patMuon.isHighPtMuon(primaryVertices->at(indexVtx), reco::improvedTuneP);
+          //          muonTree.isHighPtMuon() = patMuon.isHighPtMuon(primaryVertices->at(indexVtx), reco::improvedTuneP);
+          muonTree.isHighPtMuon() = patMuon.isHighPtMuon(primaryVertices->at(indexVtx));
       }
       else {
           muonTree.isTightMuon() = false;

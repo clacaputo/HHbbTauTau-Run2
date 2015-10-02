@@ -124,7 +124,7 @@ void ElectronBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     electronTree.trkHits() = hitp.numberOfValidTrackerHits();
 
         electronTree.nValidHits() = tk->numberOfValidHits();
-        electronTree.missingHits() = tk->trackerExpectedHitsInner().numberOfHits();
+        electronTree.missingHits() = tk->hitPattern().numberOfHits(reco::HitPattern::HitCategory::MISSING_INNER_HITS);
 
         electronTree.trkD0() = tk->d0();
         electronTree.trkD0Error() = tk->d0Error();

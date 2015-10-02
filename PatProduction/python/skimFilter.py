@@ -28,8 +28,8 @@ import FWCore.ParameterSet.Config as cms
 def applySkim(process):
     process.bbttSkim   = cms.EDFilter("SkimFilter",
                                       vertexSrc  = cms.untracked.InputTag('patVertices'),
-                                      muonSrc  = cms.untracked.InputTag('patMuonsWithEmbeddedVariables'),
-                                      electronSrc=cms.untracked.InputTag("patElectronsWithEmbeddedVariables"),
-                                      tauSrc  = cms.untracked.InputTag("patTausTriggerMatch")
+                                      muonSrc  = cms.untracked.InputTag('slimmedMuons'),
+                                      electronSrc=cms.untracked.InputTag("slimmedElectrons"),
+                                      tauSrc  = cms.untracked.InputTag("slimmedTaus")
                                       )
     return
