@@ -33,8 +33,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-#include "DataFormats/PatCandidates/interface/MET.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 
 #include "HHbbTauTau/TreeProduction/interface/MET.h"
 
@@ -96,9 +96,9 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             //            METTree.phi_uncorrected() = MET.uncorrectedPhi(pat::MET::uncorrALL);
             //            METTree.sumEt_uncorrected() = MET.sumEt() - MET.corSumEt(pat::MET::uncorrALL);
                //Compatibility with 74X
-            METTree.pt_uncorrected() = MET.uncorrectedPt();
-            METTree.phi_uncorrected() = MET.uncorrectedPhi();
-            METTree.sumEt_uncorrected() = MET.sumEt() - MET.uncorrectedSumEt();
+            METTree.pt_uncorrected() = MET.uncorPt();
+            METTree.phi_uncorrected() = MET.uncorPhi();
+            METTree.sumEt_uncorrected() = MET.sumEt() - MET.uncorSumEt();
             METTree.significanceMatrix() = ntuple::SignificanceMatrixToVector(MET.getSignificanceMatrix());
             METTree.Fill();
             METTree.Fill();
