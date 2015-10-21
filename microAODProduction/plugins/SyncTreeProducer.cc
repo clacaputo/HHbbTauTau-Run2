@@ -1,7 +1,6 @@
 /*!
- * \file ElectronsIDAnalyzer.cc
- * \author Original author: Ilya Kravchenko
- * \author Contributing author: Claudio Caputo
+ * \file SyncTreeProducer.cc
+ * \author author: Claudio Caputo
  *
  * This file is part of X->HH->bbTauTau.
  *
@@ -62,10 +61,10 @@
 // class declaration
 //
 
-class ElectronsIDAnalyzer : public edm::EDAnalyzer {
+class SyncTreeProducer : public edm::EDAnalyzer {
    public:
-      explicit ElectronsIDAnalyzer(const edm::ParameterSet&);
-      ~ElectronsIDAnalyzer();
+      explicit SyncTreeProducer(const edm::ParameterSet&);
+      ~SyncTreeProducer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -95,11 +94,6 @@ class ElectronsIDAnalyzer : public edm::EDAnalyzer {
       // Data members that are the same for AOD and miniAOD
       // ... none ...
 
-      bool electronBool_;
-      // AOD case data members
-      edm::EDGetToken electronsToken_;
-      edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticlesToken_;
-
       // MiniAOD case data members
       edm::EDGetToken electronsMiniAODToken_;
       edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticlesMiniAODToken_;
@@ -115,50 +109,7 @@ class ElectronsIDAnalyzer : public edm::EDAnalyzer {
       //Tau Tag
       edm::EDGetToken tausMiniAODToken_;
 
-  TTree *electronTree_;
-  TTree *tauTree_;
-
-  // Global info
-  Int_t run_;
-  Int_t lumi_;
-  Int_t evtnum_;
-
-  // all variables for the output tree
-
-  std::vector<Float_t> pt_;
-  std::vector<Float_t> eta_;
-  std::vector<Float_t> phi_;
-
-  //Electrons
-  Int_t nElectrons_;
-
-  std::vector<Float_t> mvaValue_;
-  std::vector<Int_t>   mvaCategory_;
-
-  std::vector<Int_t> passMediumId_;
-  std::vector<Int_t> passTightId_;
-
-  std::vector<Int_t> isTrue_;
-
-  //Taus
-  Int_t nTau_;
-
-  std::vector<Int_t> decayMode_;
-  std::vector<Int_t> decayModeFindingOld_;
-  std::vector<Int_t> decayModeFindingNew_;
-
-  std::vector<Float_t> isoCombinedRaw_;
-  std::vector<Float_t> isoMVARawOldDM_;
-  std::vector<Float_t> isoMVARawNewDM_;
-
-  std::vector<Int_t> muonLoose_;
-  std::vector<Int_t> muonTight_;
-
-  std::vector<Int_t> electronVLoose_;
-  std::vector<Int_t> electronLoose_;
-  std::vector<Int_t> electronMedium_;
-
-  ntuple::SyncTree syncTree;
+      std::shared_ptr<ntuple::SyncTree> syncTree;
 };
 
 //
@@ -172,26 +123,13 @@ class ElectronsIDAnalyzer : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-ElectronsIDAnalyzer::ElectronsIDAnalyzer(const edm::ParameterSet& iConfig):
+SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   eleMediumIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
   eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
   mvaValuesMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMap"))),
   mvaCategoriesMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMap"))),
   syncTree(&edm::Service<TFileService>()->file(),false)
 {
-
-  //
-  // Prepare tokens for all input collections and objects
-  //
-  electronBool_ = iConfig.getUntrackedParameter<bool>("electronBool");
-  // AOD tokens
-  electronsToken_    = mayConsume<edm::View<reco::GsfElectron> >
-    (iConfig.getParameter<edm::InputTag>
-     ("electrons"));
-
-  genParticlesToken_ = mayConsume<edm::View<reco::GenParticle> >
-    (iConfig.getParameter<edm::InputTag>
-     ("genParticles"));
 
   // MiniAOD tokens
   // For electrons, use the fact that pat::Electron can be cast into
@@ -206,62 +144,10 @@ ElectronsIDAnalyzer::ElectronsIDAnalyzer(const edm::ParameterSet& iConfig):
 
     tausMiniAODToken_= mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"));
 
-
-  //edm::Service<TFileService> fs;
-
-  if(electronBool_){
-//  electronTree_ = fs->make<TTree> ("ElectronTree", "Electron data");
-
-
-//  electronTree_->Branch("run"        ,  &run_     , "run/I");
-//  electronTree_->Branch("lumi"       ,  &lumi_    , "lumi/I");
-//  electronTree_->Branch("evtnum"     ,  &evtnum_  , "evtnum/I");
-
-//  electronTree_->Branch("nEle",  &nElectrons_ , "nEle/I");
-//  electronTree_->Branch("pt"  ,  &pt_    );
-//  electronTree_->Branch("eta" ,  &eta_ );
-//  electronTree_->Branch("phi" ,  &phi_ );
-
-//  electronTree_->Branch("mvaVal" ,  &mvaValue_ );
-//  electronTree_->Branch("mvaCat" ,  &mvaCategory_ );
-
-//  electronTree_->Branch("passMediumId" ,  &passMediumId_ );
-//  electronTree_->Branch("passTightId"  ,  &passTightId_ );
-
-//  electronTree_->Branch("isTrue"             , &isTrue_);
-  }
-  // Tau TTree
-  if(!electronBool_){
-//  tauTree_      = fs->make<TTree> ("TauTree", "Tau data");
-
-//  tauTree_->Branch("run"        ,  &run_     , "run/I");
-//  tauTree_->Branch("lumi"       ,  &lumi_    , "lumi/I");
-//  tauTree_->Branch("evtnum"     ,  &evtnum_  , "evtnum/I");
-
-//  tauTree_->Branch("nTau",  &nTau_ , "nTau/I");
-////  tauTree_->Branch("pt"  ,  &pt_    );
-////  tauTree_->Branch("eta" ,  &eta_ );
-////  tauTree_->Branch("phi" ,  &phi_ );
-
-//  tauTree_->Branch("decayMode" ,  &decayMode_ );
-//  tauTree_->Branch("decayModeFindingOldDMs" ,  &decayModeFindingOld_ );
-//  tauTree_->Branch("decayModeFindingNewDMs" ,  &decayModeFindingNew_ );
-
-//  tauTree_->Branch("byCombinedIsolationDeltaBetaCorrRaw3Hits" ,  &isoCombinedRaw_ );
-//  tauTree_->Branch("byIsolationMVA3oldDMwLTraw" ,  &isoMVARawOldDM_ );
-//  tauTree_->Branch("byIsolationMVA3newDMwLTraw" ,  &isoMVARawNewDM_ );
-
-//  tauTree_->Branch("againstMuonLoose3"  ,  &muonLoose_ );
-//  tauTree_->Branch("againstMuonTight3"  ,  &muonTight_ );
-
-//  tauTree_->Branch("againstElectronVLooseMVA5"  ,  &electronVLoose_ );
-//  tauTree_->Branch("againstElectronLooseMVA5"  ,  &electronLoose_ );
-//  tauTree_->Branch("againstElectronMediumMVA5"  ,  &electronMedium_ );
-  }
 }
 
 
-ElectronsIDAnalyzer::~ElectronsIDAnalyzer()
+SyncTreeProducer::~SyncTreeProducer()
 {
 
    // do anything here that needs to be done at desctruction time
@@ -276,19 +162,16 @@ ElectronsIDAnalyzer::~ElectronsIDAnalyzer()
 
 // ------------ method called for each event  ------------
 void
-ElectronsIDAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   using namespace std;
   using namespace edm;
   using namespace reco;
 
   // Save global info right away
-  run_ = iEvent.id().run();
-  lumi_ = iEvent.id().luminosityBlock();
-  evtnum_ = iEvent.id().event();
-
-  syncTree.run() = iEvent.id().run();
-  syncTree.evt() = iEvent.id().event();
+  syncTree->run()  = iEvent.id().run();
+  syncTree->lumi() = iEvent.id().luminosityBlock();
+  syncTree->evt()  = iEvent.id().event();
 
   // Retrieve the collection of electrons from the event.
   // If we fail to retrieve the collection with the standard AOD
@@ -296,24 +179,14 @@ ElectronsIDAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   //   We use exactly the same handle for AOD and miniAOD formats
   // since pat::Electron objects can be recast as reco::GsfElectron objects.
   edm::Handle<edm::View<reco::GsfElectron> > electrons;
-  bool isAOD = true;
-  iEvent.getByToken(electronsToken_, electrons);
-  if( !electrons.isValid() ){
-    isAOD = false;
-    iEvent.getByToken(electronsMiniAODToken_,electrons);
-  }
+  iEvent.getByToken(electronsMiniAODToken_,electrons);
 
   // Get the MC collection
-  Handle<edm::View<reco::GenParticle> > genParticles;
-  if( isAOD )
-    iEvent.getByToken(genParticlesToken_,genParticles);
-  else
-    iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
+  iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
 
   //Get Tau collection
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
-  //const pat::TauCollection& taus = *hTaus.product();
 
   // Get the electron ID data from the event stream.
   // Note: this implies that the VID ID modules have been run upstream.
@@ -329,113 +202,7 @@ ElectronsIDAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   iEvent.getByToken(mvaValuesMapToken_,mvaValues);
   iEvent.getByToken(mvaCategoriesMapToken_,mvaCategories);
 
-  if (!electronBool_){// Clear Taus vectors
-  nTau_ = 0;
-//  pt_.clear();
-//  eta_.clear();
-//  phi_.clear();
-  //
-  decayMode_.clear();
-  decayModeFindingOld_.clear();
-  decayModeFindingNew_.clear();
 
-  isoCombinedRaw_.clear();
-  isoMVARawNewDM_.clear();
-  isoMVARawOldDM_.clear();
-
-  muonLoose_.clear();
-  muonTight_.clear();
-  electronVLoose_.clear();
-  electronLoose_.clear();
-  electronMedium_.clear();
-
-  //loop over taus
-  //for (const auto tau : taus){
-  for(size_t i = 0; i < taus->size(); ++i){
-      const auto tau = taus->ptrAt(i);
-      if(tau->pt() > 20 && std::abs(tau->eta()) < 2.3 ) {
-          nTau_++;
-
-//          pt_   .push_back(tau->pt());
-//          eta_  .push_back(tau->eta());
-//          phi_  .push_back(tau->phi());
-          decayMode_ .push_back(tau->decayMode());
-
-          decayModeFindingOld_.push_back(tau->tauID("decayModeFinding"));
-          decayModeFindingNew_.push_back(tau->tauID("decayModeFindingNewDMs"));
-
-          isoCombinedRaw_     .push_back(tau->tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits"));
-          isoMVARawOldDM_     .push_back(tau->tauID("byIsolationMVA3oldDMwLTraw"));
-          isoMVARawOldDM_     .push_back(tau->tauID("byIsolationMVA3newDMwLTraw"));
-
-
-          muonLoose_          .push_back(tau->tauID("againstMuonLoose3"));
-          muonTight_          .push_back(tau->tauID("againstMuonTight3"));
-          electronVLoose_     .push_back(tau->tauID("againstElectronVLooseMVA5"));
-          electronLoose_      .push_back(tau->tauID("againstElectronLooseMVA5"));
-          electronMedium_     .push_back(tau->tauID("againstElectronMediumMVA5"));
-
-
-      }
-    if(nTau_ == 1){
-        syncTree.pt_1() = tau->pt();
-        syncTree.eta_1() = tau->eta();
-        syncTree.phi_1() = tau->phi();
-    }
-  }
-  //tauTree_->Fill();
-  }
-
-  if(electronBool_){
-  // Clear Electron vectors
-  nElectrons_ = 0;
-  pt_.clear();
-  eta_.clear();
-  phi_.clear();
-  //
-  mvaValue_.clear();
-  mvaCategory_.clear();
-  passMediumId_.clear();
-  passTightId_ .clear();
-  //
-  isTrue_.clear();
-
-  // Loop over electrons
-  for (size_t i = 0; i < electrons->size(); ++i){
-    const auto el = electrons->ptrAt(i);
-
-    // Kinematics
-    if( el->pt() > 20 && std::abs(el->eta()) < 2.0 ) { // keep only electrons above 5 GeV
-
-     nElectrons_++;
-
-    //
-    // Save electron kinematics
-    //
-     pt_  .push_back( el->pt() );
-     eta_ .push_back( el->superCluster()->eta() );
-     phi_ .push_back( el->superCluster()->phi() );
-
-    //
-    // Look up and save the ID decisions
-    //
-     bool isPassMedium = (*medium_id_decisions)[el];
-     bool isPassTight  = (*tight_id_decisions)[el];
-     passMediumId_.push_back( (int)isPassMedium);
-     passTightId_.push_back ( (int)isPassTight );
-
-     mvaValue_.push_back( (*mvaValues)[el] );
-     mvaCategory_.push_back( (*mvaCategories)[el] );
-
-    // Save MC truth match
-     isTrue_.push_back( matchToTruth( el, genParticles) );
-
-    }
-   }
-
-  // Save the info
-  //electronTree_->Fill();
-  }
 
   syncTree.Fill();
 
@@ -444,13 +211,13 @@ ElectronsIDAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
 // ------------ method called once each job just before starting event loop  ------------
 void
-ElectronsIDAnalyzer::beginJob()
+SyncTreeProducer::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void
-ElectronsIDAnalyzer::endJob()
+SyncTreeProducer::endJob()
 {
     syncTree.Write();
 }
@@ -458,7 +225,7 @@ ElectronsIDAnalyzer::endJob()
 // ------------ method called when starting to processes a run  ------------
 /*
 void
-ElectronsIDAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&)
+SyncTreeProducer::beginRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 */
@@ -466,7 +233,7 @@ ElectronsIDAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&)
 // ------------ method called when ending the processing of a run  ------------
 /*
 void
-ElectronsIDAnalyzer::endRun(edm::Run const&, edm::EventSetup const&)
+SyncTreeProducer::endRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 */
@@ -474,7 +241,7 @@ ElectronsIDAnalyzer::endRun(edm::Run const&, edm::EventSetup const&)
 // ------------ method called when starting to processes a luminosity block  ------------
 /*
 void
-ElectronsIDAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+SyncTreeProducer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 */
@@ -482,14 +249,14 @@ ElectronsIDAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::Even
 // ------------ method called when ending the processing of a luminosity block  ------------
 /*
 void
-ElectronsIDAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+SyncTreeProducer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 */
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-ElectronsIDAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+SyncTreeProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -497,7 +264,7 @@ ElectronsIDAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   descriptions.addDefault(desc);
 }
 
-int ElectronsIDAnalyzer::matchToTruth(const edm::Ptr<reco::GsfElectron> el,
+int SyncTreeProducer::matchToTruth(const edm::Ptr<reco::GsfElectron> el,
                   const edm::Handle<edm::View<reco::GenParticle>> &prunedGenParticles){
 
   //
@@ -547,7 +314,7 @@ int ElectronsIDAnalyzer::matchToTruth(const edm::Ptr<reco::GsfElectron> el,
   return TRUE_PROMPT_ELECTRON;
 }
 
-void ElectronsIDAnalyzer::findFirstNonElectronMother(const reco::Candidate *particle,
+void SyncTreeProducer::findFirstNonElectronMother(const reco::Candidate *particle,
                          int &ancestorPID, int &ancestorStatus){
 
   if( particle == 0 ){
@@ -568,4 +335,4 @@ void ElectronsIDAnalyzer::findFirstNonElectronMother(const reco::Candidate *part
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(ElectronsIDAnalyzer);
+DEFINE_FWK_MODULE(SyncTreeProducer);
