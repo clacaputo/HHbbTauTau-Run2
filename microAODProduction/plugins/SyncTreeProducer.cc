@@ -51,8 +51,9 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+//HHbbTauTau Framework
 #include "HHbbTauTau/AnalysisBase/include/SyncTree.h"
-
+#include "TreeProduction/interface/Tau.h"
 
 #include "TTree.h"
 #include "Math/VectorUtil.h"
@@ -124,25 +125,13 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 // constructors and destructor
 //
 SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
-  eleMediumIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
-  eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
-  mvaValuesMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMap"))),
-  mvaCategoriesMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMap"))),
+  tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
   syncTree(&edm::Service<TFileService>()->file(),false)
 {
-
-  // MiniAOD tokens
-  // For electrons, use the fact that pat::Electron can be cast into
-  // GsfElectron
-  electronsMiniAODToken_    = mayConsume<edm::View<reco::GsfElectron> >
-    (iConfig.getParameter<edm::InputTag>
-     ("electronsMiniAOD"));
 
   genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
     (iConfig.getParameter<edm::InputTag>
      ("genParticlesMiniAOD"));
-
-    tausMiniAODToken_= mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"));
 
 }
 
@@ -173,35 +162,32 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   syncTree->lumi() = iEvent.id().luminosityBlock();
   syncTree->evt()  = iEvent.id().event();
 
-  // Retrieve the collection of electrons from the event.
-  // If we fail to retrieve the collection with the standard AOD
-  // name, we next look for the one with the stndard miniAOD name.
-  //   We use exactly the same handle for AOD and miniAOD formats
-  // since pat::Electron objects can be recast as reco::GsfElectron objects.
-  edm::Handle<edm::View<reco::GsfElectron> > electrons;
-  iEvent.getByToken(electronsMiniAODToken_,electrons);
-
   // Get the MC collection
   iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
 
   //Get Tau collection
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
+//Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
+  ntuple::TauVector tausV;
 
-  // Get the electron ID data from the event stream.
-  // Note: this implies that the VID ID modules have been run upstream.
-  // If you need more info, check with the EGM group.
-  edm::Handle<edm::ValueMap<bool> > medium_id_decisions;
-  edm::Handle<edm::ValueMap<bool> > tight_id_decisions;
-  iEvent.getByToken(eleMediumIdMapToken_,medium_id_decisions);
-  iEvent.getByToken(eleTightIdMapToken_,tight_id_decisions);
+  for (const pat::Tau &tau : *taus){
+      ntuple::Tau tmp_tau;
 
-  // Get MVA values and categories (optional)
-  edm::Handle<edm::ValueMap<float> > mvaValues;
-  edm::Handle<edm::ValueMap<int> > mvaCategories;
-  iEvent.getByToken(mvaValuesMapToken_,mvaValues);
-  iEvent.getByToken(mvaCategoriesMapToken_,mvaCategories);
+      //pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(src.leadChargedHadrCand().get());
+      //fabs(packedLeadTauCand->dz()) < 0.2;  // The PackedCandidate::dz() method is wrt. the first PV by default
 
+      if(!(tau.pt() > 20 && fabs(tau.eta()) < 2.3 && tau.tauID('decayModeFindingNewDMs') > 0.5)) continue;
+      tmp_tau.eta = tau.eta();
+      tmp_tau.pt  = tau.pt();
+      tmp_tau.phi = tau.phi();
+      tmp_tau.againstElectronLooseMVA5   = tau.tauID('againstElectronLooseMVA5');
+      tmp_tau.againstElectronMediumMVA5  = tau.tauID('againstElectronMediumMVA5');
+      tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
+      tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
+
+      tausV.push_back(tmp_tau);
+  }
 
 
   syncTree.Fill();
