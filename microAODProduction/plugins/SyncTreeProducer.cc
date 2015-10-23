@@ -53,7 +53,7 @@
 
 //HHbbTauTau Framework
 #include "HHbbTauTau/AnalysisBase/include/SyncTree.h"
-#include "TreeProduction/interface/Tau.h"
+#include "HHbbTauTau/TreeProduction/interface/Tau.h"
 
 #include "TTree.h"
 #include "Math/VectorUtil.h"
@@ -110,7 +110,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       //Tau Tag
       edm::EDGetToken tausMiniAODToken_;
 
-      std::shared_ptr<ntuple::SyncTree> syncTree;
+      ntuple::SyncTree syncTree;
 };
 
 //
@@ -158,12 +158,12 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   using namespace reco;
 
   // Save global info right away
-  syncTree->run()  = iEvent.id().run();
-  syncTree->lumi() = iEvent.id().luminosityBlock();
-  syncTree->evt()  = iEvent.id().event();
+  syncTree.run()  = iEvent.id().run();
+  syncTree.lumi() = iEvent.id().luminosityBlock();
+  syncTree.evt()  = iEvent.id().event();
 
   // Get the MC collection
-  iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
+//  iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
 
   //Get Tau collection
   edm::Handle<edm::View<pat::Tau> > taus;
@@ -177,19 +177,22 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       //pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(src.leadChargedHadrCand().get());
       //fabs(packedLeadTauCand->dz()) < 0.2;  // The PackedCandidate::dz() method is wrt. the first PV by default
 
-      if(!(tau.pt() > 20 && fabs(tau.eta()) < 2.3 && tau.tauID('decayModeFindingNewDMs') > 0.5)) continue;
+      if(!(tau.pt() > 20 && fabs(tau.eta()) < 2.3 && tau.tauID("decayModeFindingNewDMs") > 0.5)) continue;
       tmp_tau.eta = tau.eta();
       tmp_tau.pt  = tau.pt();
       tmp_tau.phi = tau.phi();
-      tmp_tau.againstElectronLooseMVA5   = tau.tauID('againstElectronLooseMVA5');
-      tmp_tau.againstElectronMediumMVA5  = tau.tauID('againstElectronMediumMVA5');
-      tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
-      tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
+ //     tmp_tau.againstElectronLooseMVA5   = tau.tauID('againstElectronLooseMVA5');
+ //     tmp_tau.againstElectronMediumMVA5  = tau.tauID('againstElectronMediumMVA5');
+ //     tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
+ //     tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
 
       tausV.push_back(tmp_tau);
+
   }
 
-
+  if(!tausV.size()) return;
+  std::cout<<"Taus size:  "<<tausV.size()<<std::endl;
+  syncTree.pt_1() = tausV.at(0).pt;
   syncTree.Fill();
 
 }

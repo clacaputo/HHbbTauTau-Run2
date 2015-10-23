@@ -96,7 +96,7 @@
     /* Trigger match information */ \
     VECTOR_VAR(std::string, matchedTriggerPaths) \
     /* tau discriminators */ \
-    NEW_TAU_DISCRIMINATOR_DATA() \
+    TAU_DISCRIMINATOR_DATA() \
     /**/
 
 // new TauID
