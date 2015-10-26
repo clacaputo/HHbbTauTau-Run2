@@ -54,9 +54,24 @@
 //HHbbTauTau Framework
 #include "HHbbTauTau/AnalysisBase/include/SyncTree.h"
 #include "HHbbTauTau/TreeProduction/interface/Tau.h"
+#include "AnalysisBase/include/AnalyzerData.h"
+#include "AnalysisBase/include/CutTools.h"
+#include "Analysis/include/SelectionResults.h"
 
 #include "TTree.h"
 #include "Math/VectorUtil.h"
+
+
+//Analyzer Data Class
+namespace analisys {
+class SyncAnalyzerData : public root_ext::AnalyzerData {
+public:
+    BaseAnalyzerData(std::shared_ptr<TFile> outputFile) : AnalyzerData(outputFile) {}
+
+    SELECTION_ENTRY(Selection)
+
+};
+}
 
 //
 // class declaration
@@ -83,6 +98,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+
+      analysis::SyncAnalyzerData& GetAnaData() override { return anaData; }
 
       int matchToTruth(const edm::Ptr<reco::GsfElectron> el,
                const edm::Handle<edm::View<reco::GenParticle>>  &genParticles);
@@ -111,6 +128,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetToken tausMiniAODToken_;
 
       ntuple::SyncTree syncTree;
+
+      analisys::SyncAnalyzerData anaData;
 };
 
 //
@@ -126,7 +145,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 //
 SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
-  syncTree(&edm::Service<TFileService>()->file(),false)
+  syncTree(&edm::Service<TFileService>()->file(),false),
+  anaData(&edm::Service<TFileService>()->file(),"Taus")
 {
 
   genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
@@ -157,6 +177,8 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   using namespace edm;
   using namespace reco;
 
+  cuts::Cutter cut(&GetAnaData().Selection("events"));
+
   // Save global info right away
   syncTree.run()  = iEvent.id().run();
   syncTree.lumi() = iEvent.id().luminosityBlock();
@@ -171,6 +193,9 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
   ntuple::TauVector tausV;
 
+  try{
+
+      cut(true,"events");
   for (const pat::Tau &tau : *taus){
       ntuple::Tau tmp_tau;
 
@@ -190,8 +215,11 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
   }
 
-  if(!tausV.size()) return;
-  std::cout<<"Taus size:  "<<tausV.size()<<std::endl;
+    //if(!tausV.size()) return;
+    cut(tausV.size(),"taus");
+    std::cout<<"Taus size:  "<<tausV.size()<<std::endl;
+  }catch(cuts::cut_failed&){}
+
   syncTree.pt_1() = tausV.at(0).pt;
   syncTree.Fill();
 
