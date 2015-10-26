@@ -38,7 +38,7 @@
 #include <TH2.h>
 #include <TTree.h>
 
-#include "AnalysisBase/include/RootExt.h"
+#include "HHbbTauTau/AnalysisBase/include/RootExt.h"
 
 namespace root_ext {
 

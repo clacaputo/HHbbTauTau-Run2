@@ -28,19 +28,19 @@
 
 #include <tuple>
 
-#include "TreeProduction/interface/Event.h"
-#include "TreeProduction/interface/Electron.h"
-#include "TreeProduction/interface/Muon.h"
-#include "TreeProduction/interface/Tau.h"
-#include "TreeProduction/interface/Jet.h"
-#include "TreeProduction/interface/Vertex.h"
-#include "TreeProduction/interface/GenParticle.h"
-#include "TreeProduction/interface/Trigger.h"
-#include "TreeProduction/interface/TriggerObject.h"
-#include "TreeProduction/interface/MET.h"
-#include "TreeProduction/interface/GenMET.h"
-#include "TreeProduction/interface/PFCand.h"
-#include "TreeProduction/interface/GenEvent.h"
+#include "HHbbTauTau/TreeProduction/interface/Event.h"
+#include "HHbbTauTau/TreeProduction/interface/Electron.h"
+#include "HHbbTauTau/TreeProduction/interface/Muon.h"
+#include "HHbbTauTau/TreeProduction/interface/Tau.h"
+#include "HHbbTauTau/TreeProduction/interface/Jet.h"
+#include "HHbbTauTau/TreeProduction/interface/Vertex.h"
+#include "HHbbTauTau/TreeProduction/interface/GenParticle.h"
+#include "HHbbTauTau/TreeProduction/interface/Trigger.h"
+#include "HHbbTauTau/TreeProduction/interface/TriggerObject.h"
+#include "HHbbTauTau/TreeProduction/interface/MET.h"
+#include "HHbbTauTau/TreeProduction/interface/GenMET.h"
+#include "HHbbTauTau/TreeProduction/interface/PFCand.h"
+#include "HHbbTauTau/TreeProduction/interface/GenEvent.h"
 
 #include "EventId.h"
 

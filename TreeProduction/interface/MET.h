@@ -29,6 +29,7 @@
 #include "SmartTree.h"
 #include "TMatrixD.h"
 
+
 #define MET_DATA() \
     SIMPLE_VAR(Float_t, pt) \
     SIMPLE_VAR(Float_t, phi) \
@@ -60,18 +61,18 @@ TREE_CLASS_WITH_EVENT_ID_INITIALIZE(ntuple, METTree, MET_DATA)
 
 
 namespace ntuple {
-    //    std::vector<Float_t> SignificanceMatrixToVector(const TMatrixD& m)
-    std::vector<Float_t> SignificanceMatrixToVector(const reco::METCovMatrix& m)
-    {
-//        if(m.GetNrows() != 2 || m.GetNcols() != 2)
-//            throw std::runtime_error("invalid matrix dimensions");
-        std::vector<Float_t> v(4);
-        v[0] = m[0][0];
-        v[1] = m[0][1];
-        v[2] = m[1][0];
-        v[3] = m[1][1];
-        return v;
-    }
+//    //    std::vector<Float_t> SignificanceMatrixToVector(const TMatrixD& m)
+//    std::vector<Float_t> SignificanceMatrixToVector(const METCovMatrix& m)
+//    {
+////        if(m.GetNrows() != 2 || m.GetNcols() != 2)
+////            throw std::runtime_error("invalid matrix dimensions");
+//        std::vector<Float_t> v(4);
+//        v[0] = m[0][0];
+//        v[1] = m[0][1];
+//        v[2] = m[1][0];
+//        v[3] = m[1][1];
+//        return v;
+//    }
 
     TMatrixD VectorToSignificanceMatrix(const std::vector<Float_t>& v)
     {

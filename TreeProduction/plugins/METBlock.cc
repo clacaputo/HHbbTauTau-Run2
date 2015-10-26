@@ -99,7 +99,7 @@ void METBlock::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             METTree.pt_uncorrected() = MET.uncorPt();
             METTree.phi_uncorrected() = MET.uncorPhi();
             METTree.sumEt_uncorrected() = MET.sumEt() - MET.uncorSumEt();
-            METTree.significanceMatrix() = ntuple::SignificanceMatrixToVector(MET.getSignificanceMatrix());
+//            METTree.significanceMatrix() = ntuple::SignificanceMatrixToVector(MET.getSignificanceMatrix());
             METTree.Fill();
             METTree.Fill();
         }

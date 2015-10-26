@@ -26,8 +26,10 @@
 
 #pragma once
 
-#include "AnalysisBase/include/AnalyzerData.h"
-#include "AnalysisBase/include/Candidate.h"
+#include "HHbbTauTau/AnalysisBase/include/AnalyzerData.h"
+#include "HHbbTauTau/AnalysisBase/include/Candidate.h"
+#include "../../AnalysisBase/include/FlatTree.h"
+#include "../../AnalysisBase/include/MCfinalState.h"
 
 #include "SVfit.h"
 #include "KinFit.h"
