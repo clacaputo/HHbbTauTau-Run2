@@ -84,18 +84,10 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  #
                                  # Objects specific to MiniAOD format
                                  #
-                                 electronsMiniAOD    = cms.InputTag("slimmedElectrons"),
-                                 genParticlesMiniAOD = cms.InputTag("prunedGenParticles"),
+
                                  tauSrc  = cms.InputTag("slimmedTaus"),
-                                 #
-                                 # ID decisions (common to all formats)
-                                 eleMediumIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                 eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp80"),
-                                 #
-                                 # ValueMaps with MVA results
-                                 #
-                                 mvaValuesMap     = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-                                 mvaCategoriesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Categories")
+                                 muonSrc    = cms.InputTag("slimmedMuons"),
+                                 vtxSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                 )
 
 process.ntupler = cms.EDAnalyzer('ElectronsIDAnalyzer',

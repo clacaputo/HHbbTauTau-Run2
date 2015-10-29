@@ -35,6 +35,8 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 
 #include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
@@ -52,30 +54,27 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 //HHbbTauTau Framework
-#include "HHbbTauTau/AnalysisBase/include/SyncTree.h"
-#include "HHbbTauTau/TreeProduction/interface/Tau.h"
-#include "HHbbTauTau/AnalysisBase/include/AnalyzerData.h"
-#include "HHbbTauTau/AnalysisBase/include/CutTools.h"
-#include "HHbbTauTau/Analysis/include/SelectionResults.h"
+#include "../../AnalysisBase/include/SyncTree.h"
+#include "../../TreeProduction/interface/Tau.h"
+#include "../../TreeProduction/interface/Muon.h"
+#include "../../AnalysisBase/include/AnalyzerData.h"
+#include "../../AnalysisBase/include/CutTools.h"
+#include "../../Analysis/include/SelectionResults.h"
 
 #include "TTree.h"
 #include "Math/VectorUtil.h"
 
 
 //Analyzer Data Class
-//namespace analysis {
-//class SyncAnalyzerData : public root_ext::AnalyzerData {
-//public:
-//    SyncAnalyzerData(TFile outputFile) {
-//	std::shared_ptr<TFile> sp_outputFile;
-//	sp_outputFile = std::shared_ptr<TFile>(new TFile(outputFile));
-//	AnalyzerData(sp_outputFile);
-//    }
-//
-//    SELECTION_ENTRY(Selection)
-//
-//};
-//}
+namespace analysis {
+class SyncAnalyzerData : public root_ext::AnalyzerData {
+public:
+    SyncAnalyzerData(const std::string& outputFileName) : AnalyzerData(outputFileName) {}
+
+    SELECTION_ENTRY(Selection)
+
+};
+}
 
 //
 // class declaration
@@ -103,7 +102,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
 
-//      analysis::SyncAnalyzerData& GetAnaData() { return anaData; }
+      analysis::SyncAnalyzerData& GetAnaData() { return anaData; }
 
       int matchToTruth(const edm::Ptr<reco::GsfElectron> el,
                const edm::Handle<edm::View<reco::GenParticle>>  &genParticles);
@@ -118,7 +117,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 
       // MiniAOD case data members
       edm::EDGetToken electronsMiniAODToken_;
-      edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticlesMiniAODToken_;
+  //    edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticlesMiniAODToken_;
 
       // ID decisions objects
       edm::EDGetTokenT<edm::ValueMap<bool> > eleMediumIdMapToken_;
@@ -128,12 +127,13 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::ValueMap<float> > mvaValuesMapToken_;
       edm::EDGetTokenT<edm::ValueMap<int> > mvaCategoriesMapToken_;
 
-      //Tau Tag
+      //InputTag
       edm::EDGetToken tausMiniAODToken_;
+      edm::EDGetToken muonsMiniAODToken_;
+      edm::EDGetToken vtxMiniAODToken_;
 
       ntuple::SyncTree syncTree;
-
-//      analysis::SyncAnalyzerData anaData;
+      analysis::SyncAnalyzerData anaData;
 };
 
 //
@@ -149,11 +149,14 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 //
 SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
-  syncTree(&edm::Service<TFileService>()->file(),false) // anaData(&edm::Service<TFileService>()->file())
+  muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
+  vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
+  syncTree(&edm::Service<TFileService>()->file(),false),
+  anaData("cuts.root")
 {
-  genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
-    (iConfig.getParameter<edm::InputTag>
-     ("genParticlesMiniAOD"));
+//  genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
+//    (iConfig.getParameter<edm::InputTag>
+//     ("genParticlesMiniAOD"));
 
 }
 
@@ -179,7 +182,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   using namespace edm;
   using namespace reco;
 
- // cuts::Cutter cut(&GetAnaData().Selection("events"));
+  cuts::Cutter cut(&GetAnaData().Selection("events"));
 
   // Save global info right away
   syncTree.run()  = iEvent.id().run();
@@ -189,41 +192,79 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   // Get the MC collection
 //  iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
 
-  //Get Tau collection
+  //Get collection
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
-//Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
+  edm::Handle<edm::View<pat::Muon> > muons;
+  iEvent.getByToken(muonsMiniAODToken_, muons);
+  edm::Handle<edm::View<reco::Vertex> > vertexes;
+  iEvent.getByToken(vtxMiniAODToken_, vertexes);
+
+
+  //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
   ntuple::TauVector tausV;
+  ntuple::MuonVector muonsV;
 
- // try{
+  try{
 
- //     cut(true,"events");
-  for (const pat::Tau &tau : *taus){
-      ntuple::Tau tmp_tau;
+      cut(true,"events");
 
-      //pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(src.leadChargedHadrCand().get());
+      const auto PV = (*vertexes).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
+                                            //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
+                                            //Es. edm::View<int> gestisce int semplici, vector<int>, set<int> etc.
+      cut(PV.isNonnull(),"vertex");
+
+      //std::cout<<" Vertici    --->   "<<PV->ndof()<<std::endl;
+
+      for(const pat::Muon &muon : *muons){
+        ntuple::Muon tmp_muon;
+
+        if(!(muon.pt() > 19 && fabs(muon.eta()) < 2.1 && muon.isLooseMuon())) continue;
+
+        bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < 0.045 &&
+                      fabs(muon.muonBestTrack()->dz(PV->position())) < 0.2;
+        if(!muonIP) continue;
+        tmp_muon.eta = muon.eta();
+
+        muonsV.push_back(tmp_muon);
+
+      }
+
+      cut(muonsV.size(),"muons");
+
+      for (const pat::Tau &tau : *taus){
+
+          ntuple::Tau tmp_tau;
+
+      pat::PackedCandidate const* packedLeadTauCand =
+              dynamic_cast<pat::PackedCandidate const*>(tau.leadChargedHadrCand().get());
       //fabs(packedLeadTauCand->dz()) < 0.2;  // The PackedCandidate::dz() method is wrt. the first PV by default
 
-      if(!(tau.pt() > 20 && fabs(tau.eta()) < 2.3 && tau.tauID("decayModeFindingNewDMs") > 0.5)) continue;
+
+          if(!(tau.pt() > 20 && fabs(tau.eta()) < 2.3 && tau.tauID("decayModeFindingNewDMs") > 0.5
+               && fabs(packedLeadTauCand->dz()) < 0.2 )) continue;
       tmp_tau.eta = tau.eta();
-      tmp_tau.pt  = tau.pt();
-      tmp_tau.phi = tau.phi();
+//      tmp_tau.pt  = tau.pt();
+//      tmp_tau.phi = tau.phi();
  //     tmp_tau.againstElectronLooseMVA5   = tau.tauID('againstElectronLooseMVA5');
  //     tmp_tau.againstElectronMediumMVA5  = tau.tauID('againstElectronMediumMVA5');
  //     tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
  //     tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
 
-      tausV.push_back(tmp_tau);
 
-  }
+          tausV.push_back(tmp_tau);
+      }
 
     //if(!tausV.size()) return;
- //   cut(tausV.size(),"taus");
-    std::cout<<"Taus size:  "<<tausV.size()<<std::endl;
- // }catch(cuts::cut_failed&){}
+    cut(tausV.size(),"taus");
 
-  syncTree.pt_1() = tausV.at(0).pt;
-  syncTree.Fill();
+
+//  syncTree.pt_1() = tausV.at(0).pt;
+//  syncTree.Fill();
+
+  }catch(cuts::cut_failed&){}
+
+  GetAnaData().Selection("events").fill_selection();
 
 }
 
