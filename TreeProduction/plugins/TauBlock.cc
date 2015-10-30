@@ -54,8 +54,8 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
-#include "HHbbTauTau/TreeProduction/interface/Tau.h"
-#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
+#include "../../TreeProduction/interface/Tau.h"
+#include "../../TreeProduction/interface/TriggerTools.h"
 
 #define SIMPLE_VAR(type, name) tauTree.name() = patTau.tauID(#name);
 

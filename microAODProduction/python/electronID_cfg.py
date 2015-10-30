@@ -88,6 +88,8 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  tauSrc  = cms.InputTag("slimmedTaus"),
                                  muonSrc    = cms.InputTag("slimmedMuons"),
                                  vtxSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                 bits = cms.InputTag("TriggerResults","","HLT"),
+                                 prescales = cms.InputTag("patTrigger"),
                                 )
 
 process.ntupler = cms.EDAnalyzer('ElectronsIDAnalyzer',

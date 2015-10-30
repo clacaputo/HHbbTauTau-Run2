@@ -37,6 +37,11 @@
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+//Trigger
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
@@ -110,6 +115,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       void findFirstNonElectronMother(const reco::Candidate *particle,
                     int &ancestorPID, int &ancestorStatus);
 
+    //  bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const ;
+
       // ----------member data ---------------------------
 
       // Data members that are the same for AOD and miniAOD
@@ -131,6 +138,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetToken tausMiniAODToken_;
       edm::EDGetToken muonsMiniAODToken_;
       edm::EDGetToken vtxMiniAODToken_;
+      edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
+      edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
 
       ntuple::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
@@ -151,6 +160,8 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
   muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
   vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
+  triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
+  triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   syncTree(&edm::Service<TFileService>()->file(),false),
   anaData("cuts.root")
 {
@@ -199,7 +210,20 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByToken(muonsMiniAODToken_, muons);
   edm::Handle<edm::View<reco::Vertex> > vertexes;
   iEvent.getByToken(vtxMiniAODToken_, vertexes);
+  edm::Handle<edm::TriggerResults> triggerBits;
+  iEvent.getByToken(triggerBits_, triggerBits);
+  edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
+  iEvent.getByToken(triggerPrescales_, triggerPrescales);
 
+
+  const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
+      std::cout << "\n === TRIGGER PATHS === " << std::endl;
+      for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
+          std::cout << "Trigger " << names.triggerName(i) <<
+                  ", prescale " << triggerPrescales->getPrescaleForIndex(i) <<
+                  ": " << (triggerBits->accept(i) ? "PASS" : "fail (or not run)")
+                  << std::endl;
+      }
 
   //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
   ntuple::TauVector tausV;
@@ -393,6 +417,34 @@ void SyncTreeProducer::findFirstNonElectronMother(const reco::Candidate *particl
 
   return;
 }
+
+///////////
+
+////Forse bisogna passargli anche iEvent,
+//bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const
+//{
+//    for (const ntuple::Trigger& trigger : event->triggers()){
+//        for (size_t n = 0; HaveTriggerMatched(trigger.hltpaths, interestinghltPaths, n); ++n){
+//            if (trigger.hltresults.at(n) == 1 && trigger.hltprescales.at(n) == 1)
+//                return true;
+//        }
+//    }
+//    return false;
+//}
+
+////Far diventare questa una Lambda
+//inline bool HaveTriggerMatched(const std::vector<std::string>& objectMatchedPaths,
+//                               const std::set<std::string>& interestinghltPaths, size_t& n)
+//{
+//    for (; n < objectMatchedPaths.size(); ++n){
+//        for (const std::string& interestingPath : interestinghltPaths){
+//            const std::string& objectMatchedPath = objectMatchedPaths.at(n);
+//            const size_t found = objectMatchedPath.find(interestingPath);
+//            if (found != std::string::npos) return true;
+//        }
+//    }
+//    return false;
+//}
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(SyncTreeProducer);
