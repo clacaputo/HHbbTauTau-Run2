@@ -66,6 +66,8 @@
 #include "../../AnalysisBase/include/CutTools.h"
 #include "../../Analysis/include/SelectionResults.h"
 
+#include "../interface/Htautau_2015.h"
+
 #include "TTree.h"
 #include "Math/VectorUtil.h"
 
@@ -140,6 +142,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetToken vtxMiniAODToken_;
       edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
       edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
+      edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
 
       ntuple::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
@@ -162,6 +165,7 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
   triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
+  triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
   syncTree(&edm::Service<TFileService>()->file(),false),
   anaData("cuts.root")
 {
@@ -189,9 +193,8 @@ SyncTreeProducer::~SyncTreeProducer()
 void
 SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  using namespace std;
-  using namespace edm;
-  using namespace reco;
+  using namespace cuts::Htautau_2015;
+  using namespace cuts::Htautau_2015::MuTau;
 
   cuts::Cutter cut(&GetAnaData().Selection("events"));
 
@@ -214,16 +217,47 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByToken(triggerBits_, triggerBits);
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
   iEvent.getByToken(triggerPrescales_, triggerPrescales);
+  edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
+  iEvent.getByToken(triggerObjects_, triggerObjects);
 
 
-  const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
-      std::cout << "\n === TRIGGER PATHS === " << std::endl;
-      for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
-          std::cout << "Trigger " << names.triggerName(i) <<
-                  ", prescale " << triggerPrescales->getPrescaleForIndex(i) <<
-                  ": " << (triggerBits->accept(i) ? "PASS" : "fail (or not run)")
-                  << std::endl;
-      }
+
+
+   /*   std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
+          for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
+              obj.unpackPathNames(names);
+              std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << std::endl;
+              // Print trigger object collection and type
+              std::cout << "\t   Collection: " << obj.collection() << std::endl;
+              std::cout << "\t   Type IDs:   ";
+              for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
+              std::cout << std::endl;
+              // Print associated trigger filters
+              std::cout << "\t   Filters:    ";
+              for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
+              std::cout << std::endl;
+              std::vector<std::string> pathNamesAll  = obj.pathNames(false);
+              std::vector<std::string> pathNamesLast = obj.pathNames(true);
+              // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
+              // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
+              // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
+              std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
+              for (unsigned h = 0, n = pathNamesAll.size(); h < n; ++h) {
+                  bool isBoth = obj.hasPathName( pathNamesAll[h], true, true );
+                  bool isL3   = obj.hasPathName( pathNamesAll[h], false, true );
+                  bool isLF   = obj.hasPathName( pathNamesAll[h], true, false );
+                  bool isNone = obj.hasPathName( pathNamesAll[h], false, false );
+                  std::cout << "   " << pathNamesAll[h];
+                  if (isBoth) std::cout << "(L,3)";
+                  if (isL3 && !isBoth) std::cout << "(*,3)";
+                  if (isLF && !isBoth) std::cout << "(L,*)";
+                  if (isNone && !isBoth && !isL3 && !isLF) std::cout << "(*,*)";
+              }
+              std::cout << std::endl;
+          }
+          std::cout << std::endl;
+
+          */
 
   //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
   ntuple::TauVector tausV;
@@ -232,6 +266,32 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   try{
 
       cut(true,"events");
+
+      bool triggerFired = false;
+      const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
+    //  const auto Key = analysis::DataSourceType::Spring15MC;
+    //  const auto& hltPaths = MuTau::trigger::hltPathMaps[Key];
+      const auto& hltPaths = MuTau::trigger::hltPathMC;
+          std::cout << "\n === TRIGGER PATHS === " << std::endl;
+          for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
+              for (const std::string& triggerPath : hltPaths ){
+
+                  const std::string& objectMatchedPath = names.triggerName(i);
+                  size_t found = objectMatchedPath.find(triggerPath);
+
+
+                  if(found != std::string::npos){
+//                      std::cout << "TriggerPath --->   " << triggerPath << std::endl;
+//                      std::cout << "Trigger " << names.triggerName(i) <<
+//                      ", prescale " << triggerPrescales->getPrescaleForIndex(i) <<
+//                      ": " << (triggerBits->accept(i) ? "PASS" : "fail (or not run)")
+//                      << std::endl;
+                      if(triggerPrescales->getPrescaleForIndex(i) == 1 && triggerBits->accept(i)) triggerFired = true;
+                }
+              }
+          }
+
+      cut(triggerFired,"trigger");
 
       const auto PV = (*vertexes).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
                                             //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
@@ -243,11 +303,14 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       for(const pat::Muon &muon : *muons){
         ntuple::Muon tmp_muon;
 
-        if(!(muon.pt() > 19 && fabs(muon.eta()) < 2.1 && muon.isLooseMuon())) continue;
+        if(!(muon.pt() > muonID::pt  &&
+            fabs(muon.eta()) < muonID::eta &&
+            muon.isMediumMuon() == muonID::isMediumMuon)) continue;
 
-        bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < 0.045 &&
-                      fabs(muon.muonBestTrack()->dz(PV->position())) < 0.2;
+        bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < muonID::dB &&
+                      fabs(muon.muonBestTrack()->dz(PV->position())) < muonID::dz;
         if(!muonIP) continue;
+
         tmp_muon.eta = muon.eta();
 
         muonsV.push_back(tmp_muon);
@@ -265,8 +328,10 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       //fabs(packedLeadTauCand->dz()) < 0.2;  // The PackedCandidate::dz() method is wrt. the first PV by default
 
 
-          if(!(tau.pt() > 20 && fabs(tau.eta()) < 2.3 && tau.tauID("decayModeFindingNewDMs") > 0.5
-               && fabs(packedLeadTauCand->dz()) < 0.2 )) continue;
+          if(!(tau.pt() > tauID::pt && fabs(tau.eta()) < tauID::eta &&
+               tau.tauID("decayModeFindingNewDMs") > tauID::decayModeFinding &&
+               fabs(packedLeadTauCand->dz()) < tauID::dz )) continue;
+
       tmp_tau.eta = tau.eta();
 //      tmp_tau.pt  = tau.pt();
 //      tmp_tau.phi = tau.phi();

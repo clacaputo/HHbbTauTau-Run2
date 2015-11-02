@@ -1,5 +1,5 @@
 /*!
- * \file Htautau_Summer13.h
+ * \file Htautau_2015.h
  * \brief Higgs in tautau recommended baseline selection cuts for Summer13
  *        see https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorkingSummer2013
  * \author Konstantin Androsov (University of Siena, INFN Pisa)
@@ -31,14 +31,30 @@
 #include <map>
 
 #include <TMath.h>
-#include "AnalysisBase/include/AnalysisMath.h"
-#include "AnalysisBase/include/Tools.h"
-#include "AnalysisBase/include/exception.h"
-#include "TreeProduction/interface/Tau.h"
-#include "TreeProduction/interface/Jet.h"
+#include "../../AnalysisBase/include/AnalysisMath.h"
+#include "../../AnalysisBase/include/Tools.h"
+#include "../../AnalysisBase/include/exception.h"
+#include "../../TreeProduction/interface/Tau.h"
+#include "../../TreeProduction/interface/Jet.h"
+
+namespace analysis{
+
+enum class DataSourceType { Spring15MC=0, Run2015B=1, Run2015C , Run2015D };
+
+static const std::map<DataSourceType,std::string> dataSourceTypeMap = {{DataSourceType::Spring15MC , "Spring15MC"},
+                                                                       {DataSourceType::Run2015B , "Run2015B"},
+                                                                       {DataSourceType::Run2015C , "Run2015C"},
+                                                                       {DataSourceType::Run2015D , "Run2015D"}};
+
+std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType) {
+    s << dataSourceTypeMap.at(dataSourceType);
+    return s;
+}
+
+}//namespace analysis
 
 namespace cuts {
-namespace Htautau_Summer13 {
+namespace Htautau_2015 {
 // AN-2013/178 H->etau,mutau
 // https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/analyzers/DiLeptonAnalyzer.py
 const double DeltaR_betweenSignalObjects = 0.5; // >
@@ -49,33 +65,33 @@ const double DeltaR_triggerMatch = 0.5; // <
 
 namespace MuTau {
     namespace trigger {
-        // twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const std::set<std::string> hltPaths =
-            { "HLT_IsoMu17_eta2p1_LooseIsoPFTau20", "HLT_IsoMu18_eta2p1_LooseIsoPFTau20" };
-    }
+        // https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2015  - Trigger Session
+        const std::map<analysis::DataSourceType , std::set<std::string>> hltPathMaps =
+                                    {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1"}},
+                                     {analysis::DataSourceType::Run2015B,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
+                                                                            "HLT_IsoMu24_eta2p1_v2"}},
+                                     {analysis::DataSourceType::Run2015C,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
+                                                                          "HLT_IsoMu24_eta2p1_v2"}},
+                                     {analysis::DataSourceType::Run2015D,{"HLT_IsoMu18_v"}}};
 
-    // twiki HiggsToTauTauWorkingSummer2013
-    namespace muonIDscaleFactor {
-        const std::vector<double> eta = { 0.8, 1.2, 2.1 };
-        const std::vector<double> pt = { 20, 30 };
-        const std::vector< std::vector< double > > scaleFactors = { { 0.9818, 0.9829, 0.9869 },
-                                                                    { 0.9852, 0.9852, 0.9884 } };
-    }
-
-    // twiki HiggsToTauTauWorkingSummer2013
-    namespace muonISOscaleFactor {
-        const std::vector<double> eta = { 0.8, 1.2, 2.1 };
-        const std::vector<double> pt = { 20, 30 };
-        const std::vector< std::vector< double > > scaleFactors = { { 0.9494, 0.9835, 0.9923 },
-                                                                    { 0.9883, 0.9937, 0.9996 } };
+        const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1"};
     }
 
     namespace muonID {
-        const double pt = 20; // > twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const double eta = 2.1; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+        const double pt = 19; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double eta = 2.1; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double dz = 0.2; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double dB = 0.045; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
 
-//        const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
-        //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
+        const bool isMediumMuon = true; // = twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+                                        // def : https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2#Medium_Muon
+
+        //After Synctuple
+
+        const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorking2015#Muons
+
+     /*   //const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
+                                         //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
         const bool isGlobalMuonPromptTight = true;
               // = https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/DataFormats/MuonReco/src/MuonSelectors.cc#L534
               // def: https://github.com/cms-sw/cmssw/blob/CMSSW_5_3_X/DataFormats/MuonReco/src/MuonSelectors.cc#L534
@@ -84,28 +100,27 @@ namespace MuTau {
         const int nMatched_Stations = 1; // > def of isTightMuon
         const int pixHits = 0; // > def of isTightMuon
         const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
-        const double dz = 0.2; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
-
-        const double dB = 0.045; // < twiki HiggsToTauTauWorkingSummer2013#Muon_ID
-        const double pFRelIso = 0.1; // < twiki SWGuideMuonId#Muon_Isolation_AN1
 
         const double mt = 30; // < not used for sync, only for the final selection.
+        */
     }
 
     namespace tauID {
-        const double pt = 20; // > twiki TauIDRecommendation
-        const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
-        const double againstMuonTight = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double againstElectronLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
-                                                      // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+        const double pt = 20; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double eta = 2.3; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double decayModeFinding = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double dz = 0.2; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
 
-        // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/HiggsHTohh/test/HiggsHTohh.cpp#L1086
-        const double dz = 0.2; // <
+        //After Synctuple
+
+        const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstElectronVLooseMVA5 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
+                                                      // GeV < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+
    }
 
-    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
+    // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
     namespace ZmumuVeto {
         const double pt = 15; // >
         const double eta = 2.4; // <
@@ -244,8 +259,7 @@ namespace TauTau {
 }
 
 // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-// twiki HiggsToTauTauWorkingSummer2013#Muon_Tau_Final_state
-// https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/physicsobjects/HTauTauElectron.py
+// twiki HiggsToTauTauWorking2015#Third_lepton_vetoes
 namespace electronVeto {
     const double pt = 10; // >
     const double eta_high = 2.5; // <
@@ -269,14 +283,8 @@ namespace muonVeto {
     const double dz = 0.2; // <
     const double d0 = 0.045; // <
 
-    //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
-    const bool isGlobalMuonPromptTight = true;
-          // = https://cmssdt.cern.ch/SDT/lxr/source/DataFormats/MuonReco/src/MuonSelectors.cc#567 and 590 definition
-          // = isGlobalMuon && normalizedChi2<10 && numberOfValidMuonHits > 0
-    const bool isPFMuon = true; // = def of isTightMuon
-    const int nMatched_Stations = 1; // > def of isTightMuon
-    const int pixHits = 0; // > def of isTightMuon
-    const int trackerLayersWithMeasurement = 5; // > def of isTightMuon
+    //def of isMediumMuon: twiki SWGuideMuonId#Medium_Muon
+    const bool isMediumMuon = true; // =
 
     const double pfRelIso = 0.3; // <
 }
@@ -447,5 +455,5 @@ namespace customTauMVA {
     }
 }
 
-} // Htautau_Summer13
+} // Htautau_2015
 } // cuts

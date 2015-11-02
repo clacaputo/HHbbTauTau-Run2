@@ -90,6 +90,7 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  vtxSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  bits = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
+                                 objects = cms.InputTag("selectedPatTrigger"),
                                 )
 
 process.ntupler = cms.EDAnalyzer('ElectronsIDAnalyzer',
