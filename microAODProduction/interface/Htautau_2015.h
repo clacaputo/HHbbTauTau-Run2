@@ -74,7 +74,8 @@ namespace MuTau {
                                                                           "HLT_IsoMu24_eta2p1_v2"}},
                                      {analysis::DataSourceType::Run2015D,{"HLT_IsoMu18_v"}}};
 
-        const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1"};
+      //  const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1"};
+        const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v1","HLT_IsoMu24_eta2p1_v1"};
     }
 
     namespace muonID {

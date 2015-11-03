@@ -216,6 +216,7 @@ microAODProduction/json/Run1/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSO
 microAODProduction/json/Run1/pileup_JSON_DCSONLY_190389-208686_All_2012_pixelcorr.txt
 microAODProduction/interface/Htautau_2015.h
 microAODProduction/interface/BaseProducer.h
+microAODProduction/interface/Candidate.h
 microAODProduction/plugins/BuildFile.xml
 microAODProduction/plugins/ElectronsIDAnalyzer.cc
 microAODProduction/plugins/SkimFilterMiniAOD.cc

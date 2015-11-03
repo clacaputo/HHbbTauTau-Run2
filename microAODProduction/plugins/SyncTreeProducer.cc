@@ -37,6 +37,9 @@
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+
+#include "DataFormats/PatCandidates/interface/Jet.h"
+
 //Trigger
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
@@ -64,6 +67,7 @@
 #include "../../TreeProduction/interface/Muon.h"
 #include "../../AnalysisBase/include/AnalyzerData.h"
 #include "../../AnalysisBase/include/CutTools.h"
+#include "../interface/Candidate.h"
 #include "../../Analysis/include/SelectionResults.h"
 
 #include "../interface/Htautau_2015.h"
@@ -71,6 +75,7 @@
 #include "TTree.h"
 #include "Math/VectorUtil.h"
 
+using namespace analysis;
 
 //Analyzer Data Class
 namespace analysis {
@@ -263,6 +268,8 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   ntuple::TauVector tausV;
   ntuple::MuonVector muonsV;
 
+  std::map <size_t, ntuple::Muon> muonsMaps;
+
   try{
 
       cut(true,"events");
@@ -300,8 +307,10 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       //std::cout<<" Vertici    --->   "<<PV->ndof()<<std::endl;
 
+      std::vector<pat::Muon> patMuonsVector;
       for(const pat::Muon &muon : *muons){
         ntuple::Muon tmp_muon;
+
 
         if(!(muon.pt() > muonID::pt  &&
             fabs(muon.eta()) < muonID::eta &&
@@ -313,11 +322,23 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
         tmp_muon.eta = muon.eta();
 
+
+        patMuonsVector.push_back(muon);
         muonsV.push_back(tmp_muon);
 
       }
 
       cut(muonsV.size(),"muons");
+
+      const CandidateV2Ptr candidate(new CandidateV2(patMuonsVector.at(0)));
+      std::cout<< "Muons Checks ------------------------------------------------ \n"
+                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n";
+//                  <<"Eta vettore  :  "<< patMuonsVector.at(0).eta() <<  "  type of muon:  "<<
+//                    typeid(patMuonsVector.at(0)).name() << "\n"
+//                    << typeid(pat::Muon).name() << "\n"
+//                    << "Hash COde : "<<typeid(patMuonsVector.at(0)).hash_code() <<"\n"
+//                    << typeid(pat::Muon).hash_code() << "\n"
+//                    <<"   type ntuple  :  "<< typeid(muonsV.at(0)).name() << std::endl;
 
       for (const pat::Tau &tau : *taus){
 
@@ -484,6 +505,31 @@ void SyncTreeProducer::findFirstNonElectronMother(const reco::Candidate *particl
 }
 
 ///////////
+
+/*
+template<typename objectType1, typename objectType2>
+CandidatePtrVector FindCompatibleObjects(const objectType1& objects1, const objectType2& objects2,
+                                      double minDeltaR, Candidate::Type type,
+                                      int expectedCharge = Candidate::UnknownCharge())
+{
+    CandidatePtrVector result;
+    for(const objectType1& object1 : objects1) {
+        for(const objectType2& object2 : objects2) {
+            if(object2->GetMomentum().DeltaR(object1->GetMomentum()) > minDeltaR) {
+                const CandidatePtr candidate(new Candidate(type, object1, object2));
+                if (expectedCharge != Candidate::UnknownCharge() && candidate->GetCharge() != expectedCharge)
+                    continue;
+                result.push_back(candidate);
+                //GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),
+                //                                  GetEventWeights().GetPartialWeight());
+            }
+        }
+    }
+    //GetAnaData().N_objects(hist_name).Fill(result.size(), GetEventWeights().GetPartialWeight());
+    return result;
+}
+
+*/
 
 ////Forse bisogna passargli anche iEvent,
 //bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const
