@@ -85,6 +85,9 @@ public:
 
     SELECTION_ENTRY(Selection)
 
+    TH1D_ENTRY_FIX(N_objects, 1, 500, -0.5)
+    TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
+
 };
 }
 
@@ -116,11 +119,63 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 
       analysis::SyncAnalyzerData& GetAnaData() { return anaData; }
 
+      analysis::CandidateV2PtrVector FindCompatibleObjects(const CandidateV2PtrVector& objects1,
+                                                         const CandidateV2PtrVector& objects2,
+                                                         double minDeltaR, CandidateV2::Type type, const std::string& hist_name);
+
+      analysis::CandidateV2PtrVector ApplyTriggerMatch(
+             const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                                                       const CandidateV2PtrVector& higgses,const edm::TriggerNames &names,
+                                                       const std::set<std::string>& hltPaths,
+                                                     bool useStandardTriggerMatch);
+
       int matchToTruth(const edm::Ptr<reco::GsfElectron> el,
                const edm::Handle<edm::View<reco::GenParticle>>  &genParticles);
 
       void findFirstNonElectronMother(const reco::Candidate *particle,
                     int &ancestorPID, int &ancestorStatus);
+
+
+
+      inline bool HaveTriggerMatched(const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                                     const edm::TriggerNames &names,
+                                     const std::set<std::string>& interestingPaths, const CandidateV2& candidate,
+                                     double deltaR_Limit)
+      {
+          for (const std::string& interestinPath : interestingPaths){
+              if (HaveTriggerMatched(triggerObjects,names,interestinPath,candidate, deltaR_Limit)) return true;
+          }
+          return false;
+      }
+
+      inline bool HaveTriggerMatched(const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                                     const edm::TriggerNames &names,
+                                     const std::string& interestingPath,
+                                     const CandidateV2& candidate, double deltaR_Limit)
+      {
+          if(candidate.GetFinalStateDaughters().size()) {
+              for(const auto& daughter : candidate.GetFinalStateDaughters()) {
+                  if(!SyncTreeProducer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit))
+                      return false;
+              }
+              return true;
+          }
+
+          for (auto &triggerObject : triggerObjects){
+              triggerObject.unpackPathNames(names);
+              TLorentzVector triggerObjectMomentum;
+              triggerObjectMomentum.SetPtEtaPhiM(triggerObject.pt(), triggerObject.eta(), triggerObject.phi(), triggerObject.mass());
+              for (unsigned n = 0; n < triggerObject.pathNames(false).size(); ++n){
+                  const std::string& objectMatchedPath = triggerObject.pathNames(false).at(n);
+                  const size_t found = objectMatchedPath.find(interestingPath);
+                  bool isBoth = triggerObject.hasPathName( triggerObject.pathNames(false).at(n), true, true );
+                  if (found != std::string::npos && isBoth &&
+                          triggerObjectMomentum.DeltaR(candidate.GetMomentum()) < deltaR_Limit)
+                      return true;
+              }
+          }
+          return false;
+      }
 
     //  bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const ;
 
@@ -268,7 +323,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   ntuple::TauVector tausV;
   ntuple::MuonVector muonsV;
 
-  std::map <size_t, ntuple::Muon> muonsMaps;
+//  std::map <size_t, ntuple::Muon> muonsMaps;
 
   try{
 
@@ -308,6 +363,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       //std::cout<<" Vertici    --->   "<<PV->ndof()<<std::endl;
 
       std::vector<pat::Muon> patMuonsVector;
+      CandidateV2PtrVector muonCollection, tauCollection;
       for(const pat::Muon &muon : *muons){
         ntuple::Muon tmp_muon;
 
@@ -322,17 +378,19 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
         tmp_muon.eta = muon.eta();
 
-
+        const CandidateV2Ptr tmp_candidate(new CandidateV2(muon));
+        muonCollection.push_back(tmp_candidate);
         patMuonsVector.push_back(muon);
         muonsV.push_back(tmp_muon);
 
       }
 
-      cut(muonsV.size(),"muons");
+      cut(muonCollection.size(),"muons");
 
       const CandidateV2Ptr candidate(new CandidateV2(patMuonsVector.at(0)));
       std::cout<< "Muons Checks ------------------------------------------------ \n"
-                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n";
+                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n"
+                     << "MuonVector  :  "<< (muonCollection.at(0))->GetMomentum()<<"\n";
 //                  <<"Eta vettore  :  "<< patMuonsVector.at(0).eta() <<  "  type of muon:  "<<
 //                    typeid(patMuonsVector.at(0)).name() << "\n"
 //                    << typeid(pat::Muon).name() << "\n"
@@ -353,7 +411,9 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                tau.tauID("decayModeFindingNewDMs") > tauID::decayModeFinding &&
                fabs(packedLeadTauCand->dz()) < tauID::dz )) continue;
 
-      tmp_tau.eta = tau.eta();
+
+        const CandidateV2Ptr tmp_candidate(new CandidateV2(tau));
+        tmp_tau.eta = tau.eta();
 //      tmp_tau.pt  = tau.pt();
 //      tmp_tau.phi = tau.phi();
  //     tmp_tau.againstElectronLooseMVA5   = tau.tauID('againstElectronLooseMVA5');
@@ -361,13 +421,20 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
  //     tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
  //     tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
 
-
+        tauCollection.push_back(tmp_candidate);
           tausV.push_back(tmp_tau);
       }
 
-    //if(!tausV.size()) return;
-    cut(tausV.size(),"taus");
+    cut(tauCollection.size(),"taus");
 
+    auto higgses = FindCompatibleObjects(muonCollection,tauCollection,DeltaR_betweenSignalObjects,CandidateV2::Type::Higgs,
+                                         "h_mu_tau");
+
+    cut(higgses.size(),"mu_tau");
+
+    auto triggeredHiggses = ApplyTriggerMatch(triggerObjects.product(), higgses,names,MuTau::trigger::hltPathMC,false);
+
+    cut(triggeredHiggses.size(),"triggerMatch");
 
 //  syncTree.pt_1() = tausV.at(0).pt;
 //  syncTree.Fill();
@@ -506,30 +573,45 @@ void SyncTreeProducer::findFirstNonElectronMother(const reco::Candidate *particl
 
 ///////////
 
-/*
-template<typename objectType1, typename objectType2>
-CandidatePtrVector FindCompatibleObjects(const objectType1& objects1, const objectType2& objects2,
-                                      double minDeltaR, Candidate::Type type,
-                                      int expectedCharge = Candidate::UnknownCharge())
-{
-    CandidatePtrVector result;
-    for(const objectType1& object1 : objects1) {
-        for(const objectType2& object2 : objects2) {
-            if(object2->GetMomentum().DeltaR(object1->GetMomentum()) > minDeltaR) {
-                const CandidatePtr candidate(new Candidate(type, object1, object2));
-                if (expectedCharge != Candidate::UnknownCharge() && candidate->GetCharge() != expectedCharge)
-                    continue;
-                result.push_back(candidate);
-                //GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),
-                //                                  GetEventWeights().GetPartialWeight());
+
+analysis::CandidateV2PtrVector SyncTreeProducer::FindCompatibleObjects(const CandidateV2PtrVector& objects1,
+                                                   const CandidateV2PtrVector& objects2,
+                                                   double minDeltaR, CandidateV2::Type type, const std::string& hist_name)
+    {
+        CandidateV2PtrVector result;
+        for(const CandidateV2Ptr& object1 : objects1) {
+            for(const CandidateV2Ptr& object2 : objects2) {
+                if(object2->GetMomentum().DeltaR(object1->GetMomentum()) > minDeltaR) {
+                    const CandidateV2Ptr candidate(new CandidateV2(type, object1, object2));
+//                    if (expectedCharge != CandidateV2::UnknownCharge() && candidate->GetCharge() != expectedCharge)
+//                        continue;
+                    result.push_back(candidate);
+                    GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),1);
+                }
             }
         }
+
+        GetAnaData().N_objects(hist_name).Fill(result.size(),1);
+        return result;
     }
-    //GetAnaData().N_objects(hist_name).Fill(result.size(), GetEventWeights().GetPartialWeight());
-    return result;
+
+CandidateV2PtrVector SyncTreeProducer::ApplyTriggerMatch(const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                                                         const CandidateV2PtrVector& higgses, const edm::TriggerNames &names,
+                                                         const std::set<std::string>& hltPaths,
+                                                         bool useStandardTriggerMatch)
+{
+    CandidateV2PtrVector triggeredHiggses;
+    for (const auto& higgs : higgses){
+        if(!useStandardTriggerMatch && SyncTreeProducer::HaveTriggerMatched(triggerObjects,names, hltPaths, *higgs,
+                                                                    cuts::Htautau_2015::DeltaR_triggerMatch))
+            triggeredHiggses.push_back(higgs);
+//        if (useStandardTriggerMatch && SyncTreeProducer::HaveTriggerMatched(hltPaths, *higgs))
+//            triggeredHiggses.push_back(higgs);
+    }
+    return triggeredHiggses;
 }
 
-*/
+
 
 ////Forse bisogna passargli anche iEvent,
 //bool HaveTriggerFired(const std::set<std::string>& interestinghltPaths) const
