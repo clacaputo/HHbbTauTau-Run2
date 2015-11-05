@@ -123,8 +123,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
                                                          const CandidateV2PtrVector& objects2,
                                                          double minDeltaR, CandidateV2::Type type, const std::string& hist_name);
 
-      analysis::CandidateV2PtrVector ApplyTriggerMatch(
-             const pat::TriggerObjectStandAloneCollection& triggerObjects,
+      analysis::CandidateV2PtrVector ApplyTriggerMatch(pat::TriggerObjectStandAloneCollection triggerObjects,
                                                        const CandidateV2PtrVector& higgses,const edm::TriggerNames &names,
                                                        const std::set<std::string>& hltPaths,
                                                      bool useStandardTriggerMatch);
@@ -137,18 +136,19 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 
 
 
-      inline bool HaveTriggerMatched(const pat::TriggerObjectStandAloneCollection& triggerObjects,
+      inline bool HaveTriggerMatched(pat::TriggerObjectStandAloneCollection& triggerObjects,
                                      const edm::TriggerNames &names,
                                      const std::set<std::string>& interestingPaths, const CandidateV2& candidate,
                                      double deltaR_Limit)
       {
           for (const std::string& interestinPath : interestingPaths){
+              std::cout<<"Trigger Path  :   "<<interestinPath<<std::endl;
               if (HaveTriggerMatched(triggerObjects,names,interestinPath,candidate, deltaR_Limit)) return true;
           }
           return false;
       }
 
-      inline bool HaveTriggerMatched(const pat::TriggerObjectStandAloneCollection& triggerObjects,
+      inline bool HaveTriggerMatched(pat::TriggerObjectStandAloneCollection& triggerObjects,
                                      const edm::TriggerNames &names,
                                      const std::string& interestingPath,
                                      const CandidateV2& candidate, double deltaR_Limit)
@@ -165,10 +165,15 @@ class SyncTreeProducer : public edm::EDAnalyzer {
               triggerObject.unpackPathNames(names);
               TLorentzVector triggerObjectMomentum;
               triggerObjectMomentum.SetPtEtaPhiM(triggerObject.pt(), triggerObject.eta(), triggerObject.phi(), triggerObject.mass());
+              std::cout<<"\t Trigger obj :   "<<triggerObjectMomentum<<std::endl;
               for (unsigned n = 0; n < triggerObject.pathNames(false).size(); ++n){
                   const std::string& objectMatchedPath = triggerObject.pathNames(false).at(n);
+
                   const size_t found = objectMatchedPath.find(interestingPath);
                   bool isBoth = triggerObject.hasPathName( triggerObject.pathNames(false).at(n), true, true );
+                  if (found != std::string::npos) std::cout << "\t\t Path Names :   " << objectMatchedPath
+                            << (isBoth ? "  PASS\n" : "  fail (or not run)\n")
+                            << "Candidato :  " << candidate.GetMomentum() << std::endl;
                   if (found != std::string::npos && isBoth &&
                           triggerObjectMomentum.DeltaR(candidate.GetMomentum()) < deltaR_Limit)
                       return true;
@@ -263,9 +268,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   syncTree.lumi() = iEvent.id().luminosityBlock();
   syncTree.evt()  = iEvent.id().event();
 
-  // Get the MC collection
-//  iEvent.getByToken(genParticlesMiniAODToken_,genParticles);
-
   //Get collection
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
@@ -334,7 +336,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     //  const auto Key = analysis::DataSourceType::Spring15MC;
     //  const auto& hltPaths = MuTau::trigger::hltPathMaps[Key];
       const auto& hltPaths = MuTau::trigger::hltPathMC;
-          std::cout << "\n === TRIGGER PATHS === " << std::endl;
+          //std::cout << "\n === TRIGGER PATHS === " << std::endl;
           for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
               for (const std::string& triggerPath : hltPaths ){
 
@@ -388,9 +390,9 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       cut(muonCollection.size(),"muons");
 
       const CandidateV2Ptr candidate(new CandidateV2(patMuonsVector.at(0)));
-      std::cout<< "Muons Checks ------------------------------------------------ \n"
-                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n"
-                     << "MuonVector  :  "<< (muonCollection.at(0))->GetMomentum()<<"\n";
+//      std::cout<< "Muons Checks ------------------------------------------------ \n"
+//                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n"
+//                     << "MuonVector  :  "<< (muonCollection.at(0))->GetMomentum()<<"\n";
 //                  <<"Eta vettore  :  "<< patMuonsVector.at(0).eta() <<  "  type of muon:  "<<
 //                    typeid(patMuonsVector.at(0)).name() << "\n"
 //                    << typeid(pat::Muon).name() << "\n"
@@ -432,7 +434,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
     cut(higgses.size(),"mu_tau");
 
-    auto triggeredHiggses = ApplyTriggerMatch(triggerObjects.product(), higgses,names,MuTau::trigger::hltPathMC,false);
+    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,MuTau::trigger::hltPathMC,false);
 
     cut(triggeredHiggses.size(),"triggerMatch");
 
@@ -595,7 +597,7 @@ analysis::CandidateV2PtrVector SyncTreeProducer::FindCompatibleObjects(const Can
         return result;
     }
 
-CandidateV2PtrVector SyncTreeProducer::ApplyTriggerMatch(const pat::TriggerObjectStandAloneCollection& triggerObjects,
+CandidateV2PtrVector SyncTreeProducer::ApplyTriggerMatch(pat::TriggerObjectStandAloneCollection triggerObjects,
                                                          const CandidateV2PtrVector& higgses, const edm::TriggerNames &names,
                                                          const std::set<std::string>& hltPaths,
                                                          bool useStandardTriggerMatch)
