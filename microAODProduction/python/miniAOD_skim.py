@@ -48,11 +48,12 @@ inputDY = cms.untracked.vstring(
 
 AZh_minAODv2 = cms.untracked.vstring(
                 '/store/mc/RunIISpring15MiniAODv2/AToZhToLLTauTau_M-220_13TeV_madgraph_4f_LO/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/50000/E47E8231-746F-E511-93EF-34E6D7BDDEDB.root')
-
+inputSignal_v2 = cms.untracked.vstring(
+                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/18442D74-D671-E511-99AF-00266CFAE748.root')
 
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = inputTTbar
+    fileNames = AZh_minAODv2
 )
 
 ## Output file
@@ -101,7 +102,7 @@ process.p = cms.Path(process.bbttSkim)
 #process.p=cms.Path()
 
 process.out = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string('allBranches_miniAODv2_AZh.root'),
+    fileName = cms.untracked.string('allBranches_miniAOD_AZh.root'),
     SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
     #outputCommands = skimmedBranches
     #outputCommands = tausBranch

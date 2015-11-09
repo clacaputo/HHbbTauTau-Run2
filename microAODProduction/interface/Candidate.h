@@ -36,18 +36,20 @@
 
 namespace analysis {
 
+//template<typename NtupleObject>
 class CandidateV2;
 typedef std::shared_ptr<const CandidateV2> CandidateV2Ptr;
 typedef std::vector<CandidateV2Ptr> CandidateV2PtrVector;
 
+//template<typename NtupleObject>
 class CandidateV2 {
 public:
     enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
     static int UnknownCharge() { return std::numeric_limits<int>::max(); }
 
 private:
-    template<typename NtupleObject>
-    static Type TypeFromNtupleObject(const NtupleObject& ntupleObject)
+    template<typename PATObject>
+    static Type TypeFromNtupleObject(const PATObject& ntupleObject)
     {
         static const std::map<size_t, Type> ntupleTypes = {
             { typeid(pat::Electron).hash_code(), Type::Electron }, { typeid(pat::Muon).hash_code(), Type::Muon },
@@ -68,15 +70,16 @@ private:
 
     CandidateV2PtrVector daughters;
     CandidateV2PtrVector finalStateDaughters;
-    //const root_ext::detail::BaseDataClass* ntupleObject;
+
+    const reco::RecoCandidate* ntupleObject;
 
 public:
-    template<typename NtupleObject>
-    explicit CandidateV2(const NtupleObject& _ntupleObject) :
-        type(TypeFromNtupleObject<NtupleObject>(_ntupleObject)), charge(_ntupleObject.charge()),
+    template<typename PATObject>
+    explicit CandidateV2(const PATObject& _ntupleObject) :
+        type(TypeFromNtupleObject<PATObject>(_ntupleObject)), charge(_ntupleObject.charge()),
         momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt(), _ntupleObject.eta(), _ntupleObject.phi(), _ntupleObject.mass())),
-        has_vertexPosition(true), vertexPosition(_ntupleObject.vx(), _ntupleObject.vy(), _ntupleObject.vz())
-        //ntupleObject(&_ntupleObject)
+        has_vertexPosition(true), vertexPosition(_ntupleObject.vx(), _ntupleObject.vy(), _ntupleObject.vz()),
+        ntupleObject(&_ntupleObject)
     {}
 
 //    explicit CandidateV2(const ntuple::Jet& _ntupleObject) :
@@ -85,7 +88,7 @@ public:
 //        has_vertexPosition(false), ntupleObject(&_ntupleObject) {}
 
     CandidateV2(Type _type, const CandidateV2Ptr& daughter1, const CandidateV2Ptr& daughter2)
-        : type(_type), has_vertexPosition(false)// ntupleObject(nullptr)
+        : type(_type), has_vertexPosition(false), ntupleObject(nullptr)
     {
         if(!daughter1 || !daughter2)
             throw exception("Candidate daughters can't be nullptr.");
@@ -117,17 +120,17 @@ public:
         return vertexPosition;
     }
 
-//    template<typename NtupleObject>
-//    const NtupleObject& GetNtupleObject() const
-//    {
-//        if(!ntupleObject)
-//            throw exception("Candidate is not associated with antuple object.");
-//        const NtupleObject* casted = dynamic_cast<const NtupleObject*>(ntupleObject);
-//        if(!casted)
-//            throw exception("Bad ntuple object type '") << typeid(NtupleObject).name() << "'. Expected '"
-//                                                        << typeid(ntupleObject).name() << "'.";
-//        return *casted;
-//    }
+    template<typename PATObject>
+    const PATObject& GetNtupleObject() const
+    {
+        if(!ntupleObject)
+            throw exception("Candidate is not associated with antuple object.");
+        const PATObject* casted = dynamic_cast<const PATObject*>(ntupleObject);
+        if(!casted)
+            throw exception("Bad ntuple object type '") << typeid(PATObject).name() << "'. Expected '"
+                                                        << typeid(ntupleObject).name() << "'.";
+        return *casted;
+    }
 
     const CandidateV2PtrVector& GetDaughters() const { return daughters; }
     const CandidateV2PtrVector& GetFinalStateDaughters() const { return finalStateDaughters; }

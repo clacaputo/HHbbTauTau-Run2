@@ -45,7 +45,8 @@ inputWJets = cms.untracked.vstring(
                 '/store/mc/RunIISpring15DR74/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/048FB1EE-33FD-E411-A2BA-0025905A6094.root')
 inputDY = cms.untracked.vstring(
                 '/store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/009D49A5-7314-E511-84EF-0025905A605E.root')
-
+inputSignal_v2 = cms.untracked.vstring(
+                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
     fileNames = inputSignal
@@ -64,7 +65,7 @@ skimmedBranches = cms.untracked.vstring(['drop *',
                                          'keep PileupSummaryInfos_addPileupInfo__HLT',
                                          'keep double_*__RECO',
                                          'keep recoBeamSpot_offlineBeamSpot__RECO',
-                                         'keep *_electronMVAValueMapProducer_*_USER', ## Value Map with the electrons ID MVA values
+                                        ## 'keep *_electronMVAValueMapProducer_*_USER', ## Value Map with the electrons ID MVA values
                                          'keep floatedmValueMap_offlineSlimmedPrimaryVertices__PAT',
                                          'keep patPackedTriggerPrescales_patTrigger__PAT',
                                          'keep patElectrons_slimmedElectrons__PAT',
@@ -83,11 +84,9 @@ skimmedBranches = cms.untracked.vstring(['drop *',
 
 allBranches = cms.untracked.vstring(['keep *'])
 
-tausBranch = cms.untracked.vstring(['keep patTaus_slimmedTaus__PAT'])
 
 
-
-process.bbttSkim   = cms.EDFilter("SkimFilter",
+process.bbttSkim   = cms.EDFilter("SkimFilterMiniAOD",
                                   vertexSrc  = cms.untracked.InputTag('offlineSlimmedPrimaryVertices'),
                                   muonSrc  = cms.untracked.InputTag('slimmedMuons'),
                                   electronSrc=cms.untracked.InputTag("slimmedElectrons"),
@@ -98,25 +97,26 @@ process.bbttSkim   = cms.EDFilter("SkimFilter",
 ## Example code here:
 ##  https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_7.4.12/ElectronNtupler/plugins/ElectronNtuplerVIDwithMVADemo.cc#L99
 ## process.load("RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi")
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-# turn on VID producer, indicate data format  to be
-# DataFormat.AOD or DataFormat.MiniAOD, as appropriate
-dataFormat = DataFormat.MiniAOD
+##-------------
+#from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+## turn on VID producer, indicate data format  to be
+## DataFormat.AOD or DataFormat.MiniAOD, as appropriate
+#dataFormat = DataFormat.MiniAOD
 
-switchOnVIDElectronIdProducer(process, dataFormat) ##also compute a maps with the electrons that pass an MVA cut
+#switchOnVIDElectronIdProducer(process, dataFormat) ##also compute a maps with the electrons that pass an MVA cut
 
-# define which IDs we want to produce
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
+## define which IDs we want to produce
+#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
 
-#add them to the VID producer
-for idmod in my_id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-
+##add them to the VID producer
+#for idmod in my_id_modules:
+#    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+##------------
 
 process.p = cms.Path(
              #process.electronMVAValueMapProducer*
-             process.bbttSkim*
-             process.egmGsfElectronIDSequence
+             process.bbttSkim
+             #process.egmGsfElectronIDSequence
 
 	   	    )
 #process.p=cms.Path()
@@ -125,7 +125,7 @@ process.out = cms.OutputModule("PoolOutputModule",
     compressionLevel = cms.untracked.int32(4),
     compressionAlgorithm = cms.untracked.string('LZMA'),
     eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
-    fileName = cms.untracked.string('allBranches_eleIDs_signal_v2.root'),
+    fileName = cms.untracked.string('allBranches_Signal_miniV2.root'),
     SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
     #outputCommands = skimmedBranches,
     #outputCommands = tausBranch,

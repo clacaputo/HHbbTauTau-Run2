@@ -34,7 +34,7 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
-#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
+//#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
 
 class SkimFilterMiniAOD : public edm::EDFilter {
 public:
@@ -76,7 +76,7 @@ bool SkimFilterMiniAOD::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
     bool haveGoodVertex = false;
     unsigned nGoodTaus = 0;
 
-    auto vtx = vertices.at(0);
+  //  auto vtx = vertices.at(0);
 
     for (const reco::Vertex& vertex : vertices){
         if(vertex.ndof() > 4 && std::abs(vertex.z()) < 24 && vertex.position().rho() < 2){
@@ -87,7 +87,6 @@ bool SkimFilterMiniAOD::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
     if (!haveGoodVertex) {
         return false;}
   
-//  std::cout<<"Prima .........."<<std::endl;
 
     for(const pat::Tau& tau : taus) {
         if(tau.pt() > 18 && std::abs(tau.eta()) < 2.3  /*&& tau.tauID("decayModeFinding") > 0.5*/)
@@ -96,7 +95,6 @@ bool SkimFilterMiniAOD::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
     }
     if(!nGoodTaus) return false;
   
-//  std::cout<<"..........Dopo"<<std::endl;
 
     for(const pat::Electron& electron : electrons) {
         if(electron.pt() > 20.0 && std::abs(electron.eta()) < 2.0) {
@@ -106,9 +104,9 @@ bool SkimFilterMiniAOD::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
     }
 
     for(const pat::Muon& muon : muons) {
-        bool muonIP = fabs(muon.muonBestTrack()->dxy(vtx.position())) < 0.045 &&
-                      fabs(muon.muonBestTrack()->dz(vtx.position())) < 0.2;
-        if(muon.pt() > 16.0 && std::abs(muon.eta())<2.4 && muon.isLooseMuon() && muonIP) {
+//        bool muonIP = fabs(muon.muonBestTrack()->dxy(vtx.position())) < 0.045 &&
+//                      fabs(muon.muonBestTrack()->dz(vtx.position())) < 0.2;
+        if(muon.pt() > 16.0 && std::abs(muon.eta())<2.4 && muon.isLooseMuon()) {
 //            float iso = (muon.pfIsolationR03().sumChargedHadronPt + std::max(
 //                       muon.pfIsolationR03().sumNeutralHadronEt +
 //                       muon.pfIsolationR03().sumPhotonEt -
