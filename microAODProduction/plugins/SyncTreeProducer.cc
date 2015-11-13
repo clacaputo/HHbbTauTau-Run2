@@ -120,13 +120,17 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       analysis::SyncAnalyzerData& GetAnaData() { return anaData; }
 
       analysis::CandidateV2PtrVector FindCompatibleObjects(const CandidateV2PtrVector& objects1,
-                                                         const CandidateV2PtrVector& objects2,
-                                                         double minDeltaR, CandidateV2::Type type, const std::string& hist_name);
+                                                           const CandidateV2PtrVector& objects2,
+                                                           double minDeltaR, CandidateV2::Type type,
+                                                           const std::string& hist_name,
+                                                           int expectedCharge=analysis::CandidateV2::UnknownCharge());
 
       analysis::CandidateV2PtrVector ApplyTriggerMatch(pat::TriggerObjectStandAloneCollection triggerObjects,
                                                        const CandidateV2PtrVector& higgses,const edm::TriggerNames &names,
                                                        const std::set<std::string>& hltPaths,
-                                                     bool useStandardTriggerMatch);
+                                                       bool useStandardTriggerMatch, const bool isCrossTrigger);
+
+      analysis::CandidateV2Ptr SelectSemiLeptonicHiggs(CandidateV2PtrVector& higgses);
 
       int matchToTruth(const edm::Ptr<reco::GsfElectron> el,
                const edm::Handle<edm::View<reco::GenParticle>>  &genParticles);
@@ -139,24 +143,28 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       inline bool HaveTriggerMatched(pat::TriggerObjectStandAloneCollection& triggerObjects,
                                      const edm::TriggerNames &names,
                                      const std::set<std::string>& interestingPaths, const CandidateV2& candidate,
-                                     double deltaR_Limit)
+                                     const double deltaR_Limit,const bool isCrossTrigger)
       {
           for (const std::string& interestinPath : interestingPaths){
               std::cout<<"Trigger Path  :   "<<interestinPath<<std::endl;
-              if (HaveTriggerMatched(triggerObjects,names,interestinPath,candidate, deltaR_Limit)) return true;
+              if (HaveTriggerMatched(triggerObjects,names,interestinPath,candidate, deltaR_Limit, isCrossTrigger)) return true;
           }
           return false;
       }
-
+//Now it could manage also the single object Trigger
       inline bool HaveTriggerMatched(pat::TriggerObjectStandAloneCollection& triggerObjects,
                                      const edm::TriggerNames &names,
                                      const std::string& interestingPath,
-                                     const CandidateV2& candidate, double deltaR_Limit)
+                                     const CandidateV2& candidate, const double deltaR_Limit, const bool isCrossTrigger)
       {
           if(candidate.GetFinalStateDaughters().size()) {
               for(const auto& daughter : candidate.GetFinalStateDaughters()) {
-                  if(!SyncTreeProducer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit))
+                  if(isCrossTrigger &&
+                          !SyncTreeProducer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit,isCrossTrigger))
                       return false;
+                  if(!isCrossTrigger &&
+                          SyncTreeProducer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit,isCrossTrigger))
+                      return true;
               }
               return true;
           }
@@ -165,16 +173,22 @@ class SyncTreeProducer : public edm::EDAnalyzer {
               triggerObject.unpackPathNames(names);
               TLorentzVector triggerObjectMomentum;
               triggerObjectMomentum.SetPtEtaPhiM(triggerObject.pt(), triggerObject.eta(), triggerObject.phi(), triggerObject.mass());
-//              std::cout<<"\t Trigger obj :   "<<triggerObjectMomentum<<std::endl;
-              for (unsigned n = 0; n < triggerObject.pathNames(false).size(); ++n){
-                  const std::string& objectMatchedPath = triggerObject.pathNames(false).at(n);
+
+              for (unsigned n = 0; n < triggerObject.pathNames(true).size(); ++n){
+                  const std::string& objectMatchedPath = triggerObject.pathNames(true).at(n);
 
                   const size_t found = objectMatchedPath.find(interestingPath);
-                  bool isBoth = triggerObject.hasPathName( triggerObject.pathNames(false).at(n), true, true );
-//                  if (found != std::string::npos) std::cout << "\t\t Path Names :   " << objectMatchedPath
-//                            << (isBoth ? "  PASS\n" : "  fail (or not run) -- ")
-//                            << triggerObject.pathLastFilterAccepted.at(n) << "\n"
-//                            << "\t\t Candidato :  " << candidate.GetMomentum() << std::endl;
+                  bool isBoth = triggerObject.hasPathName( triggerObject.pathNames(true).at(n), true, true );
+                  if (found != std::string::npos) {
+                      std::cout<<"\t Trigger obj :   "<<triggerObjectMomentum<<std::endl;
+                      std::cout << "\t\t Path Names :   " << objectMatchedPath
+                            << (isBoth ? "  PASS\n " : "  fail (or not run) --\n ")
+                            //<< triggerObject.pathLastFilterAccepted.at(n) << "\n"
+                            << "\t\t Candidato :  " << candidate.GetMomentum()
+                            <<"\t\t DeltaR = "<< triggerObjectMomentum.DeltaR(candidate.GetMomentum())
+                            <<(triggerObjectMomentum.DeltaR(candidate.GetMomentum()) < deltaR_Limit ? "\t Matched":"\t NotMatched")
+                            << std::endl;
+                  }
                   if (found != std::string::npos && isBoth &&
                           triggerObjectMomentum.DeltaR(candidate.GetMomentum()) < deltaR_Limit)
                       return true;
@@ -381,8 +395,8 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
         tmp_muon.eta = muon.eta();
 
-        const CandidateV2Ptr tmp_candidate(new CandidateV2(muon));
-        muonCollection.push_back(tmp_candidate);
+        const CandidateV2Ptr muon_candidate(new CandidateV2(muon));
+        muonCollection.push_back(muon_candidate);
         patMuonsVector.push_back(muon);
         muonsV.push_back(tmp_muon);
 
@@ -390,11 +404,27 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       cut(muonCollection.size(),"muons");
 
-      const CandidateV2Ptr candidate(new CandidateV2(patMuonsVector.at(0)));
-      const pat::Muon& patMuon = candidate->GetNtupleObject<pat::Muon>();
+//      const CandidateV2Ptr candidate(new CandidateV2(patMuonsVector.at(0)));
+//      const pat::Muon& patMuon = candidate->GetNtupleObject<pat::Muon>();
+      std::cout<< "=========================================================================== \n"
+               << "\t Run "<<iEvent.id().run()<<"\t Lumi "<<iEvent.id().luminosityBlock()
+                  << "\t Event "<<iEvent.id().event()<<std::endl;
 
-     std::cout<< "Muons Checks ------------------------------------------------ \n"
-                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n"
+      std::cout<< "Muons Checks ------------------------------------------------ \n";
+      for(auto &muon : muonCollection){
+          const pat::Muon& patMuon = muon->GetNtupleObject<pat::Muon>();
+          double iso_mu = (patMuon.pfIsolationR03().sumChargedHadronPt + std::max(
+                            patMuon.pfIsolationR03().sumNeutralHadronEt +
+                            patMuon.pfIsolationR03().sumPhotonEt -
+                            0.5 * patMuon.pfIsolationR03().sumPUPt, 0.0)) / patMuon.pt();
+          std::cout << "\t Candidate Muon :  "<< muon->GetMomentum()<<"\n"
+                       << "\t Pat Muon  Casted  "<<&patMuon<<" :  "<< patMuon.pt() << "  "<< patMuon.eta()
+                       << "  Iso : "<< iso_mu<<"\n";
+
+      }
+
+//     std::cout<< "Muons Checks ------------------------------------------------ \n"
+//                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n"
 
       //                 << "MuonVector  :  "<< (muonCollection.at(0))->GetMomentum()<<"\n";
 //                  <<"Eta vettore  :  "<< patMuonsVector.at(0).eta() <<  "  type of muon:  "<<
@@ -404,7 +434,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 //                    << typeid(pat::Muon).hash_code() << "\n"
 //                    <<"   type ntuple  :  "<< typeid(muonsV.at(0)).name() << std::endl;
 
-                        <<"Pat Muon  Casted  :  "<< patMuon.pt() << "  "<< patMuon.eta() << "\n";
+//                        <<"Pat Muon  Casted  :  "<< patMuon.pt() << "  "<< patMuon.eta() << "\n";
 
       for (const pat::Tau &tau : *taus){
 
@@ -420,7 +450,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                fabs(packedLeadTauCand->dz()) < tauID::dz )) continue;
 
 
-        const CandidateV2Ptr tmp_candidate(new CandidateV2(tau));
+        const CandidateV2Ptr tau_candidate(new CandidateV2(tau));
         tmp_tau.eta = tau.eta();
 //      tmp_tau.pt  = tau.pt();
 //      tmp_tau.phi = tau.phi();
@@ -429,20 +459,43 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
  //     tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
  //     tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
 
-        tauCollection.push_back(tmp_candidate);
+        tauCollection.push_back(tau_candidate);
           tausV.push_back(tmp_tau);
       }
 
     cut(tauCollection.size(),"taus");
 
+    std::cout<< "Taus Checks ------------------------------------------------ \n";
+    for(auto &tau : tauCollection){
+        const pat::Tau& patTau = tau->GetNtupleObject<pat::Tau>();
+        double iso_tau = patTau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        std::cout << "\t Candidate Tau :  "<< tau->GetMomentum()<<"\n"
+                     << "\t Pat Tau  Casted  "<<&patTau<<" : "<< patTau.pt() << "  "<< patTau.eta()
+                     << "  Iso : "<< iso_tau<<"\n";
+
+    }
+
+
     auto higgses = FindCompatibleObjects(muonCollection,tauCollection,DeltaR_betweenSignalObjects,CandidateV2::Type::Higgs,
-                                         "h_mu_tau");
+                                         "H_mu_tau");
 
     cut(higgses.size(),"mu_tau");
 
-    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,MuTau::trigger::hltPathMC,false);
+    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,MuTau::trigger::hltPathMC,false,false);
 
     cut(triggeredHiggses.size(),"triggerMatch");
+
+    for (auto hig : triggeredHiggses){
+        std::cout<<" Triggered Pair : "<< hig->GetMomentum() <<std::endl;
+    }
+
+    auto higgs = SelectSemiLeptonicHiggs(triggeredHiggses);
+
+
+    std::cout<< "\n\t CHOOSEN -->  " << higgs->GetMomentum() <<std::endl;
+
+    std::cout<< "=========================================================================== \n";
+
 
 //  syncTree.pt_1() = tausV.at(0).pt;
 //  syncTree.Fill();
@@ -584,15 +637,18 @@ void SyncTreeProducer::findFirstNonElectronMother(const reco::Candidate *particl
 
 analysis::CandidateV2PtrVector SyncTreeProducer::FindCompatibleObjects(const CandidateV2PtrVector& objects1,
                                                    const CandidateV2PtrVector& objects2,
-                                                   double minDeltaR, CandidateV2::Type type, const std::string& hist_name)
+                                                   double minDeltaR, CandidateV2::Type type, const std::string& hist_name,
+                                                   int expectedCharge)
     {
         CandidateV2PtrVector result;
         for(const CandidateV2Ptr& object1 : objects1) {
             for(const CandidateV2Ptr& object2 : objects2) {
+                std::cout << " \t\t\t  Pair DeltaR = "
+                          << object2->GetMomentum().DeltaR(object1->GetMomentum()) << std::endl;
                 if(object2->GetMomentum().DeltaR(object1->GetMomentum()) > minDeltaR) {
                     const CandidateV2Ptr candidate(new CandidateV2(type, object1, object2));
-//                    if (expectedCharge != CandidateV2::UnknownCharge() && candidate->GetCharge() != expectedCharge)
-//                        continue;
+                    if (expectedCharge != CandidateV2::UnknownCharge() && candidate->GetCharge() != expectedCharge)
+                        continue;
                     result.push_back(candidate);
                     GetAnaData().Mass(hist_name).Fill(candidate->GetMomentum().M(),1);
                 }
@@ -606,48 +662,84 @@ analysis::CandidateV2PtrVector SyncTreeProducer::FindCompatibleObjects(const Can
 CandidateV2PtrVector SyncTreeProducer::ApplyTriggerMatch(pat::TriggerObjectStandAloneCollection triggerObjects,
                                                          const CandidateV2PtrVector& higgses, const edm::TriggerNames &names,
                                                          const std::set<std::string>& hltPaths,
-                                                         bool useStandardTriggerMatch)
+                                                         bool useStandardTriggerMatch, const bool isCrossTrigger)
 {
     CandidateV2PtrVector triggeredHiggses;
     for (const auto& higgs : higgses){
+
+        std::cout<<"### Higgs Pair :  \n"<<higgs->GetMomentum()<<std::endl;
         if(!useStandardTriggerMatch && SyncTreeProducer::HaveTriggerMatched(triggerObjects,names, hltPaths, *higgs,
-                                                                    cuts::Htautau_2015::DeltaR_triggerMatch))
+                                                                    cuts::Htautau_2015::DeltaR_triggerMatch, isCrossTrigger)){
+            std::cout<<"### Pushed Back "<<std::endl;
             triggeredHiggses.push_back(higgs);
+        }
 //        if (useStandardTriggerMatch && SyncTreeProducer::HaveTriggerMatched(hltPaths, *higgs))
 //            triggeredHiggses.push_back(higgs);
     }
     return triggeredHiggses;
 }
 
-//CandidateV2Ptr SelectSemiLeptonicHiggs(const CandidateV2PtrVector& higgses)
-//{
-//    if(!higgses.size())
-//        throw std::runtime_error("no available higgs candidate to select");
-//    const auto higgsSelector = [&] (const CandidateV2Ptr& first, const CandidateV2Ptr& second) -> bool
-//    {
-//        const pat::Muon& first_muon = first->GetDaughter(analysis::CandidateV2::Type::Muon)->GetNtupleObject<pat::Muon>();
-//        const pat::tau&  first_tau  = first->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
-//        const pat::Muon& second_muon = second->GetDaughter(analysis::CandidateV2::Type::Muon)->GetNtupleObject<pat::Muon>();
-//        const pat::tau&  second_tau  = second->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
+CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& higgses)
+{
+    if(!higgses.size())
+        throw std::runtime_error("no available higgs candidate to select");
+    if(higgses.size()==1) return higgses.front();
 
-//        double iso1 = (first_muon.pfIsolationR03().sumChargedHadronPt + max(
-//                          first_muon.pfIsolationR03().sumNeutralHadronEt +
-//                          first_muon.pfIsolationR03().sumPhotonEt -
-//                          0.5 * first_muon.pfIsolationR03().sumPUPt, 0.0)) / first_muon.pt();
-//        double iso2 = (second_muon.pfIsolationR03().sumChargedHadronPt + max(
-//                          second_muon.pfIsolationR03().sumNeutralHadronEt +
-//                          second_muon.pfIsolationR03().sumPhotonEt -
-//                          0.5 * second_muon.pfIsolationR03().sumPUPt, 0.0)) / second_muon.pt();
+    const auto higgsSelector = [&] (const CandidateV2Ptr& first, const CandidateV2Ptr& second) -> bool
+    {
+        const pat::Muon& first_muon = first->GetDaughter(analysis::CandidateV2::Type::Muon)->GetNtupleObject<pat::Muon>();
+        const pat::Tau&  first_tau  = first->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
+        const pat::Muon& second_muon = second->GetDaughter(analysis::CandidateV2::Type::Muon)->GetNtupleObject<pat::Muon>();
+        const pat::Tau&  second_tau  = second->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
 
-//        if(iso1<iso2) return true;
-//        if(iso1==iso2){
-//            if(first_muon.pt()>)
+        double iso_mu1 = (first_muon.pfIsolationR03().sumChargedHadronPt + std::max(
+                          first_muon.pfIsolationR03().sumNeutralHadronEt +
+                          first_muon.pfIsolationR03().sumPhotonEt -
+                          0.5 * first_muon.pfIsolationR03().sumPUPt, 0.0)) / first_muon.pt();
+        double iso_mu2 = (second_muon.pfIsolationR03().sumChargedHadronPt + std::max(
+                          second_muon.pfIsolationR03().sumNeutralHadronEt +
+                          second_muon.pfIsolationR03().sumPhotonEt -
+                          0.5 * second_muon.pfIsolationR03().sumPUPt, 0.0)) / second_muon.pt();
+
+        double iso_tau1 = first_tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        double iso_tau2 = second_tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+
+        std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_mu1<<"  IsoMu2 = "<<iso_mu2
+                  << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
+        std::cout << " PtMu1 = "<<first_muon.pt()<<"  PtMu2 = "<<second_muon.pt()
+                  << "  PtTau1 = "<<first_tau.pt()<<"  PtTau2 = "<<second_tau.pt()<<std::endl;
+
+        if (!iso_mu1 || !iso_mu2 ){
+            std::cout << "\t 1st Muon \t ChargedHadronPt = "<<first_muon.pfIsolationR03().sumChargedHadronPt
+                      << "\t NeutralHadronEt = "<<first_muon.pfIsolationR03().sumNeutralHadronEt
+                      << "\t PhotonEt = "<<first_muon.pfIsolationR03().sumPhotonEt
+                      << "\t PUPt = "<<first_muon.pfIsolationR03().sumPUPt<<std::endl;
+            std::cout << "\t 2nd Muon \t ChargedHadronPt = "<<second_muon.pfIsolationR03().sumChargedHadronPt
+                      << "\t NeutralHadronEt = "<<second_muon.pfIsolationR03().sumNeutralHadronEt
+                      << "\t PhotonEt = "<<second_muon.pfIsolationR03().sumPhotonEt
+                      << "\t PUPt = "<<second_muon.pfIsolationR03().sumPUPt<<std::endl;
+        }
+        bool muon = (iso_mu1 < iso_mu2) ||
+                    ((iso_mu1 == iso_mu2) ? first_muon.pt() > second_muon.pt() : false);
+        bool tau = (iso_tau1 < iso_tau2) ||
+                    ((iso_tau1 == iso_tau2) ? first_tau.pt() > second_tau.pt() : false);
+
+//        if ( &first_muon==&second_muon ){
+//            if ( &first_tau==&second_tau ) return true;
+//            return tau;
 //        }
 
-//        return first_sumPt < second_sumPt;
-//    };
-//    return *std::sort(higgses.begin(), higgses.end(), higgsSelector) ;
-//}
+//        if (!muon) return tau;
+//        return muon;
+        if ( &first_muon!=&second_muon ) return muon;
+        if ( &first_tau!=&second_tau ) return tau;
+
+        throw analysis::exception("not found a good criteria for best tau pair");
+    };
+
+    std::sort(higgses.begin(), higgses.end(), higgsSelector) ;
+    return higgses.front();
+}
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(SyncTreeProducer);
