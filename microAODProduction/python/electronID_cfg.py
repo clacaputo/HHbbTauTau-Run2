@@ -33,7 +33,7 @@ inputFilesMiniAOD = cms.untracked.vstring(
     '/store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/0260F225-7614-E511-A79F-00A0D1EE8EB4.root',
     )
 
-personalFileMiniAOD = cms.untracked.vstring('file:allBranches_Signal_miniV2.root',)
+personalFileMiniAOD = cms.untracked.vstring('file:skimBranches_Signal_miniV2.root',)
 
 # Set up input/output depending on the format
 # You can list here either AOD or miniAOD files, but not both types mixed

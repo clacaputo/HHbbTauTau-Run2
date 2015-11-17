@@ -89,8 +89,24 @@ public:
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
 
 };
-}
 
+struct SelectionResultsV2_mutau : public SelectionResultsV2 {
+    finalState::bbMuTaujet muTau_MC;
+    CandidateV2Ptr GetMuon() const { return higgs->GetDaughter(CandidateV2::Type::Muon); }
+    CandidateV2Ptr GetTau() const { return higgs->GetDaughter(CandidateV2::Type::Tau); }
+
+    virtual CandidateV2Ptr GetLeg(size_t leg_id) const override
+    {
+        if(leg_id == 1) return GetMuon();
+        if(leg_id == 2) return GetTau();
+        throw exception("Bad leg id = ") << leg_id;
+    }
+
+    //virtual const finalState::bbTauTau& GetFinalStateMC() const override { return muTau_MC; }
+
+};
+
+}
 //
 // class declaration
 //
@@ -118,6 +134,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
 
       analysis::SyncAnalyzerData& GetAnaData() { return anaData; }
+
+      void FillSyncTree(const edm::Event&);
 
       analysis::CandidateV2PtrVector FindCompatibleObjects(const CandidateV2PtrVector& objects1,
                                                            const CandidateV2PtrVector& objects2,
@@ -226,6 +244,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 
       ntuple::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
+      SelectionResultsV2_mutau selection;
+      VertexV2Ptr primaryVertex;
 };
 
 //
@@ -247,7 +267,7 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
   syncTree(&edm::Service<TFileService>()->file(),false),
-  anaData("cuts.root")
+  anaData("BeforCut.root")
 {
 //  genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
 //    (iConfig.getParameter<edm::InputTag>
@@ -279,17 +299,15 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   cuts::Cutter cut(&GetAnaData().Selection("events"));
 
   // Save global info right away
-  syncTree.run()  = iEvent.id().run();
-  syncTree.lumi() = iEvent.id().luminosityBlock();
-  syncTree.evt()  = iEvent.id().event();
+
 
   //Get collection
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
   edm::Handle<edm::View<pat::Muon> > muons;
   iEvent.getByToken(muonsMiniAODToken_, muons);
-  edm::Handle<edm::View<reco::Vertex> > vertexes;
-  iEvent.getByToken(vtxMiniAODToken_, vertexes);
+  edm::Handle<edm::View<reco::Vertex> > vertices;
+  iEvent.getByToken(vtxMiniAODToken_, vertices);
   edm::Handle<edm::TriggerResults> triggerBits;
   iEvent.getByToken(triggerBits_, triggerBits);
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
@@ -372,12 +390,23 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       cut(triggerFired,"trigger");
 
-      const auto PV = (*vertexes).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
+      const auto PV = (*vertices).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
                                             //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
                                             //Es. edm::View<int> gestisce int semplici, vector<int>, set<int> etc.
-      cut(PV.isNonnull(),"vertex");
 
-      //std::cout<<" Vertici    --->   "<<PV->ndof()<<std::endl;
+     // auto primVtx = *(PV.get());
+      for (const reco::Vertex& vertex: *vertices){
+
+//          if (!(vertex.ndof() < cuts::Htautau_2015::vertex::ndf &&
+//                std::abs(vertex.z()) < cuts::Htautau_2015::vertex::z )) continue;
+          VertexV2Ptr tmp_Vertex(new VertexV2(vertex));
+          selection.vertices.push_back(tmp_Vertex);
+      }
+
+      cut(selection.vertices.size(),"vertex");
+
+      primaryVertex = selection.GetPrimaryVertex();
+      std::cout<<" Vertici    --->   "<<selection.vertices.size()<<std::endl;
 
       std::vector<pat::Muon> patMuonsVector;
       CandidateV2PtrVector muonCollection, tauCollection;
@@ -404,8 +433,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       cut(muonCollection.size(),"muons");
 
-//      const CandidateV2Ptr candidate(new CandidateV2(patMuonsVector.at(0)));
-//      const pat::Muon& patMuon = candidate->GetNtupleObject<pat::Muon>();
       std::cout<< "=========================================================================== \n"
                << "\t Run "<<iEvent.id().run()<<"\t Lumi "<<iEvent.id().luminosityBlock()
                   << "\t Event "<<iEvent.id().event()<<std::endl;
@@ -423,19 +450,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       }
 
-//     std::cout<< "Muons Checks ------------------------------------------------ \n"
-//                  << "Candidate Muon :  "<< candidate->GetMomentum()<<"\n"
-
-      //                 << "MuonVector  :  "<< (muonCollection.at(0))->GetMomentum()<<"\n";
-//                  <<"Eta vettore  :  "<< patMuonsVector.at(0).eta() <<  "  type of muon:  "<<
-//                    typeid(patMuonsVector.at(0)).name() << "\n"
-//                    << typeid(pat::Muon).name() << "\n"
-//                    << "Hash COde : "<<typeid(patMuonsVector.at(0)).hash_code() <<"\n"
-//                    << typeid(pat::Muon).hash_code() << "\n"
-//                    <<"   type ntuple  :  "<< typeid(muonsV.at(0)).name() << std::endl;
-
-//                        <<"Pat Muon  Casted  :  "<< patMuon.pt() << "  "<< patMuon.eta() << "\n";
-
+      //Taus selections
       for (const pat::Tau &tau : *taus){
 
           ntuple::Tau tmp_tau;
@@ -489,20 +504,20 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         std::cout<<" Triggered Pair : "<< hig->GetMomentum() <<std::endl;
     }
 
-    auto higgs = SelectSemiLeptonicHiggs(triggeredHiggses);
+    selection.higgs = SelectSemiLeptonicHiggs(triggeredHiggses);
+    auto higgs = selection.higgs;
 
 
     std::cout<< "\n\t CHOOSEN -->  " << higgs->GetMomentum() <<std::endl;
+//    const pat::Tau&  tauBuono  = higgs->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
+//    std::cout<< "\n\t Tau Iso-->  " << tauBuono.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") <<std::endl;
 
     std::cout<< "=========================================================================== \n";
 
-
-//  syncTree.pt_1() = tausV.at(0).pt;
-//  syncTree.Fill();
-
+    FillSyncTree(iEvent);
   }catch(cuts::cut_failed&){}
-
   GetAnaData().Selection("events").fill_selection();
+  selection.vertices.clear();
 
 }
 
@@ -720,9 +735,9 @@ CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& h
                       << "\t PUPt = "<<second_muon.pfIsolationR03().sumPUPt<<std::endl;
         }
         bool muon = (iso_mu1 < iso_mu2) ||
-                    ((iso_mu1 == iso_mu2) ? first_muon.pt() > second_muon.pt() : false);
+                    ((iso_mu1 == iso_mu2) ? first_muon.pt() >= second_muon.pt() : false);
         bool tau = (iso_tau1 < iso_tau2) ||
-                    ((iso_tau1 == iso_tau2) ? first_tau.pt() > second_tau.pt() : false);
+                    ((iso_tau1 == iso_tau2) ? first_tau.pt() >= second_tau.pt() : false);
 
 //        if ( &first_muon==&second_muon ){
 //            if ( &first_tau==&second_tau ) return true;
@@ -740,6 +755,234 @@ CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& h
     std::sort(higgses.begin(), higgses.end(), higgsSelector) ;
     return higgses.front();
 }
+
+void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
+    {
+        //static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+
+        // Event
+        std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
+        std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
+                <<" Event = "<<iEvent.id().event()<<std::endl;
+        syncTree.run()  = iEvent.id().run();
+        syncTree.lumi() = iEvent.id().luminosityBlock();
+        syncTree.evt()  = iEvent.id().event();
+//        syncTree->eventType() = static_cast<int>(selection.eventType);
+//        syncTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
+
+        syncTree.npv() = selection.vertices.size();
+//        if (config.ApplyPUreweight()){
+//            const size_t bxIndex = tools::find_index(event->eventInfo().bunchCrossing, 0);
+//            if(bxIndex >= event->eventInfo().bunchCrossing.size())
+//                throw std::runtime_error("in-time BX not found");
+//            syncTree->npu() = event->eventInfo().trueNInt.at(bxIndex);
+//        }
+
+        // Weights
+//        syncTree->puweight() = GetEventWeights().GetPileUpWeight();
+//        syncTree->trigweight_1() = GetEventWeights().GetTriggerWeight(1);
+//        syncTree->trigweight_2() = GetEventWeights().GetTriggerWeight(2);
+//        syncTree->idweight_1() = GetEventWeights().GetIdWeight(1);
+//        syncTree->idweight_2() = GetEventWeights().GetIdWeight(2);
+//        syncTree->isoweight_1() = GetEventWeights().GetIsoWeight(1);
+//        syncTree->isoweight_2() = GetEventWeights().GetIsoWeight(2);
+//        syncTree->fakeweight_1() = GetEventWeights().GetFakeWeight(1); //
+//        syncTree->fakeweight_2() = GetEventWeights().GetFakeWeight(2); // e -> tau fake rate * jet -> tau fake rate
+//        syncTree->weight() = GetEventWeights().GetFullWeight();
+//        syncTree->embeddedWeight() = GetEventWeights().GetEmbeddedWeight();
+//        syncTree->decayModeWeight_1() = GetEventWeights().GetDecayModeWeight(1);
+//        syncTree->decayModeWeight_2() = GetEventWeights().GetDecayModeWeight(2);
+
+        // HTT candidate
+        syncTree.mvis() = selection.higgs->GetMomentum().M();
+//        syncTree->m_sv_vegas() = selection.svfitResults.fit_vegas.has_valid_mass
+//                ? selection.svfitResults.fit_vegas.mass : default_value;
+//        syncTree->m_sv_MC() = selection.svfitResults.fit_mc.has_valid_mass
+//                ? selection.svfitResults.fit_mc.mass : default_value;
+//        syncTree->pt_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
+//                ? selection.svfitResults.fit_mc.momentum.Pt() : default_value;
+//        syncTree->eta_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
+//                ? selection.svfitResults.fit_mc.momentum.Eta() : default_value;
+//        syncTree->phi_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
+//                ? selection.svfitResults.fit_mc.momentum.Phi() : default_value;
+
+        syncTree.pt_tt()  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
+
+        // Kinematic fit
+//        syncTree->kinfit_bb_tt_mass() = selection.kinfitResults.mass;
+//        syncTree->kinfit_bb_tt_convergence() = selection.kinfitResults.convergence;
+//        syncTree->kinfit_bb_tt_chi2() = selection.kinfitResults.chi2;
+//        syncTree->kinfit_bb_tt_pull_balance() = selection.kinfitResults.pull_balance;
+
+        // Hhh generator info candidate
+//        if(selection.GetFinalStateMC().resonance) {
+//            const TLorentzVector& momentum = selection.GetFinalStateMC().resonance->momentum;
+//            syncTree->pt_resonance_MC()    = momentum.Pt()  ;
+//            syncTree->eta_resonance_MC()   = momentum.Eta() ;
+//            syncTree->phi_resonance_MC()   = momentum.Phi() ;
+//            syncTree->mass_resonance_MC()  = momentum.M()   ;
+//            syncTree->pdgId_resonance_MC() = selection.GetFinalStateMC().resonance->pdg.ToInteger();
+//        } else {
+//            syncTree->pt_resonance_MC()    = default_value  ;
+//            syncTree->eta_resonance_MC()   = default_value  ;
+//            syncTree->phi_resonance_MC()   = default_value  ;
+//            syncTree->mass_resonance_MC()  = default_value  ;
+//            syncTree->pdgId_resonance_MC() = particles::NONEXISTENT.RawCode() ;
+//        }
+
+//        if(selection.GetFinalStateMC().Higgs_TauTau) {
+//            const TLorentzVector& momentum = selection.GetFinalStateMC().Higgs_TauTau->momentum;
+//            syncTree->pt_Htt_MC()    = momentum.Pt()  ;
+//            syncTree->eta_Htt_MC()   = momentum.Eta() ;
+//            syncTree->phi_Htt_MC()   = momentum.Phi() ;
+//            syncTree->mass_Htt_MC()  = momentum.M()   ;
+//            syncTree->pdgId_Htt_MC() = selection.GetFinalStateMC().Higgs_TauTau->pdg.ToInteger();
+//        } else {
+//            syncTree->pt_Htt_MC()    = default_value  ;
+//            syncTree->eta_Htt_MC()   = default_value  ;
+//            syncTree->phi_Htt_MC()   = default_value  ;
+//            syncTree->mass_Htt_MC()  = default_value  ;
+//            syncTree->pdgId_Htt_MC() = particles::NONEXISTENT.RawCode() ;
+//        }
+
+//        if(selection.GetFinalStateMC().Higgs_BB) {
+//            const TLorentzVector& momentum = selection.GetFinalStateMC().Higgs_BB->momentum;
+//            syncTree->pt_Hbb_MC()    = momentum.Pt()  ;
+//            syncTree->eta_Hbb_MC()   = momentum.Eta() ;
+//            syncTree->phi_Hbb_MC()   = momentum.Phi() ;
+//            syncTree->mass_Hbb_MC()  = momentum.M()   ;
+//            syncTree->pdgId_Hbb_MC() = selection.GetFinalStateMC().Higgs_BB->pdg.ToInteger();
+//        } else {
+//            syncTree->pt_Hbb_MC()    = default_value  ;
+//            syncTree->eta_Hbb_MC()   = default_value  ;
+//            syncTree->phi_Hbb_MC()   = default_value  ;
+//            syncTree->mass_Hbb_MC()  = default_value  ;
+//            syncTree->pdgId_Hbb_MC() = particles::NONEXISTENT.RawCode()  ;
+//        }
+
+//        // needs to be filles with NUP!
+//        // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
+//        if (config.MaxTreeVersion() == 2)
+//            syncTree->n_extraJets_MC() = event->genEvent().nup;
+//        else
+//            syncTree->n_extraJets_MC() = default_value;
+
+        // MET
+//        const TLorentzVector MET_momentum = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,
+//                                                                       selection.MET_with_recoil_corrections.phi, 0);
+//        syncTree->pt_tt_MET() = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()
+//                                 + MET_momentum).Pt();
+
+//        syncTree->met() = selection.pfMET.pt;
+//        syncTree->metphi() = selection.pfMET.phi;
+//        syncTree->mvamet() = MET_momentum.Pt();
+//        syncTree->mvametphi() = MET_momentum.Phi();
+//        //syncTree->pzetavis();
+//        //syncTree->pzetamiss();
+//        if(selection.pfMET.significanceMatrix.size()) {
+//            const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(selection.pfMET.significanceMatrix);
+//            syncTree->metcov00() = metPFcov[0][0];
+//            syncTree->metcov01() = metPFcov[0][1];
+//            syncTree->metcov10() = metPFcov[1][0];
+//            syncTree->metcov11() = metPFcov[1][1];
+//        }
+//        const TMatrixD metMVAcov =
+//                ntuple::VectorToSignificanceMatrix(selection.MET_with_recoil_corrections.significanceMatrix);
+//        syncTree->mvacov00() = metMVAcov[0][0];
+//        syncTree->mvacov01() = metMVAcov[0][1];
+//        syncTree->mvacov10() = metMVAcov[1][0];
+//        syncTree->mvacov11() = metMVAcov[1][1];
+
+        // Leg 1, lepton
+        syncTree.pt_1()     = selection.GetLeg(1)->GetMomentum().Pt();
+        syncTree.phi_1()    = selection.GetLeg(1)->GetMomentum().Phi();
+        syncTree.eta_1()    = selection.GetLeg(1)->GetMomentum().Eta();
+        syncTree.m_1()      = selection.GetLeg(1)->GetMomentum().M();
+//        syncTree.energy_1() = selection.GetLeg(1)->GetMomentum().E();
+        syncTree.q_1()      = selection.GetLeg(1)->GetCharge();
+  //      syncTree->mt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
+        syncTree.d0_1()     = Calculate_dxy(selection.GetLeg(1)->GetVertexPosition(), primaryVertex->GetPosition(),
+                                             selection.GetLeg(1)->GetMomentum());
+        syncTree.dZ_1()     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+
+        // Leg 2, tau
+        syncTree.pt_2()     = selection.GetLeg(2)->GetMomentum().Pt();
+        syncTree.phi_2()    = selection.GetLeg(2)->GetMomentum().Phi();
+        syncTree.eta_2()    = selection.GetLeg(2)->GetMomentum().Eta();
+        syncTree.m_2()      = selection.GetLeg(2)->GetMomentum().M();
+//        syncTree->energy_2() = selection.GetLeg(2)->GetMomentum().E();
+        syncTree.q_2()      = selection.GetLeg(2)->GetCharge();
+//        syncTree->mt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
+        syncTree.d0_2()     = Calculate_dxy(selection.GetLeg(2)->GetVertexPosition(), primaryVertex->GetPosition(),
+                                             selection.GetLeg(2)->GetMomentum());
+        syncTree.dZ_2()     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+
+        // RM: for the three channels, mt, et, tt this leg is always a tau
+        const pat::Tau& ntuple_tau_leg2 = selection.GetLeg(2)->GetNtupleObject<pat::Tau>();
+//        syncTree.decayMode_2()                                = ntuple_tau_leg2.decayMode;
+        syncTree.iso_2()                  = ntuple_tau_leg2.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+//        syncTree.againstElectronMVA3raw_2() = ntuple_tau_leg2.tauID("");
+//        syncTree->againstElectronMediumMVA_2() = ntuple_tau_leg2.againstElectronMediumMVA3;
+//        syncTree->againstElectronTightMVA_2() = ntuple_tau_leg2.againstElectronTightMVA3;
+//        syncTree->againstElectronVTightMVA_2() = ntuple_tau_leg2.againstElectronVTightMVA3;
+
+//        syncTree->againstElectronLoose_2()                     = ntuple_tau_leg2.againstElectronLoose  ;
+//        syncTree->againstElectronMedium_2()                    = ntuple_tau_leg2.againstElectronMedium ;
+//        syncTree->againstElectronTight_2()                     = ntuple_tau_leg2.againstElectronTight  ;
+        syncTree.againstMuonLoose2_2()                         = ntuple_tau_leg2.tauID("againstMuonLoose3");
+//        syncTree->againstMuonMedium_2()                        = ntuple_tau_leg2.againstMuonMedium     ;
+        syncTree.againstMuonTight2_2()                          = ntuple_tau_leg2.tauID("againstMuonTight3");
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+//        syncTree->againstElectronMVA3raw_2()                   = ntuple_tau_leg2.againstElectronMVA3raw;
+        syncTree.byIsolationMVA2raw_2()                       = ntuple_tau_leg2.tauID("byIsolationMVA3oldDMwLTraw");
+
+        // Jets
+//        syncTree->njets()     = selection.jets.size();
+//        syncTree->njetspt20() = selection.jetsPt20.size();
+//        syncTree->nBjets()    = selection.bjets_all.size();
+//        syncTree->nBjets_retagged()    = selection.retagged_bjets.size();
+
+
+//        for (const CandidatePtr& jet : selection.jets){
+//            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();
+//            syncTree->pt_jets().push_back(jet->GetMomentum().Pt());
+//            syncTree->eta_jets().push_back(jet->GetMomentum().Eta());
+//            syncTree->phi_jets().push_back(jet->GetMomentum().Phi());
+//            syncTree->ptraw_jets().push_back(ntuple_jet.pt_raw);
+//            syncTree->ptunc_jets().push_back(ntuple_jet.pt_raw);//to put uncertainties -> put pt_raw only to compile
+//            syncTree->mva_jets().push_back(ntuple_jet.puIdMVA);
+//            syncTree->passPU_jets().push_back(ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits));
+//        }
+
+//        for (const CandidatePtr& jet : selection.bjets_all) {
+//            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();
+
+//            syncTree->pt_Bjets()      .push_back( jet->GetMomentum().Pt() );
+//            syncTree->eta_Bjets()     .push_back( jet->GetMomentum().Eta() );
+//            syncTree->phi_Bjets()     .push_back( jet->GetMomentum().Phi() );
+//            syncTree->energy_Bjets()  .push_back( jet->GetMomentum().E() );
+//            syncTree->chargedHadronEF_Bjets().push_back( ntuple_jet.chargedHadronEnergyFraction );
+//            syncTree->neutralHadronEF_Bjets()  .push_back( ntuple_jet.neutralHadronEnergyFraction );
+//            syncTree->photonEF_Bjets()         .push_back( ntuple_jet.photonEnergyFraction );
+//            syncTree->muonEF_Bjets()  .push_back( ntuple_jet.muonEnergyFraction );
+//            syncTree->electronEF_Bjets()  .push_back( ntuple_jet.electronEnergyFraction );
+//            syncTree->csv_Bjets()     .push_back( ntuple_jet.combinedSecondaryVertexBJetTags );
+//            // inspect the flavour of the gen jet
+//            const VisibleGenObjectVector matched_bjets_MC = FindMatchedObjects(jet->GetMomentum(),
+//                                                                               selection.GetFinalStateMC().b_jets,
+//                                                                               cuts::DeltaR_MC_Match);
+//            const bool isJet_MC_Bjet = matched_bjets_MC.size() != 0;
+//            const bool isJet_MC_Bjet_withLeptonicDecay = isJet_MC_Bjet
+//                    && matched_bjets_MC.at(0).finalStateChargedLeptons.size() != 0;
+//            syncTree->isBjet_MC_Bjet()                  .push_back( isJet_MC_Bjet );
+//            syncTree->isBjet_MC_Bjet_withLeptonicDecay().push_back( isJet_MC_Bjet_withLeptonicDecay );
+//        }
+
+//        syncTree->x_PV() = primaryVertex->GetPosition().x();
+//        syncTree->y_PV() = primaryVertex->GetPosition().y();
+//        syncTree->z_PV() = primaryVertex->GetPosition().z();
+        syncTree.Fill();
+    }
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(SyncTreeProducer);

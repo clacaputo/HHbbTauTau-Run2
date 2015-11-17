@@ -31,6 +31,8 @@
 #include "../../AnalysisBase/include/FlatTree.h"
 #include "../../AnalysisBase/include/MCfinalState.h"
 
+#include "../../microAODProduction/interface/Candidate.h"
+
 #include "SVfit.h"
 #include "KinFit.h"
 
@@ -83,5 +85,26 @@ struct SelectionResults {
     VertexPtr GetPrimaryVertex() const { return vertices.front(); }
     virtual CandidatePtr GetLeg(size_t leg_id) const = 0;
     virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
+};
+
+struct SelectionResultsV2 {
+    static constexpr size_t NumberOfLegs = 2;
+
+    virtual ~SelectionResultsV2() {}
+    CandidateV2Ptr higgs;
+    //sv_fit::CombinedFitResults svfitResults;
+    //kinematic_fit::four_body::FitResults kinfitResults;
+    CandidateV2PtrVector jets;
+    CandidateV2PtrVector jetsPt20;
+    CandidateV2PtrVector bjets_all;
+    CandidateV2PtrVector retagged_bjets;
+    VertexV2PtrVector vertices;
+    ntuple::MET pfMET;
+    //ntuple::MET MET_with_recoil_corrections;
+    //ntuple::EventType eventType;
+
+    VertexV2Ptr GetPrimaryVertex() const { return vertices.front(); }
+    virtual CandidateV2Ptr GetLeg(size_t leg_id) const = 0;
+    //virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
 };
 } // namespace analysis

@@ -198,29 +198,29 @@ private:
     }
 };
 
-//class Vertex;
-//typedef std::shared_ptr<const Vertex> VertexPtr;
-//typedef std::vector<VertexPtr> VertexPtrVector;
+class VertexV2;
+typedef std::shared_ptr<const VertexV2> VertexV2Ptr;
+typedef std::vector<VertexV2Ptr> VertexV2PtrVector;
 
-//class Vertex {
-//public:
-//    Vertex(const ntuple::Vertex& _ntupleObject)
-//        : sumPtSquared(_ntupleObject.sumPtSquared), ndf(_ntupleObject.ndf),
-//          position(_ntupleObject.x, _ntupleObject.y, _ntupleObject.z), ntupleObject(&_ntupleObject) {}
+class VertexV2 {
+public:
+    VertexV2(const reco::Vertex& _ntupleObject)
+        : ndf(_ntupleObject.ndof()),
+          position(_ntupleObject.x(), _ntupleObject.y(), _ntupleObject.z()), ntupleObject(&_ntupleObject) {}
 
-//    bool operator< (const Vertex& other) const { return ntupleObject < other.ntupleObject; }
+    bool operator< (const VertexV2& other) const { return ntupleObject < other.ntupleObject; }
 
-//    double GetSumPtSquared() const { return sumPtSquared; }
-//    unsigned GetNdf() const { return ndf; }
-//    const TVector3& GetPosition() const { return position; }
-//    const ntuple::Vertex& GetNtupleObject() const { return *ntupleObject; }
+    //double GetSumPtSquared() const { return sumPtSquared; }
+    unsigned GetNdf() const { return ndf; }
+    const TVector3& GetPosition() const { return position; }
+    const reco::Vertex& GetNtupleObject() const { return *ntupleObject; }
 
-//private:
-//    double sumPtSquared;
-//    unsigned ndf;
-//    TVector3 position;
-//    const ntuple::Vertex* ntupleObject;
-//};
+private:
+   // double sumPtSquared;
+    unsigned ndf;
+    TVector3 position;
+    const reco::Vertex* ntupleObject;
+};
 
 namespace detail {
 const std::map<CandidateV2::Type, std::string> CandidateV2TypeNameMap = {
