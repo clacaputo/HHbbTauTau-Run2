@@ -207,6 +207,8 @@ TreeProduction/python/TriggerObjectBlock_cfi.py
 TreeProduction/python/VertexBlock_cfi.py
 TreeProduction/python/treeProducer.py
 microAODProduction/BuildFile.xml
+microAODProduction/batchSub/Submitter
+microAODProduction/batchSub/batchSubmission.pbs
 microAODProduction/crab/crab3_cfg.py
 microAODProduction/data/dummy.txt
 microAODProduction/interface/PatVertex.h
@@ -225,6 +227,7 @@ microAODProduction/python/electronID_cfg.py
 microAODProduction/python/electronsAnalyzer_cfi.py
 microAODProduction/python/miniAOD_skim.py
 microAODProduction/python/miniAOD_skim_EleID.py
+microAODProduction/python/syncTreeProducer_cfg.py
 microAODProduction/src/classes.h
 microAODProduction/src/classes_def.xml
 env.sh

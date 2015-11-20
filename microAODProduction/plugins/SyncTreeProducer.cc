@@ -37,6 +37,7 @@
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 
 #include "DataFormats/PatCandidates/interface/Jet.h"
 
@@ -62,12 +63,12 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 //HHbbTauTau Framework
-#include "../../AnalysisBase/include/SyncTree.h"
 #include "../../TreeProduction/interface/Tau.h"
 #include "../../TreeProduction/interface/Muon.h"
 #include "../../AnalysisBase/include/AnalyzerData.h"
 #include "../../AnalysisBase/include/CutTools.h"
 #include "../interface/Candidate.h"
+#include "../interface/SyncTree.h"
 #include "../../Analysis/include/SelectionResults.h"
 
 #include "../interface/Htautau_2015.h"
@@ -238,11 +239,12 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetToken tausMiniAODToken_;
       edm::EDGetToken muonsMiniAODToken_;
       edm::EDGetToken vtxMiniAODToken_;
+      edm::EDGetToken pfMETAODToken_;
       edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
       edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
       edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
 
-      ntuple::SyncTree syncTree;
+      Run2::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
       SelectionResultsV2_mutau selection;
       VertexV2Ptr primaryVertex;
@@ -263,6 +265,7 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
   muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
   vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
+  pfMETAODToken_(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
   triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
@@ -308,15 +311,14 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByToken(muonsMiniAODToken_, muons);
   edm::Handle<edm::View<reco::Vertex> > vertices;
   iEvent.getByToken(vtxMiniAODToken_, vertices);
+  edm::Handle<edm::View<pat::MET> > pfMETs;
+  iEvent.getByToken(pfMETAODToken_, pfMETs);
   edm::Handle<edm::TriggerResults> triggerBits;
   iEvent.getByToken(triggerBits_, triggerBits);
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
   iEvent.getByToken(triggerPrescales_, triggerPrescales);
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
   iEvent.getByToken(triggerObjects_, triggerObjects);
-
-
-
 
    /*   std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
           for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
@@ -513,6 +515,9 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 //    std::cout<< "\n\t Tau Iso-->  " << tauBuono.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") <<std::endl;
 
     std::cout<< "=========================================================================== \n";
+
+        MissingETPtr pfMET(new MissingET((*pfMETs)[0]));
+        selection.pfMET = pfMET;
 
     FillSyncTree(iEvent);
   }catch(cuts::cut_failed&){}
@@ -758,7 +763,7 @@ CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& h
 
 void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
     {
-        //static const float default_value = ntuple::DefaultFloatFillValueForFlatTree();
+//        static const float default_value = Run2::DefaultFloatFillValueForFlatTree();
 
         // Event
         std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
@@ -795,6 +800,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 
         // HTT candidate
         syncTree.mvis() = selection.higgs->GetMomentum().M();
+        syncTree.pt_tt()  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
 //        syncTree->m_sv_vegas() = selection.svfitResults.fit_vegas.has_valid_mass
 //                ? selection.svfitResults.fit_vegas.mass : default_value;
 //        syncTree->m_sv_MC() = selection.svfitResults.fit_mc.has_valid_mass
@@ -806,66 +812,13 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 //        syncTree->phi_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
 //                ? selection.svfitResults.fit_mc.momentum.Phi() : default_value;
 
-        syncTree.pt_tt()  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
-
         // Kinematic fit
 //        syncTree->kinfit_bb_tt_mass() = selection.kinfitResults.mass;
 //        syncTree->kinfit_bb_tt_convergence() = selection.kinfitResults.convergence;
 //        syncTree->kinfit_bb_tt_chi2() = selection.kinfitResults.chi2;
 //        syncTree->kinfit_bb_tt_pull_balance() = selection.kinfitResults.pull_balance;
 
-        // Hhh generator info candidate
-//        if(selection.GetFinalStateMC().resonance) {
-//            const TLorentzVector& momentum = selection.GetFinalStateMC().resonance->momentum;
-//            syncTree->pt_resonance_MC()    = momentum.Pt()  ;
-//            syncTree->eta_resonance_MC()   = momentum.Eta() ;
-//            syncTree->phi_resonance_MC()   = momentum.Phi() ;
-//            syncTree->mass_resonance_MC()  = momentum.M()   ;
-//            syncTree->pdgId_resonance_MC() = selection.GetFinalStateMC().resonance->pdg.ToInteger();
-//        } else {
-//            syncTree->pt_resonance_MC()    = default_value  ;
-//            syncTree->eta_resonance_MC()   = default_value  ;
-//            syncTree->phi_resonance_MC()   = default_value  ;
-//            syncTree->mass_resonance_MC()  = default_value  ;
-//            syncTree->pdgId_resonance_MC() = particles::NONEXISTENT.RawCode() ;
-//        }
 
-//        if(selection.GetFinalStateMC().Higgs_TauTau) {
-//            const TLorentzVector& momentum = selection.GetFinalStateMC().Higgs_TauTau->momentum;
-//            syncTree->pt_Htt_MC()    = momentum.Pt()  ;
-//            syncTree->eta_Htt_MC()   = momentum.Eta() ;
-//            syncTree->phi_Htt_MC()   = momentum.Phi() ;
-//            syncTree->mass_Htt_MC()  = momentum.M()   ;
-//            syncTree->pdgId_Htt_MC() = selection.GetFinalStateMC().Higgs_TauTau->pdg.ToInteger();
-//        } else {
-//            syncTree->pt_Htt_MC()    = default_value  ;
-//            syncTree->eta_Htt_MC()   = default_value  ;
-//            syncTree->phi_Htt_MC()   = default_value  ;
-//            syncTree->mass_Htt_MC()  = default_value  ;
-//            syncTree->pdgId_Htt_MC() = particles::NONEXISTENT.RawCode() ;
-//        }
-
-//        if(selection.GetFinalStateMC().Higgs_BB) {
-//            const TLorentzVector& momentum = selection.GetFinalStateMC().Higgs_BB->momentum;
-//            syncTree->pt_Hbb_MC()    = momentum.Pt()  ;
-//            syncTree->eta_Hbb_MC()   = momentum.Eta() ;
-//            syncTree->phi_Hbb_MC()   = momentum.Phi() ;
-//            syncTree->mass_Hbb_MC()  = momentum.M()   ;
-//            syncTree->pdgId_Hbb_MC() = selection.GetFinalStateMC().Higgs_BB->pdg.ToInteger();
-//        } else {
-//            syncTree->pt_Hbb_MC()    = default_value  ;
-//            syncTree->eta_Hbb_MC()   = default_value  ;
-//            syncTree->phi_Hbb_MC()   = default_value  ;
-//            syncTree->mass_Hbb_MC()  = default_value  ;
-//            syncTree->pdgId_Hbb_MC() = particles::NONEXISTENT.RawCode()  ;
-//        }
-
-//        // needs to be filles with NUP!
-//        // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauTauAnalyzer.py#L51
-//        if (config.MaxTreeVersion() == 2)
-//            syncTree->n_extraJets_MC() = event->genEvent().nup;
-//        else
-//            syncTree->n_extraJets_MC() = default_value;
 
         // MET
 //        const TLorentzVector MET_momentum = MakeLorentzVectorPtEtaPhiM(selection.MET_with_recoil_corrections.pt, 0,
@@ -873,18 +826,16 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 //        syncTree->pt_tt_MET() = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()
 //                                 + MET_momentum).Pt();
 
-//        syncTree->met() = selection.pfMET.pt;
-//        syncTree->metphi() = selection.pfMET.phi;
+        syncTree.met() = selection.pfMET->Pt();
+        syncTree.metphi() = selection.pfMET->Phi();
+        syncTree.isPFMET() = selection.pfMET->isPFMET();
 //        syncTree->mvamet() = MET_momentum.Pt();
 //        syncTree->mvametphi() = MET_momentum.Phi();
 //        //syncTree->pzetavis();
 //        //syncTree->pzetamiss();
 //        if(selection.pfMET.significanceMatrix.size()) {
 //            const TMatrixD metPFcov = ntuple::VectorToSignificanceMatrix(selection.pfMET.significanceMatrix);
-//            syncTree->metcov00() = metPFcov[0][0];
-//            syncTree->metcov01() = metPFcov[0][1];
-//            syncTree->metcov10() = metPFcov[1][0];
-//            syncTree->metcov11() = metPFcov[1][1];
+//
 //        }
 //        const TMatrixD metMVAcov =
 //                ntuple::VectorToSignificanceMatrix(selection.MET_with_recoil_corrections.significanceMatrix);
@@ -894,47 +845,57 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 //        syncTree->mvacov11() = metMVAcov[1][1];
 
         // Leg 1, lepton
+        const pat::Muon& patMuon = selection.GetLeg(1)->GetNtupleObject<pat::Muon>();
+
         syncTree.pt_1()     = selection.GetLeg(1)->GetMomentum().Pt();
         syncTree.phi_1()    = selection.GetLeg(1)->GetMomentum().Phi();
         syncTree.eta_1()    = selection.GetLeg(1)->GetMomentum().Eta();
         syncTree.m_1()      = selection.GetLeg(1)->GetMomentum().M();
-//        syncTree.energy_1() = selection.GetLeg(1)->GetMomentum().E();
         syncTree.q_1()      = selection.GetLeg(1)->GetCharge();
-  //      syncTree->mt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
+        syncTree.mt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
         syncTree.d0_1()     = Calculate_dxy(selection.GetLeg(1)->GetVertexPosition(), primaryVertex->GetPosition(),
                                              selection.GetLeg(1)->GetMomentum());
         syncTree.dZ_1()     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
+        syncTree.iso_1()    = (patMuon.pfIsolationR03().sumChargedHadronPt + std::max(
+                                   patMuon.pfIsolationR03().sumNeutralHadronEt +
+                                   patMuon.pfIsolationR03().sumPhotonEt -
+                                   0.5 * patMuon.pfIsolationR03().sumPUPt, 0.0)) / patMuon.pt();
 
+        syncTree.id_e_mva_nt_loose_1() = Run2::DefaultFillValueForSyncTree();
+
+        syncTree.gen_match_1() = true;
         // Leg 2, tau
+        const pat::Tau& patTau = selection.GetLeg(2)->GetNtupleObject<pat::Tau>();
+
         syncTree.pt_2()     = selection.GetLeg(2)->GetMomentum().Pt();
         syncTree.phi_2()    = selection.GetLeg(2)->GetMomentum().Phi();
         syncTree.eta_2()    = selection.GetLeg(2)->GetMomentum().Eta();
         syncTree.m_2()      = selection.GetLeg(2)->GetMomentum().M();
-//        syncTree->energy_2() = selection.GetLeg(2)->GetMomentum().E();
         syncTree.q_2()      = selection.GetLeg(2)->GetCharge();
-//        syncTree->mt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), MET_momentum.Pt(), MET_momentum.Phi());
+        syncTree.mt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
         syncTree.d0_2()     = Calculate_dxy(selection.GetLeg(2)->GetVertexPosition(), primaryVertex->GetPosition(),
                                              selection.GetLeg(2)->GetMomentum());
         syncTree.dZ_2()     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
 
-        // RM: for the three channels, mt, et, tt this leg is always a tau
-        const pat::Tau& ntuple_tau_leg2 = selection.GetLeg(2)->GetNtupleObject<pat::Tau>();
-//        syncTree.decayMode_2()                                = ntuple_tau_leg2.decayMode;
-        syncTree.iso_2()                  = ntuple_tau_leg2.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-//        syncTree.againstElectronMVA3raw_2() = ntuple_tau_leg2.tauID("");
-//        syncTree->againstElectronMediumMVA_2() = ntuple_tau_leg2.againstElectronMediumMVA3;
-//        syncTree->againstElectronTightMVA_2() = ntuple_tau_leg2.againstElectronTightMVA3;
-//        syncTree->againstElectronVTightMVA_2() = ntuple_tau_leg2.againstElectronVTightMVA3;
+        syncTree.id_e_mva_nt_loose_1() = Run2::DefaultFillValueForSyncTree();
+        syncTree.gen_match_2() = true;
 
-//        syncTree->againstElectronLoose_2()                     = ntuple_tau_leg2.againstElectronLoose  ;
-//        syncTree->againstElectronMedium_2()                    = ntuple_tau_leg2.againstElectronMedium ;
-//        syncTree->againstElectronTight_2()                     = ntuple_tau_leg2.againstElectronTight  ;
-        syncTree.againstMuonLoose2_2()                         = ntuple_tau_leg2.tauID("againstMuonLoose3");
-//        syncTree->againstMuonMedium_2()                        = ntuple_tau_leg2.againstMuonMedium     ;
-        syncTree.againstMuonTight2_2()                          = ntuple_tau_leg2.tauID("againstMuonTight3");
-        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = ntuple_tau_leg2.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-//        syncTree->againstElectronMVA3raw_2()                   = ntuple_tau_leg2.againstElectronMVA3raw;
-        syncTree.byIsolationMVA2raw_2()                       = ntuple_tau_leg2.tauID("byIsolationMVA3oldDMwLTraw");
+        syncTree.againstElectronLooseMVA5_2()   = patTau.tauID("againstElectronLooseMVA5");
+        syncTree.againstElectronMediumMVA5_2()  = patTau.tauID("againstElectronMediumMVA5");
+        syncTree.againstElectronTightMVA5_2()   = patTau.tauID("againstElectronTightMVA5");
+        syncTree.againstElectronVLooseMVA5_2()  = patTau.tauID("againstElectronVLooseMVA5");
+        syncTree.againstElectronVTightMVA5_2()  = patTau.tauID("againstElectronVTightMVA5");
+
+        syncTree.againstMuonLoose3_2()          = patTau.tauID("againstMuonLoose3");
+        syncTree.againstMuonTight3_2()          = patTau.tauID("againstMuonTight3");
+
+        syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = patTau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        syncTree.byIsolationMVA3newDMwLTraw_2()               = patTau.tauID("byIsolationMVA3newDMwLTraw");
+        syncTree.byIsolationMVA3oldDMwLTraw_2()               = patTau.tauID("byIsolationMVA3oldDMwLTraw");
+        syncTree.byIsolationMVA3newDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
+        syncTree.byIsolationMVA3oldDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
+
+        syncTree.decayModeFindingOldDMs_2() = patTau.tauID("decayModeFinding");
 
         // Jets
 //        syncTree->njets()     = selection.jets.size();

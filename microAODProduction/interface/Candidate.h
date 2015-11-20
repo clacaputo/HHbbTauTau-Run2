@@ -222,6 +222,43 @@ private:
     const reco::Vertex* ntupleObject;
 };
 
+class MissingET;
+typedef std::shared_ptr<const MissingET> MissingETPtr;
+
+class MissingET {
+public:
+    template<typename METtype>
+    explicit MissingET(const METtype& _ntupleObject)
+        :pt(_ntupleObject.pt()), phi(_ntupleObject.phi()), isPF(_ntupleObject.isPFMET()),
+          ntupleObject(&_ntupleObject) {
+        CovVector = METCovMatrixToVector(_ntupleObject.getSignificanceMatrix());
+    }
+
+    //const reco::RecoCandidate& GetNtupleObject() const { return *ntupleObject; }
+    const double& Pt() const  { return pt; }
+    const double& Phi() const { return phi; }
+    const bool&   isPFMET() const { return isPF; }
+    const std::vector<Float_t> GetCovVector() const {return CovVector;}
+
+private:
+    double pt;
+    double phi;
+    bool isPF;
+    const reco::RecoCandidate* ntupleObject;
+    //Matrix
+    std::vector<Float_t> CovVector;
+private:
+    std::vector<Float_t> METCovMatrixToVector (const reco::METCovMatrix& m){
+        std::vector<Float_t> v(4);
+        v[0] = m[0][0]; // xx
+        std::cout<<"\t xx = "<< m[0][0] << "\t xy = "<<m[0][1] << "\n\t yx = "<< m[1][0] << "\t yy = "<< m[1][1] <<std::endl;
+        v[1] = m[0][1]; // xy
+        v[2] = m[1][0]; // yx
+        v[3] = m[1][1]; // yy
+        return v;
+    }
+};
+
 namespace detail {
 const std::map<CandidateV2::Type, std::string> CandidateV2TypeNameMap = {
     { CandidateV2::Type::Electron, "electron" }, { CandidateV2::Type::Muon, "muon" }, { CandidateV2::Type::Tau, "tau" },

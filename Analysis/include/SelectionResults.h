@@ -99,7 +99,7 @@ struct SelectionResultsV2 {
     CandidateV2PtrVector bjets_all;
     CandidateV2PtrVector retagged_bjets;
     VertexV2PtrVector vertices;
-    ntuple::MET pfMET;
+    MissingETPtr pfMET;
     //ntuple::MET MET_with_recoil_corrections;
     //ntuple::EventType eventType;
 

@@ -85,12 +85,13 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  # Objects specific to MiniAOD format
                                  #
 
-                                 tauSrc  = cms.InputTag("slimmedTaus"),
-                                 muonSrc    = cms.InputTag("slimmedMuons"),
-                                 vtxSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                 bits = cms.InputTag("TriggerResults","","HLT"),
+                                 tauSrc    = cms.InputTag("slimmedTaus"),
+                                 muonSrc   = cms.InputTag("slimmedMuons"),
+                                 vtxSrc    = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                 pfMETSrc  = cms.InputTag("slimmedMETs"),
+                                 bits      = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
-                                 objects = cms.InputTag("selectedPatTrigger"),
+                                 objects   = cms.InputTag("selectedPatTrigger"),
                                 )
 
 process.ntupler = cms.EDAnalyzer('ElectronsIDAnalyzer',
