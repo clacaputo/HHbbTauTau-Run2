@@ -39,11 +39,12 @@ COMPILE_FLAGS=$3
 NAME=$4
 ARGS=("$@")
 
-if [ "$CMSSW_BASE/" = "/" ] ; then
-    SCRIPT_PATH="."
-else
-    SCRIPT_PATH="$CMSSW_BASE/src/HHbbTauTau"
-fi
+#if [ "$CMSSW_BASE/" = "/" ] ; then
+#    SCRIPT_PATH="."
+#else
+#    SCRIPT_PATH="$CMSSW_BASE/src/HHbbTauTau"
+#fi
+SCRIPT_PATH="."
 
 if [ ! -d "$SCRIPT_RUN_PATH" ] ; then
     echo "ERROR: script run path $SCRIPT_RUN_PATH doesn't exist"

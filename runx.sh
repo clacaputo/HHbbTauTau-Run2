@@ -25,11 +25,13 @@
 
 NAME=$1
 
-if [ "$CMSSW_BASE/" = "/" ] ; then
-    SCRIPT_PATH="."
-else
-    SCRIPT_PATH="$CMSSW_BASE/src/HHbbTauTau"
-fi
+#if [ "$CMSSW_BASE/" = "/" ] ; then
+#    SCRIPT_PATH="."
+#else
+#    SCRIPT_PATH="$CMSSW_BASE/src/HHbbTauTau"
+#fi
+
+SCRIPT_PATH="."
 
 SCRIPT_RUN_PATH="$SCRIPT_PATH/run"
 mkdir -p $SCRIPT_RUN_PATH
