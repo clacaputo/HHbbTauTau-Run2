@@ -156,10 +156,10 @@ public:
 
         //SV Fit variables
         drawHistos("m_vis", 20, 0, 200);
-//        drawHistos("m_sv", 30, 0, 300);
-//        drawHistos("pt_sv", 100, 0, 100);
-//        drawHistos("eta_sv", 60, -3, 3);
-//        drawHistos("phi_sv", 30, -3.5, 3.5);
+        drawHistos("m_sv", 30, 0, 300);
+        drawHistos("pt_sv", 100, 0, 100);
+        drawHistos("eta_sv", 60, -3, 3);
+        drawHistos("phi_sv", 30, -3.5, 3.5);
 //        drawHistos("m_sv_Up", 60, 0, 300);
 //        drawHistos("m_sv_Down", 60, 0, 300);
 
@@ -216,12 +216,12 @@ public:
 //        //Met related variables
 
         drawHistos("met", 20, 0, 200);
-          isLastDraw = true;
         drawHistos("metphi", 30, -3.5, 3.5);
-////        drawHistos("metcov00", 40, 0, 1000);
-////        drawHistos("metcov01", 40, 0, 1000);
-////        drawHistos("metcov10", 40, 0, 1000);
-////        drawHistos("metcov11", 40, 0, 1000);
+        drawHistos("metcov00", 40, 0, 1000);
+        drawHistos("metcov01", 40, 0, 1000);
+        drawHistos("metcov10", 40, 0, 1000);
+          isLastDraw = true;
+        drawHistos("metcov11", 40, 0, 1000);
 
 ////        drawHistos("mvamet", 20, 0, 200);
 ////        drawHistos("mvametphi", 30, -3.5, 3.5);
