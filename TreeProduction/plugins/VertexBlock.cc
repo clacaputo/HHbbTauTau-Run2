@@ -31,9 +31,9 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
+#include "../../PatProduction/interface/PatVertex.h"
 
-#include "HHbbTauTau/TreeProduction/interface/Vertex.h"
+#include "../../TreeProduction/interface/Vertex.h"
 
 class VertexBlock : public edm::EDAnalyzer {
 public:

@@ -49,8 +49,8 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "PhysicsTools/SelectorUtils/interface/PFJetIDSelectionFunctor.h"
  
-#include "HHbbTauTau/TreeProduction/interface/Jet.h"
-#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
+#include "../../TreeProduction/interface/Jet.h"
+#include "../../TreeProduction/interface/TriggerTools.h"
 
 #define SIMPLE_VAR(type, name) jetTree.name() = jet.bDiscriminator(#name);
 

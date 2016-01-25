@@ -27,6 +27,22 @@ options.register ('includeSim',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.bool,
                   "Include Sim. Default: False")
+options.register ('isData',
+                  False,
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.bool,
+                  "Include Sim. Default: False")
+options.register ('runOnCrab', 
+                  False,
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.bool,
+                  "Indicates if script will be executed on CRAB.")
+options.register ('sampleType', 
+                  'Spring15MC',
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+
 
 options.parseArguments()
 
@@ -37,31 +53,40 @@ options.parseArguments()
 from HHbbTauTau.RunTools.readFileList import *
 
 process.source = cms.Source ("PoolSource", fileNames = cms.untracked.vstring())
-readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
 
-
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
+if not options.runOnCrab:
+  readFileList(process.source.fileNames, options.fileList, options.fileNamePrefix)
+  process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
 
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 
 #-----------------------------
 # Geometry
 #-----------------------------
-process.load("Configuration.StandardSequences.Geometry_cff")
+process.load("Configuration.Geometry.GeometryIdeal_cff")
 #-----------------------------
 # Magnetic Field
 #-----------------------------
 process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
 #-------------
-# Global Tag
+# Global Tag and Lumi
 #-------------
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+import FWCore.PythonUtilities.LumiList as LumiList
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 # NOTE: the pick the right global tag!
 #    for PHYS14 scenario PU4bx50 : global tag is ???
 #    for PHYS14 scenario PU20bx25: global tag is PHYS14_25_V1
 #  as a rule, find the global tag in the DAS under the Configs for given dataset
 #process.GlobalTag.globaltag = 'PHYS14_25_V1::All'
-process.GlobalTag.globaltag = options.globalTag
+
+runOnData = options.isData
+
+if runOnData:
+  process.GlobalTag.globaltag = '74X_dataRun2_reMiniAOD_v1'
+  process.source.lumisToProcess = LumiList.LumiList(filename = '/cmshome/caputo/HH_bbTauTau/Run2/CMSSW_7_4_12_patch4/src/HHbbTauTau/microAODProduction/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt').getVLuminosityBlockRange()
+else:
+  process.GlobalTag.globaltag = '74X_mcRun2_asymptotic_v4'
 
 #-------------
 # Output ROOT file
@@ -78,13 +103,16 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  # Objects specific to MiniAOD format
                                  #
 
-                                 tauSrc    = cms.InputTag("slimmedTaus"),
-                                 muonSrc   = cms.InputTag("slimmedMuons"),
-                                 vtxSrc    = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                 pfMETSrc  = cms.InputTag("slimmedMETs"),
-                                 bits      = cms.InputTag("TriggerResults","","HLT"),
-                                 prescales = cms.InputTag("patTrigger"),
-                                 objects   = cms.InputTag("selectedPatTrigger"),
-                                )
+                                 tauSrc     = cms.InputTag("slimmedTaus"),
+                                 muonSrc    = cms.InputTag("slimmedMuons"),
+                                 vtxSrc     = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                 jetSrc     = cms.InputTag("slimmedJets"),
+                                 ##pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
+                                 pfMETSrc   = cms.InputTag("slimmedMETs"),
+                                 bits       = cms.InputTag("TriggerResults","","HLT"),
+                                 prescales  = cms.InputTag("patTrigger"),
+                                 objects    = cms.InputTag("selectedPatTrigger"),
+                                 sampleType = cms.string(options.sampleType),
+				)
 
 process.p = cms.Path(process.synctupler)

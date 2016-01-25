@@ -51,9 +51,9 @@
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
-#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
-#include "HHbbTauTau/TreeProduction/interface/Electron.h"
-#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
+#include "../../PatProduction/interface/PatVertex.h"
+#include "../../TreeProduction/interface/Electron.h"
+#include "../../TreeProduction/interface/TriggerTools.h"
 
 class ElectronBlock : public edm::EDAnalyzer {
 public:

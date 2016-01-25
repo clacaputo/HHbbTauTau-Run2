@@ -71,7 +71,7 @@ private:
     CandidateV2PtrVector daughters;
     CandidateV2PtrVector finalStateDaughters;
 
-    const reco::RecoCandidate* ntupleObject;
+    const reco::LeafCandidate* ntupleObject;
 
 public:
     template<typename PATObject>
@@ -82,10 +82,10 @@ public:
         ntupleObject(&_ntupleObject)
     {}
 
-//    explicit CandidateV2(const ntuple::Jet& _ntupleObject) :
-//        type(TypeFromNtupleObject(_ntupleObject)), charge(UnknownCharge()),
-//        momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt, _ntupleObject.eta, _ntupleObject.phi, _ntupleObject.mass)),
-//        has_vertexPosition(false), ntupleObject(&_ntupleObject) {}
+    explicit CandidateV2(const pat::Jet& _ntupleObject) :
+        type(TypeFromNtupleObject<pat::Jet>(_ntupleObject)), charge(UnknownCharge()),
+        momentum(MakeLorentzVectorPtEtaPhiM(_ntupleObject.pt(), _ntupleObject.eta(), _ntupleObject.phi(), _ntupleObject.mass())),
+        has_vertexPosition(false), ntupleObject(&_ntupleObject) {}
 
     CandidateV2(Type _type, const CandidateV2Ptr& daughter1, const CandidateV2Ptr& daughter2)
         : type(_type), has_vertexPosition(false), ntupleObject(nullptr)
@@ -228,20 +228,41 @@ typedef std::shared_ptr<const MissingET> MissingETPtr;
 class MissingET {
 public:
     template<typename METtype>
-    explicit MissingET(const METtype& _ntupleObject)
+    MissingET(const METtype& _ntupleObject)
         :pt(_ntupleObject.pt()), phi(_ntupleObject.phi()), isPF(_ntupleObject.isPFMET()),
           ntupleObject(&_ntupleObject) {
         CovVector = METCovMatrixToVector(_ntupleObject.getSignificanceMatrix());
     }
 
+    template<typename METtype>
+    MissingET(const METtype& _ntupleObject,const reco::METCovMatrix& m)
+        :pt(_ntupleObject.pt()), px(_ntupleObject.px()), py(_ntupleObject.py()),
+         phi(_ntupleObject.phi()), isPF(_ntupleObject.isPFMET()), ntupleObject(&_ntupleObject) {
+        CovVector = METCovMatrixToVector(m);
+    }
+
     //const reco::RecoCandidate& GetNtupleObject() const { return *ntupleObject; }
     const double& Pt() const  { return pt; }
+    const double& Px() const  { return px; }
+    const double& Py() const  { return py; }
     const double& Phi() const { return phi; }
     const bool&   isPFMET() const { return isPF; }
     const std::vector<Float_t> GetCovVector() const {return CovVector;}
 
+    template<typename METtype>
+    const METtype& GetNtupleObject() const
+    {
+        if(!ntupleObject)
+            throw exception("Candidate is not associated with antuple object.");
+        const METtype* casted = dynamic_cast<const METtype*>(ntupleObject);
+        if(!casted)
+            throw exception("Bad ntuple object type '") << typeid(METtype).name() << "'. Expected '"
+                                                        << typeid(ntupleObject).name() << "'.";
+        return *casted;
+    }
+
 private:
-    double pt;
+    double pt,px,py;
     double phi;
     bool isPF;
     const reco::RecoCandidate* ntupleObject;
@@ -251,7 +272,7 @@ private:
     std::vector<Float_t> METCovMatrixToVector (const reco::METCovMatrix& m){
         std::vector<Float_t> v(4);
         v[0] = m[0][0]; // xx
-        std::cout<<"\t xx = "<< m[0][0] << "\t xy = "<<m[0][1] << "\n\t yx = "<< m[1][0] << "\t yy = "<< m[1][1] <<std::endl;
+        //std::cout<<"\t xx = "<< m[0][0] << "\t xy = "<<m[0][1] << "\n\t yx = "<< m[1][0] << "\t yy = "<< m[1][1] <<std::endl;
         v[1] = m[0][1]; // xy
         v[2] = m[1][0]; // yx
         v[3] = m[1][1]; // yy

@@ -39,7 +39,7 @@
 #include "SimDataFormats/GeneratorProducts/interface/GenFilterInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 
-#include "HHbbTauTau/TreeProduction/interface/GenEvent.h"
+#include "../../TreeProduction/interface/GenEvent.h"
 
 class GenEventBlock : public edm::EDAnalyzer {
 public:

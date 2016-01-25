@@ -48,10 +48,10 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Provenance/interface/EventID.h"
 
-#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
+#include "../../PatProduction/interface/PatVertex.h"
 
-#include "HHbbTauTau/TreeProduction/interface/Muon.h"
-#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
+#include "../../TreeProduction/interface/Muon.h"
+#include "../../TreeProduction/interface/TriggerTools.h"
 
 class MuonBlock : public edm::EDAnalyzer {
 public:

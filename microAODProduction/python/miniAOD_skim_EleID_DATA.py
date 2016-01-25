@@ -34,26 +34,17 @@ process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 
-process.GlobalTag = GlobalTag(process.GlobalTag, '74X_mcRun2_asymptotic_v4')
+process.GlobalTag = GlobalTag(process.GlobalTag, '74X_dataRun2_reMiniAOD_v1')
 
 ## Events to process
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
 
 
 inputSignal = cms.untracked.vstring(
-                '/store/mc/RunIISpring15DR74/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/10000/2CC6C6BD-5303-E511-9F70-0025905964CC.root')
-inputTTbar = cms.untracked.vstring(
-                '/store/mc/RunIISpring15DR74/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/022B08C4-C702-E511-9995-D4856459AC30.root')
-inputWJets = cms.untracked.vstring(
-                '/store/mc/RunIISpring15DR74/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/048FB1EE-33FD-E411-A2BA-0025905A6094.root')
-inputDY = cms.untracked.vstring(
-                '/store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/009D49A5-7314-E511-84EF-0025905A605E.root')
-inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD280.root")
-##inputSignal_v2 = cms.untracked.vstring(
-##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
-## Input files
+                '/store/data/Run2015D/SingleMuon/MINIAOD/PromptReco-v4/000/258/159/00000/6CA1C627-246C-E511-8A6A-02163E014147.root')
+
 process.source = cms.Source("PoolSource",
-    fileNames = inputSignal_v2
+    fileNames = inputSignal
 )
 
 ## Output file
@@ -61,34 +52,33 @@ from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
 
 ## 'keep recoGsfElectronCores_*_*_PAT',
 ## 'keep recoSuperClusters_*_*_PAT',
-## 'keep patJets_slimmedJetsPuppi__PAT',
+## 'keep patJets_slimmedJetsPuppi__RECO',
 
 skimmedBranches = cms.untracked.vstring(['drop *',
                                          'keep edmTriggerResults_*__HLT',
-                                         'keep edmTriggerResults_*__PAT',
-                                         'keep PileupSummaryInfos_addPileupInfo__HLT',
-                                         'keep PileupSummaryInfos_slimmedAddPileupInfo__PAT',
                                          'keep double_*__RECO',
-                                         'keep recoBeamSpot_offlineBeamSpot__RECO',
                                          'keep *_electronMVAValueMapProducer_*_USER', ## Value Map with the electrons ID MVA values
-                                         'keep floatedmValueMap_offlineSlimmedPrimaryVertices__PAT',
-                                         'keep patPackedTriggerPrescales_patTrigger__PAT',
-                                         'keep patElectrons_slimmedElectrons__PAT',
-                                         'keep patJets_*__PAT',
-                                         'keep patMETs_*__PAT', ## MET
-                                         'keep patMuons_slimmedMuons__PAT',
-                                         'keep patPackedCandidates_packedPFCandidates__PAT',
-                                         'keep patPackedGenParticles_packedGenParticles__PAT',
-                                         'keep patTaus_slimmedTaus__PAT',
-                                         'keep patTriggerObjectStandAlones_selectedPatTrigger__PAT',
-                                         'keep recoGenJets_slimmedGenJets__PAT',
-                                         'keep recoGenParticles_prunedGenParticles__PAT',
-                                         'keep recoVertexs_offlineSlimmedPrimaryVertices__PAT',
-                                         'keep recoVertexCompositePtrCandidates_slimmedSecondaryVertices__PAT',
+                                         'keep floatedmValueMap_offlineSlimmedPrimaryVertices__RECO',
+                                         'keep patPackedTriggerPrescales_patTrigger__RECO',
+                                         'keep patElectrons_slimmedElectrons__RECO',
+                                         'keep patJets_*__RECO',
+                                         'keep patMETs_*__RECO', ## MET
+                                         'keep patMuons_slimmedMuons__RECO',
+                                         'keep patPackedCandidates_packedPFCandidates__RECO',
+                                         'keep patPackedGenParticles_packedGenParticles__RECO',
+                                         'keep patTaus_slimmedTaus__RECO',
+                                         'keep patTriggerObjectStandAlones_selectedPatTrigger__RECO',
+                                         'keep recoGenJets_slimmedGenJets__RECO',
+                                         'keep recoGenParticles_prunedGenParticles__RECO',
+                                         'keep recoVertexs_offlineSlimmedPrimaryVertices__RECO',
+                                         'keep recoVertexCompositePtrCandidates_slimmedSecondaryVertices__RECO',
                                          'keep *_l1extraParticles_*_*',
                                          'keep *_METSignificance_*_USER'])
 
 allBranches = cms.untracked.vstring(['keep *'])
+
+import FWCore.PythonUtilities.LumiList as LumiList
+process.source.lumisToProcess = LumiList.LumiList(filename = '/cmshome/caputo/HH_bbTauTau/Run2/CMSSW_7_4_12_patch4/src/HHbbTauTau/microAODProduction/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt').getVLuminosityBlockRange()
 
 process.load("RecoMET.METProducers.METSignificance_cfi")
 process.load("RecoMET.METProducers.METSignificanceParams_cfi")
@@ -121,13 +111,40 @@ my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElect
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 ##------------
+#-------------
+# Output ROOT file
+#-------------
+process.TFileService = cms.Service("TFileService", fileName = cms.string("syncTree.root") )
+
+#-------------
+# SyncTree Producer
+#-------------
+process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
+
+                                 genParticles = cms.InputTag("genParticles"),
+                                 #
+                                 # Objects specific to MiniAOD format
+                                 #
+
+                                 tauSrc    = cms.InputTag("slimmedTaus"),
+                                 muonSrc   = cms.InputTag("slimmedMuons"),
+                                 vtxSrc    = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                 jetSrc    = cms.InputTag("slimmedJets"),
+                                 ##pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
+                                 pfMETSrc  = cms.InputTag("slimmedMETs"),
+                                 bits      = cms.InputTag("TriggerResults","","HLT"),
+                                 prescales = cms.InputTag("patTrigger"),
+                                 objects   = cms.InputTag("selectedPatTrigger"),
+                                 sampleType = cms.string("Run2015C"),
+                                )
+
 
 process.p = cms.Path(
              #process.electronMVAValueMapProducer*
-             process.bbttSkim*
              process.METSignificance*
-             process.egmGsfElectronIDSequence
-
+             process.egmGsfElectronIDSequence*
+             process.bbttSkim*
+             process.synctupler
 	   	    )
 #process.p=cms.Path()
 
@@ -135,7 +152,7 @@ process.out = cms.OutputModule("PoolOutputModule",
     compressionLevel = cms.untracked.int32(4),
     compressionAlgorithm = cms.untracked.string('LZMA'),
     eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
-    fileName = cms.untracked.string('skimBranches_Signal_miniV2.root'),
+    fileName = cms.untracked.string('skimBranches_Data.root'),
     SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
     outputCommands = skimmedBranches,
     #outputCommands = tausBranch,

@@ -121,15 +121,40 @@ my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElect
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 ##------------
+#-------------
+# Output ROOT file
+#-------------
+process.TFileService = cms.Service("TFileService", fileName = cms.string("syncTree.root") )
+
+#-------------
+# SyncTree Producer
+#-------------
+process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
+
+                                 genParticles = cms.InputTag("genParticles"),
+                                 #
+                                 # Objects specific to MiniAOD format
+                                 #
+
+                                 tauSrc    = cms.InputTag("slimmedTaus"),
+                                 muonSrc   = cms.InputTag("slimmedMuons"),
+                                 vtxSrc    = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                 jetSrc    = cms.InputTag("slimmedJets"),
+                                 ##pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
+                                 pfMETSrc  = cms.InputTag("slimmedMETs"),
+                                 bits      = cms.InputTag("TriggerResults","","HLT"),
+                                 prescales = cms.InputTag("patTrigger"),
+                                 objects   = cms.InputTag("selectedPatTrigger"),
+                                )
 
 process.p = cms.Path(
              #process.electronMVAValueMapProducer*
-             process.bbttSkim*
              process.METSignificance*
-             process.egmGsfElectronIDSequence
-
+             process.egmGsfElectronIDSequence*
+             process.bbttSkim*
+	     process.synctupler
 	   	    )
-#process.p=cms.Path()
+
 
 process.out = cms.OutputModule("PoolOutputModule",
     compressionLevel = cms.untracked.int32(4),

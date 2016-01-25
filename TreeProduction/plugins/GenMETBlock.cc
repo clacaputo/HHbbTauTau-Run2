@@ -37,7 +37,7 @@
 #include "DataFormats/METReco/interface/GenMET.h"
 #include "DataFormats/METReco/interface/GenMETFwd.h"
 
-#include "HHbbTauTau/TreeProduction/interface/GenMET.h"
+#include "../../TreeProduction/interface/GenMET.h"
 
 class GenMETBlock : public edm::EDAnalyzer {
 public:

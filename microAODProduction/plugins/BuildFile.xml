@@ -23,6 +23,7 @@
 <use   name="MagneticField/Records"/>
 <use   name="JetMETCorrections/Objects"/>
 <use   name="JetMETCorrections/Algorithms"/>
+<use   name="TauAnalysis/SVfitStandalone"/>
 <use   name="boost"/>
 <use   name="rootcore"/>
 <use   name="rootrflx"/>

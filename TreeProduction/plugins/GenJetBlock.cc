@@ -37,7 +37,7 @@
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "HHbbTauTau/TreeProduction/interface/GenJet.h"
+#include "../../TreeProduction/interface/GenJet.h"
 
 class GenJetBlock : public edm::EDAnalyzer {
 public:

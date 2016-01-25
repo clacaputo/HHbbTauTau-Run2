@@ -46,6 +46,12 @@ static const std::map<DataSourceType,std::string> dataSourceTypeMap = {{DataSour
                                                                        {DataSourceType::Run2015C , "Run2015C"},
                                                                        {DataSourceType::Run2015D , "Run2015D"}};
 
+static const std::map<std::string, DataSourceType> stringToDataSourceTypeMap = {{ "Spring15MC", DataSourceType::Spring15MC},
+                                                                       { "Run2015B" , DataSourceType::Run2015B},
+                                                                       { "Run2015C" , DataSourceType::Run2015C},
+                                                                       { "Run2015D" , DataSourceType::Run2015D}};
+
+
 std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType) {
     s << dataSourceTypeMap.at(dataSourceType);
     return s;
@@ -66,8 +72,8 @@ const double DeltaR_triggerMatch = 0.5; // <
 namespace MuTau {
     namespace trigger {
         // https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2015  - Trigger Session
-        const std::map<analysis::DataSourceType , std::set<std::string>> hltPathMaps =
-                                    {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1"}},
+        const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
+                                    {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1_v1"}},
                                      {analysis::DataSourceType::Run2015B,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
                                                                             "HLT_IsoMu24_eta2p1_v2"}},
                                      {analysis::DataSourceType::Run2015C,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
@@ -75,6 +81,7 @@ namespace MuTau {
                                      {analysis::DataSourceType::Run2015D,{"HLT_IsoMu18_v"}}};
 
         const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_v1"};
+        const std::set<std::string> hltPathRunD = {"HLT_IsoMu18_v"};
         //const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v1","HLT_IsoMu24_eta2p1_v1"};
     }
 
@@ -292,7 +299,7 @@ namespace muonVeto {
 
 namespace jetID {
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
-    const double pt = 30; // >
+    const double pt = 30; // > , njets is filled with a 30 GeV cuts. All the other variables use jets with 20 pt cut
     const double eta = 4.7; // <
     const bool puLooseID = true; // =
     const double deltaR_signalObjects = 0.5; // >
@@ -302,18 +309,18 @@ namespace jetID {
 
     const double pt_loose = 20; // >
 
-    // https://github.com/ajgilbert/ICHiggsTauTau/blob/production-27Feb2014/plugins/MVAMETPairProducer.cc#L410
-    inline bool passPFLooseId(const ntuple::Jet& jet)
+    //  https://twiki.cern.ch/twiki/bin/view/CMS/JetID#Recommendations_for_13_TeV_data
+    inline bool passPFLooseId(const pat::Jet& jet)
     {
         TLorentzVector momentum;
-        momentum.SetPtEtaPhiM(jet.pt, jet.eta, jet.phi, jet.mass);
+        momentum.SetPtEtaPhiM(jet.pt(), jet.eta(), jet.phi(), jet.mass());
         if(momentum.E() == 0)                                  return false;
-        if(jet.neutralHadronEnergyFraction > 0.99)   return false;
-        if(jet.neutralEmEnergyFraction     > 0.99)   return false;
-        if(jet.nConstituents <  2)                          return false;
-        if(jet.chargedHadronEnergyFraction <= 0 && std::abs(jet.eta) < 2.4 ) return false;
-        if(jet.chargedEmEnergyFraction >  0.99  && std::abs(jet.eta) < 2.4 ) return false;
-        if(jet.chargedMultiplicity     < 1      && std::abs(jet.eta) < 2.4 ) return false;
+        if(jet.neutralHadronEnergyFraction() > 0.99)   return false;
+        if(jet.neutralEmEnergyFraction()     > 0.99)   return false;
+        if(jet.nConstituents() <  1)                   return false;
+        if(jet.chargedHadronEnergyFraction() <= 0 && std::abs(jet.eta()) < 2.4 ) return false;
+        if(jet.chargedEmEnergyFraction() >  0.99  && std::abs(jet.eta()) < 2.4 ) return false;
+        if(jet.chargedMultiplicity()     <= 0      && std::abs(jet.eta()) < 2.4 ) return false;
         return true;
     }
 }

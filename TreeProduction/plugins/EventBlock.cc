@@ -43,8 +43,8 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
 
-#include "HHbbTauTau/PatProduction/interface/PatVertex.h"
-#include "HHbbTauTau/TreeProduction/interface/Event.h"
+#include "../../PatProduction/interface/PatVertex.h"
+#include "../../TreeProduction/interface/Event.h"
 
 class EventBlock : public edm::EDAnalyzer {
 public:

@@ -7,10 +7,10 @@
 #define SYNC_DATA() \
     SIMPLE_VAR(Int_t, run) /* Run */ \
     SIMPLE_VAR(Int_t, lumi) /* Lumi */ \
-    SIMPLE_VAR(Int_t, evt) /* Evt */ \
+    SIMPLE_VAR(ULong64_t, evt) /* Evt */ \
     /* Event Variables */ \
     SIMPLE_VAR(Int_t, npv) /* NPV */ \
-    SIMPLE_VAR(Int_t, npu) /* Number of in-time pu interactions added to the event */ \
+    SIMPLE_VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
     SIMPLE_VAR(Float_t, rho) /* Use fixedGridRhoFastjetAll */ \
     /* SV Fit variables */ \
     SIMPLE_VAR(Float_t, m_sv) /* SV Fit using integration method */ \
@@ -77,7 +77,7 @@
     SIMPLE_VAR(Float_t, neutralIsoPtSum_2) \
     SIMPLE_VAR(Float_t, puCorrPtSum_2) \
     /* Di-lepton */ \
-    SIMPLE_VAR(Float_t, mvis) /* pairs invariant mass */ \
+    SIMPLE_VAR(Float_t, m_vis) /* pairs invariant mass */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pT */ \
     /* Met related variables */ \
     SIMPLE_VAR(Float_t, met) /* pfmet */ \

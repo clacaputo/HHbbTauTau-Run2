@@ -33,8 +33,8 @@ inputFilesMiniAOD = cms.untracked.vstring(
     '/store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/0260F225-7614-E511-A79F-00A0D1EE8EB4.root',
     )
 
-personalFileMiniAOD = cms.untracked.vstring('file:skimBranches_Signal_miniV2.root',)
-
+personalFileMiniAOD = cms.untracked.vstring('file:skimBranches_Signal_miniV2.root') ##skimBranches_Signal_miniV2.root
+RunD_mini = cms.untracked.vstring('file:/lustre/cms//store/user/ccaputo/HHbbtautau/Run2/FirstProduction/SingleMuon/crab_RunD/160104_205440/0000/skimBranches_Data_140.root')
 # Set up input/output depending on the format
 # You can list here either AOD or miniAOD files, but not both types mixed
 #
@@ -45,10 +45,33 @@ if useAOD == True :
     outputFile = "electron_ntuple.root"
     print("AOD input files are used")
 else :
-    inputFiles = personalFileMiniAOD
+    inputFiles = personalFileMiniAOD 
     outputFile = "tauID_ntuple.root"
     print("MiniAOD input files are used")
-process.source = cms.Source ("PoolSource", fileNames = inputFiles )                             
+process.source = cms.Source ("PoolSource", fileNames = inputFiles,
+#                              eventsToProcess = cms.untracked.VEventRange('1:97841')
+#                             eventsToProcess = cms.untracked.VEventRange(
+#                                            '1:4854','1:5650','1:12154', '1:15313', '1:18377', '1:22017', '1:22477',
+#                                            '1:30133', '1:30975', '1:32636', '1:34615', '1:48908', '1:50869', '1:50980',
+#                                            '1:53592', '1:58895', '1:59329', '1:61403', '1:62118', '1:64539', '1:65259',
+#                                            '1:68675', '1:69486', '1:74288', '1:76282', '1:77713', '1:78710', '1:82726',
+#                                            '1:85391', '1:89033', '1:94331', '1:96211', '1:96265', '1:97841', '1:98466',
+#                                            '1:101778','1:106256','1:108005','1:115654','1:118548','1:124470','1:125911',
+#                                            '1:128080','1:133973','1:145636','1:145782','1:148435','1:153388','1:154989',
+#                                            '1:155222','1:155606','1:157896','1:158203','1:159524','1:159677','1:164960',
+#                                            '1:173976','1:176806','1:178151','1:178506','1:185060','1:185621','1:206157',
+#                                            '1:218844','1:224633','1:225924','1:226354','1:228458','1:229620','1:233295',
+#                                            '1:235780','1:236624','1:240021','1:248476','1:248626','1:252329','1:261874',
+#                                            '1:269397','1:271785','1:273917','1:275016','1:276244','1:279778','1:282814',
+#                                            '1:285986','1:287025','1:296181','1:306248','1:311128','1:312811','1:313864',
+#                                            '1:319594','1:321652','1:337202','1:354113','1:354826','1:356172','1:358279',
+#                                            '1:361468','1:368865','1:372553','1:374591','1:374834','1:376422','1:377092',
+#                                            '1:377857','1:381228','1:382663','1:389025','1:389619','1:395620','1:396061',
+#                                            '1:403741','1:404549','1:407695','1:411717','1:411885','1:415110','1:421456',
+#                                            '1:439435','1:440533','1:448589','1:449538','1:452435','1:458941','1:461904',
+#                                            '1:475696','1:476634','1:481900','1:485343','1:485435','1:488045','1:488544',
+#                                            '1:489345','1:489596','1:489812','1:494968','1:495099')
+                                            )
 
 #
 # Set up electron ID (VID framework)
@@ -88,7 +111,8 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  tauSrc    = cms.InputTag("slimmedTaus"),
                                  muonSrc   = cms.InputTag("slimmedMuons"),
                                  vtxSrc    = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                 pfMETSrc  = cms.InputTag("slimmedMETs"),
+                                 pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
+                                 jetSrc    = cms.InputTag("slimmedJets"),
                                  bits      = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
                                  objects   = cms.InputTag("selectedPatTrigger"),
@@ -123,7 +147,6 @@ process.ntupler = cms.EDAnalyzer('ElectronsIDAnalyzer',
                                  mvaValuesMap     = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
                                  mvaCategoriesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Categories")
                                 )
-
 
 
 process.TFileService = cms.Service("TFileService",

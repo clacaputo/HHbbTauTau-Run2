@@ -23,7 +23,7 @@ eval `scramv1 runtime -sh`
 cd -
 echo "$NAME $( date )" >> $OUTPUT_PATH/job_start.log
 
-cmsRun $PROGRAMM fileList=$WORKSPACE/$FILE_LIST outputFile=$OUTPUT_PATH/$NAME.root maxEvents=-1 > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
+cmsRun $PROGRAMM sampleType=$SampleType fileList=$WORKSPACE/$FILE_LIST outputFile=$OUTPUT_PATH/$NAME.root maxEvents=-1 > $OUTPUT_PATH/${NAME}_detail.log 2> $OUTPUT_PATH/${NAME}.log
 
 RESULT=$?
 

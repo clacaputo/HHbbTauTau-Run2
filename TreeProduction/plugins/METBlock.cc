@@ -36,7 +36,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 
-#include "HHbbTauTau/TreeProduction/interface/MET.h"
+#include "../../TreeProduction/interface/MET.h"
 
 class METBlock : public edm::EDAnalyzer {
 public:

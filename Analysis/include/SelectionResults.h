@@ -92,11 +92,13 @@ struct SelectionResultsV2 {
 
     virtual ~SelectionResultsV2() {}
     CandidateV2Ptr higgs;
-    //sv_fit::CombinedFitResults svfitResults;
+    Float_t numtruepileupinteractions;
+    bool Zveto;
+    sv_fit::FitResults svfitResult;
     //kinematic_fit::four_body::FitResults kinfitResults;
     CandidateV2PtrVector jets;
     CandidateV2PtrVector jetsPt20;
-    CandidateV2PtrVector bjets_all;
+    CandidateV2PtrVector bjets;
     CandidateV2PtrVector retagged_bjets;
     VertexV2PtrVector vertices;
     MissingETPtr pfMET;

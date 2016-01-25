@@ -57,10 +57,17 @@
 
 #include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
 #include "DataFormats/EgammaCandidates/interface/Conversion.h"
+
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+//SVFit
+#include "FWCore/ParameterSet/interface/FileInPath.h"
+#include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
 
 //HHbbTauTau Framework
 #include "../../TreeProduction/interface/Tau.h"
@@ -149,6 +156,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
                                                        const std::set<std::string>& hltPaths,
                                                        bool useStandardTriggerMatch, const bool isCrossTrigger);
 
+
+      double Fit(const CandidateV2Ptr& higgs, const analysis::MissingETPtr& met);
       analysis::CandidateV2Ptr SelectSemiLeptonicHiggs(CandidateV2PtrVector& higgses);
 
       int matchToTruth(const edm::Ptr<reco::GsfElectron> el,
@@ -182,16 +191,20 @@ class SyncTreeProducer : public edm::EDAnalyzer {
                           !SyncTreeProducer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit,isCrossTrigger))
                       return false;
                   if(!isCrossTrigger &&
+                          daughter->GetType() == CandidateV2::Type::Muon &&
                           SyncTreeProducer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit,isCrossTrigger))
                       return true;
               }
-              return true;
+              if ( isCrossTrigger) return true;
+              if (!isCrossTrigger) return false;
           }
 
           for (auto &triggerObject : triggerObjects){
               triggerObject.unpackPathNames(names);
               TLorentzVector triggerObjectMomentum;
               triggerObjectMomentum.SetPtEtaPhiM(triggerObject.pt(), triggerObject.eta(), triggerObject.phi(), triggerObject.mass());
+              //Pt cut for singleTrigger
+              if (!isCrossTrigger && triggerObject.pt() < 18) continue;
 
               for (unsigned n = 0; n < triggerObject.pathNames(true).size(); ++n){
                   const std::string& objectMatchedPath = triggerObject.pathNames(true).at(n);
@@ -240,6 +253,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetToken muonsMiniAODToken_;
       edm::EDGetToken vtxMiniAODToken_;
       edm::EDGetToken pfMETAODToken_;
+      edm::EDGetToken jetsMiniAODToken_;
       edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
       edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
       edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
@@ -248,6 +262,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       analysis::SyncAnalyzerData anaData;
       SelectionResultsV2_mutau selection;
       VertexV2Ptr primaryVertex;
+      std::string sampleType;
 };
 
 //
@@ -266,11 +281,13 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
   vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
   pfMETAODToken_(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
+  jetsMiniAODToken_(mayConsume<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
   triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
   syncTree(&edm::Service<TFileService>()->file(),false),
-  anaData("BeforCut.root")
+  anaData("BeforCut.root"),
+  sampleType(iConfig.getParameter<std::string>("sampleType"))
 {
 //  genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
 //    (iConfig.getParameter<edm::InputTag>
@@ -302,8 +319,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   cuts::Cutter cut(&GetAnaData().Selection("events"));
 
   // Save global info right away
-
-
   //Get collection
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
@@ -313,12 +328,20 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByToken(vtxMiniAODToken_, vertices);
   edm::Handle<edm::View<pat::MET> > pfMETs;
   iEvent.getByToken(pfMETAODToken_, pfMETs);
+  edm::Handle<edm::View<pat::Jet> > jets;
+  iEvent.getByToken(jetsMiniAODToken_, jets);
+  edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> metCovMatrix;
+  edm::InputTag metCovMatrixTAG("METSignificance","METCovariance");
+  iEvent.getByLabel(metCovMatrixTAG,metCovMatrix);
   edm::Handle<edm::TriggerResults> triggerBits;
   iEvent.getByToken(triggerBits_, triggerBits);
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
   iEvent.getByToken(triggerPrescales_, triggerPrescales);
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
   iEvent.getByToken(triggerObjects_, triggerObjects);
+
+  edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
+  iEvent.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PUInfo);
 
    /*   std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
           for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
@@ -366,11 +389,21 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       cut(true,"events");
 
+
+          if(PUInfo.isValid()){
+              for(std::vector<PileupSummaryInfo>::const_iterator PVI = PUInfo->begin(); PVI != PUInfo->end(); ++PVI){
+                  int BX = PVI->getBunchCrossing();
+                  std::cout << "\t PileUpInfo :    BX = " << PVI->getBunchCrossing()
+                            << "  PU = " << PVI->getTrueNumInteractions() << std::endl;
+                  if(BX == 0) selection.numtruepileupinteractions = PVI->getTrueNumInteractions();
+            }
+          }
+
       bool triggerFired = false;
       const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
-    //  const auto Key = analysis::DataSourceType::Spring15MC;
-    //  const auto& hltPaths = MuTau::trigger::hltPathMaps[Key];
-      const auto& hltPaths = MuTau::trigger::hltPathMC;
+      const auto Key = analysis::stringToDataSourceTypeMap.at(sampleType);
+      const auto& hltPaths = MuTau::trigger::hltPathMaps.at(Key);
+    //  const auto& hltPaths = MuTau::trigger::hltPathMC;
           //std::cout << "\n === TRIGGER PATHS === " << std::endl;
           for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
               for (const std::string& triggerPath : hltPaths ){
@@ -391,7 +424,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
           }
 
       cut(triggerFired,"trigger");
-
+  
       const auto PV = (*vertices).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
                                             //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
                                             //Es. edm::View<int> gestisce int semplici, vector<int>, set<int> etc.
@@ -412,6 +445,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       std::vector<pat::Muon> patMuonsVector;
       CandidateV2PtrVector muonCollection, tauCollection;
+      CandidateV2PtrVector muonVetoCollection;
       for(const pat::Muon &muon : *muons){
         ntuple::Muon tmp_muon;
 
@@ -433,7 +467,26 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       }
 
+      for(const pat::Muon &muon : *muons){
+          double iso_mu = (muon.pfIsolationR03().sumChargedHadronPt + std::max(
+                            muon.pfIsolationR03().sumNeutralHadronEt +
+                            muon.pfIsolationR03().sumPhotonEt -
+                            0.5 * muon.pfIsolationR03().sumPUPt, 0.0)) / muon.pt();
+          bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < muonID::dB &&
+                        fabs(muon.muonBestTrack()->dz(PV->position())) < muonID::dz;
+          if(!(muon.pt() > ZmumuVeto::pt && fabs(muon.eta()) < ZmumuVeto::eta &&
+               muon.isGlobalMuon() && muon.isTrackerMuon()  && muon.isPFMuon()  &&
+               muonIP && iso_mu < 0.3)) continue;
+
+          const CandidateV2Ptr muon_candidate(new CandidateV2(muon));
+          muonVetoCollection.push_back(muon_candidate);
+      }
+
       cut(muonCollection.size(),"muons");
+
+      auto Zmumu = FindCompatibleObjects(muonVetoCollection,muonVetoCollection,DeltaR_betweenSignalObjects,
+                                         CandidateV2::Type::Z,"Z_mu_mu",0);
+      selection.Zveto = Zmumu.size() ? true : false;
 
       std::cout<< "=========================================================================== \n"
                << "\t Run "<<iEvent.id().run()<<"\t Lumi "<<iEvent.id().luminosityBlock()
@@ -498,7 +551,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
     cut(higgses.size(),"mu_tau");
 
-    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,MuTau::trigger::hltPathMC,false,false);
+    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,hltPaths,false,false);
 
     cut(triggeredHiggses.size(),"triggerMatch");
 
@@ -514,10 +567,57 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 //    const pat::Tau&  tauBuono  = higgs->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
 //    std::cout<< "\n\t Tau Iso-->  " << tauBuono.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") <<std::endl;
 
+
+    MissingETPtr pfMET(new MissingET((*pfMETs)[0],*metCovMatrix));
+    selection.pfMET = pfMET;
+
+
+    CandidateV2PtrVector jetsCollection, bjetsCollection;
+    for(const pat::Jet &jet : *jets){
+
+        if (!( jet.pt()>jetID::pt_loose && fabs(jet.eta())<jetID::eta && jetID::passPFLooseId(jet) ) ) continue;
+
+        const CandidateV2Ptr jet_candidate(new CandidateV2(jet));
+
+        if (!(jet_candidate->GetMomentum().DeltaR(selection.GetLeg(1)->GetMomentum()) > jetID::deltaR_signalObjects &&
+            jet_candidate->GetMomentum().DeltaR(selection.GetLeg(2)->GetMomentum()) > jetID::deltaR_signalObjects) ) continue;
+        jetsCollection.push_back(jet_candidate);
+
+        if ( jet.pt()>jetID::pt_loose && jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > 0.89)
+            bjetsCollection.push_back(jet_candidate);
+
+    }
+
+//   const auto ptOrdering = [&] ( const CandidateV2Ptr& first, const CandidateV2Ptr& second ) -> bool
+//                            { return first->GetMomentum().Pt() > second->GetMomentum().Pt(); };
+
+//   std::cout << " Before Pt Jets Ordering \n :  " << std::endl;
+//   for (auto & jet : jetsCollection) {
+//          std::cout <<"\t Jet Momentum  :  "<<jet->GetMomentum()<<std::endl;
+//   }
+//   std::cout << " Before Pt BJets Ordering \n :  " << std::endl;
+//   for (auto & jet : jetsCollection) {
+//          std::cout <<"\t bJet Momentum  :  "<<jet->GetMomentum()<<std::endl;
+//   }
+//   std::sort(jetsCollection.begin(),jetsCollection.end(),ptOrdering);
+//   std::sort(bjetsCollection.begin(),bjetsCollection.end(),ptOrdering);
+//   std::cout << " After Pt Jets Ordering \n :  " << std::endl;
+//   for (auto & jet : jetsCollection) {
+//          std::cout <<"\t Jet Momentum  :  "<<jet->GetMomentum()<<std::endl;
+//   }
+//   std::cout << " After Pt BJets Ordering \n :  " << std::endl;
+//   for (auto & jet : jetsCollection) {
+//          std::cout <<"\t bJet Momentum  :  "<<jet->GetMomentum()<<std::endl;
+//   }
+
+
+   selection.bjets = bjetsCollection;
+   selection.jets  = jetsCollection;
+
+    double svfit_mass = Fit(higgs,pfMET);
+    std::cout<< "\n\t CHOOSEN SVFit -->  " << svfit_mass <<std::endl;
     std::cout<< "=========================================================================== \n";
 
-        MissingETPtr pfMET(new MissingET((*pfMETs)[0]));
-        selection.pfMET = pfMET;
 
     FillSyncTree(iEvent);
   }catch(cuts::cut_failed&){}
@@ -761,9 +861,54 @@ CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& h
     return higgses.front();
 }
 
+double SyncTreeProducer::Fit(const CandidateV2Ptr& higgs, const analysis::MissingETPtr& met){
+
+    const pat::Muon& muon = higgs->GetDaughter(analysis::CandidateV2::Type::Muon)->GetNtupleObject<pat::Muon>();
+    const pat::Tau&  tau  = higgs->GetDaughter(analysis::CandidateV2::Type::Tau)->GetNtupleObject<pat::Tau>();
+    // define MET
+      double measuredMETx = met->Px();
+      double measuredMETy = met->Py();
+      // define MET covariance
+      TMatrixD covMET(2, 2);
+      covMET[0][0] = met->GetCovVector().at(0);
+      covMET[1][0] = met->GetCovVector().at(1);
+      covMET[0][1] = met->GetCovVector().at(2);
+      covMET[1][1] = met->GetCovVector().at(3);
+      // define lepton four vectors
+      std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
+      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, muon.pt(),
+                                                                      muon.eta(), muon.phi(), muon.mass())); // tau -> electron decay (Pt, eta, phi, mass)
+      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, tau.pt(),
+                                                                      tau.eta(), tau.phi(), tau.mass(),tau.decayMode())); // tau -> 1prong0pi0 hadronic decay (Pt, eta, phi, mass, pat::Tau.decayMode())
+      SVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMETx, measuredMETy, covMET, 0);
+      algo.addLogM(false);
+      edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
+      TH1::AddDirectory(false);
+      TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
+      algo.shiftVisPt(true, inputFile_visPtResolution);
+      algo.integrateMarkovChain();
+
+      double mass = algo.getMass(); // return value is in units of GeV
+      if ( algo.isValidSolution() ) {
+          selection.svfitResult.mass = algo.mass();
+          selection.svfitResult.has_valid_mass = true;
+          //if(fitAlgorithm == FitAlgorithm::MarkovChain) {
+              selection.svfitResult.momentum.SetPtEtaPhiM(algo.pt(), algo.eta(), algo.phi(), algo.mass());
+              selection.svfitResult.has_valid_momentum = true;
+         // }
+         std::cout << "... m svfit : " << algo.mass() << " +/- " << algo.massUncert() << std::endl;
+      } else {
+        std::cout << "sorry -- status of NLL is not valid [" << algo.isValidSolution() << "]" << std::endl;
+      }
+
+      delete inputFile_visPtResolution;
+
+      return mass;
+}
+
 void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
     {
-//        static const float default_value = Run2::DefaultFloatFillValueForFlatTree();
+ //       static const float default_value = Run2::DefaultFloatFillValueForFlatTree();
 
         // Event
         std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
@@ -776,6 +921,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 //        syncTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
 
         syncTree.npv() = selection.vertices.size();
+        syncTree.npu() = selection.numtruepileupinteractions;
 //        if (config.ApplyPUreweight()){
 //            const size_t bxIndex = tools::find_index(event->eventInfo().bunchCrossing, 0);
 //            if(bxIndex >= event->eventInfo().bunchCrossing.size())
@@ -799,18 +945,18 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 //        syncTree->decayModeWeight_2() = GetEventWeights().GetDecayModeWeight(2);
 
         // HTT candidate
-        syncTree.mvis() = selection.higgs->GetMomentum().M();
+        syncTree.m_vis() = selection.higgs->GetMomentum().M();
         syncTree.pt_tt()  = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()).Pt();
 //        syncTree->m_sv_vegas() = selection.svfitResults.fit_vegas.has_valid_mass
 //                ? selection.svfitResults.fit_vegas.mass : default_value;
-//        syncTree->m_sv_MC() = selection.svfitResults.fit_mc.has_valid_mass
-//                ? selection.svfitResults.fit_mc.mass : default_value;
-//        syncTree->pt_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
-//                ? selection.svfitResults.fit_mc.momentum.Pt() : default_value;
-//        syncTree->eta_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
-//                ? selection.svfitResults.fit_mc.momentum.Eta() : default_value;
-//        syncTree->phi_sv_MC() = selection.svfitResults.fit_mc.has_valid_momentum
-//                ? selection.svfitResults.fit_mc.momentum.Phi() : default_value;
+        syncTree.m_sv() = selection.svfitResult.has_valid_mass
+                ? selection.svfitResult.mass : Run2::DefaultFillValueForSyncTree();
+        syncTree.pt_sv() = selection.svfitResult.has_valid_momentum
+                ? selection.svfitResult.momentum.Pt() : Run2::DefaultFillValueForSyncTree();
+        syncTree.eta_sv() = selection.svfitResult.has_valid_momentum
+                ? selection.svfitResult.momentum.Eta() : Run2::DefaultFillValueForSyncTree();
+        syncTree.phi_sv() = selection.svfitResult.has_valid_momentum
+                ? selection.svfitResult.momentum.Phi() : Run2::DefaultFillValueForSyncTree();
 
         // Kinematic fit
 //        syncTree->kinfit_bb_tt_mass() = selection.kinfitResults.mass;
@@ -829,6 +975,10 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.met() = selection.pfMET->Pt();
         syncTree.metphi() = selection.pfMET->Phi();
         syncTree.isPFMET() = selection.pfMET->isPFMET();
+        syncTree.metcov00() = selection.pfMET->GetCovVector().at(0);
+        syncTree.metcov01() = selection.pfMET->GetCovVector().at(1);
+        syncTree.metcov10() = selection.pfMET->GetCovVector().at(2);
+        syncTree.metcov11() = selection.pfMET->GetCovVector().at(3);
 //        syncTree->mvamet() = MET_momentum.Pt();
 //        syncTree->mvametphi() = MET_momentum.Phi();
 //        //syncTree->pzetavis();
@@ -897,23 +1047,80 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 
         syncTree.decayModeFindingOldDMs_2() = patTau.tauID("decayModeFinding");
 
+        syncTree.dilepton_veto() = selection.Zveto;
+
         // Jets
-//        syncTree->njets()     = selection.jets.size();
+        syncTree.njets()     = selection.jets.size();
 //        syncTree->njetspt20() = selection.jetsPt20.size();
-//        syncTree->nBjets()    = selection.bjets_all.size();
+        syncTree.nbtag()    = selection.bjets.size();
+        //int jetCount = 0;
+
+        if (selection.jets.size()){
+            const pat::Jet& pat_jet1 = selection.jets.at(0)->GetNtupleObject<pat::Jet>();
+            syncTree.jpt_1()   = selection.jets.at(0)->GetMomentum().Pt();
+            syncTree.jeta_1()  = selection.jets.at(0)->GetMomentum().Eta();
+            syncTree.jphi_1()  = selection.jets.at(0)->GetMomentum().Phi();
+            syncTree.jrawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.jets.at(0)->GetMomentum().Pt();
+            syncTree.jmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
+        }
+
+        if (selection.bjets.size()){
+            const pat::Jet& pat_jet1 = selection.bjets.at(0)->GetNtupleObject<pat::Jet>();
+            syncTree.bpt_1()   = selection.bjets.at(0)->GetMomentum().Pt();
+            syncTree.beta_1()  = selection.bjets.at(0)->GetMomentum().Eta();
+            syncTree.bphi_1()  = selection.bjets.at(0)->GetMomentum().Phi();
+            syncTree.brawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.bjets.at(0)->GetMomentum().Pt();
+            syncTree.bmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
+            syncTree.bcsv_1()  = pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+        }
 //        syncTree->nBjets_retagged()    = selection.retagged_bjets.size();
+//        for( const CandidateV2Ptr& jet : selection.jets ){
+//            jetCount++;
+//            if ( jetCount > 2 ) continue;
+//            if (jetCount == 1){
+//                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+//                syncTree.jpt_1()   = jet->GetMomentum().Pt();
+//                syncTree.jeta_1()  = jet->GetMomentum().Eta();
+//                syncTree.jphi_1()  = jet->GetMomentum().Phi();
+//                syncTree.jrawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
+//                syncTree.jmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
+//            }
 
+//            if (jetCount == 2){
+//                const pat::Jet& pat_jet2 = jet->GetNtupleObject<pat::Jet>();
+//                syncTree.jpt_2()   = jet->GetMomentum().Pt();
+//                syncTree.jeta_2()  = jet->GetMomentum().Eta();
+//                syncTree.jphi_2()  = jet->GetMomentum().Phi();
+//                syncTree.jrawf_2() = (pat_jet2.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
+//                syncTree.jmva_2()  = pat_jet2.userFloat("pileupJetId:fullDiscriminant");
+//            }
+//         }
 
-//        for (const CandidatePtr& jet : selection.jets){
-//            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();
-//            syncTree->pt_jets().push_back(jet->GetMomentum().Pt());
-//            syncTree->eta_jets().push_back(jet->GetMomentum().Eta());
-//            syncTree->phi_jets().push_back(jet->GetMomentum().Phi());
-//            syncTree->ptraw_jets().push_back(ntuple_jet.pt_raw);
-//            syncTree->ptunc_jets().push_back(ntuple_jet.pt_raw);//to put uncertainties -> put pt_raw only to compile
-//            syncTree->mva_jets().push_back(ntuple_jet.puIdMVA);
-//            syncTree->passPU_jets().push_back(ntuple::JetID_MVA::PassLooseId(ntuple_jet.puIdBits));
-//        }
+//        int bjetCount = 0;
+////        syncTree->nBjets_retagged()    = selection.retagged_bjets.size();
+//        for( const CandidateV2Ptr& jet : selection.bjets ){
+//            bjetCount++;
+//            if ( bjetCount > 2 ) continue;
+//            if (bjetCount == 1){
+//                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+//                syncTree.bpt_1()   = jet->GetMomentum().Pt();
+//                syncTree.beta_1()  = jet->GetMomentum().Eta();
+//                syncTree.bphi_1()  = jet->GetMomentum().Phi();
+//                syncTree.brawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
+//                syncTree.bmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
+//                syncTree.bcsv_1()  = pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+//            }
+
+//            if (bjetCount == 2){
+//                const pat::Jet& pat_jet2 = jet->GetNtupleObject<pat::Jet>();
+//                syncTree.bpt_2()   = jet->GetMomentum().Pt();
+//                syncTree.beta_2()  = jet->GetMomentum().Eta();
+//                syncTree.bphi_2()  = jet->GetMomentum().Phi();
+//                syncTree.brawf_2() = (pat_jet2.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
+//                syncTree.bmva_2()  = pat_jet2.userFloat("pileupJetId:fullDiscriminant");
+//                syncTree.bcsv_2()  = pat_jet2.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+//            }
+//         }
 
 //        for (const CandidatePtr& jet : selection.bjets_all) {
 //            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();

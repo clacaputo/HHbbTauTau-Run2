@@ -49,8 +49,8 @@
 
 #include "Utilities/General/interface/FileInPath.h"
 
-#include "HHbbTauTau/TreeProduction/interface/PFCand.h"
-#include "HHbbTauTau/TreeProduction/interface/TriggerTools.h"
+#include "../../TreeProduction/interface/PFCand.h"
+#include "../../TreeProduction/interface/TriggerTools.h"
 
 class PFCandBlock : public edm::EDAnalyzer {
 public:

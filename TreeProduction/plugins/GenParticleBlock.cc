@@ -35,7 +35,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
-#include "HHbbTauTau/TreeProduction/interface/GenParticle.h"
+#include "../../TreeProduction/interface/GenParticle.h"
 
 #include <limits>
 
