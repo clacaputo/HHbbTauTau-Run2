@@ -135,7 +135,7 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  bits      = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
                                  objects   = cms.InputTag("selectedPatTrigger"),
-                                 sampleType = cms.string("Run2015C"),
+                                 sampleType = cms.string("Run2015D"),
                                 )
 
 

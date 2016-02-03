@@ -22,6 +22,10 @@
 #include <memory>
 #include <vector>
 
+
+// import LHEEventProduction definition
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -379,6 +383,24 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
           */
 
+  // access generator level HT
+    edm::Handle<LHEEventProduct> lheEventProduct;
+    iEvent.getByLabel(edm::InputTag("externalLHEProducer"), lheEventProduct);
+    const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
+    std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
+    double lheHt = 0.;
+    size_t numParticles = lheParticles.size();
+    for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
+     int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
+     int status = lheEvent.ISTUP[idxParticle];
+     if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
+         lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.) + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
+     }
+    }
+    std::cout<<"  HT  ============ > "<<lheHt<<std::endl;
+
+
+
   //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
   ntuple::TauVector tausV;
   ntuple::MuonVector muonsV;
@@ -551,7 +573,10 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
     cut(higgses.size(),"mu_tau");
 
-    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,hltPaths,false,false);
+    bool isCrossTrigger = false;
+    if ( sampleType == "Run2015C" ) isCrossTrigger = true;
+
+    auto triggeredHiggses = ApplyTriggerMatch(*(triggerObjects.product()), higgses,names,hltPaths,false,isCrossTrigger);
 
     cut(triggeredHiggses.size(),"triggerMatch");
 
@@ -583,7 +608,8 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
             jet_candidate->GetMomentum().DeltaR(selection.GetLeg(2)->GetMomentum()) > jetID::deltaR_signalObjects) ) continue;
         jetsCollection.push_back(jet_candidate);
 
-        if ( jet.pt()>jetID::pt_loose && jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > 0.89)
+        if ( jet.pt()>jetID::pt_loose && fabs(jet.eta())<btag::eta &&
+             jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > btag::CSVL)
             bjetsCollection.push_back(jet_candidate);
 
     }
@@ -1050,77 +1076,53 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.dilepton_veto() = selection.Zveto;
 
         // Jets
-        syncTree.njets()     = selection.jets.size();
-//        syncTree->njetspt20() = selection.jetsPt20.size();
-        syncTree.nbtag()    = selection.bjets.size();
+        syncTree.njetspt20() = selection.jets.size();
+        //syncTree.njets()     = selection.numJet;
+        syncTree.nbtag()     = selection.bjets.size();
         //int jetCount = 0;
 
-        if (selection.jets.size()){
-            const pat::Jet& pat_jet1 = selection.jets.at(0)->GetNtupleObject<pat::Jet>();
-            syncTree.jpt_1()   = selection.jets.at(0)->GetMomentum().Pt();
-            syncTree.jeta_1()  = selection.jets.at(0)->GetMomentum().Eta();
-            syncTree.jphi_1()  = selection.jets.at(0)->GetMomentum().Phi();
-            syncTree.jrawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.jets.at(0)->GetMomentum().Pt();
-            syncTree.jmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
-        }
+//        if (selection.jets.size()){
+//            const pat::Jet& pat_jet1 = selection.jets.at(0)->GetNtupleObject<pat::Jet>();
+//            syncTree.jpt_1()   = selection.jets.at(0)->GetMomentum().Pt();
+//            syncTree.jeta_1()  = selection.jets.at(0)->GetMomentum().Eta();
+//            syncTree.jphi_1()  = selection.jets.at(0)->GetMomentum().Phi();
+//            syncTree.jrawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.jets.at(0)->GetMomentum().Pt();
+//            syncTree.jmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
+//        }
 
-        if (selection.bjets.size()){
-            const pat::Jet& pat_jet1 = selection.bjets.at(0)->GetNtupleObject<pat::Jet>();
-            syncTree.bpt_1()   = selection.bjets.at(0)->GetMomentum().Pt();
-            syncTree.beta_1()  = selection.bjets.at(0)->GetMomentum().Eta();
-            syncTree.bphi_1()  = selection.bjets.at(0)->GetMomentum().Phi();
-            syncTree.brawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.bjets.at(0)->GetMomentum().Pt();
-            syncTree.bmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
-            syncTree.bcsv_1()  = pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-        }
+//        if (selection.bjets.size()){
+//            const pat::Jet& pat_jet1 = selection.bjets.at(0)->GetNtupleObject<pat::Jet>();
+//            syncTree.bpt_1()   = selection.bjets.at(0)->GetMomentum().Pt();
+//            syncTree.beta_1()  = selection.bjets.at(0)->GetMomentum().Eta();
+//            syncTree.bphi_1()  = selection.bjets.at(0)->GetMomentum().Phi();
+//            syncTree.brawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.bjets.at(0)->GetMomentum().Pt();
+//            syncTree.bmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
+//            syncTree.bcsv_1()  = pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+//        }
 //        syncTree->nBjets_retagged()    = selection.retagged_bjets.size();
-//        for( const CandidateV2Ptr& jet : selection.jets ){
-//            jetCount++;
-//            if ( jetCount > 2 ) continue;
-//            if (jetCount == 1){
-//                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
-//                syncTree.jpt_1()   = jet->GetMomentum().Pt();
-//                syncTree.jeta_1()  = jet->GetMomentum().Eta();
-//                syncTree.jphi_1()  = jet->GetMomentum().Phi();
-//                syncTree.jrawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
-//                syncTree.jmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
-//            }
+        Int_t numJet = 0;
+        for( const CandidateV2Ptr& jet : selection.jets ){
+                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+                if (jet->GetMomentum().Pt() > 30 ) numJet++;
+                syncTree.pt_jets()   .push_back(jet->GetMomentum().Pt());
+                syncTree.eta_jets()  .push_back(jet->GetMomentum().Eta());
+                syncTree.phi_jets()  .push_back(jet->GetMomentum().Phi());
+                syncTree.rawf_jets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
+                syncTree.mva_jets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
+                syncTree.csv_jets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+         }
+        syncTree.njets() = numJet;
 
-//            if (jetCount == 2){
-//                const pat::Jet& pat_jet2 = jet->GetNtupleObject<pat::Jet>();
-//                syncTree.jpt_2()   = jet->GetMomentum().Pt();
-//                syncTree.jeta_2()  = jet->GetMomentum().Eta();
-//                syncTree.jphi_2()  = jet->GetMomentum().Phi();
-//                syncTree.jrawf_2() = (pat_jet2.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
-//                syncTree.jmva_2()  = pat_jet2.userFloat("pileupJetId:fullDiscriminant");
-//            }
-//         }
 
-//        int bjetCount = 0;
-////        syncTree->nBjets_retagged()    = selection.retagged_bjets.size();
-//        for( const CandidateV2Ptr& jet : selection.bjets ){
-//            bjetCount++;
-//            if ( bjetCount > 2 ) continue;
-//            if (bjetCount == 1){
-//                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
-//                syncTree.bpt_1()   = jet->GetMomentum().Pt();
-//                syncTree.beta_1()  = jet->GetMomentum().Eta();
-//                syncTree.bphi_1()  = jet->GetMomentum().Phi();
-//                syncTree.brawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
-//                syncTree.bmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
-//                syncTree.bcsv_1()  = pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-//            }
-
-//            if (bjetCount == 2){
-//                const pat::Jet& pat_jet2 = jet->GetNtupleObject<pat::Jet>();
-//                syncTree.bpt_2()   = jet->GetMomentum().Pt();
-//                syncTree.beta_2()  = jet->GetMomentum().Eta();
-//                syncTree.bphi_2()  = jet->GetMomentum().Phi();
-//                syncTree.brawf_2() = (pat_jet2.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt();
-//                syncTree.bmva_2()  = pat_jet2.userFloat("pileupJetId:fullDiscriminant");
-//                syncTree.bcsv_2()  = pat_jet2.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-//            }
-//         }
+        for( const CandidateV2Ptr& jet : selection.bjets ){
+                const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
+                syncTree.pt_bjets()   .push_back(jet->GetMomentum().Pt());
+                syncTree.eta_bjets()  .push_back(jet->GetMomentum().Eta());
+                syncTree.phi_bjets()  .push_back(jet->GetMomentum().Phi());
+                syncTree.rawf_bjets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
+                syncTree.mva_bjets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
+                syncTree.csv_bjets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+         }
 
 //        for (const CandidatePtr& jet : selection.bjets_all) {
 //            const ntuple::Jet& ntuple_jet = jet->GetNtupleObject<ntuple::Jet>();

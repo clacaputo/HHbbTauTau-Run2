@@ -24,6 +24,14 @@
 import FWCore.ParameterSet.Config as cms
 
 from FWCore.ParameterSet.VarParsing import VarParsing
+options = VarParsing('analysis')
+options.register ('sampleType',
+                  'Spring15MC',
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+
+options.parseArguments()
 
 process = cms.Process("USER")
 
@@ -58,10 +66,6 @@ process.source = cms.Source("PoolSource",
 
 ## Output file
 from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
-
-## 'keep recoGsfElectronCores_*_*_PAT',
-## 'keep recoSuperClusters_*_*_PAT',
-## 'keep patJets_slimmedJetsPuppi__PAT',
 
 skimmedBranches = cms.untracked.vstring(['drop *',
                                          'keep edmTriggerResults_*__HLT',
@@ -145,6 +149,7 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  bits      = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
                                  objects   = cms.InputTag("selectedPatTrigger"),
+                                 sampleType = cms.string(options.sampleType),
                                 )
 
 process.p = cms.Path(
@@ -160,7 +165,7 @@ process.out = cms.OutputModule("PoolOutputModule",
     compressionLevel = cms.untracked.int32(4),
     compressionAlgorithm = cms.untracked.string('LZMA'),
     eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
-    fileName = cms.untracked.string('skimBranches_Signal_miniV2.root'),
+    fileName = cms.untracked.string('microAOD.root'),
     SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
     outputCommands = skimmedBranches,
     #outputCommands = tausBranch,

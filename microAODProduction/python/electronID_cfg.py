@@ -33,7 +33,8 @@ inputFilesMiniAOD = cms.untracked.vstring(
     '/store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/0260F225-7614-E511-A79F-00A0D1EE8EB4.root',
     )
 
-personalFileMiniAOD = cms.untracked.vstring('file:skimBranches_Signal_miniV2.root') ##skimBranches_Signal_miniV2.root
+personalFileMiniAOD = cms.untracked.vstring('file:768F5AFB-D771-E511-9ABD-B499BAABD280.root') ##skimBranches_Signal_miniV2.root
+DYSample = cms.untracked.vstring("/store/user/ccaputo/HHbbtautau/Run2/DYSample_forHT.root")
 RunD_mini = cms.untracked.vstring('file:/lustre/cms//store/user/ccaputo/HHbbtautau/Run2/FirstProduction/SingleMuon/crab_RunD/160104_205440/0000/skimBranches_Data_140.root')
 # Set up input/output depending on the format
 # You can list here either AOD or miniAOD files, but not both types mixed
@@ -45,7 +46,7 @@ if useAOD == True :
     outputFile = "electron_ntuple.root"
     print("AOD input files are used")
 else :
-    inputFiles = personalFileMiniAOD 
+    inputFiles = DYSample
     outputFile = "tauID_ntuple.root"
     print("MiniAOD input files are used")
 process.source = cms.Source ("PoolSource", fileNames = inputFiles,
@@ -116,6 +117,7 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  bits      = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
                                  objects   = cms.InputTag("selectedPatTrigger"),
+                                 sampleType = cms.string("Spring15MC"),
                                 )
 
 process.ntupler = cms.EDAnalyzer('ElectronsIDAnalyzer',

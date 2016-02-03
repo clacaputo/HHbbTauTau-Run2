@@ -4,11 +4,12 @@ config = config()
 config.General.workArea = 'GluGluToRadionToHHTo2B2Tau'
 
 config.JobType.pluginName = 'Analysis'
-config.JobType.psetName = '../python/miniAOD_skim_EleID.py'
+config.JobType.psetName = '../python/miniAOD_skim_Sync.py'
+config.JobType.pyCfgParams = ['sampleType=Spring15MC']
 
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'EventAwareLumiBased'
-config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/FirstProduction/' # or '/store/group/<subdir>'
+config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/ThirdProduction/' # or '/store/group/<subdir>'
 config.Data.publication = True
 
 config.Site.storageSite = 'T2_IT_Bari'

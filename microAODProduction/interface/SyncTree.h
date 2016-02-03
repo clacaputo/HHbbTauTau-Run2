@@ -101,33 +101,34 @@
     SIMPLE_VAR(Int_t, njets) /*  */ \
     SIMPLE_VAR(Int_t, njetspt20) /*  */ \
     /* First Jet   : leading jet after applying Jet energy corrections (excluding hadronic Tau) */ \
-    SIMPLE_VAR(Float_t, jpt_1) /* Jet Pt after corrections */ \
-    SIMPLE_VAR(Float_t, jeta_1) /* Jet Eta */ \
-    SIMPLE_VAR(Float_t, jphi_1) /* Jet Phi */ \
-    SIMPLE_VAR(Float_t, jrawf_1) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    SIMPLE_VAR(Float_t, jmva_1) /* Jet MVA id value */ \
+    VECTOR_VAR(Float_t, pt_jets) /* Jet Pt after corrections */ \
+    VECTOR_VAR(Float_t, eta_jets) /* Jet Eta */ \
+    VECTOR_VAR(Float_t, phi_jets) /* Jet Phi */ \
+    VECTOR_VAR(Float_t, rawf_jets) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
+    VECTOR_VAR(Float_t, mva_jets) /* Jet MVA id value */ \
+    VECTOR_VAR(Float_t, csv_jets) /* Jet MVA id value */ \
     /* Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau) */ \
-    SIMPLE_VAR(Float_t, jpt_2) /* Jet Pt after corrections */ \
-    SIMPLE_VAR(Float_t, jeta_2) /* Jet Eta */ \
-    SIMPLE_VAR(Float_t, jphi_2) /* Jet Phi */ \
-    SIMPLE_VAR(Float_t, jrawf_2) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    SIMPLE_VAR(Float_t, jmva_2) /* Jet MVA id value */ \
+    /* SIMPLE_VAR(Float_t, jpt_2)  Jet Pt after corrections */ \
+    /* SIMPLE_VAR(Float_t, jeta_2)  Jet Eta */ \
+    /* SIMPLE_VAR(Float_t, jphi_2)  Jet Phi */ \
+    /* SIMPLE_VAR(Float_t, jrawf_2)  factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
+    /* SIMPLE_VAR(Float_t, jmva_2)  Jet MVA id value */ \
     /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) */ \
     SIMPLE_VAR(Int_t, nbtag) /*  */ \
     /* Candidate B Jets : leading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
-    SIMPLE_VAR(Float_t, bpt_1) /* Corrected BTag Pt */ \
-    SIMPLE_VAR(Float_t, beta_1) /* Btag Eta */ \
-    SIMPLE_VAR(Float_t, bphi_1) /* Btag Phi */ \
-    SIMPLE_VAR(Float_t, brawf_1) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    SIMPLE_VAR(Float_t, bmva_1) /* Btag mva */ \
-    SIMPLE_VAR(Float_t, bcsv_1) /* Btag CSV */ \
+    VECTOR_VAR(Float_t, pt_bjets) /* Corrected BTag Pt */ \
+    VECTOR_VAR(Float_t, eta_bjets) /* Btag Eta */ \
+    VECTOR_VAR(Float_t, phi_bjets) /* Btag Phi */ \
+    VECTOR_VAR(Float_t, rawf_bjets) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
+    VECTOR_VAR(Float_t, mva_bjets) /* Btag mva */ \
+    VECTOR_VAR(Float_t, csv_bjets) /* Btag CSV */ \
     /* Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
-    SIMPLE_VAR(Float_t, bpt_2) /* Corrected BTag Pt */ \
-    SIMPLE_VAR(Float_t, beta_2) /* Btag Eta */ \
-    SIMPLE_VAR(Float_t, bphi_2) /* Btag Phi */ \
-    SIMPLE_VAR(Float_t, brawf_2) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
-    SIMPLE_VAR(Float_t, bmva_2) /* Btag mva */ \
-    SIMPLE_VAR(Float_t, bcsv_2) /* Btag CSV */ \
+    /* SIMPLE_VAR(Float_t, bpt_2)  Corrected BTag Pt */ \
+    /* SIMPLE_VAR(Float_t, beta_2)  Btag Eta */ \
+    /* SIMPLE_VAR(Float_t, bphi_2)  Btag Phi */ \
+    /* SIMPLE_VAR(Float_t, brawf_2)  Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
+    /* SIMPLE_VAR(Float_t, bmva_2)  Btag mva */ \
+    /* SIMPLE_VAR(Float_t, bcsv_2)  Btag CSV */ \
     /**/ \
     SIMPLE_VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     SIMPLE_VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \

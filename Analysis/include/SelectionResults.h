@@ -97,6 +97,7 @@ struct SelectionResultsV2 {
     sv_fit::FitResults svfitResult;
     //kinematic_fit::four_body::FitResults kinfitResults;
     CandidateV2PtrVector jets;
+    int numJet;
     CandidateV2PtrVector jetsPt20;
     CandidateV2PtrVector bjets;
     CandidateV2PtrVector retagged_bjets;

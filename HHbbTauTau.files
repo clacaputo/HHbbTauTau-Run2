@@ -211,10 +211,12 @@ microAODProduction/batchSub/Submitter
 microAODProduction/batchSub/batchSubmission.pbs
 microAODProduction/crab/crab3_cfg.py
 microAODProduction/crab/DiBosons_crab.py
+microAODProduction/crab/DiBosons__sync_crab.py
 microAODProduction/crab/DY_crab.py
 microAODProduction/crab/Hhh_crab.py
 microAODProduction/crab/RunD__sync_crab.py
 microAODProduction/crab/RunD_crab.py
+microAODProduction/crab/WJets_crab.py
 microAODProduction/crab/TTBar_crab.py
 microAODProduction/crab/TTBar_sync_crab.py
 microAODProduction/data/dummy.txt
