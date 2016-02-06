@@ -39,38 +39,38 @@
 class SkimFilterMiniAOD : public edm::EDFilter {
 public:
     explicit SkimFilterMiniAOD(const edm::ParameterSet& iConfig)
-        : vertexTag(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc")),
-          muonTag(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc")),
-          electronTag(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc")),
-          tauTag(iConfig.getUntrackedParameter<edm::InputTag>("tauSrc")) {}
+        : vertexTag(mayConsume<reco::VertexCollection>(iConfig.getUntrackedParameter<edm::InputTag>("vertexSrc"))),
+          muonTag(mayConsume<pat::MuonCollection >(iConfig.getUntrackedParameter<edm::InputTag>("muonSrc"))),
+          electronTag(mayConsume<pat::ElectronCollection>(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
+          tauTag(mayConsume<pat::TauCollection>(iConfig.getUntrackedParameter<edm::InputTag>("tauSrc"))) {}
 
 private:
     virtual bool filter(edm::Event&, const edm::EventSetup&);
 
 private:
 //    const edm::EDGetTokenT<reco::VertexCollection> vertexTag;
-    edm::InputTag vertexTag;
-    edm::InputTag muonTag;
-    edm::InputTag electronTag;
-    edm::InputTag tauTag;
+    edm::EDGetToken vertexTag;
+    edm::EDGetToken muonTag;
+    edm::EDGetToken electronTag;
+    edm::EDGetToken tauTag;
 };
 
 bool SkimFilterMiniAOD::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     edm::Handle<reco::VertexCollection> hVertices;
-    iEvent.getByLabel(vertexTag, hVertices);
+    iEvent.getByToken(vertexTag, hVertices);
     const reco::VertexCollection& vertices = *hVertices;
 
     edm::Handle<pat::MuonCollection> hMuons;
-    iEvent.getByLabel(muonTag, hMuons);
+    iEvent.getByToken(muonTag, hMuons);
     const pat::MuonCollection& muons = *hMuons.product();
 
     edm::Handle<pat::ElectronCollection> hElectrons;
-    iEvent.getByLabel(electronTag, hElectrons);
+    iEvent.getByToken(electronTag, hElectrons);
     const pat::ElectronCollection& electrons = *hElectrons.product();
 
     edm::Handle<pat::TauCollection> hTaus;
-    iEvent.getByLabel(tauTag, hTaus);
+    iEvent.getByToken(tauTag, hTaus);
     const pat::TauCollection& taus = *hTaus.product();
 
     bool haveGoodVertex = false;

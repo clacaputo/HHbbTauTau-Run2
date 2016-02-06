@@ -38,10 +38,10 @@ options.register ('runOnCrab',
                   VarParsing.varType.bool,
                   "Indicates if script will be executed on CRAB.")
 options.register ('sampleType', 
-                  'Spring15MC',
+                  'Fall15MC',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
-                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+                  "Indicates the sample type: Spring15MC, Fall15MC, Run2015B, Run2015C, Run2015D")
 
 
 options.parseArguments()
@@ -107,11 +107,13 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  muonSrc    = cms.InputTag("slimmedMuons"),
                                  vtxSrc     = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  jetSrc     = cms.InputTag("slimmedJets"),
+                                 PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
                                  ##pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
                                  pfMETSrc   = cms.InputTag("slimmedMETs"),
                                  bits       = cms.InputTag("TriggerResults","","HLT"),
                                  prescales  = cms.InputTag("patTrigger"),
                                  objects    = cms.InputTag("selectedPatTrigger"),
+                                 metCov     = cms.InputTag("METSignificance","METCovariance"),
                                  sampleType = cms.string(options.sampleType),
 				)
 

@@ -219,6 +219,8 @@ microAODProduction/crab/RunD_crab.py
 microAODProduction/crab/WJets_crab.py
 microAODProduction/crab/TTBar_crab.py
 microAODProduction/crab/TTBar_sync_crab.py
+microAODProduction/crab/SyncTuple_crab.py
+microAODProduction/crab/SyncTuple_v2_crab.py
 microAODProduction/data/dummy.txt
 microAODProduction/interface/PatVertex.h
 microAODProduction/interface/BaseEDAnalyzer.h
@@ -406,7 +408,3 @@ miniAOD_skim.py
 miniAOD_skim_EleID.py
 electronID_cfg.py
 microAODProduction/interface/SyncTree.h
-differentEvents.log
-differentEvents2.log
-microAODProduction/crab/SyncTuple_crab.py
-svFit_pfMET_1.log

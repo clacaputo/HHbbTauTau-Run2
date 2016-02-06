@@ -26,10 +26,10 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
 options.register ('sampleType',
-                  'Spring15MC',
+                  'Fall15MC',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
-                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+                  "Indicates the sample type: Spring15MC, Fall15MC, Run2015B, Run2015C, Run2015D")
 
 options.parseArguments()
 
@@ -42,7 +42,7 @@ process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 
-process.GlobalTag = GlobalTag(process.GlobalTag, '74X_mcRun2_asymptotic_v4')
+process.GlobalTag = GlobalTag(process.GlobalTag, '76X_mcRun2_asymptotic_v12')
 
 ## Events to process
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
@@ -56,7 +56,7 @@ inputWJets = cms.untracked.vstring(
                 '/store/mc/RunIISpring15DR74/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/048FB1EE-33FD-E411-A2BA-0025905A6094.root')
 inputDY = cms.untracked.vstring(
                 '/store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/009D49A5-7314-E511-84EF-0025905A605E.root')
-inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD280.root")
+inputSignal_v2 = cms.untracked.vstring('/store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/12184969-3DB8-E511-879B-001E67504A65.root')
 ##inputSignal_v2 = cms.untracked.vstring(
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
@@ -144,11 +144,13 @@ process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
                                  muonSrc   = cms.InputTag("slimmedMuons"),
                                  vtxSrc    = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  jetSrc    = cms.InputTag("slimmedJets"),
+                                 PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
                                  ##pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
                                  pfMETSrc  = cms.InputTag("slimmedMETs"),
                                  bits      = cms.InputTag("TriggerResults","","HLT"),
                                  prescales = cms.InputTag("patTrigger"),
                                  objects   = cms.InputTag("selectedPatTrigger"),
+                                 metCov     = cms.InputTag("METSignificance","METCovariance"),
                                  sampleType = cms.string(options.sampleType),
                                 )
 

@@ -39,14 +39,16 @@
 
 namespace analysis{
 
-enum class DataSourceType { Spring15MC=0, Run2015B=1, Run2015C , Run2015D };
+enum class DataSourceType { Spring15MC=0, Fall15MC=1, Run2015B=2, Run2015C , Run2015D };
 
 static const std::map<DataSourceType,std::string> dataSourceTypeMap = {{DataSourceType::Spring15MC , "Spring15MC"},
+                                                                       {DataSourceType::Fall15MC , "Fall15MC"},
                                                                        {DataSourceType::Run2015B , "Run2015B"},
                                                                        {DataSourceType::Run2015C , "Run2015C"},
                                                                        {DataSourceType::Run2015D , "Run2015D"}};
 
 static const std::map<std::string, DataSourceType> stringToDataSourceTypeMap = {{ "Spring15MC", DataSourceType::Spring15MC},
+                                                                       { "Fall15MC", DataSourceType::Fall15MC},
                                                                        { "Run2015B" , DataSourceType::Run2015B},
                                                                        { "Run2015C" , DataSourceType::Run2015C},
                                                                        { "Run2015D" , DataSourceType::Run2015D}};
@@ -74,6 +76,7 @@ namespace MuTau {
         // https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2015  - Trigger Session
         const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
                                     {{analysis::DataSourceType::Spring15MC,{"HLT_IsoMu17_eta2p1_v1"}},
+                                     {analysis::DataSourceType::Fall15MC,{"HLT_IsoMu18_v2"}},
                                      {analysis::DataSourceType::Run2015B,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
                                                                             "HLT_IsoMu24_eta2p1_v2"}},
                                      {analysis::DataSourceType::Run2015C,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",

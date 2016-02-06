@@ -208,7 +208,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
               TLorentzVector triggerObjectMomentum;
               triggerObjectMomentum.SetPtEtaPhiM(triggerObject.pt(), triggerObject.eta(), triggerObject.phi(), triggerObject.mass());
               //Pt cut for singleTrigger
-              if (!isCrossTrigger && triggerObject.pt() < 18) continue;
+              // if (!isCrossTrigger && triggerObject.pt() < 18) continue;
 
               for (unsigned n = 0; n < triggerObject.pathNames(true).size(); ++n){
                   const std::string& objectMatchedPath = triggerObject.pathNames(true).at(n);
@@ -258,9 +258,11 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetToken vtxMiniAODToken_;
       edm::EDGetToken pfMETAODToken_;
       edm::EDGetToken jetsMiniAODToken_;
+      edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_;
       edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
       edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
       edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
+      edm::EDGetTokenT<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> metCovMatrixTAG_;
 
       Run2::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
@@ -286,9 +288,12 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
   pfMETAODToken_(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
   jetsMiniAODToken_(mayConsume<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
+  PUInfo_(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
   triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
+  metCovMatrixTAG_(consumes
+                   <ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >>(iConfig.getParameter<edm::InputTag>("metCov"))),
   syncTree(&edm::Service<TFileService>()->file(),false),
   anaData("BeforCut.root"),
   sampleType(iConfig.getParameter<std::string>("sampleType"))
@@ -335,8 +340,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   edm::Handle<edm::View<pat::Jet> > jets;
   iEvent.getByToken(jetsMiniAODToken_, jets);
   edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> metCovMatrix;
-  edm::InputTag metCovMatrixTAG("METSignificance","METCovariance");
-  iEvent.getByLabel(metCovMatrixTAG,metCovMatrix);
+  iEvent.getByToken(metCovMatrixTAG_,metCovMatrix);
   edm::Handle<edm::TriggerResults> triggerBits;
   iEvent.getByToken(triggerBits_, triggerBits);
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
@@ -345,7 +349,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByToken(triggerObjects_, triggerObjects);
 
   edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
-  iEvent.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PUInfo);
+  iEvent.getByToken(PUInfo_, PUInfo);
 
    /*   std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
           for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
@@ -384,20 +388,20 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
           */
 
   // access generator level HT
-    edm::Handle<LHEEventProduct> lheEventProduct;
-    iEvent.getByLabel(edm::InputTag("externalLHEProducer"), lheEventProduct);
-    const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
-    std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
-    double lheHt = 0.;
-    size_t numParticles = lheParticles.size();
-    for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
-     int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
-     int status = lheEvent.ISTUP[idxParticle];
-     if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
-         lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.) + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
-     }
-    }
-    std::cout<<"  HT  ============ > "<<lheHt<<std::endl;
+//    edm::Handle<LHEEventProduct> lheEventProduct;
+//    iEvent.getByLabel(edm::InputTag("externalLHEProducer"), lheEventProduct);
+//    const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
+//    std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
+//    double lheHt = 0.;
+//    size_t numParticles = lheParticles.size();
+//    for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
+//     int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
+//     int status = lheEvent.ISTUP[idxParticle];
+//     if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
+//         lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.) + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
+//     }
+//    }
+//    std::cout<<"  HT  ============ > "<<lheHt<<std::endl;
 
 
 
@@ -415,8 +419,8 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
           if(PUInfo.isValid()){
               for(std::vector<PileupSummaryInfo>::const_iterator PVI = PUInfo->begin(); PVI != PUInfo->end(); ++PVI){
                   int BX = PVI->getBunchCrossing();
-                  std::cout << "\t PileUpInfo :    BX = " << PVI->getBunchCrossing()
-                            << "  PU = " << PVI->getTrueNumInteractions() << std::endl;
+//                  std::cout << "\t PileUpInfo :    BX = " << PVI->getBunchCrossing()
+//                            << "  PU = " << PVI->getTrueNumInteractions() << std::endl;
                   if(BX == 0) selection.numtruepileupinteractions = PVI->getTrueNumInteractions();
             }
           }
@@ -1081,25 +1085,6 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.nbtag()     = selection.bjets.size();
         //int jetCount = 0;
 
-//        if (selection.jets.size()){
-//            const pat::Jet& pat_jet1 = selection.jets.at(0)->GetNtupleObject<pat::Jet>();
-//            syncTree.jpt_1()   = selection.jets.at(0)->GetMomentum().Pt();
-//            syncTree.jeta_1()  = selection.jets.at(0)->GetMomentum().Eta();
-//            syncTree.jphi_1()  = selection.jets.at(0)->GetMomentum().Phi();
-//            syncTree.jrawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.jets.at(0)->GetMomentum().Pt();
-//            syncTree.jmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
-//        }
-
-//        if (selection.bjets.size()){
-//            const pat::Jet& pat_jet1 = selection.bjets.at(0)->GetNtupleObject<pat::Jet>();
-//            syncTree.bpt_1()   = selection.bjets.at(0)->GetMomentum().Pt();
-//            syncTree.beta_1()  = selection.bjets.at(0)->GetMomentum().Eta();
-//            syncTree.bphi_1()  = selection.bjets.at(0)->GetMomentum().Phi();
-//            syncTree.brawf_1() = (pat_jet1.correctedJet("Uncorrected").pt() ) / selection.bjets.at(0)->GetMomentum().Pt();
-//            syncTree.bmva_1()  = pat_jet1.userFloat("pileupJetId:fullDiscriminant");
-//            syncTree.bcsv_1()  = pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-//        }
-//        syncTree->nBjets_retagged()    = selection.retagged_bjets.size();
         Int_t numJet = 0;
         for( const CandidateV2Ptr& jet : selection.jets ){
                 const pat::Jet& pat_jet1 = jet->GetNtupleObject<pat::Jet>();
@@ -1107,6 +1092,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
                 syncTree.pt_jets()   .push_back(jet->GetMomentum().Pt());
                 syncTree.eta_jets()  .push_back(jet->GetMomentum().Eta());
                 syncTree.phi_jets()  .push_back(jet->GetMomentum().Phi());
+                syncTree.energy_jets() .push_back(jet->GetMomentum().E());
                 syncTree.rawf_jets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
                 syncTree.mva_jets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
                 syncTree.csv_jets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
@@ -1119,6 +1105,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
                 syncTree.pt_bjets()   .push_back(jet->GetMomentum().Pt());
                 syncTree.eta_bjets()  .push_back(jet->GetMomentum().Eta());
                 syncTree.phi_bjets()  .push_back(jet->GetMomentum().Phi());
+                syncTree.energy_bjets() .push_back(jet->GetMomentum().E());
                 syncTree.rawf_bjets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
                 syncTree.mva_bjets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
                 syncTree.csv_bjets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
