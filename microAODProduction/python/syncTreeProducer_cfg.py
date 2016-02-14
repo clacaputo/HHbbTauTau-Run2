@@ -42,6 +42,11 @@ options.register ('sampleType',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+options.register ('computeHT',
+                'False',
+                 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.bool,
+                "Compute HT variable and HT binning")
 
 
 options.parseArguments()
@@ -96,23 +101,6 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(options
 #-------------
 # SyncTree Producer
 #-------------
-process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
+from HHbbTauTau.microAODProduction.syncNtupler_cfi import syncNtupler
 
-                                 genParticles = cms.InputTag("genParticles"),
-                                 #
-                                 # Objects specific to MiniAOD format
-                                 #
-
-                                 tauSrc     = cms.InputTag("slimmedTaus"),
-                                 muonSrc    = cms.InputTag("slimmedMuons"),
-                                 vtxSrc     = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                 jetSrc     = cms.InputTag("slimmedJets"),
-                                 ##pfMETSrc  = cms.InputTag("slimmedMETsNoHF"),
-                                 pfMETSrc   = cms.InputTag("slimmedMETs"),
-                                 bits       = cms.InputTag("TriggerResults","","HLT"),
-                                 prescales  = cms.InputTag("patTrigger"),
-                                 objects    = cms.InputTag("selectedPatTrigger"),
-                                 sampleType = cms.string(options.sampleType),
-				)
-
-process.p = cms.Path(process.synctupler)
+process.p = cms.Path(process.syncNtupler)

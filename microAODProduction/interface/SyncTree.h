@@ -8,6 +8,9 @@
     SIMPLE_VAR(Int_t, run) /* Run */ \
     SIMPLE_VAR(Int_t, lumi) /* Lumi */ \
     SIMPLE_VAR(ULong64_t, evt) /* Evt */ \
+    SIMPLE_VAR(Int_t, eventType) /* event type category */ \
+    SIMPLE_VAR(Int_t, HTBin) /* event type category */ \
+    SIMPLE_VAR(Double_t, weightevt) /*Gen Event Weight*/ \
     /* Event Variables */ \
     SIMPLE_VAR(Int_t, npv) /* NPV */ \
     SIMPLE_VAR(Float_t, npu) /* Number of in-time pu interactions added to the event */ \
@@ -106,7 +109,8 @@
     VECTOR_VAR(Float_t, phi_jets) /* Jet Phi */ \
     VECTOR_VAR(Float_t, rawf_jets) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VECTOR_VAR(Float_t, mva_jets) /* Jet MVA id value */ \
-    VECTOR_VAR(Float_t, csv_jets) /* Jet MVA id value */ \
+    VECTOR_VAR(Float_t, csv_jets) /* Jet CSV value */ \
+    VECTOR_VAR(Float_t, energy_jets) /* Jet mass value */ \
     /* Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau) */ \
     /* SIMPLE_VAR(Float_t, jpt_2)  Jet Pt after corrections */ \
     /* SIMPLE_VAR(Float_t, jeta_2)  Jet Eta */ \
@@ -122,6 +126,7 @@
     VECTOR_VAR(Float_t, rawf_bjets) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VECTOR_VAR(Float_t, mva_bjets) /* Btag mva */ \
     VECTOR_VAR(Float_t, csv_bjets) /* Btag CSV */ \
+    VECTOR_VAR(Float_t, energy_bjets) /* Btag mass */ \
     /* Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
     /* SIMPLE_VAR(Float_t, bpt_2)  Corrected BTag Pt */ \
     /* SIMPLE_VAR(Float_t, beta_2)  Btag Eta */ \
@@ -130,6 +135,7 @@
     /* SIMPLE_VAR(Float_t, bmva_2)  Btag mva */ \
     /* SIMPLE_VAR(Float_t, bcsv_2)  Btag CSV */ \
     /**/ \
+    SIMPLE_VAR(Float_t, HT) \
     SIMPLE_VAR(Bool_t, dilepton_veto) /* Event is vetoed by the dilepton veto if true */ \
     SIMPLE_VAR(Bool_t, extraelec_veto) /* Event is vetoed by the extra electron veto if true */ \
     SIMPLE_VAR(Bool_t, extramuon_veto) /* Event is vetoed by the extra muon veto if true */ \
@@ -156,4 +162,10 @@ TREE_CLASS_INITIALIZE(Run2, SyncTree, SYNC_DATA)
 
 namespace Run2 {
 inline double DefaultFillValueForSyncTree() { return -10000; }
+inline float DefaultFloatFillValueForSyncTree() { return std::numeric_limits<float>::lowest(); }
+
+enum class HTbinning { lt100 = 0, f100to200 = 1, f200to400 = 2, f400to600 = 3, gt600 = 4 };
+
 }
+
+
