@@ -221,6 +221,9 @@ microAODProduction/crab/TTBar_crab.py
 microAODProduction/crab/TTBar_sync_crab.py
 microAODProduction/crab/SyncTuple_crab.py
 microAODProduction/crab/SyncTuple_v2_crab.py
+microAODProduction/crab/ReSynctupleProducer_crab.py
+microAODProduction/crab/ReSynctupleProducer_DATA_crab.py
+microAODProduction/crab/ReSynctupleProducer_Signal_crab.py
 microAODProduction/data/dummy.txt
 microAODProduction/interface/PatVertex.h
 microAODProduction/interface/BaseEDAnalyzer.h
@@ -240,7 +243,9 @@ microAODProduction/python/miniAOD_skim.py
 microAODProduction/python/miniAOD_skim_Sync.py
 microAODProduction/python/miniAOD_skim_EleID.py
 microAODProduction/python/miniAOD_skim_EleID_DATA.py
+microAODProduction/python/syncNtupler_cfi.py
 microAODProduction/python/syncTreeProducer_cfg.py
+microAODProduction/python/skimmedBranches_cff.py
 microAODProduction/src/classes.h
 microAODProduction/src/classes_def.xml
 env.sh

@@ -92,7 +92,9 @@ struct SelectionResultsV2 {
 
     virtual ~SelectionResultsV2() {}
     CandidateV2Ptr higgs;
-    Float_t numtruepileupinteractions;
+    Float_t numtruepileupinteractions =-1;
+    Float_t HT;
+    Double_t weightevt;
     bool Zveto;
     sv_fit::FitResults svfitResult;
     //kinematic_fit::four_body::FitResults kinfitResults;

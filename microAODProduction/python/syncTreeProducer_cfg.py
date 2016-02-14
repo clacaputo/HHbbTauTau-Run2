@@ -41,7 +41,12 @@ options.register ('sampleType',
                   'Fall15MC',
                   VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
-                  "Indicates the sample type: Spring15MC, Fall15MC, Run2015B, Run2015C, Run2015D")
+                  "Indicates the sample type: Spring15MC, Run2015B, Run2015C, Run2015D")
+options.register ('computeHT',
+                'False',
+                 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.bool,
+                "Compute HT variable and HT binning")
 
 
 options.parseArguments()
@@ -96,7 +101,7 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(options
 #-------------
 # SyncTree Producer
 #-------------
-process.synctupler = cms.EDAnalyzer('SyncTreeProducer',
+from HHbbTauTau.microAODProduction.syncNtupler_cfi import syncNtupler
 
                                  genParticles = cms.InputTag("genParticles"),
                                  #

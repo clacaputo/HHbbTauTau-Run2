@@ -25,6 +25,7 @@
 
 // import LHEEventProduction definition
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -263,7 +264,10 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
       edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
       edm::EDGetTokenT<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> metCovMatrixTAG_;
+      edm::EDGetTokenT<LHEEventProduct> lheEventProduct_;
+      edm::EDGetTokenT<GenEventInfoProduct> genWeights_;
 
+      bool computeHT_;
       Run2::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
       SelectionResultsV2_mutau selection;
@@ -294,6 +298,9 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
   metCovMatrixTAG_(consumes
                    <ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >>(iConfig.getParameter<edm::InputTag>("metCov"))),
+  lheEventProduct_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
+  genWeights_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
+  computeHT_(iConfig.getParameter<bool>("HTBinning")),
   syncTree(&edm::Service<TFileService>()->file(),false),
   anaData("BeforCut.root"),
   sampleType(iConfig.getParameter<std::string>("sampleType"))
@@ -348,6 +355,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
   iEvent.getByToken(triggerObjects_, triggerObjects);
 
+
   edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
   iEvent.getByToken(PUInfo_, PUInfo);
 
@@ -387,23 +395,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
           */
 
-  // access generator level HT
-//    edm::Handle<LHEEventProduct> lheEventProduct;
-//    iEvent.getByLabel(edm::InputTag("externalLHEProducer"), lheEventProduct);
-//    const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
-//    std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
-//    double lheHt = 0.;
-//    size_t numParticles = lheParticles.size();
-//    for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
-//     int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
-//     int status = lheEvent.ISTUP[idxParticle];
-//     if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
-//         lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.) + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
-//     }
-//    }
-//    std::cout<<"  HT  ============ > "<<lheHt<<std::endl;
-
-
 
   //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
   ntuple::TauVector tausV;
@@ -414,6 +405,32 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   try{
 
       cut(true,"events");
+
+      if(computeHT_){
+          //access generator level HT
+      edm::Handle<LHEEventProduct> lheEventProduct;
+      iEvent.getByToken(lheEventProduct_, lheEventProduct);
+      const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
+      std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
+      double lheHt = 0.;
+      size_t numParticles = lheParticles.size();
+      for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
+       int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
+       int status = lheEvent.ISTUP[idxParticle];
+       if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
+           lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.) + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
+       }
+      }
+      selection.HT = lheHt;
+      //std::cout<<"  HT  ============ > "<<lheHt<<std::endl;
+      }
+
+      if (sampleType == "Spring15MC" || sampleType == "Fall15MC"){
+          edm::Handle<GenEventInfoProduct> genEvt;
+          iEvent.getByToken(genWeights_,genEvt);
+          // event weight
+          selection.weightevt=genEvt->weight();
+      }
 
 
           if(PUInfo.isValid()){
@@ -615,7 +632,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         if ( jet.pt()>jetID::pt_loose && fabs(jet.eta())<btag::eta &&
              jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > btag::CSVL)
             bjetsCollection.push_back(jet_candidate);
-
     }
 
 //   const auto ptOrdering = [&] ( const CandidateV2Ptr& first, const CandidateV2Ptr& second ) -> bool
@@ -938,7 +954,7 @@ double SyncTreeProducer::Fit(const CandidateV2Ptr& higgs, const analysis::Missin
 
 void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
     {
- //       static const float default_value = Run2::DefaultFloatFillValueForFlatTree();
+        static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
 
         // Event
         std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
@@ -947,8 +963,24 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.run()  = iEvent.id().run();
         syncTree.lumi() = iEvent.id().luminosityBlock();
         syncTree.evt()  = iEvent.id().event();
+
+        if(computeHT_){
+            syncTree.HT()   = selection.HT;
+            if(selection.HT<100) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::lt100);
+            if(100<=selection.HT && selection.HT<200) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f100to200);
+            if(200<=selection.HT && selection.HT<400) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f200to400);
+            if(400<=selection.HT && selection.HT<600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f400to600);
+            if(selection.HT>=600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::gt600);
 //        syncTree->eventType() = static_cast<int>(selection.eventType);
 //        syncTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
+        }
+        else {
+            syncTree.HT() = default_value;
+            syncTree.HTBin() = -1;
+        }
+
+        if (sampleType == "Spring15MC" || sampleType == "Fall15MC") syncTree.weightevt() = selection.weightevt;
+        else syncTree.weightevt() = default_value;
 
         syncTree.npv() = selection.vertices.size();
         syncTree.npu() = selection.numtruepileupinteractions;
