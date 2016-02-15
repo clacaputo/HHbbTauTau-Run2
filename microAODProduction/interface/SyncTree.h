@@ -30,15 +30,17 @@
     SIMPLE_VAR(Int_t, q_1) /* Charge */ \
     SIMPLE_VAR(Float_t, d0_1) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_1) /* dZ with respect to primary vertex */ \
-    SIMPLE_VAR(Float_t, mt_1) /* mT of  first lepton wrt to PF met */ \
+    SIMPLE_VAR(Float_t, mt_1) /* mT of  first lepton wrt to MVA met */ \
+    SIMPLE_VAR(Float_t, pfmt_1) /* mT of  first lepton wrt to MVA met */ \
+    SIMPLE_VAR(Float_t, puppimt_1) /* mT of  first lepton wrt to MVA met */ \
     SIMPLE_VAR(Float_t, iso_1) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     SIMPLE_VAR(Float_t, id_e_mva_nt_loose_1) /* Non-triggering electron ID MVA score id (when using electron) 0 otherwise */ \
     SIMPLE_VAR(Int_t, gen_match_1 ) /*Generator matching, see Htautau Twiki*/\
-    SIMPLE_VAR(Float_t, againstElectronLooseMVA5_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronMediumMVA5_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronTightMVA5_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronVLooseMVA5_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronVTightMVA5_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronLooseMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronMediumMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronTightMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronVLooseMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronVTightMVA6_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, byIsolationMVA2raw_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, againstMuonLoose3_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, againstMuonTight3_1) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
@@ -51,6 +53,8 @@
     SIMPLE_VAR(Int_t, decayModeFindingOldDMs_1) /* Old Decay Mode finding */\
     SIMPLE_VAR(Float_t, neutralIsoPtSum_1) \
     SIMPLE_VAR(Float_t, puCorrPtSum_1) \
+    SIMPLE_VAR(Float_t, trigweight_1) \
+    SIMPLE_VAR(Float_t, idisoweight_1) \
     /* Second lepton :  hadronic Tau for mu Tau had for e Tau, Muon for e mu, Trailing (in pT)  Tau for Tau Tau */ \
     SIMPLE_VAR(Float_t, pt_2) /* pT */ \
     SIMPLE_VAR(Float_t, phi_2) /* Phi */ \
@@ -62,11 +66,11 @@
     SIMPLE_VAR(Float_t, mt_2) /* mT of  first lepton wrt to PF met */ \
     SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     SIMPLE_VAR(Int_t, gen_match_2 ) /*Generator matching, see Htautau Twiki*/\
-    SIMPLE_VAR(Float_t, againstElectronLooseMVA5_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronMediumMVA5_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronTightMVA5_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronVLooseMVA5_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
-    SIMPLE_VAR(Float_t, againstElectronVTightMVA5_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronLooseMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronMediumMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronTightMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronVLooseMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
+    SIMPLE_VAR(Float_t, againstElectronVTightMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, byIsolationMVA2raw_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, againstMuonLoose3_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
     SIMPLE_VAR(Float_t, againstMuonTight3_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
@@ -79,12 +83,15 @@
     SIMPLE_VAR(Int_t, decayModeFindingOldDMs_2) /* Old Decay Mode finding */\
     SIMPLE_VAR(Float_t, neutralIsoPtSum_2) \
     SIMPLE_VAR(Float_t, puCorrPtSum_2) \
+    SIMPLE_VAR(Float_t, idisoweight_2) \
     /* Di-lepton */ \
     SIMPLE_VAR(Float_t, m_vis) /* pairs invariant mass */ \
     SIMPLE_VAR(Float_t, pt_tt) /* pT */ \
     /* Met related variables */ \
     SIMPLE_VAR(Float_t, met) /* pfmet */ \
     SIMPLE_VAR(Float_t, metphi) /* pfmet Phi */ \
+    SIMPLE_VAR(Float_t, puppimet) /* puppimet */ \
+    SIMPLE_VAR(Float_t, puppimetphi) /* puppimet Phi */ \
     SIMPLE_VAR(Bool_t, isPFMET) /* pfmet Phi */ \
     SIMPLE_VAR(Float_t, mvamet) /* mvamet */ \
     SIMPLE_VAR(Float_t, mvametphi) /* mvamet Phi */ \

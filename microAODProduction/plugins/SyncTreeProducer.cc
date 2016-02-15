@@ -559,7 +559,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
 
           if(!(tau.pt() > tauID::pt && fabs(tau.eta()) < tauID::eta &&
-               tau.tauID("decayModeFindingNewDMs") > tauID::decayModeFinding &&
+               tau.tauID("decayModeFinding") > tauID::decayModeFinding &&
                fabs(packedLeadTauCand->dz()) < tauID::dz )) continue;
 
 
@@ -867,8 +867,8 @@ CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& h
                           second_muon.pfIsolationR03().sumPhotonEt -
                           0.5 * second_muon.pfIsolationR03().sumPUPt, 0.0)) / second_muon.pt();
 
-        double iso_tau1 = first_tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-        double iso_tau2 = second_tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
+        double iso_tau1 = first_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
+        double iso_tau2 = second_tau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
 
         std::cout << "LAMBDA ------------------------  \n IsoMu1 = "<<iso_mu1<<"  IsoMu2 = "<<iso_mu2
                   << "  IsoTau1 = "<<iso_tau1<<"  IsoTau2 = "<<iso_tau2<<std::endl;
