@@ -64,6 +64,8 @@
     SIMPLE_VAR(Float_t, d0_2) /* d0 with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, dZ_2) /* dZ with respect to primary vertex */ \
     SIMPLE_VAR(Float_t, mt_2) /* mT of  first lepton wrt to PF met */ \
+    SIMPLE_VAR(Float_t, pfmt_2) /* mT of  first lepton wrt to PF met */ \
+    SIMPLE_VAR(Float_t, puppimt_2) /* mT of  first lepton wrt to PF met */ \
     SIMPLE_VAR(Float_t, iso_2) /* MVA iso for hadronic Tau, Delta Beta for muon and electron */ \
     SIMPLE_VAR(Int_t, gen_match_2 ) /*Generator matching, see Htautau Twiki*/\
     SIMPLE_VAR(Float_t, againstElectronLooseMVA6_2) /* MVA iso for hadronic Tau, Delta Beta for muon */ \
@@ -118,7 +120,6 @@
     VECTOR_VAR(Float_t, rawf_jets) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VECTOR_VAR(Float_t, mva_jets) /* Jet MVA id value */ \
     VECTOR_VAR(Float_t, csv_jets) /* Jet CSV value */ \
-    VECTOR_VAR(Float_t, energy_jets) /* Jet mass value */ \
     /* Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau) */ \
     /* SIMPLE_VAR(Float_t, jpt_2)  Jet Pt after corrections */ \
     /* SIMPLE_VAR(Float_t, jeta_2)  Jet Eta */ \
@@ -135,7 +136,6 @@
     VECTOR_VAR(Float_t, rawf_bjets) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VECTOR_VAR(Float_t, mva_bjets) /* Btag mva */ \
     VECTOR_VAR(Float_t, csv_bjets) /* Btag CSV */ \
-    VECTOR_VAR(Float_t, energy_bjets) /* Btag mass */ \
     /* Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
     /* SIMPLE_VAR(Float_t, bpt_2)  Corrected BTag Pt */ \
     /* SIMPLE_VAR(Float_t, beta_2)  Btag Eta */ \

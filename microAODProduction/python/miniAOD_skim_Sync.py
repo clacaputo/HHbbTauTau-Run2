@@ -62,12 +62,13 @@ inputSignal_v2 = cms.untracked.vstring("file:768F5AFB-D771-E511-9ABD-B499BAABD28
 DYSample = cms.untracked.vstring("/store/user/ccaputo/HHbbtautau/Run2/DYSample_forHT.root")
 
 Diboson = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIISpring15MiniAODv2/VVTo2L2Nu_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/10000/1A826380-CB6D-E511-BCFA-0025901D4D6E.root')
+SyncSignal = cms.untracked.vstring('root://xrootd.unl.edu//store/mc/RunIIFall15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/50000/B2FF8F77-3DB8-E511-B743-001E6757F1D4.root')
 
 ##inputSignal_v2 = cms.untracked.vstring(
 ##                '/store/mc/RunIISpring15MiniAODv2/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/40000/10563B6E-D871-E511-9513-B499BAABD280.root')
 ## Input files
 process.source = cms.Source("PoolSource",
-    fileNames = Diboson
+    fileNames = SyncSignal
 )
 
 ## Output file
@@ -84,7 +85,7 @@ if not options.computeHT and not options.isData:
 if options.isData:
     skimmedBranches = cms.untracked.vstring(BaseDATABranches)
 
-allBranches = cms.untracked.vstring(['keep *'])
+allBranches = cms.untracked.vstring(['drop *'])
 
 process.load("RecoMET.METProducers.METSignificance_cfi")
 process.load("RecoMET.METProducers.METSignificanceParams_cfi")
@@ -136,11 +137,13 @@ process.syncNtupler = cms.EDAnalyzer('SyncTreeProducer',
                                  muonSrc          = cms.InputTag("slimmedMuons"),
                                  vtxSrc           = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  jetSrc           = cms.InputTag("slimmedJets"),
+                                 PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
                                  ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
                                  pfMETSrc         = cms.InputTag("slimmedMETs"),
                                  bits             = cms.InputTag("TriggerResults","","HLT"),
                                  prescales        = cms.InputTag("patTrigger"),
                                  objects          = cms.InputTag("selectedPatTrigger"),
+                                 metCov     = cms.InputTag("METSignificance","METCovariance"),
                                  lheEventProducts = cms.InputTag("externalLHEProducer"),
                                  genEventInfoProduct = cms.InputTag("generator"),
                                  HTBinning        = cms.bool(options.computeHT),
@@ -162,9 +165,9 @@ process.out = cms.OutputModule("PoolOutputModule",
     eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
     fileName = cms.untracked.string('microAOD.root'),
     SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
-    outputCommands = skimmedBranches,
+    #outputCommands = skimmedBranches,
     #outputCommands = HTBinBranches,
-    #outputCommands = allBranches,
+    outputCommands = allBranches,
     dropMetaData = cms.untracked.string('ALL'),
     fastCloning = cms.untracked.bool(False),
     overrideInputFileSplitLevels = cms.untracked.bool(True)

@@ -101,8 +101,9 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(options
 #-------------
 # SyncTree Producer
 #-------------
-from HHbbTauTau.microAODProduction.syncNtupler_cfi import syncNtupler
+#from HHbbTauTau.microAODProduction.syncNtupler_cfi import syncNtupler
 
+process.syncNtupler = cms.EDAnalyzer('SyncTreeProducer',
                                  genParticles = cms.InputTag("genParticles"),
                                  #
                                  # Objects specific to MiniAOD format

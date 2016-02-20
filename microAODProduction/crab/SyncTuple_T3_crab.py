@@ -1,7 +1,7 @@
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = 'SUSYGluGluToHToTauTau_M160_76X_Pisa'
+config.General.requestName = 'SUSYGluGluToHToTauTau_M160_76X_MIB_v3'
 config.General.workArea = 'SUSYGluGluToHToTauTau_M160'
 
 config.JobType.pluginName = 'Analysis'
@@ -16,4 +16,4 @@ config.Data.unitsPerJob = 5000
 config.Data.outLFNDirBase = '/store/user/ccaputo/' # or '/store/group/<subdir>'
 config.Data.publication = False
 
-config.Site.storageSite = 'T2_IT_Pisa'
+config.Site.storageSite = 'T3_IT_MIB'

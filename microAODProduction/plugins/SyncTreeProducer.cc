@@ -562,6 +562,7 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                tau.tauID("decayModeFinding") > tauID::decayModeFinding &&
                fabs(packedLeadTauCand->dz()) < tauID::dz )) continue;
 
+	  if(!(fabs(tau.charge())==1)) continue;
 
         const CandidateV2Ptr tau_candidate(new CandidateV2(tau));
         tmp_tau.eta = tau.eta();
@@ -887,7 +888,7 @@ CandidateV2Ptr SyncTreeProducer::SelectSemiLeptonicHiggs(CandidateV2PtrVector& h
         }
         bool muon = (iso_mu1 < iso_mu2) ||
                     ((iso_mu1 == iso_mu2) ? first_muon.pt() >= second_muon.pt() : false);
-        bool tau = (iso_tau1 < iso_tau2) ||
+        bool tau = (iso_tau1 > iso_tau2) ||
                     ((iso_tau1 == iso_tau2) ? first_tau.pt() >= second_tau.pt() : false);
 
 //        if ( &first_muon==&second_muon ){
@@ -1064,7 +1065,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.eta_1()    = selection.GetLeg(1)->GetMomentum().Eta();
         syncTree.m_1()      = selection.GetLeg(1)->GetMomentum().M();
         syncTree.q_1()      = selection.GetLeg(1)->GetCharge();
-        syncTree.mt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
+        syncTree.pfmt_1()     = Calculate_MT(selection.GetLeg(1)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
         syncTree.d0_1()     = Calculate_dxy(selection.GetLeg(1)->GetVertexPosition(), primaryVertex->GetPosition(),
                                              selection.GetLeg(1)->GetMomentum());
         syncTree.dZ_1()     = selection.GetLeg(1)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
@@ -1084,26 +1085,26 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.eta_2()    = selection.GetLeg(2)->GetMomentum().Eta();
         syncTree.m_2()      = selection.GetLeg(2)->GetMomentum().M();
         syncTree.q_2()      = selection.GetLeg(2)->GetCharge();
-        syncTree.mt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
+        syncTree.pfmt_2()     = Calculate_MT(selection.GetLeg(2)->GetMomentum(), selection.pfMET->Pt(), selection.pfMET->Phi());
         syncTree.d0_2()     = Calculate_dxy(selection.GetLeg(2)->GetVertexPosition(), primaryVertex->GetPosition(),
                                              selection.GetLeg(2)->GetMomentum());
         syncTree.dZ_2()     = selection.GetLeg(2)->GetVertexPosition().Z() - primaryVertex->GetPosition().Z();
-
+	syncTree.iso_2()    = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
         syncTree.id_e_mva_nt_loose_1() = Run2::DefaultFillValueForSyncTree();
         syncTree.gen_match_2() = true;
 
-        syncTree.againstElectronLooseMVA5_2()   = patTau.tauID("againstElectronLooseMVA5");
-        syncTree.againstElectronMediumMVA5_2()  = patTau.tauID("againstElectronMediumMVA5");
-        syncTree.againstElectronTightMVA5_2()   = patTau.tauID("againstElectronTightMVA5");
-        syncTree.againstElectronVLooseMVA5_2()  = patTau.tauID("againstElectronVLooseMVA5");
-        syncTree.againstElectronVTightMVA5_2()  = patTau.tauID("againstElectronVTightMVA5");
+        syncTree.againstElectronLooseMVA6_2()   = patTau.tauID("againstElectronLooseMVA6");
+        syncTree.againstElectronMediumMVA6_2()  = patTau.tauID("againstElectronMediumMVA6");
+        syncTree.againstElectronTightMVA6_2()   = patTau.tauID("againstElectronTightMVA6");
+        syncTree.againstElectronVLooseMVA6_2()  = patTau.tauID("againstElectronVLooseMVA6");
+        syncTree.againstElectronVTightMVA6_2()  = patTau.tauID("againstElectronVTightMVA6");
 
         syncTree.againstMuonLoose3_2()          = patTau.tauID("againstMuonLoose3");
         syncTree.againstMuonTight3_2()          = patTau.tauID("againstMuonTight3");
 
         syncTree.byCombinedIsolationDeltaBetaCorrRaw3Hits_2() = patTau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
-        syncTree.byIsolationMVA3newDMwLTraw_2()               = patTau.tauID("byIsolationMVA3newDMwLTraw");
-        syncTree.byIsolationMVA3oldDMwLTraw_2()               = patTau.tauID("byIsolationMVA3oldDMwLTraw");
+        syncTree.byIsolationMVA3newDMwLTraw_2()               = patTau.tauID("byIsolationMVArun2v1DBnewDMwLTraw");
+        syncTree.byIsolationMVA3oldDMwLTraw_2()               = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
         syncTree.byIsolationMVA3newDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
         syncTree.byIsolationMVA3oldDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
 
