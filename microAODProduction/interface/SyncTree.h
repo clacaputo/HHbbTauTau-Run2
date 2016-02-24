@@ -112,7 +112,7 @@
     /* number of jets passing jet id ( pt > 30 ) */ \
     SIMPLE_VAR(Int_t, njets) /*  */ \
     SIMPLE_VAR(Int_t, njetspt20) /*  */ \
-    /* First Jet   : leading jet after applying Jet energy corrections (excluding hadronic Tau) */ \
+    /* Candidate Jets: jets after applying Jet energy corrections (excluding hadronic Tau) */ \
     VECTOR_VAR(Float_t, pt_jets) /* Jet Pt after corrections */ \
     VECTOR_VAR(Float_t, eta_jets) /* Jet Eta */ \
     VECTOR_VAR(Float_t, phi_jets) /* Jet Phi */ \
@@ -128,7 +128,7 @@
     /* SIMPLE_VAR(Float_t, jmva_2)  Jet MVA id value */ \
     /* number of btags passing btag id (medium CSV WP) ( pt > 20 ) */ \
     SIMPLE_VAR(Int_t, nbtag) /*  */ \
-    /* Candidate B Jets : leading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
+    /* Candidate B Jets (in pt ordering) passing (pt > 20 + eta < 2.4) */ \
     VECTOR_VAR(Float_t, pt_bjets) /* Corrected BTag Pt */ \
     VECTOR_VAR(Float_t, eta_bjets) /* Btag Eta */ \
     VECTOR_VAR(Float_t, phi_bjets) /* Btag Phi */ \

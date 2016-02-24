@@ -52,7 +52,14 @@ process.load("Configuration.Geometry.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 
-process.GlobalTag = GlobalTag(process.GlobalTag, '76X_mcRun2_asymptotic_v12')
+runOnData = options.isData
+
+if runOnData:
+  process.GlobalTag.globaltag = '76X_dataRun2_v15'
+  #process.source.lumisToProcess = LumiList.LumiList(filename = '../json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON.txt').getVLuminosityBlockRange()
+else:
+  process.GlobalTag.globaltag = '76X_mcRun2_asymptotic_v12'
+
 
 ## Events to process
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )

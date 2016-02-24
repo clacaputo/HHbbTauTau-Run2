@@ -88,7 +88,7 @@ from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 runOnData = options.isData
 
 if runOnData:
-  process.GlobalTag.globaltag = '74X_dataRun2_reMiniAOD_v1'
+  process.GlobalTag.globaltag = '76X_dataRun2_v15'
   process.source.lumisToProcess = LumiList.LumiList(filename = '/cmshome/caputo/HH_bbTauTau/Run2/CMSSW_7_4_12_patch4/src/HHbbTauTau/microAODProduction/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt').getVLuminosityBlockRange()
 else:
   process.GlobalTag.globaltag = '74X_mcRun2_asymptotic_v4'

@@ -82,10 +82,6 @@ namespace MuTau {
                                      {analysis::DataSourceType::Run2015C,{"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v2",
                                                                           "HLT_IsoMu24_eta2p1_v2"}},
                                      {analysis::DataSourceType::Run2015D,{"HLT_IsoMu18_v"}}};
-
-        const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_v1"};
-        const std::set<std::string> hltPathRunD = {"HLT_IsoMu18_v"};
-        //const std::set<std::string> hltPathMC = {"HLT_IsoMu17_eta2p1_LooseIsoPFTau20_v1","HLT_IsoMu24_eta2p1_v1"};
     }
 
     namespace muonID {
@@ -329,15 +325,15 @@ namespace jetID {
 }
 
 namespace btag {
-    // twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-    const double CSVL = 0.244; // > loose
-    const double CSVM = 0.679; // > medium
-    const double CSVT = 0.898; // > tight
+    // pfCombinedInclusiveSecondaryVertexV2BJetTags, twiki
+    const double CSVL = 0.605; // > loose
+    const double CSVM = 0.89; // > medium
+    const double CSVT = 0.97; // > tight
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
     const double pt = 20; // >
     const double eta = 2.4; // <
-    const double CSV = CSVM; // >
+    const double CSV = 0.8; // > HTauTau Twiki
     // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/VBFAnalyzer.py
     const bool puLooseID = true; // =
     const bool pfLooseID = true; // =

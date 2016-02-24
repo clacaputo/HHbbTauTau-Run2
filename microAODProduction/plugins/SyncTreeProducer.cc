@@ -354,55 +354,14 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByToken(triggerPrescales_, triggerPrescales);
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
   iEvent.getByToken(triggerObjects_, triggerObjects);
-
-
   edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
   iEvent.getByToken(PUInfo_, PUInfo);
 
-   /*   std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
-          for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
-              obj.unpackPathNames(names);
-              std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << std::endl;
-              // Print trigger object collection and type
-              std::cout << "\t   Collection: " << obj.collection() << std::endl;
-              std::cout << "\t   Type IDs:   ";
-              for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
-              std::cout << std::endl;
-              // Print associated trigger filters
-              std::cout << "\t   Filters:    ";
-              for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
-              std::cout << std::endl;
-              std::vector<std::string> pathNamesAll  = obj.pathNames(false);
-              std::vector<std::string> pathNamesLast = obj.pathNames(true);
-              // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
-              // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
-              // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
-              std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
-              for (unsigned h = 0, n = pathNamesAll.size(); h < n; ++h) {
-                  bool isBoth = obj.hasPathName( pathNamesAll[h], true, true );
-                  bool isL3   = obj.hasPathName( pathNamesAll[h], false, true );
-                  bool isLF   = obj.hasPathName( pathNamesAll[h], true, false );
-                  bool isNone = obj.hasPathName( pathNamesAll[h], false, false );
-                  std::cout << "   " << pathNamesAll[h];
-                  if (isBoth) std::cout << "(L,3)";
-                  if (isL3 && !isBoth) std::cout << "(*,3)";
-                  if (isLF && !isBoth) std::cout << "(L,*)";
-                  if (isNone && !isBoth && !isL3 && !isLF) std::cout << "(*,*)";
-              }
-              std::cout << std::endl;
-          }
-          std::cout << std::endl;
-
-          */
-
-
-  //Usare ntuple::Muon e Tau definiti in TreeProduction in modo da poter utilizzare i metodi del BaseAnalyzer
-  ntuple::TauVector tausV;
-  ntuple::MuonVector muonsV;
-
-//  std::map <size_t, ntuple::Muon> muonsMaps;
-
   try{
+
+      std::cout<< "=========================================================================== \n"
+               << "\t Run "<<iEvent.id().run()<<"\t Lumi "<<iEvent.id().luminosityBlock()
+                  << "\t Event "<<iEvent.id().event()<<std::endl;
 
       cut(true,"events");
 
@@ -490,9 +449,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       CandidateV2PtrVector muonCollection, tauCollection;
       CandidateV2PtrVector muonVetoCollection;
       for(const pat::Muon &muon : *muons){
-        ntuple::Muon tmp_muon;
-
-
         if(!(muon.pt() > muonID::pt  &&
             fabs(muon.eta()) < muonID::eta &&
             muon.isMediumMuon() == muonID::isMediumMuon)) continue;
@@ -501,12 +457,9 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                       fabs(muon.muonBestTrack()->dz(PV->position())) < muonID::dz;
         if(!muonIP) continue;
 
-        tmp_muon.eta = muon.eta();
-
         const CandidateV2Ptr muon_candidate(new CandidateV2(muon));
         muonCollection.push_back(muon_candidate);
         patMuonsVector.push_back(muon);
-        muonsV.push_back(tmp_muon);
 
       }
 
@@ -531,10 +484,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                                          CandidateV2::Type::Z,"Z_mu_mu",0);
       selection.Zveto = Zmumu.size() ? true : false;
 
-      std::cout<< "=========================================================================== \n"
-               << "\t Run "<<iEvent.id().run()<<"\t Lumi "<<iEvent.id().luminosityBlock()
-                  << "\t Event "<<iEvent.id().event()<<std::endl;
-
       std::cout<< "Muons Checks ------------------------------------------------ \n";
       for(auto &muon : muonCollection){
           const pat::Muon& patMuon = muon->GetNtupleObject<pat::Muon>();
@@ -551,8 +500,6 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       //Taus selections
       for (const pat::Tau &tau : *taus){
 
-          ntuple::Tau tmp_tau;
-
       pat::PackedCandidate const* packedLeadTauCand =
               dynamic_cast<pat::PackedCandidate const*>(tau.leadChargedHadrCand().get());
       //fabs(packedLeadTauCand->dz()) < 0.2;  // The PackedCandidate::dz() method is wrt. the first PV by default
@@ -565,16 +512,8 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 	  if(!(fabs(tau.charge())==1)) continue;
 
         const CandidateV2Ptr tau_candidate(new CandidateV2(tau));
-        tmp_tau.eta = tau.eta();
-//      tmp_tau.pt  = tau.pt();
-//      tmp_tau.phi = tau.phi();
- //     tmp_tau.againstElectronLooseMVA5   = tau.tauID('againstElectronLooseMVA5');
- //     tmp_tau.againstElectronMediumMVA5  = tau.tauID('againstElectronMediumMVA5');
- //     tmp_tau.againstElectronTightMVA5   = tau.tauID('againstElectronTightMVA5');
- //     tmp_tau.againstElectronVTightMVA5  = tau.tauID('againstElectronVTightMVA5');
 
         tauCollection.push_back(tau_candidate);
-          tausV.push_back(tmp_tau);
       }
 
     cut(tauCollection.size(),"taus");
@@ -631,32 +570,9 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         jetsCollection.push_back(jet_candidate);
 
         if ( jet.pt()>jetID::pt_loose && fabs(jet.eta())<btag::eta &&
-             jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > btag::CSVL)
+             jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > btag::CSV)
             bjetsCollection.push_back(jet_candidate);
     }
-
-//   const auto ptOrdering = [&] ( const CandidateV2Ptr& first, const CandidateV2Ptr& second ) -> bool
-//                            { return first->GetMomentum().Pt() > second->GetMomentum().Pt(); };
-
-//   std::cout << " Before Pt Jets Ordering \n :  " << std::endl;
-//   for (auto & jet : jetsCollection) {
-//          std::cout <<"\t Jet Momentum  :  "<<jet->GetMomentum()<<std::endl;
-//   }
-//   std::cout << " Before Pt BJets Ordering \n :  " << std::endl;
-//   for (auto & jet : jetsCollection) {
-//          std::cout <<"\t bJet Momentum  :  "<<jet->GetMomentum()<<std::endl;
-//   }
-//   std::sort(jetsCollection.begin(),jetsCollection.end(),ptOrdering);
-//   std::sort(bjetsCollection.begin(),bjetsCollection.end(),ptOrdering);
-//   std::cout << " After Pt Jets Ordering \n :  " << std::endl;
-//   for (auto & jet : jetsCollection) {
-//          std::cout <<"\t Jet Momentum  :  "<<jet->GetMomentum()<<std::endl;
-//   }
-//   std::cout << " After Pt BJets Ordering \n :  " << std::endl;
-//   for (auto & jet : jetsCollection) {
-//          std::cout <<"\t bJet Momentum  :  "<<jet->GetMomentum()<<std::endl;
-//   }
-
 
    selection.bjets = bjetsCollection;
    selection.jets  = jetsCollection;
