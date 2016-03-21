@@ -1,7 +1,7 @@
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = 'SUSYGluGluToHToTauTau_M160_76X_MIB_v3'
+config.General.requestName = 'SUSYGluGluToHToTauTau_M160_76X_MIB_v5'
 config.General.workArea = 'SUSYGluGluToHToTauTau_M160'
 
 config.JobType.pluginName = 'Analysis'

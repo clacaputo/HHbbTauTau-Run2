@@ -1,4 +1,3 @@
-
 #pragma once
 
 //#include "TreeProduction/interface/SmartTree.h"
@@ -49,6 +48,11 @@
     SIMPLE_VAR(Float_t, byIsolationMVA3oldDMwoLTraw_1) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
     SIMPLE_VAR(Float_t, byIsolationMVA3newDMwLTraw_1) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
     SIMPLE_VAR(Float_t, byIsolationMVA3oldDMwLTraw_1) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
+    SIMPLE_VAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
+    SIMPLE_VAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Loose WP */ \
+    SIMPLE_VAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Medium WP */ \
+    SIMPLE_VAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime Tight WP */ \
+    SIMPLE_VAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT_1) /* MVA iso for Tau w/ Lifetime VTight WP */ \
     SIMPLE_VAR(Float_t, chargedIsoPtSum_1) \
     SIMPLE_VAR(Int_t, decayModeFindingOldDMs_1) /* Old Decay Mode finding */\
     SIMPLE_VAR(Float_t, neutralIsoPtSum_1) \
@@ -81,6 +85,11 @@
     SIMPLE_VAR(Float_t, byIsolationMVA3oldDMwoLTraw_2) /* MVA iso for Tau w/o Lifetime information Old Decay Mode */ \
     SIMPLE_VAR(Float_t, byIsolationMVA3newDMwLTraw_2) /* MVA iso for Tau w/ Lifetime information New Decay Mode */ \
     SIMPLE_VAR(Float_t, byIsolationMVA3oldDMwLTraw_2) /* MVA iso for Tau w/ Lifetime information Old Decay Mode */ \
+    SIMPLE_VAR(Int_t, byVLooseIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime VLoose WP */ \
+    SIMPLE_VAR(Int_t, byLooseIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Loose WP */ \
+    SIMPLE_VAR(Int_t, byMediumIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Medium WP */ \
+    SIMPLE_VAR(Int_t, byTightIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime Tight WP */ \
+    SIMPLE_VAR(Int_t, byVTightIsolationMVArun2v1DBoldDMwLT_2) /* MVA iso for Tau w/ Lifetime VTight WP */ \
     SIMPLE_VAR(Float_t, chargedIsoPtSum_2) \
     SIMPLE_VAR(Int_t, decayModeFindingOldDMs_2) /* Old Decay Mode finding */\
     SIMPLE_VAR(Float_t, neutralIsoPtSum_2) \
@@ -120,6 +129,7 @@
     VECTOR_VAR(Float_t, rawf_jets) /* factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VECTOR_VAR(Float_t, mva_jets) /* Jet MVA id value */ \
     VECTOR_VAR(Float_t, csv_jets) /* Jet CSV value */ \
+    VECTOR_VAR(Int_t, partonFlavour_jets) /* Jet CSV value */ \
     /* Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau) */ \
     /* SIMPLE_VAR(Float_t, jpt_2)  Jet Pt after corrections */ \
     /* SIMPLE_VAR(Float_t, jeta_2)  Jet Eta */ \
@@ -136,6 +146,7 @@
     VECTOR_VAR(Float_t, rawf_bjets) /* Btag factor to be applied to the jet p4 to obtain its uncorrected p4 */ \
     VECTOR_VAR(Float_t, mva_bjets) /* Btag mva */ \
     VECTOR_VAR(Float_t, csv_bjets) /* Btag CSV */ \
+    VECTOR_VAR(Int_t, partonFlavour_bjets) /* Jet CSV value */ \
     /* Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4) */ \
     /* SIMPLE_VAR(Float_t, bpt_2)  Corrected BTag Pt */ \
     /* SIMPLE_VAR(Float_t, beta_2)  Btag Eta */ \

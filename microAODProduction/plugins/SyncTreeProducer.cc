@@ -75,12 +75,15 @@
 #include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
 
 //HHbbTauTau Framework
+#include "../interface/SyncTree.h"
 #include "../../TreeProduction/interface/Tau.h"
 #include "../../TreeProduction/interface/Muon.h"
 #include "../../AnalysisBase/include/AnalyzerData.h"
 #include "../../AnalysisBase/include/CutTools.h"
 #include "../interface/Candidate.h"
-#include "../interface/SyncTree.h"
+
+
+
 #include "../../Analysis/include/SelectionResults.h"
 
 #include "../interface/Htautau_2015.h"
@@ -127,6 +130,7 @@ struct SelectionResultsV2_mutau : public SelectionResultsV2 {
 class SyncTreeProducer : public edm::EDAnalyzer {
    public:
       explicit SyncTreeProducer(const edm::ParameterSet&);
+  
       ~SyncTreeProducer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
@@ -241,6 +245,7 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       // Data members that are the same for AOD and miniAOD
       // ... none ...
 
+	private:	
       // MiniAOD case data members
       edm::EDGetToken electronsMiniAODToken_;
   //    edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticlesMiniAODToken_;
@@ -268,11 +273,12 @@ class SyncTreeProducer : public edm::EDAnalyzer {
       edm::EDGetTokenT<GenEventInfoProduct> genWeights_;
 
       bool computeHT_;
-      Run2::SyncTree syncTree;
       analysis::SyncAnalyzerData anaData;
-      SelectionResultsV2_mutau selection;
-      VertexV2Ptr primaryVertex;
+      Run2::SyncTree syncTree;
       std::string sampleType;
+      
+      VertexV2Ptr primaryVertex;
+      SelectionResultsV2_mutau selection;
 };
 
 //
@@ -287,6 +293,8 @@ class SyncTreeProducer : public edm::EDAnalyzer {
 // constructors and destructor
 //
 SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
+  electronsMiniAODToken_(mayConsume<edm::View<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
+  eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
   tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
   muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
   vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
@@ -301,14 +309,13 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   lheEventProduct_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
   genWeights_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
   computeHT_(iConfig.getParameter<bool>("HTBinning")),
-  syncTree(&edm::Service<TFileService>()->file(),false),
   anaData("BeforCut.root"),
+  syncTree(&edm::Service<TFileService>()->file(),false),
   sampleType(iConfig.getParameter<std::string>("sampleType"))
 {
 //  genParticlesMiniAODToken_ = mayConsume<edm::View<reco::GenParticle> >
 //    (iConfig.getParameter<edm::InputTag>
 //     ("genParticlesMiniAOD"));
-
 }
 
 
@@ -336,6 +343,11 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
   // Save global info right away
   //Get collection
+  edm::Handle<edm::View<pat::Electron> > electrons;
+  iEvent.getByToken(electronsMiniAODToken_, electrons);
+  edm::Handle<edm::ValueMap<bool> > tight_id_decisions;
+  iEvent.getByToken(eleTightIdMapToken_,tight_id_decisions);
+  
   edm::Handle<edm::View<pat::Tau> > taus;
   iEvent.getByToken(tausMiniAODToken_, taus);
   edm::Handle<edm::View<pat::Muon> > muons;
@@ -447,22 +459,67 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
       std::vector<pat::Muon> patMuonsVector;
       CandidateV2PtrVector muonCollection, tauCollection;
-      CandidateV2PtrVector muonVetoCollection;
+      CandidateV2PtrVector ZVetoCollection, muonVetoCollectio;
+      
+      
+      std::vector<bool> muonVetoVtr;
       for(const pat::Muon &muon : *muons){
-        if(!(muon.pt() > muonID::pt  &&
-            fabs(muon.eta()) < muonID::eta &&
-            muon.isMediumMuon() == muonID::isMediumMuon)) continue;
-
+      	bool muonVeto= false;
+        double iso_mu = (muon.pfIsolationR03().sumChargedHadronPt + std::max(
+                            muon.pfIsolationR03().sumNeutralHadronEt +
+                            muon.pfIsolationR03().sumPhotonEt -
+                            0.5 * muon.pfIsolationR03().sumPUPt, 0.0)) / muon.pt();
+        
         bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < muonID::dB &&
                       fabs(muon.muonBestTrack()->dz(PV->position())) < muonID::dz;
-        if(!muonIP) continue;
+        
+        // if( muon.pt() > muonVeto::pt && fabs(muon.eta()) < muonVeto::eta &&
+//             muonIP && iso_mu < muonVeto::pfRelIso && muon.isMediumMuon()) muonVeto= true;
+        
+        if(!(muon.pt() > muonID::pt  &&
+            fabs(muon.eta()) < muonID::eta && muonIP &&
+            muon.isMediumMuon() == muonID::isMediumMuon)) {
+            
+            if( muon.pt() > muonVeto::pt && fabs(muon.eta()) < muonVeto::eta &&
+            muonIP && iso_mu < muonVeto::pfRelIso && muon.isMediumMuon()) muonVeto= true;
+            muonVetoVtr.push_back(muonVeto);  
+            
+            continue;
+            
+            }
+        else muonVetoVtr.push_back(muonVeto);
 
+		//if(muonVeto) muonVetoVtr.push_back(!(muonVeto));
+		
         const CandidateV2Ptr muon_candidate(new CandidateV2(muon));
         muonCollection.push_back(muon_candidate);
         patMuonsVector.push_back(muon);
 
       }
-
+	  
+	  if (std::find(muonVetoVtr.begin(), muonVetoVtr.end(), true) != muonVetoVtr.end()) 
+	  				selection.muonVeto = true;
+	  else						   selection.muonVeto = false;
+      // DiLepton Veto -----------
+      
+//        for(const pat::Muon &muon : *muons){
+//         
+//         double iso_mu = (muon.pfIsolationR03().sumChargedHadronPt + std::max(
+//                             muon.pfIsolationR03().sumNeutralHadronEt +
+//                             muon.pfIsolationR03().sumPhotonEt -
+//                             0.5 * muon.pfIsolationR03().sumPUPt, 0.0)) / muon.pt();
+//         
+//         bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < muonID::dB &&
+//                       fabs(muon.muonBestTrack()->dz(PV->position())) < muonID::dz;
+//         
+//         if( !(muon.pt() > muonVeto::pt && fabs(muon.eta()) < muonVeto::eta &&
+//             muonIP && iso_mu < muonVeto::pfRelIso && muon.isMediumMuon()));
+//             
+//             const CandidateV2Ptr muon_candidate(new CandidateV2(muon));
+//             muonVetoCollection.push_back(muon_candidate);
+//       
+//             }
+      
       for(const pat::Muon &muon : *muons){
           double iso_mu = (muon.pfIsolationR03().sumChargedHadronPt + std::max(
                             muon.pfIsolationR03().sumNeutralHadronEt +
@@ -470,20 +527,23 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
                             0.5 * muon.pfIsolationR03().sumPUPt, 0.0)) / muon.pt();
           bool muonIP = fabs(muon.muonBestTrack()->dxy(PV->position())) < muonID::dB &&
                         fabs(muon.muonBestTrack()->dz(PV->position())) < muonID::dz;
+                        
           if(!(muon.pt() > ZmumuVeto::pt && fabs(muon.eta()) < ZmumuVeto::eta &&
                muon.isGlobalMuon() && muon.isTrackerMuon()  && muon.isPFMuon()  &&
                muonIP && iso_mu < 0.3)) continue;
 
           const CandidateV2Ptr muon_candidate(new CandidateV2(muon));
-          muonVetoCollection.push_back(muon_candidate);
+          ZVetoCollection.push_back(muon_candidate);
       }
 
       cut(muonCollection.size(),"muons");
 
-      auto Zmumu = FindCompatibleObjects(muonVetoCollection,muonVetoCollection,DeltaR_betweenSignalObjects,
+      auto Zmumu = FindCompatibleObjects(ZVetoCollection,ZVetoCollection,DeltaR_betweenSignalObjects,
                                          CandidateV2::Type::Z,"Z_mu_mu",0);
       selection.Zveto = Zmumu.size() ? true : false;
-
+	  
+	  //---------------
+	
       std::cout<< "Muons Checks ------------------------------------------------ \n";
       for(auto &muon : muonCollection){
           const pat::Muon& patMuon = muon->GetNtupleObject<pat::Muon>();
@@ -576,6 +636,34 @@ SyncTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
    selection.bjets = bjetsCollection;
    selection.jets  = jetsCollection;
+   
+   // Third Lepton veto
+   	selection.electronVeto = false ; 
+   	//for (const pat::Electron &ele : *electrons){
+   	for (size_t i = 0; i < electrons->size(); ++i){
+    
+      
+     const auto ele = electrons->ptrAt(i);
+   	 using namespace cuts::Htautau_2015;
+   	 
+   	 
+   	 bool isPassTight  = (*tight_id_decisions)[ele];
+   	 
+	 double iso = ((*ele).pfIsolationVariables().sumChargedHadronPt 
+	 				+ std::max((*ele).pfIsolationVariables().sumNeutralHadronEt 
+	 				+ (*ele).pfIsolationVariables().sumPhotonEt - 
+	 				0.5 * (*ele).pfIsolationVariables().sumPUPt, 0.0)) / (*ele).pt();
+     
+     bool eleIP = fabs((*ele).gsfTrack()->dxy(PV->position())) < electronVeto::d0 &&
+                        fabs((*ele).gsfTrack()->dz(PV->position())) < electronVeto::dz;
+                        
+     if ((*ele).pt() > electronVeto::pt && fabs((*ele).eta()) < electronVeto::eta_high 
+     	 && eleIP && isPassTight
+         && (*ele).passConversionVeto() 
+         && (*ele).gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS) <= electronVeto::missingHits
+         && iso < electronVeto::pFRelIso)   selection.electronVeto = true;       	
+   }
+   // ----------------
 
     double svfit_mass = Fit(higgs,pfMET);
     std::cout<< "\n\t CHOOSEN SVFit -->  " << svfit_mass <<std::endl;
@@ -951,9 +1039,9 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
 //        syncTree->pt_tt_MET() = (selection.GetLeg(1)->GetMomentum() + selection.GetLeg(2)->GetMomentum()
 //                                 + MET_momentum).Pt();
 
-        syncTree.met() = selection.pfMET->Pt();
-        syncTree.metphi() = selection.pfMET->Phi();
-        syncTree.isPFMET() = selection.pfMET->isPFMET();
+        syncTree.met()      = selection.pfMET->Pt();
+        syncTree.metphi()   = selection.pfMET->Phi();
+        syncTree.isPFMET()  = selection.pfMET->isPFMET();
         syncTree.metcov00() = selection.pfMET->GetCovVector().at(0);
         syncTree.metcov01() = selection.pfMET->GetCovVector().at(1);
         syncTree.metcov10() = selection.pfMET->GetCovVector().at(2);
@@ -1023,10 +1111,18 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
         syncTree.byIsolationMVA3oldDMwLTraw_2()               = patTau.tauID("byIsolationMVArun2v1DBoldDMwLTraw");
         syncTree.byIsolationMVA3newDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
         syncTree.byIsolationMVA3oldDMwoLTraw_2()              = Run2::DefaultFillValueForSyncTree();
+        
+        syncTree.byVLooseIsolationMVArun2v1DBoldDMwLT_2()     = patTau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
+        syncTree.byLooseIsolationMVArun2v1DBoldDMwLT_2()      = patTau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+        syncTree.byMediumIsolationMVArun2v1DBoldDMwLT_2()     = patTau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+        syncTree.byTightIsolationMVArun2v1DBoldDMwLT_2()      = patTau.tauID("byTightIsolationMVArun2v1DBoldDMwLT");
+        syncTree.byVTightIsolationMVArun2v1DBoldDMwLT_2()     = patTau.tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
 
         syncTree.decayModeFindingOldDMs_2() = patTau.tauID("decayModeFinding");
 
-        syncTree.dilepton_veto() = selection.Zveto;
+        syncTree.dilepton_veto()  = selection.Zveto;
+        syncTree.extraelec_veto() = selection.electronVeto;
+        syncTree.extramuon_veto() = selection.muonVeto;
 
         // Jets
         syncTree.njetspt20() = selection.jets.size();
@@ -1045,6 +1141,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
                 syncTree.rawf_jets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
                 syncTree.mva_jets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
                 syncTree.csv_jets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                syncTree.partonFlavour_jets() .push_back(pat_jet1.partonFlavour());
          }
         syncTree.njets() = numJet;
 
@@ -1058,6 +1155,7 @@ void SyncTreeProducer::FillSyncTree(const edm::Event& iEvent)
                 syncTree.rawf_bjets() .push_back((pat_jet1.correctedJet("Uncorrected").pt() ) / jet->GetMomentum().Pt());
                 syncTree.mva_bjets()  .push_back(pat_jet1.userFloat("pileupJetId:fullDiscriminant"));
                 syncTree.csv_bjets()  .push_back(pat_jet1.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags"));
+                syncTree.partonFlavour_bjets() .push_back(pat_jet1.partonFlavour());
          }
 
 //        for (const CandidatePtr& jet : selection.bjets_all) {

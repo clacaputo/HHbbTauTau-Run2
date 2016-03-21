@@ -28,6 +28,7 @@
 
 #include "../../AnalysisBase/include/AnalyzerData.h"
 #include "../../AnalysisBase/include/Candidate.h"
+#include "../../AnalysisBase/include/CutTools.h"
 #include "../../AnalysisBase/include/FlatTree.h"
 #include "../../AnalysisBase/include/MCfinalState.h"
 
@@ -95,7 +96,7 @@ struct SelectionResultsV2 {
     Float_t numtruepileupinteractions =-1;
     Float_t HT;
     Double_t weightevt;
-    bool Zveto;
+    bool Zveto, electronVeto, muonVeto;
     sv_fit::FitResults svfitResult;
     //kinematic_fit::four_body::FitResults kinfitResults;
     CandidateV2PtrVector jets;

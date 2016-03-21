@@ -54,11 +54,12 @@ from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 
 runOnData = options.isData
 
+# Latest JEC
 if runOnData:
-  process.GlobalTag.globaltag = '76X_dataRun2_v15'
+  process.GlobalTag.globaltag = '76X_dataRun2_16Dec2015_v0'
   #process.source.lumisToProcess = LumiList.LumiList(filename = '../json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON.txt').getVLuminosityBlockRange()
 else:
-  process.GlobalTag.globaltag = '76X_mcRun2_asymptotic_v12'
+  process.GlobalTag.globaltag = '76X_mcRun2_asymptotic_RunIIFall15DR76_v1'
 
 
 ## Events to process
@@ -139,7 +140,8 @@ process.syncNtupler = cms.EDAnalyzer('SyncTreeProducer',
                                  #
                                  # Objects specific to MiniAOD format
                                  #
-
+								 electronSrc      = cms.InputTag("slimmedElectrons"),
+								 eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
                                  tauSrc           = cms.InputTag("slimmedTaus"),
                                  muonSrc          = cms.InputTag("slimmedMuons"),
                                  vtxSrc           = cms.InputTag("offlineSlimmedPrimaryVertices"),
@@ -158,9 +160,9 @@ process.syncNtupler = cms.EDAnalyzer('SyncTreeProducer',
                                 )
 
 process.p = cms.Path(
-             #process.electronMVAValueMapProducer*
              process.METSignificance*
              process.egmGsfElectronIDSequence*
+             process.electronMVAValueMapProducer*
              process.bbttSkim*
              process.syncNtupler
 	   	    )

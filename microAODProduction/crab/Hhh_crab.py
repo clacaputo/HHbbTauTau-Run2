@@ -9,7 +9,7 @@ config.JobType.pyCfgParams = ['sampleType=Fall15MC','isData=False','computeHT=Fa
 
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'EventAwareLumiBased'
-config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/76X_Production_v1/' # or '/store/group/<subdir>'
+config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/76X_Production_v2/' # or '/store/group/<subdir>'
 config.Data.publication = False
 
 config.Site.storageSite = 'T2_IT_Bari'
