@@ -123,12 +123,12 @@ public:
     {
         using namespace std;
 
-        //drawHistos("run", 200, 0, 200000);
-        //drawHistos("lumi", 2000, 0, 2000);
-        //drawHistos("evt", 2000, 0, 2000);
+//        drawHistos("run", 200, 0, 200000);
+//        drawHistos("lumi", 2000, 0, 2000);
+//        drawHistos("evt", 2000, 0, 2000);
 
         drawHistos("npv", 50, 0, 50);
-        //drawHistos("npu", 50, 0, 50);
+        drawHistos("npu", 50, 0, 50);
         //drawHistos("rho", 50, 0, 50);
 
         //event weights
@@ -157,9 +157,9 @@ public:
         //SV Fit variables
         drawHistos("m_vis", 20, 0, 200);
         drawHistos("m_sv", 30, 0, 300);
-        drawHistos("pt_sv", 100, 0, 100);
-        drawHistos("eta_sv", 60, -3, 3);
-        drawHistos("phi_sv", 30, -3.5, 3.5);
+        //drawHistos("pt_sv", 100, 0, 100);
+        //drawHistos("eta_sv", 60, -3, 3);
+        //drawHistos("phi_sv", 30, -3.5, 3.5);
 //        drawHistos("m_sv_Up", 60, 0, 300);
 //        drawHistos("m_sv_Down", 60, 0, 300);
 
@@ -170,7 +170,7 @@ public:
         drawHistos("eta_1", 60, -3, 3);
         drawHistos("phi_1", 30, -3.5, 3.5);
 ////        if (channel == "etau" || channel == "mutau")
-////            drawHistos("iso_1", 40, 0., 0.12);
+        drawHistos("iso_1", 40, 0., 0.12);
 ////        if (channel == "tautau")
 ////            drawHistos("iso_1", 100, 0., 1);
 //        drawHistos("m_1", 20, 0, 0.4);
@@ -181,7 +181,7 @@ public:
 //        drawHistos("dZ_1", 40, -0.5, 0.5);
 ////        drawHistos("passid_1", 2, -0.5, 1.5);
 ////        drawHistos("passiso_1", 2, -0.5, 1.5);
-        drawHistos("mt_1", 50, 0, 200);
+        drawHistos("pfmt_1", 50, 0, 200);
 ////        drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_1", 40, 0, 20);
 ////        drawHistos("againstElectronMVA3raw_1", 2, -0.5, 1.5);
 ////        drawHistos("byIsolationMVA2raw_1", 300, -1, 1);
@@ -193,7 +193,7 @@ public:
         drawHistos("pt_2", 15, 0, 150);
         drawHistos("eta_2", 60, -3, 3);
         drawHistos("phi_2", 30, -3.5, 3.5);
-//        drawHistos("iso_2", 40, 0.6, 1.1);
+        drawHistos("iso_2", 50, -1, 1);
 //        drawHistos("m_2", 40, 0, 2);
         drawHistos("q_2", 4, -2, 2);
 ////        drawHistos("d0_2", 40, -0.1, 0.1);
@@ -201,7 +201,7 @@ public:
 ////        drawHistos("mva_2", 20, -0.5, 1.5);
 ////        drawHistos("passid_2", 2, -0.5, 1.5);
 ////        drawHistos("passiso_2", 2, -0.5, 1.5);
-        drawHistos("mt_2", 50, 0, 200);
+        drawHistos("pfmt_2", 50, 0, 200);
 
         drawHistos("byCombinedIsolationDeltaBetaCorrRaw3Hits_2", 40, 0, 2);
 ////        drawHistos("againstElectronMVA3raw_2", 2, -0.5, 1.5);
@@ -220,7 +220,6 @@ public:
         drawHistos("metcov00", 40, 0, 1000);
         drawHistos("metcov01", 40, 0, 1000);
         drawHistos("metcov10", 40, 0, 1000);
-          isLastDraw = true;
         drawHistos("metcov11", 40, 0, 1000);
 
 ////        drawHistos("mvamet", 20, 0, 200);
@@ -258,10 +257,10 @@ public:
 //        };
 
 //        //First Jet   : leading jet after applying Jet energy corrections (excluding hadronic Tau)
-//        drawHistos("jpt_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
-//        drawHistos("jeta_1", 50, -5, 5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
-//        drawHistos("jphi_1", 30, -3.5, 3.5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
-//        drawHistos("jptraw_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
+//        drawHistos("jpt_1", 50, 0, 300);
+//        drawHistos("jeta_1", 50, -5, 5);
+//        drawHistos("jphi_1", 30, -3.5, 3.5);
+//        drawHistos("jptraw_1", 50, 0, 300);
 //        //drawHistos("jptunc_1", 50, 0, 300, atLeast1jet_my, atLeast1jet_other, "njets>=1");
 //        drawHistos("jmva_1", 40, 0.5, 1.1, atLeast1jet_my, atLeast1jet_other, "njets>=1");
 ////        drawHistos("jlrm_1", 120, -60, 60, atLeast1jet_my, atLeast1jet_other, "njets>=1");
@@ -269,10 +268,10 @@ public:
 ////        drawHistos("jpass_1" , 2, -0.5, 1.5, atLeast1jet_my, atLeast1jet_other, "njets>=1");
 
 //            //Second Jet  : 2nd leading jet (in pt) afer applying Jet energy corrections (excluding Tau)
-//        drawHistos("jpt_2", 50, 0, 300, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-//        drawHistos("jeta_2", 50, -5, 5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-//        drawHistos("jphi_2", 30, -3.5, 3.5, atLeast2jets_my, atLeast2jets_other, "njets>=2");
-//        drawHistos("jptraw_2", 50, 0, 300, atLeast2jets_my, atLeast2jets_other, "njets>=2");
+//        drawHistos("jpt_2", 50, 0, 300);
+//        drawHistos("jeta_2", 50, -5, 5);
+//        drawHistos("jphi_2", 30, -3.5, 3.5);
+//        drawHistos("jptraw_2", 50, 0, 300);
 ////        drawHistos("jptunc_2", 50, 0, 300, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 //        drawHistos("jmva_2", 40, 0.5, 1.1, atLeast2jets_my, atLeast2jets_other, "njets>=2");
 ////        drawHistos("jlrm_2", 120, -60, 60, atLeast2jets_my, atLeast2jets_other, "njets>=2");
@@ -281,8 +280,8 @@ public:
 
 
 //            //number of jets passing jet id ( pt > 30 )
-//        drawHistos("njets", 7, -0.5, 6.5);
-//        drawHistos("njetspt20", 7, -0.5, 6.5);
+        drawHistos("njets", 7, -0.5, 6.5);
+        drawHistos("njetspt20", 7, -0.5, 6.5);
 
 
 //        // b-jets
@@ -311,16 +310,16 @@ public:
 
 
 //            //Candidate B Jets : leading jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
-//        drawHistos("bpt_1", 20, 0, 200, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
-//        drawHistos("beta_1", 50, -5, 5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
-//        drawHistos("bphi_1", 30, -3.5, 3.5, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
-//        drawHistos("bcsv_1", 50, 0.5, 1.1, atLeast1bjet_my, atLeast1bjet_other, "nbtag>=1");
+//        drawHistos("bpt_1", 20, 0, 200);
+//        drawHistos("beta_1", 50, -5, 5);
+//        drawHistos("bphi_1", 30, -3.5, 3.5);
+//        drawHistos("bcsv_1", 50, 0.5, 1.1);
 
 //            //Candidate B Jets : subleading jet (in CSV ordering) passing (pt > 20 + eta < 2.4)
-//        drawHistos("bpt_2", 20, 0, 200, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
-//        drawHistos("beta_2", 50, -5, 5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
-//        drawHistos("bphi_2", 30, -3.5, 3.5, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
-//        drawHistos("bcsv_2", 50, 0.5, 1.1, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
+//        drawHistos("bpt_2", 20, 0, 200);
+//        drawHistos("beta_2", 50, -5, 5);
+//        drawHistos("bphi_2", 30, -3.5, 3.5);
+//        drawHistos("bcsv_2", 50, 0.5, 1.1);
 //        drawHistos("m_bb", 30, 0, 300, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
 //        drawHistos("m_ttbb", 50, 0, 500, atLeast2bjets_my, atLeast2bjets_other, "nbtag>=2");
 
@@ -331,7 +330,12 @@ public:
 //        drawHistos("bcsv_3", 50, 0.5, 1.1, atLeast3bjets_my, atLeast3bjets_other, "nbtag>=3");
 
 //            //number of btags passing btag id (medium CSV WP) ( pt > 20 )
-//        drawHistos("nbtag", 5, -0.5, 4.5);
+        drawHistos("dilepton_veto", 2, 0, 2);
+        drawHistos("extraelec_veto", 2, 0, 2);
+        drawHistos("extramuon_veto", 2, 0, 2);
+        isLastDraw = true;
+        drawHistos("nbtag", 5, -0.5, 4.5);
+  //drawHistos("dilepton_veto", 2, 0, 2);
     }
 
 private:

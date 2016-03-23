@@ -105,6 +105,7 @@ PatProduction/python/treeProduction.py
 PatProduction/src/classes.h
 PatProduction/src/classes_def.xml
 Analysis/config/sources.cfg
+Analysis/config/sources_Run2.cfg
 PrintTools/include/RootPrintSource.h
 PrintTools/include/RootPrintToPdf.h
 PrintTools/include/RootPrintTools.h

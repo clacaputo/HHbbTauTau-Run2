@@ -90,6 +90,7 @@ namespace MuTau {
         //After Synctuple
 
         const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorking2015#Muons
+        const double mt = 30; // <
 
      /*   //const bool isTightMuon = true; // = HiggsToTauTauWorkingSummer2013#Muon_ID
                                          //def of isTightMuon: twiki SWGuideMuonId#Tight_Muon
@@ -116,6 +117,7 @@ namespace MuTau {
 
         const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double againstElectronVLooseMVA5 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstElectronVLooseMVA6 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h 76x
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
                                                       // GeV < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
 
@@ -320,9 +322,13 @@ namespace jetID {
 
 namespace btag {
     // twiki BTagPerformanceOP#B_tagging_Operating_Points_for_5
-    const double CSVL = 0.244; // > loose
-    const double CSVM = 0.679; // > medium
-    const double CSVT = 0.898; // > tight
+    // const double CSVL = 0.605; // > loose
+    // const double CSVM = 0.89; // > medium
+    // const double CSVT = 0.97; // > tight
+    // Fall 2015
+    const double CSVL = 0.460; // > loose
+    const double CSVM = 0.800; // > medium
+    const double CSVT = 0.935; // > tight
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Jets
     const double pt = 20; // >

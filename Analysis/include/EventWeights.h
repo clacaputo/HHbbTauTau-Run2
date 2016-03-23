@@ -26,10 +26,12 @@
 
 #pragma once
 
-#include "SelectionResults.h"
+//#include "SelectionResults.h"
 #include "AnalysisBase/include/Tools.h"
 #include "Analysis/include/Htautau_Summer13.h"
 #include "AnalysisBase/include/MCfinalState.h"
+/*----Run2----*/
+#include "microAODProduction/interface/SyncTree.h"
 
 namespace analysis {
 
@@ -90,6 +92,24 @@ public:
         has_pu_weight = true;
     }
 
+    /*---Run2---*/
+    void CalculatePuWeight(const Run2::Sync& eventInfo)
+    {
+        if(has_pu_weight)
+            throw exception("PU weight is already calculated.");
+        if(!apply_pu_weight)
+            throw exception("PU weight should not be applied.");
+
+        const double nPU = eventInfo.npu;
+        const Int_t bin = pu_weights->FindBin(nPU);
+        const Int_t maxBin = pu_weights->FindBin(max_available_pu);
+        const bool goodBin = bin >= 1 && bin <= maxBin;
+        PUweight = goodBin ? pu_weights->GetBinContent(bin) : default_pu_weight;
+
+        eventWeight *= PUweight;
+        has_pu_weight = true;
+    }
+    /*-----------*/
     void CalculateSelectionDependentWeights(const SelectionResults& selection)
     {
         if(has_selection_dependent_weights)

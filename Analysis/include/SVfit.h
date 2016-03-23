@@ -26,16 +26,16 @@
 
 #pragma once
 
-#include "HHbbTauTau/SVfit/source/generalAuxFunctions.cc"
-#include "HHbbTauTau/SVfit/source/LikelihoodFunctions.cc"
-#include "HHbbTauTau/SVfit/source/MarkovChainIntegrator.cc"
-#include "HHbbTauTau/SVfit/source/NSVfitStandaloneAlgorithm.cc"
-#include "HHbbTauTau/SVfit/source/NSVfitStandaloneLikelihood.cc"
-#include "HHbbTauTau/SVfit/source/svFitAuxFunctions.cc"
+#include "../../SVfit/source/generalAuxFunctions.cc"
+#include "../../SVfit/source/LikelihoodFunctions.cc"
+#include "../../SVfit/source/MarkovChainIntegrator.cc"
+#include "../../SVfit/source/NSVfitStandaloneAlgorithm.cc"
+#include "../../SVfit/source/NSVfitStandaloneLikelihood.cc"
+#include "../../SVfit/source/svFitAuxFunctions.cc"
 
-#include "HHbbTauTau/TreeProduction/interface/MET.h"
+#include "../../TreeProduction/interface/MET.h"
 
-#include "HHbbTauTau/AnalysisBase/include/Candidate.h"
+#include "../../AnalysisBase/include/Candidate.h"
 
 namespace analysis {
 
@@ -151,4 +151,3 @@ CombinedFitResults CombinedFit(const CandidatePtrVector& higgsLegs, const ntuple
 } // namespace sv_fit
 
 } // namespace analysis
-

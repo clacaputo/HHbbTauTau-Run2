@@ -101,7 +101,7 @@ public:
 
         canvas->Draw();
         std::ostringstream print_options;
-        print_options << "Title:" << page.title;
+        print_options << "Title: " << page.title;
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());
         ++n_pages;
     }
@@ -116,7 +116,7 @@ public:
         stackDescriptor.Draw(*canvas);
         canvas->Draw();
         std::ostringstream print_options;
-        print_options << "Title:" << stackDescriptor.GetTitle();
+        print_options << "Title: " << stackDescriptor.GetTitle();
         const Int_t old_gErrorIgnoreLevel = gErrorIgnoreLevel;
         gErrorIgnoreLevel = kWarning;
         canvas->Print(output_file_name.c_str(), print_options.str().c_str());

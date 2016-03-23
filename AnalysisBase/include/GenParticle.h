@@ -30,7 +30,7 @@
 
 #include <TLorentzVector.h>
 
-#include "HHbbTauTau/TreeProduction/interface/GenParticle.h"
+#include "TreeProduction/interface/GenParticle.h"
 
 #include "Particles.h"
 #include "exception.h"

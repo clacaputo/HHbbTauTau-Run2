@@ -40,10 +40,72 @@ public:
     {
     }
 
+private:
+  static bool IsAntiIsolatedRegion(const Run2::Sync& event)
+    {
+        return event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 > 1.6 &&
+                event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 < 10;
+    }
+
 protected:
     virtual analysis::Channel ChannelId() const override { return analysis::Channel::MuTau; }
 
-    virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
+    // virtual analysis::EventRegion DetermineEventRegion(const Run2::Sync& event,
+    //                                                    analysis::EventCategory eventCategory) override
+    virtual analysis::EventRegionSet DetermineEventRegion(const Run2::Sync& event,
+                                                       analysis::EventCategory eventCategory) override
+    {
+        using analysis::EventRegion;
+        using namespace cuts::Htautau_2015::MuTau;
+
+         analysis::EventRegionSet tmpSet;
+
+        const bool againstLeptons = event.againstMuonTight3_2 >= tauID::againstMuonTight3 &&
+                                    event.againstElectronVLooseMVA6_2 >= tauID::againstElectronVLooseMVA6;
+
+        if( !againstLeptons
+                 ||  event.iso_1 >= muonID::pFRelIso|| event.dilepton_veto
+              /*|| (event.mt_1 >= muonID::mt && event.mt_1<=70 && event.mt_1>140) || event.pt_2 <= 30*/ ){
+            tmpSet.insert(EventRegion::Unknown);
+            return tmpSet;
+            //return EventRegion::Unknown;
+          }
+
+        const bool os = event.q_1 * event.q_2 == -1;
+        const bool iso = event.iso_2 > 0.2 ;
+        const bool low_mt = event.pfmt_1 < muonID::mt;
+        //const bool low_mt = true;
+
+        if(iso && os) {
+            tmpSet.insert(EventRegion::OS_Isolated);
+            if(!low_mt && event.pfmt_1 > 70) tmpSet.insert(EventRegion::OS_Iso_HighMt);
+            if(low_mt) tmpSet.insert(EventRegion::OS_Iso_LowMt);
+        }
+        if(iso && !os) {
+            tmpSet.insert(EventRegion::SS_Isolated);
+            if(!low_mt && event.pfmt_1 > 70) tmpSet.insert(EventRegion::SS_Iso_HighMt);
+            if(low_mt) tmpSet.insert(EventRegion::SS_Iso_LowMt);
+        }
+        if(!iso && os) {
+            tmpSet.insert(EventRegion::OS_AntiIsolated);
+            if(!low_mt && event.pfmt_1 > 70) tmpSet.insert(EventRegion::OS_AntiIso_HighMt);
+            if(low_mt) tmpSet.insert(EventRegion::OS_AntiIso_LowMt);
+        }
+        if(!iso && !os) {
+            tmpSet.insert(EventRegion::SS_AntiIsolated);
+            if(!low_mt && event.pfmt_1 > 70) tmpSet.insert(EventRegion::SS_AntiIso_HighMt);
+            if(low_mt) tmpSet.insert(EventRegion::SS_AntiIso_LowMt);
+        }
+
+        return tmpSet;
+
+        // if(iso && os) return low_mt ? EventRegion::OS_Isolated : EventRegion::OS_Iso_HighMt;
+        // if(iso && !os) return low_mt ? EventRegion::SS_Isolated : EventRegion::SS_Iso_HighMt;
+        // if(os) return low_mt ? EventRegion::OS_AntiIsolated : EventRegion::OS_AntiIso_HighMt;
+        // return low_mt ? EventRegion::SS_AntiIsolated : EventRegion::SS_AntiIso_HighMt;
+    }
+
+        virtual analysis::EventRegion DetermineEventRegion(const ntuple::Flat& event,
                                                        analysis::EventCategory eventCategory) override
     {
         using analysis::EventRegion;
@@ -51,7 +113,7 @@ protected:
 
         if(!event.againstMuonTight_2
                 || event.byCombinedIsolationDeltaBetaCorrRaw3Hits_2 >= tauID::byCombinedIsolationDeltaBetaCorrRaw3Hits
-                || (event.pfRelIso_1 >= muonID::pFRelIso && !IsAntiIsolatedRegion(event))
+                || (event.pfRelIso_1 >= muonID::pFRelIso /*&& !IsAntiIsolatedRegion(event)*/)
                 || (event.mt_1 >= muonID::mt && !IsHighMtRegion(event,eventCategory)) /*|| event.pt_2 <= 30*/ )
             return EventRegion::Unknown;
 

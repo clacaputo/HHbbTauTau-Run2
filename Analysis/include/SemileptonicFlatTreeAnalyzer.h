@@ -52,7 +52,7 @@ protected:
 
     static bool IsAntiIsolatedRegion(const ntuple::Flat& event)
     {
-        using namespace cuts;        
+        using namespace cuts;
         return event.pfRelIso_1 > IsolationRegionForLeptonicChannel::isolation_low &&
                 event.pfRelIso_1 < IsolationRegionForLeptonicChannel::isolation_high;
     }
@@ -135,7 +135,8 @@ protected:
                              const analysis::PhysicalValue& scale_factor, DataCategoryType dataCategoryType) override
     {
         static const EventCategorySet categories=
-            { EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
+            { EventCategory::TwoJets_AtLeastOneBtag };
+            //{ EventCategory::TwoJets_OneBtag, EventCategory::TwoJets_TwoBtag, EventCategory::TwoJets_AtLeastOneBtag };
         static const analysis::EventCategorySet inclusive_categories =
             { EventCategory::Inclusive, EventCategory::TwoJets_Inclusive};
 

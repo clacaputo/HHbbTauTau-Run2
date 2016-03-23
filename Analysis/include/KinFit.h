@@ -27,22 +27,22 @@
 
 #pragma once
 
-#include "HHbbTauTau/HHKinFit/src/HHDiJetKinFit.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHDiJetKinFitMaster.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHEventRecord.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHKinFit.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHKinFitMaster.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHParticle.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHParticleList.cpp"
+#include "../../HHKinFit/src/HHDiJetKinFit.cpp"
+#include "../../HHKinFit/src/HHDiJetKinFitMaster.cpp"
+#include "../../HHKinFit/src/HHEventRecord.cpp"
+#include "../../HHKinFit/src/HHKinFit.cpp"
+#include "../../HHKinFit/src/HHKinFitMaster.cpp"
+#include "../../HHKinFit/src/HHParticle.cpp"
+#include "../../HHKinFit/src/HHParticleList.cpp"
 //#include "HHKinFit/src/HHTauInputKinFit.cpp"
 //#include "HHKinFit/src/HHTauInputKinFitMaster.cpp"
-#include "HHbbTauTau/HHKinFit/src/HHV4Vector.cpp"
-#include "HHbbTauTau/HHKinFit/src/PSMath.cpp"
-#include "HHbbTauTau/HHKinFit/src/PSTools.cpp"
+#include "../../HHKinFit/src/HHV4Vector.cpp"
+#include "../../HHKinFit/src/PSMath.cpp"
+#include "../../HHKinFit/src/PSTools.cpp"
 
-#include "HHbbTauTau/TreeProduction/interface/MET.h"
-#include "HHbbTauTau/AnalysisBase/include/Candidate.h"
-#include "HHbbTauTau/AnalysisBase/include/RootExt.h"
+#include "../../TreeProduction/interface/MET.h"
+#include "../../AnalysisBase/include/Candidate.h"
+#include "../../AnalysisBase/include/RootExt.h"
 
 namespace analysis {
 

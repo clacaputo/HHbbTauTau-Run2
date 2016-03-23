@@ -87,8 +87,16 @@ int main()
 }
 " > $CODE_OUT
 
+export CMSSW_BASE=/Users/claup/workspace/HHbbTauTau_Run2/HHbbTauTau
+export CMSSW_RELEASE_BASE=/Users/claup/workspace/HHbbTauTau_Run2/HHbbTauTau
+export HTT_UTIL=/Users/claup/workspace/HHbbTauTau_Run2/HTT-utilities
+
+#g++ -std=c++0x -Wall $COMPILE_FLAGS \
+#        -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
+#        $( root-config --libs ) -lMathMore -lGenVector -lTMVA -lASImage -L$BOOST_BASE/lib  \
+#        -o $EXE_NAME $CODE_OUT
 g++ -std=c++0x -Wall $COMPILE_FLAGS \
-        -I. -I$CMSSW_BASE/src -I$CMSSW_RELEASE_BASE/src -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
+        -I. -I$CMSSW_BASE -I$HTT_UTIL -I$CMSSW_RELEASE_BASE -I$ROOT_INCLUDE_PATH -I$BOOST_INCLUDE_PATH \
         $( root-config --libs ) -lMathMore -lGenVector -lTMVA -lASImage -L$BOOST_BASE/lib  \
         -o $EXE_NAME $CODE_OUT
 

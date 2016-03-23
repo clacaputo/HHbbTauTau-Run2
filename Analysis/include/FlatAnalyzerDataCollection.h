@@ -295,7 +295,8 @@ public:
         return *anaData;
     }
 
-    void Fill(const FlatAnalyzerDataId& id, Channel channel, const FlatEventInfo& eventInfo, double weight)
+    template<typename GenericEventInfo>
+    void Fill(const FlatAnalyzerDataId& id, Channel channel, const GenericEventInfo& eventInfo, double weight)
     {
         auto& anaData = Get(id, channel);
         anaData.Fill(eventInfo, weight);
@@ -306,48 +307,52 @@ public:
 //                         eventInfo.event->run << ", lumi: " << eventInfo.event->lumi << std::endl;
     }
 
+    template<typename GenericEventInfo>
     void FillSubCategories(const FlatAnalyzerDataMetaId_noSub& meta_id, Channel channel,
-                           const FlatEventInfo& eventInfo, double weight)
+                           const GenericEventInfo& eventInfo, double weight)
     {
         using namespace cuts::massWindow;
 
         const double mass_tautau = eventInfo.event->m_sv_MC;
-        Fill(meta_id.MakeId(EventSubCategory::NoCuts), channel, eventInfo, weight);
+        Fill<GenericEventInfo>(meta_id.MakeId(EventSubCategory::NoCuts), channel, eventInfo, weight);
         const bool inside_mass_window = mass_tautau > m_tautau_low && mass_tautau < m_tautau_high
                 && eventInfo.Hbb.M() > m_bb_low && eventInfo.Hbb.M() < m_bb_high;
         if(inside_mass_window)
-            Fill(meta_id.MakeId(EventSubCategory::MassWindow), channel, eventInfo, weight);
+            Fill<GenericEventInfo>(meta_id.MakeId(EventSubCategory::MassWindow), channel, eventInfo, weight);
         else
-            Fill(meta_id.MakeId(EventSubCategory::OutsideMassWindow), channel, eventInfo, weight);
+            Fill<GenericEventInfo>(meta_id.MakeId(EventSubCategory::OutsideMassWindow), channel, eventInfo, weight);
         if(eventInfo.fitResults.has_valid_mass)
-            Fill(meta_id.MakeId(EventSubCategory::KinematicFitConverged), channel, eventInfo, weight);
+            Fill<GenericEventInfo>(meta_id.MakeId(EventSubCategory::KinematicFitConverged), channel, eventInfo, weight);
         if(eventInfo.fitResults.has_valid_mass && inside_mass_window)
-            Fill(meta_id.MakeId(EventSubCategory::KinematicFitConvergedWithMassWindow), channel, eventInfo, weight);
+            Fill<GenericEventInfo>(meta_id.MakeId(EventSubCategory::KinematicFitConvergedWithMassWindow), channel, eventInfo, weight);
         if(eventInfo.fitResults.has_valid_mass && !inside_mass_window)
-            Fill(meta_id.MakeId(EventSubCategory::KinematicFitConvergedOutsideMassWindow), channel, eventInfo, weight);
+            Fill<GenericEventInfo>(meta_id.MakeId(EventSubCategory::KinematicFitConvergedOutsideMassWindow), channel, eventInfo, weight);
     }
 
+    template<typename GenericEventInfo>
     void FillEnergyScales(const FlatAnalyzerDataMetaId_noSub_noES& meta_id, Channel channel,
-                          const FlatEventInfo& eventInfo, double weight, const std::set<EventEnergyScale>& energyScales)
+                          const GenericEventInfo& eventInfo, double weight, const std::set<EventEnergyScale>& energyScales)
     {
         for (EventEnergyScale energyScale : energyScales)
-            FillSubCategories(meta_id.MakeMetaId(energyScale), channel, eventInfo, weight);
+            FillSubCategories<GenericEventInfo>(meta_id.MakeMetaId(energyScale), channel, eventInfo, weight);
     }
 
+    template<typename GenericEventInfo>
     void FillCentralAndJetRelatedScales(const FlatAnalyzerDataMetaId_noSub_noES& meta_id, Channel channel,
-                                        const FlatEventInfo& eventInfo, double weight)
+                                        const GenericEventInfo& eventInfo, double weight)
     {
         static const std::set<EventEnergyScale> energyScales =
             { EventEnergyScale::Central, EventEnergyScale::JetUp, EventEnergyScale::JetDown,
               EventEnergyScale::BtagEfficiencyUp, EventEnergyScale::BtagEfficiencyDown,
               EventEnergyScale::BtagFakeUp, EventEnergyScale::BtagFakeDown };
-        FillEnergyScales(meta_id, channel, eventInfo, weight, energyScales);
+        FillEnergyScales<GenericEventInfo>(meta_id, channel, eventInfo, weight, energyScales);
     }
 
+    template<typename GenericEventInfo>
     void FillAllEnergyScales(const FlatAnalyzerDataMetaId_noSub_noES& meta_id, Channel channel,
-                             const FlatEventInfo& eventInfo, double weight)
+                             const GenericEventInfo& eventInfo, double weight)
     {
-        FillEnergyScales(meta_id, channel, eventInfo, weight, AllEventEnergyScales);
+        FillEnergyScales<GenericEventInfo>(meta_id, channel, eventInfo, weight, AllEventEnergyScales);
     }
 
 private:
