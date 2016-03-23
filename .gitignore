@@ -1,5 +1,6 @@
 *.pdf
 *.csv
+*.root
 *.pyc
 *.so
 __init__.py
