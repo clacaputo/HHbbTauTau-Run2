@@ -21,7 +21,6 @@
 <use   name="EgammaAnalysis/ElectronTools"/>
 <use   name="MagneticField/Engine"/>
 <use   name="MagneticField/Records"/>
-<use   name="HHbbTauTau/TreeProduction"/>
 <use   name="boost"/>
 <use   name="rootcore"/>
 <use   name="rootrflx"/>

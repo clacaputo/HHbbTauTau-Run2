@@ -227,7 +227,7 @@ const std::map<Candidate::Type, std::string> CandidateTypeNameMap = {
 
 // enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
 
-std::ostream& operator<< (std::ostream& s, const Candidate::Type& t)
+inline std::ostream& operator<< (std::ostream& s, const Candidate::Type& t)
 {
     s << detail::CandidateTypeNameMap.at(t);
     return s;

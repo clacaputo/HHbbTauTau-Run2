@@ -1,12 +1,10 @@
 /*!
- * \file BaseAnalyzer.h
- * \brief Definition of BaseAnalyzer class which is the base class for all X->HH->bbTauTau and H->tautau analyzers.
- * \author Konstantin Androsov (University of Siena, INFN Pisa)
- * \author Maria Teresa Grippo (University of Siena, INFN Pisa)
+ * \file BaseEDAnalyzer.h
+ * \brief Definition of BaseEDAnalyzer class which is the base class for all X->HH->bbTauTau and H->tautau analyzers.
+ * \author Claudio Caputo (INFN Bari)
  * \date 2014-03-20 created
  *
- * Copyright 2014 Konstantin Androsov <konstantin.androsov@gmail.com>,
- *                Maria Teresa Grippo <grippomariateresa@gmail.com>
+ * Copyright 2016 Claudio Caputo <cld.cpt@gmail.com>
  *
  * This file is part of X->HH->bbTauTau.
  *
@@ -23,7 +21,6 @@
  * You should have received a copy of the GNU General Public License
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
 #include <iomanip>
@@ -71,11 +68,8 @@
 
 //HHbbTauTau Framework
 #include "Htautau_2015.h"
+#include "SyncTree.h"
 #include "Candidate.h"
-#include "../../AnalysisBase/include/SyncTree.h"
-#include "../../Analysis/include/SelectionResults.h"
-#include "../../TreeProduction/interface/Tau.h"
-#include "../../TreeProduction/interface/Muon.h"
 #include "../../AnalysisBase/include/AnalyzerData.h"
 #include "../../AnalysisBase/include/CutTools.h"
 
@@ -83,7 +77,31 @@
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h"
 
+#define SELECTION_ENTRY(name) \
+    ANA_DATA_ENTRY(cuts::ObjectSelector, name) \
+    /**/
+
+#define X(name) \
+    selectionManager.FillHistogram(object.name, #name)
+
+#define Y(name) \
+    selectionManager.FillHistogram(name, #name)
+
 using namespace edm;
+
+// namespace analysis { 
+// 	class CandidateV2;
+// 	typedef std::shared_ptr<const CandidateV2> CandidateV2Ptr;
+// 	typedef std::vector<CandidateV2Ptr> CandidateV2PtrVector; 
+// 	enum class CandidateV2::Type;
+// 	
+// 	class VertexV2;
+// 	typedef std::shared_ptr<const VertexV2> VertexV2Ptr;
+// 	typedef std::vector<VertexV2Ptr> VertexV2PtrVector;
+// 
+// 	class MissingET;
+// 	typedef std::shared_ptr<const MissingET> MissingETPtr;
+// };
 
 namespace analysis {
 
@@ -98,7 +116,51 @@ public:
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
     TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
 };
-}
+
+class SelectionManager {
+public:
+    SelectionManager(root_ext::AnalyzerData& _anaData, const std::string& _selection_label, double _weight)
+        : anaData(&_anaData), selection_label(_selection_label), weight(_weight) {}
+
+    template<typename ValueType>
+    ValueType FillHistogram(ValueType value, const std::string& histogram_name)
+    {
+        auto& histogram = anaData->Get(static_cast<TH1D*>(nullptr), histogram_name, selection_label);
+        return cuts::fill_histogram(value, histogram, weight);
+    }
+
+private:
+    root_ext::AnalyzerData* anaData;
+    std::string selection_label;
+    double weight;
+};
+
+struct SelectionResultsV2 {
+    static constexpr size_t NumberOfLegs = 2;
+
+    virtual ~SelectionResultsV2() {}
+    CandidateV2Ptr higgs;
+    Float_t numtruepileupinteractions =-1;
+    Float_t HT;
+    Double_t weightevt;
+    bool Zveto, electronVeto, muonVeto;
+    //sv_fit::FitResults svfitResult;
+    //kinematic_fit::four_body::FitResults kinfitResults;
+    CandidateV2PtrVector jets;
+    int numJet;
+    CandidateV2PtrVector jetsPt20;
+    CandidateV2PtrVector bjets;
+    CandidateV2PtrVector retagged_bjets;
+    VertexV2PtrVector vertices;
+    MissingETPtr pfMET;
+    //ntuple::MET MET_with_recoil_corrections;
+    //ntuple::EventType eventType;
+
+    VertexV2Ptr GetPrimaryVertex() const { return vertices.front(); }
+    virtual CandidateV2Ptr GetLeg(size_t leg_id) const = 0;
+    //virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
+};
+} //namespace analysis
 
 
 class BaseEDAnalyzer: public edm::EDAnalyzer {
@@ -107,6 +169,8 @@ protected:
     std::shared_ptr<TFile> outputFile;
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
 private:
+	edm::EDGetToken electronsMiniAODToken_;
+    edm::EDGetTokenT<edm::ValueMap<bool> > eleTightIdMapToken_;
     edm::EDGetToken tausMiniAODToken_;
     edm::EDGetToken muonsMiniAODToken_;
     edm::EDGetToken vtxMiniAODToken_;
@@ -119,6 +183,9 @@ private:
     std::string sampleType;
 
 protected:
+//  edm::Handle<edm::View<pat::Electron> > electrons;
+  edm::Handle<std::vector<pat::Electron> > electrons;
+  edm::Handle<edm::ValueMap<bool> > tight_id_decisions;
   edm::Handle<edm::View<pat::Tau> > taus;
   //edm::Handle<edm::View<pat::Muon> > muons;
   edm::Handle<std::vector<pat::Muon> > muons;
@@ -137,6 +204,8 @@ public:
         outputFile(root_ext::CreateRootFile("cuts.root")),
         anaDataBeforeCut(outputFile, "before_cut"), anaDataAfterCut(outputFile, "after_cut"),
         anaDataFinalSelection(outputFile, "final_selection"),
+        electronsMiniAODToken_(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
+  		eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
         tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
 //        muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
         muonsMiniAODToken_(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
@@ -157,6 +226,8 @@ public:
     virtual void endJob() = 0;
 
     void Initialize(const edm::Event& iEvent){
+      iEvent.getByToken(electronsMiniAODToken_, electrons);	
+      iEvent.getByToken(eleTightIdMapToken_,tight_id_decisions);
       iEvent.getByToken(tausMiniAODToken_, taus);
       iEvent.getByToken(muonsMiniAODToken_, muons);
       iEvent.getByToken(vtxMiniAODToken_, vertices);
@@ -349,6 +420,11 @@ protected:
     {
         return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectMuon, *muons);
     }
+    
+    analysis::CandidateV2PtrVector CollectElectrons()
+    {
+        return CollectCandidateObjects("electrons", &BaseEDAnalyzer::SelectElectron, *electrons);
+    }
 
     virtual void SelectMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
     {
@@ -366,6 +442,18 @@ protected:
 //        cut(std::abs( Y(d0_PV) ) < d0, "d0");
 //        cut(X(isMediumMuon) == isGlobalMuonPromptTight, "tight");
     }
+    
+    virtual void SelectElectron(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+    	using namespace cuts::Htautau_2015::ETau;
+        using namespace cuts::Htautau_2015::ETau::electronID;
+        const pat::Electron& object = muon->GetNtupleObject<pat::Electron>();
+
+        cut(true, ">0 ele cand");
+        cut(X(pt()) > pt, "pt");
+        cut(std::abs( X(eta()) ) < eta_high, "eta");
+    }
+};
 
     // CandidatePtrVector CollectSignalMuons()
     // {
@@ -1041,5 +1129,3 @@ protected:
 // private:
 //     ntuple::TauVector scaledTaus;
 //     ntuple::JetVector scaledJets;
-};
-

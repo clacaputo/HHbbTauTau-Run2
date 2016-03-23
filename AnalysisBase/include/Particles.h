@@ -485,17 +485,17 @@ struct PdgParticle {
 typedef std::vector<particles::ParticleCode> ParticleCodes;
 typedef std::vector<ParticleCodes> ParticleCodes2D;
 
-std::ostream& operator<<(std::ostream& s, const Status& particleStatus){
+inline std::ostream& operator<<(std::ostream& s, const Status& particleStatus){
     s << particles::NameProvider<particles::Status>::Name(particleStatus);
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const ParticleCode& code){
+inline std::ostream& operator<<(std::ostream& s, const ParticleCode& code){
     s << code.Name();
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const PdgParticle& particle){
+inline std::ostream& operator<<(std::ostream& s, const PdgParticle& particle){
     s << particle.Name();
     return s;
 }

@@ -25,6 +25,7 @@
 <use   name="JetMETCorrections/Algorithms"/>
 <use   name="TauAnalysis/SVfitStandalone"/>
 <use   name="SimDataFormats/GeneratorProducts"/>
+<use   name="HHbbTauTau/microAODProduction"/>
 <use   name="boost"/>
 <use   name="rootcore"/>
 <use   name="rootrflx"/>

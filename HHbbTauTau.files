@@ -248,6 +248,7 @@ microAODProduction/python/syncNtupler_cfi.py
 microAODProduction/python/syncTreeProducer_cfg.py
 microAODProduction/python/skimmedBranches_cff.py
 microAODProduction/src/genMatch.cc
+microAODProduction/src/SyncTreeProducer_mutau.cc
 env.sh
 generate_file_list.sh
 runx.sh

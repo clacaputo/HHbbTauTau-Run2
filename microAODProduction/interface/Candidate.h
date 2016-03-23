@@ -23,8 +23,8 @@
  * You should have received a copy of the GNU General Public License
  * along with X->HH->bbTauTau.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
+
 
 #include <vector>
 
@@ -253,7 +253,7 @@ public:
     const METtype& GetNtupleObject() const
     {
         if(!ntupleObject)
-            throw exception("Candidate is not associated with antuple object.");
+            throw exception("Candidate is not associated with a ntuple object.");
         const METtype* casted = dynamic_cast<const METtype*>(ntupleObject);
         if(!casted)
             throw exception("Bad ntuple object type '") << typeid(METtype).name() << "'. Expected '"
@@ -280,16 +280,16 @@ private:
     }
 };
 
+
 namespace detail {
 const std::map<CandidateV2::Type, std::string> CandidateV2TypeNameMap = {
     { CandidateV2::Type::Electron, "electron" }, { CandidateV2::Type::Muon, "muon" }, { CandidateV2::Type::Tau, "tau" },
     { CandidateV2::Type::Jet, "jet" }, { CandidateV2::Type::Z, "Z" }, { CandidateV2::Type::Higgs, "Higgs" }
 };
 } // namespace detail
-
 // enum class Type { Electron, Muon, Tau, Jet, Z, Higgs };
 
-std::ostream& operator<< (std::ostream& s, const CandidateV2::Type& t)
+inline std::ostream& operator<< (std::ostream& s, const CandidateV2::Type& t)
 {
     s << detail::CandidateV2TypeNameMap.at(t);
     return s;
@@ -297,4 +297,3 @@ std::ostream& operator<< (std::ostream& s, const CandidateV2::Type& t)
 
 
 } // analysis
-

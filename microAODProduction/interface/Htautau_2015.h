@@ -54,7 +54,7 @@ static const std::map<std::string, DataSourceType> stringToDataSourceTypeMap = {
                                                                        { "Run2015D" , DataSourceType::Run2015D}};
 
 
-std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType) {
+inline std::ostream& operator<< (std::ostream& s, const DataSourceType& dataSourceType) {
     s << dataSourceTypeMap.at(dataSourceType);
     return s;
 }
@@ -428,7 +428,7 @@ namespace DYEmbedded {
 
 namespace customTauMVA {
     // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/Utilities/src/FnPredicates.cc#L319
-    bool ComputeAntiElectronMVA3New(const ntuple::Tau& tau, size_t WP, bool applyDzCut = false)
+    inline bool ComputeAntiElectronMVA3New(const ntuple::Tau& tau, size_t WP, bool applyDzCut = false)
     {
         static size_t n_categories = 16;
         static const std::vector< std::vector<float> > cuts {

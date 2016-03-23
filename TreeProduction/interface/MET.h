@@ -74,7 +74,7 @@ namespace ntuple {
 //        return v;
 //    }
 
-    TMatrixD VectorToSignificanceMatrix(const std::vector<Float_t>& v)
+    inline TMatrixD VectorToSignificanceMatrix(const std::vector<Float_t>& v)
     {
         if(v.size() != 4)
             throw std::runtime_error("invalid input vector for significance matrix");
