@@ -44,6 +44,7 @@ public:
           electronTag(mayConsume<pat::ElectronCollection>(iConfig.getUntrackedParameter<edm::InputTag>("electronSrc"))),
           tauTag(mayConsume<pat::TauCollection>(iConfig.getUntrackedParameter<edm::InputTag>("tauSrc"))) {}
 
+	
 private:
     virtual bool filter(edm::Event&, const edm::EventSetup&);
 

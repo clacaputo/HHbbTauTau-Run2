@@ -12,8 +12,9 @@ config.Data.inputDataset = '/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pyth
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.unitsPerJob = 5000
-#config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/160215_Sync_76x_v1/' # or '/store/group/<subdir>'
-config.Data.outLFNDirBase = '/store/user/ccaputo/' # or '/store/group/<subdir>'
+config.Data.disableAutomaticOutputCollection = True
+config.Data.outputFiles = ['syncTree.root','mutau_cuts.root']
+config.Data.outLFNDirBase = '/store/user/ccaputo/HHbbtautau/Run2/160328_Sync_76x_newCode/' # or '/store/group/<subdir>'
 config.Data.publication = False
 
-config.Site.storageSite = 'T3_IT_MIB'
+config.Site.storageSite = 'T2_IT_Bari'

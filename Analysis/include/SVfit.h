@@ -42,7 +42,7 @@ namespace analysis {
 namespace sv_fit {
 
 enum class FitAlgorithm { Vegas, MarkovChain };
-std::ostream& operator<< (std::ostream& s, FitAlgorithm algo)
+inline std::ostream& operator<< (std::ostream& s, FitAlgorithm algo)
 {
     static const std::map<FitAlgorithm, std::string> algo_names = { { FitAlgorithm::Vegas, "VEGAS" },
                                                                     { FitAlgorithm::MarkovChain, "Markov chain" } };
@@ -137,7 +137,7 @@ inline FitResults Fit(FitAlgorithm fitAlgorithm, const CandidatePtrVector& higgs
     return result;
 }
 
-CombinedFitResults CombinedFit(const CandidatePtrVector& higgsLegs, const ntuple::MET& met, bool fitWithVegas,
+inline CombinedFitResults CombinedFit(const CandidatePtrVector& higgsLegs, const ntuple::MET& met, bool fitWithVegas,
                                bool fitWithMarkovChain)
 {
     CombinedFitResults result;

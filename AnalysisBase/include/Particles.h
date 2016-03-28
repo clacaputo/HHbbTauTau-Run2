@@ -83,18 +83,18 @@ public:
     }
     ParticleCode(int _raw_code, const std::string& name)
         : raw_code(_raw_code) {
-        if(Freeze())
-            throw std::runtime_error("New particle code can not be defined.");
-        if(Names().find(raw_code) != Names().end()) {
-            std::ostringstream ss;
-            ss << "Particle id " << raw_code << " is already defined.";
-            throw std::runtime_error(ss.str());
-        }
-        if(Codes().find(name) != Codes().end()) {
-            std::ostringstream ss;
-            ss << "Particle name '" << name << "' is already taken.";
-            throw std::runtime_error(ss.str());
-        }
+        // if(Freeze())
+//             throw std::runtime_error("New particle code can not be defined.");
+//         if(Names().find(raw_code) != Names().end()) {
+//             std::ostringstream ss;
+//             ss << "Particle id " << raw_code << " is already defined.";
+//             throw std::runtime_error(ss.str());
+//         }
+//         if(Codes().find(name) != Codes().end()) {
+//             std::ostringstream ss;
+//             ss << "Particle name '" << name << "' is already taken.";
+//             throw std::runtime_error(ss.str());
+//         }
 
         Names()[raw_code] = name;
         Codes()[name] = raw_code;

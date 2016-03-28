@@ -67,11 +67,11 @@
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 //HHbbTauTau Framework
-#include "Htautau_2015.h"
-#include "SyncTree.h"
-#include "Candidate.h"
-#include "../../AnalysisBase/include/AnalyzerData.h"
-#include "../../AnalysisBase/include/CutTools.h"
+#include "HHbbTauTau/microAODProduction/interface/Htautau_2015.h"
+#include "HHbbTauTau/microAODProduction/interface/SyncTree.h"
+#include "HHbbTauTau/microAODProduction/interface/Candidate.h"
+#include "HHbbTauTau/AnalysisBase/include/AnalyzerData.h"
+#include "HHbbTauTau/AnalysisBase/include/CutTools.h"
 
 //SVFit
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -117,6 +117,21 @@ public:
     TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
 };
 
+namespace sv_fit{
+struct FitResults {
+    static constexpr double default_value = std::numeric_limits<double>::lowest();
+
+    bool has_valid_mass;
+    double mass;
+
+    bool has_valid_momentum;
+    TLorentzVector momentum;
+
+    FitResults() : has_valid_mass(false), mass(default_value), has_valid_momentum(false) {}
+}; //fix SVFit.h
+}//sv_fit namespace
+
+// exported from other .h file
 class SelectionManager {
 public:
     SelectionManager(root_ext::AnalyzerData& _anaData, const std::string& _selection_label, double _weight)
@@ -144,10 +159,10 @@ struct SelectionResultsV2 {
     Float_t HT;
     Double_t weightevt;
     bool Zveto, electronVeto, muonVeto;
-    //sv_fit::FitResults svfitResult;
+    sv_fit::FitResults svfitResult;
     //kinematic_fit::four_body::FitResults kinfitResults;
     CandidateV2PtrVector jets;
-    int numJet;
+    int numJet=-1, npv=-1;
     CandidateV2PtrVector jetsPt20;
     CandidateV2PtrVector bjets;
     CandidateV2PtrVector retagged_bjets;
@@ -160,6 +175,8 @@ struct SelectionResultsV2 {
     virtual CandidateV2Ptr GetLeg(size_t leg_id) const = 0;
     //virtual const finalState::bbTauTau& GetFinalStateMC() const = 0;
 };
+//end export
+
 } //namespace analysis
 
 
@@ -176,6 +193,7 @@ private:
     edm::EDGetToken vtxMiniAODToken_;
     edm::EDGetToken pfMETAODToken_;
     edm::EDGetToken jetsMiniAODToken_;
+    edm::EDGetTokenT<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> metCovMatrixTAG_;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo>> PUInfo_;
     edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
     edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
@@ -183,21 +201,24 @@ private:
     std::string sampleType;
 
 protected:
-//  edm::Handle<edm::View<pat::Electron> > electrons;
   edm::Handle<std::vector<pat::Electron> > electrons;
   edm::Handle<edm::ValueMap<bool> > tight_id_decisions;
-  edm::Handle<edm::View<pat::Tau> > taus;
-  //edm::Handle<edm::View<pat::Muon> > muons;
+  edm::Handle<std::vector<pat::Tau> > taus;
   edm::Handle<std::vector<pat::Muon> > muons;
   edm::Handle<edm::View<reco::Vertex> > vertices;
   edm::Handle<edm::View<pat::MET> > pfMETs;
-  edm::Handle<edm::View<pat::Jet> > jets;
+  edm::Handle<std::vector<pat::Jet> > jets;
+  edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> metCovMatrix;
   edm::Handle<std::vector<PileupSummaryInfo> > PUInfo;
   edm::Handle<edm::TriggerResults> triggerBits;
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
 
-
+  const edm::Handle<edm::View<reco::Vertex> > GetVertexCollection() const {return vertices;}
+  const edm::Handle<edm::View<pat::MET> >     GetPFMet()			const {return pfMETs;}
+  const edm::Handle<edm::TriggerResults>      GetTriggerBits()      const {return triggerBits;}
+  const edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> GetMETCovMatrix() {return metCovMatrix;}
+  const std::string							  GetSampleType()		const {return sampleType;}
 
 public:
     BaseEDAnalyzer(const edm::ParameterSet& iConfig):
@@ -206,12 +227,12 @@ public:
         anaDataFinalSelection(outputFile, "final_selection"),
         electronsMiniAODToken_(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
   		eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
-        tausMiniAODToken_(mayConsume<edm::View<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
-//        muonsMiniAODToken_(mayConsume<edm::View<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
+        tausMiniAODToken_(mayConsume<std::vector<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
         muonsMiniAODToken_(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
         vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
         pfMETAODToken_(mayConsume<edm::View<pat::MET> >(iConfig.getParameter<edm::InputTag>("pfMETSrc"))),
-        jetsMiniAODToken_(mayConsume<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
+        jetsMiniAODToken_(mayConsume<std::vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jetSrc"))),
+        metCovMatrixTAG_(consumes<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >>(iConfig.getParameter<edm::InputTag>("metCov"))),
         PUInfo_(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
         triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
         triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
@@ -233,24 +254,24 @@ public:
       iEvent.getByToken(vtxMiniAODToken_, vertices);
       iEvent.getByToken(pfMETAODToken_, pfMETs);
       iEvent.getByToken(jetsMiniAODToken_, jets);
+      iEvent.getByToken(metCovMatrixTAG_,metCovMatrix);
       iEvent.getByToken(triggerBits_, triggerBits);
       iEvent.getByToken(PUInfo_, PUInfo);
       iEvent.getByToken(triggerPrescales_, triggerPrescales);
       iEvent.getByToken(triggerObjects_, triggerObjects);
     }
+    
 
 protected:
 
     virtual analysis::BaseEDAnalyzerData& GetAnaData() = 0;
     virtual analysis::CandidateV2Ptr SelectHiggs(analysis::CandidateV2PtrVector& higgses) = 0;
 
-    bool HaveTriggerFired(const edm::Event& iEvent){
-        using namespace cuts::Htautau_2015;                                     // Muovere questa parte nel plugin del canale e passare direttamente
-        using namespace cuts::Htautau_2015::MuTau;                              // hltPaths alla funzione
-      const edm::TriggerNames &triggerNames= iEvent.triggerNames(*triggerBits); //
-      const auto Key = analysis::stringToDataSourceTypeMap.at(sampleType);      //
-      const auto& hltPaths = MuTau::trigger::hltPathMaps.at(Key);               //
+    bool HaveTriggerFired(const edm::Event& iEvent,const std::set<std::string>& hltPaths){
+    	  
+    	  const edm::TriggerNames &triggerNames= iEvent.triggerNames(*(GetTriggerBits()));
           std::cout << "\n === TRIGGER PATHS === " << std::endl;
+          
           for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
               for (const std::string& triggerPath : hltPaths ){
 
@@ -275,7 +296,7 @@ protected:
     analysis::CandidateV2PtrVector FindCompatibleObjects(const analysis::CandidateV2PtrVector& objects1,
                                                          const analysis::CandidateV2PtrVector& objects2,
                                                          double minDeltaR, analysis::CandidateV2::Type type,
-                                                         const std::string& hist_name, int expectedCharge)
+                                                         const std::string& hist_name, int expectedCharge=analysis::CandidateV2::UnknownCharge())
         {
             analysis::CandidateV2PtrVector result;
             for(const analysis::CandidateV2Ptr& object1 : objects1) {
@@ -302,7 +323,8 @@ protected:
                                                      bool useStandardTriggerMatch, const bool isCrossTrigger)
     {
         analysis::CandidateV2PtrVector triggeredHiggses;
-        const edm::TriggerNames &triggerNames= iEvent.triggerNames(*triggerBits);
+    	const edm::TriggerNames &triggerNames= iEvent.triggerNames(*triggerBits);
+    	
         for (const auto& higgs : higgses){
 
             std::cout<<"### Higgs Pair :  \n"<<higgs->GetMomentum()<<std::endl;
@@ -421,6 +443,58 @@ protected:
         return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectMuon, *muons);
     }
     
+    analysis::CandidateV2PtrVector CollectSignalMuons()
+    {
+        return CollectCandidateObjects("muons_sgn", &BaseEDAnalyzer::SelectSignalMuon, *muons);
+    }
+    
+    virtual void SelectSignalMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+        throw std::runtime_error("Signal muon selection for signal not implemented");
+    }
+    
+    analysis::CandidateV2PtrVector CollectZmuons()
+    {
+        return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectZMuon, *muons);
+    }
+
+    virtual void SelectZMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager,
+                             cuts::Cutter& cut)
+    {
+        using namespace cuts::Htautau_2015::MuTau;
+        const pat::Muon& object = muon->GetNtupleObject<pat::Muon>();
+		const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+		
+		const double iso_mu = (object.pfIsolationR03().sumChargedHadronPt + std::max(
+                            object.pfIsolationR03().sumNeutralHadronEt +
+                            object.pfIsolationR03().sumPhotonEt -
+                            0.5 * object.pfIsolationR03().sumPUPt, 0.0)) / object.pt();
+		
+        cut(true, ">0 mu cand");
+        cut(X(pt()) > ZmumuVeto::pt, "pt");
+        cut(std::abs( X(eta()) ) < ZmumuVeto::eta, "eta");
+        const double muonDZ = std::abs(object.muonBestTrack()->dz(primaryVertex->position()));
+        cut(Y(muonDZ)  < muonID::dz, "dz");
+        const double muonDB = std::abs(object.muonBestTrack()->dxy(primaryVertex->position()));
+        cut(Y(muonDB) < muonID::dB, "dxy");
+        cut(X(isTrackerMuon()), "trackerMuon");
+        cut(X(isGlobalMuon()), "GlobalMuon");
+        cut(X(isPFMuon()), "PFMuon");
+        cut(Y(iso_mu) < 0.3, "pFRelIso");
+    }
+    
+    
+    analysis::CandidateV2PtrVector CollectSignalTaus()
+    {
+        return CollectCandidateObjects("taus_sgn", &BaseEDAnalyzer::SelectSignalTau, *taus);
+    }
+    
+    virtual void SelectSignalTau(const analysis::CandidateV2Ptr& tau, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+        throw std::runtime_error("Signal tau selection for signal not implemented");
+    }
+    
+    
     analysis::CandidateV2PtrVector CollectElectrons()
     {
         return CollectCandidateObjects("electrons", &BaseEDAnalyzer::SelectElectron, *electrons);
@@ -453,6 +527,30 @@ protected:
         cut(X(pt()) > pt, "pt");
         cut(std::abs( X(eta()) ) < eta_high, "eta");
     }
+    
+    analysis::CandidateV2PtrVector CollectJets()
+    {
+        return CollectCandidateObjects("jets", &BaseEDAnalyzer::SelectJets, *jets);
+    }
+    
+    virtual void SelectJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+            throw std::runtime_error("Jets selection not implemented");
+    }
+    
+    analysis::CandidateV2PtrVector CollectBJets()
+    {
+        return CollectCandidateObjects("bjets", &BaseEDAnalyzer::SelectBJets, *jets);
+    }
+    
+    virtual void SelectBJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+            throw std::runtime_error("BJets selection not implemented");
+    }
+
+
+
+	
 };
 
     // CandidatePtrVector CollectSignalMuons()

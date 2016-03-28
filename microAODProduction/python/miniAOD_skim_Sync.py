@@ -140,6 +140,7 @@ process.syncNtupler_mutau = cms.EDAnalyzer('SyncTreeProducer_mutau',
                                  #
                                  # Objects specific to MiniAOD format
                                  #
+								 
 								 electronSrc      = cms.InputTag("slimmedElectrons"),
 								 eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
                                  tauSrc           = cms.InputTag("slimmedTaus"),
@@ -158,37 +159,37 @@ process.syncNtupler_mutau = cms.EDAnalyzer('SyncTreeProducer_mutau',
 #                                  HTBinning        = cms.bool(options.computeHT),
                                   sampleType = cms.string(options.sampleType),
                                 )
-process.syncNtupler_etau = cms.EDAnalyzer('SyncTreeProducer_etau',
-
-                                 genParticles = cms.InputTag("genParticles"),
-                                 #
-                                 # Objects specific to MiniAOD format
-                                 #
-								 electronSrc      = cms.InputTag("slimmedElectrons"),
-								 eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
-                                 tauSrc           = cms.InputTag("slimmedTaus"),
-                                 muonSrc          = cms.InputTag("slimmedMuons"),
-                                 vtxSrc           = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                 jetSrc           = cms.InputTag("slimmedJets"),
-                                 PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
-                                 ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
-                                 pfMETSrc         = cms.InputTag("slimmedMETs"),
-                                 bits             = cms.InputTag("TriggerResults","","HLT"),
-                                 prescales        = cms.InputTag("patTrigger"),
-                                 objects          = cms.InputTag("selectedPatTrigger"),
-                                 metCov     = cms.InputTag("METSignificance","METCovariance"),
-                                 # lheEventProducts = cms.InputTag("externalLHEProducer"),
-#                                  genEventInfoProduct = cms.InputTag("generator"),
-#                                  HTBinning        = cms.bool(options.computeHT),
-                                  sampleType = cms.string(options.sampleType),
-                                )
+# process.syncNtupler_etau = cms.EDAnalyzer('SyncTreeProducer_etau',
+# 
+#                                  genParticles = cms.InputTag("genParticles"),
+#                                  #
+#                                  # Objects specific to MiniAOD format
+#                                  #
+# 								 electronSrc      = cms.InputTag("slimmedElectrons"),
+# 								 eleTightIdMap = cms.InputTag("egmGsfElectronIDs:mvaEleID-Spring15-25ns-nonTrig-V1-wp90"),
+#                                  tauSrc           = cms.InputTag("slimmedTaus"),
+#                                  muonSrc          = cms.InputTag("slimmedMuons"),
+#                                  vtxSrc           = cms.InputTag("offlineSlimmedPrimaryVertices"),
+#                                  jetSrc           = cms.InputTag("slimmedJets"),
+#                                  PUInfo    = cms.InputTag("slimmedAddPileupInfo"),
+#                                  ##pfMETSrc       = cms.InputTag("slimmedMETsNoHF"),
+#                                  pfMETSrc         = cms.InputTag("slimmedMETs"),
+#                                  bits             = cms.InputTag("TriggerResults","","HLT"),
+#                                  prescales        = cms.InputTag("patTrigger"),
+#                                  objects          = cms.InputTag("selectedPatTrigger"),
+#                                  metCov     = cms.InputTag("METSignificance","METCovariance"),
+#                                  # lheEventProducts = cms.InputTag("externalLHEProducer"),
+# #                                  genEventInfoProduct = cms.InputTag("generator"),
+# #                                  HTBinning        = cms.bool(options.computeHT),
+#                                   sampleType = cms.string(options.sampleType),
+#                                )
 
 process.p = cms.Path(
              process.METSignificance*
              process.egmGsfElectronIDSequence*
              process.electronMVAValueMapProducer*
              process.bbttSkim*
-             (process.syncNtupler_mutau + syncNtupler_etau)
+             process.syncNtupler_mutau
 	   	    )
 
 

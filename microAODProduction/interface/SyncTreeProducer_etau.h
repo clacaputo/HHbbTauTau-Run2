@@ -7,7 +7,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-#include "BaseEDAnalyzer.h"
+#include "HHbbTauTau/microAODProduction/interface/BaseEDAnalyzer.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 
 #include "TTree.h"
