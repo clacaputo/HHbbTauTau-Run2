@@ -146,10 +146,18 @@ namespace MuTau {
 namespace ETau {
     namespace trigger {
         // twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const std::set<std::string> hltPaths =
-            { "HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
-              "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20" };
+//        const std::set<std::string> hltPaths =
+//            { "HLT_Ele20_CaloIdVT_CaloIsoRhoT_TrkIdT_TrkIsoT_LooseIsoPFTau20",
+//              "HLT_Ele22_eta2p1_WP90Rho_LooseIsoPFTau20" };
+
+        const std::map<analysis::DataSourceType , const std::set<std::string>> hltPathMaps =
+                                    {{analysis::DataSourceType::Spring15MC,{"HLT_Ele22_eta2p1_WP75_Gsf"}},
+                                     {analysis::DataSourceType::Fall15MC,{"HLT_Ele23_WPLoose_Gsf_v3"}},
+                                     {analysis::DataSourceType::Run2015C,{"HLT_Ele22_eta2p1_WPLoose_Gsf_LooseIsoPFTau20_v1",
+                                                                          "HLT_Ele32_eta2p1_WPTight_Gsf_v1"}},
+                                     {analysis::DataSourceType::Run2015D,{"HLT_Ele23_WPLoose_Gsf_v"}}};
     }
+
 
     // twiki HiggsToTauTauWorkingSummer2013
     namespace electronIDscaleFactor {
@@ -167,39 +175,37 @@ namespace ETau {
                                                                     { 0.9804, 0.9900 } };
     }
 
+    // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsToTauTauWorking2015#Baseline_e_tau_h_AN1
     namespace electronID{
-        const double pt = 24; // >  HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const double eta_high = 2.1; // <  HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const double dz = 0.2; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
-        const int missingHits = 1; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
-        const bool hasMatchedConversion = false; // =  HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double d0 = 0.045; // <  HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double pFRelIso = 0.1; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Muon_Isolation
-        const double scEta_min[2] = { 0.8, 1.479 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
-        const double MVApogNonTrig[3] = { 0.925, 0.975, 0.985 }; // tight HiggsToTauTauWorkingSummer2013#Electron_ID
+        const double pt = 24; // >
+        const double eta = 2.1; // <
+        const double dz = 0.2; // <
+        const double d0 = 0.045; // <
+        const bool MVApogNonTrig = true; // tight Use Value map compute by POG people
+        const int missingHits = 1; // <
+        const bool passConversionVeto = true; // =
+
+        const double pFRelIso = 0.1; // < twiki
+        const double scEta_min[2] = { 0.8, 1.479 }; // tight
+
 
         const double mt = 30; // < not used for sync, only for the final selection.
     }
 
     namespace tauID {
-        const double pt = 20; // > twiki TauIDRecommendation
-        const double eta = 2.3; // < twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
-        const double decayModeFinding = 0.5; // > AN-2010/082 Z->tautau
-        const double againstMuonLoose = 0.5; // > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-        const double againstElectronMediumMVA3 = 0.5; //  > twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
-                                                      // twiki SWGuidePFTauID#Tau_ID_2014_preparation_for_AN1
-                                                      // MVA3 is recommended, but it does not exists any more
+        const double pt = 20; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double eta = 2.3; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double decayModeFinding = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double dz = 0.2; // < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+
+        //After Synctuple
+
+        const double againstMuonTight3 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
+        const double againstElectronVLooseMVA5 = 0.5; // > twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
         const double byCombinedIsolationDeltaBetaCorrRaw3Hits = 1.5;
-                                                      // GeV < twiki HiggsToTauTauWorkingSummer2013#Tau_ID_Isolation
+                                                      // GeV < twiki HiggsToTauTauWorking2015#Baseline_mu_tau_h
 
-        // > https://github.com/rmanzoni/HTT/blob/master/CMGTools/RootTools/python/physicsobjects/Tau.py#L62
-        const size_t againstElectronMVA3_customWP_id = 1; // = custom medium working point
-
-        // https://github.com/rmanzoni/HTT/blob/master/CMGTools/H2TauTau/python/proto/analyzers/TauEleAnalyzer.py#L187
-        // https://github.com/ajgilbert/ICHiggsTauTau/blob/master/Analysis/HiggsHTohh/test/HiggsHTohh.cpp#L1060 (no dB)
-        const double dz = 0.2; // <
-        const double dB = 0.045; // <
-    }
+   }
 
     // AN-2013/188 H->tautau physics objects && twiki HiggsToTauTauWorkingSummer2013#Electron_Tau_Final_state
     namespace ZeeVeto {
@@ -288,7 +294,7 @@ namespace muonVeto {
     const double pt = 10; // >
     const double eta = 2.4; // <
     const double dz = 0.2; // <
-    const double d0 = 0.045; // <
+    const double dB = 0.045; // <
 
     //def of isMediumMuon: twiki SWGuideMuonId#Medium_Muon
     const bool isMediumMuon = true; // =

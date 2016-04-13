@@ -309,7 +309,7 @@ SyncTreeProducer::SyncTreeProducer(const edm::ParameterSet& iConfig):
   lheEventProduct_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
   genWeights_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
   computeHT_(iConfig.getParameter<bool>("HTBinning")),
-  anaData("BeforCut.root"),
+  anaData("mutau_cuts.root"),
   syncTree(&edm::Service<TFileService>()->file(),false),
   sampleType(iConfig.getParameter<std::string>("sampleType"))
 {

@@ -7,6 +7,7 @@
     SIMPLE_VAR(Int_t, run) /* Run */ \
     SIMPLE_VAR(Int_t, lumi) /* Lumi */ \
     SIMPLE_VAR(ULong64_t, evt) /* Evt */ \
+    SIMPLE_VAR(Int_t, channelID) /* Channel: MuTau, ETau, TauTau */ \
     SIMPLE_VAR(Int_t, eventType) /* event type category */ \
     SIMPLE_VAR(Int_t, HTBin) /* event type category */ \
     SIMPLE_VAR(Double_t, weightevt) /*Gen Event Weight*/ \

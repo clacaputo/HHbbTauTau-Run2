@@ -27,6 +27,20 @@ public:
     TH1D_ENTRY(Mass, 3000, 0.0, 3000.0)
     TH1D_ENTRY(Htautau_Mass, 60, 0.0, 300.0)
 };
+
+
+struct SelectionResultsV2_etau : public SelectionResultsV2 {
+    CandidateV2Ptr GetElectron() const { return higgs->GetDaughter(CandidateV2::Type::Electron); }
+    CandidateV2Ptr GetTau() const { return higgs->GetDaughter(CandidateV2::Type::Tau); }
+
+    virtual CandidateV2Ptr GetLeg(size_t leg_id) const override
+    {
+        if(leg_id == 1) return GetElectron();
+        if(leg_id == 2) return GetTau();
+        throw exception("Bad leg id = ") << leg_id;
+    }
+};
+
 }
 
 //
@@ -38,12 +52,14 @@ class SyncTreeProducer_etau: public BaseEDAnalyzer {
       explicit SyncTreeProducer_etau(const edm::ParameterSet&);
       ~SyncTreeProducer_etau();
 
-      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  protected:
+      virtual analysis::Channel ChannelId() const override;
+      virtual void SelectSignalElectron(const analysis::CandidateV2Ptr& electron, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
+      virtual void SelectSignalTau(const analysis::CandidateV2Ptr& tau, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
+      virtual void SelectJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
+      virtual void SelectBJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
 
-  enum ElectronMatchType {UNMATCHED = 0,
-              TRUE_PROMPT_ELECTRON,
-              TRUE_ELECTRON_FROM_TAU,
-              TRUE_NON_PROMPT_ELECTRON}; // The last does not include tau parents
+
 
    private:
       virtual void beginJob() override;
@@ -58,8 +74,12 @@ class SyncTreeProducer_etau: public BaseEDAnalyzer {
       virtual analysis::SyncAnalyzerData_eTau& GetAnaData() override { return anaData; }
       virtual analysis::CandidateV2Ptr SelectHiggs(analysis::CandidateV2PtrVector& higgses) override;
 
+      void FillSyncTree(const edm::Event& iEvent);
+
+
       // ----------member data --------------------------
 
       Run2::SyncTree syncTree;
       analysis::SyncAnalyzerData_eTau anaData;
+      analysis::SelectionResultsV2_etau selection;
 };

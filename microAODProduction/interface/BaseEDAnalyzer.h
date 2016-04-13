@@ -82,10 +82,10 @@
     /**/
 
 #define X(name) \
-    selectionManager.FillHistogram(object.name, #name)
+    object.name
 
 #define Y(name) \
-    selectionManager.FillHistogram(name, #name)
+    name
 
 using namespace edm;
 
@@ -104,6 +104,13 @@ using namespace edm;
 // };
 
 namespace analysis {
+
+namespace detail {
+const std::map<analysis::Channel,analysis::CandidateV2::Type> channelToTypeMap = {{analysis::Channel::MuTau, analysis::CandidateV2::Type::Muon},
+                                                                            {analysis::Channel::ETau, analysis::CandidateV2::Type::Electron},
+                                                                            {analysis::Channel::TauTau, analysis::CandidateV2::Type::Tau}};
+
+}
 
 class BaseEDAnalyzerData : public root_ext::AnalyzerData {
 public:
@@ -187,7 +194,7 @@ protected:
     root_ext::AnalyzerData anaDataBeforeCut, anaDataAfterCut, anaDataFinalSelection;
 private:
 	edm::EDGetToken electronsMiniAODToken_;
-    edm::EDGetTokenT<edm::ValueMap<bool> > eleTightIdMapToken_;
+    edm::EDGetTokenT<edm::ValueMap<bool> > eleTightIdMapToken_,eleMediumIdMapToken_;
     edm::EDGetToken tausMiniAODToken_;
     edm::EDGetToken muonsMiniAODToken_;
     edm::EDGetToken vtxMiniAODToken_;
@@ -198,11 +205,14 @@ private:
     edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
     edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
     edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
+    edm::EDGetTokenT<LHEEventProduct> lheEventProduct_;
+    edm::EDGetTokenT<GenEventInfoProduct> genWeights_;
+    bool computeHT_;
     std::string sampleType;
 
 protected:
   edm::Handle<std::vector<pat::Electron> > electrons;
-  edm::Handle<edm::ValueMap<bool> > tight_id_decisions;
+  edm::Handle<edm::ValueMap<bool> > tight_id_decisions, medium_id_decisions;
   edm::Handle<std::vector<pat::Tau> > taus;
   edm::Handle<std::vector<pat::Muon> > muons;
   edm::Handle<edm::View<reco::Vertex> > vertices;
@@ -213,8 +223,11 @@ protected:
   edm::Handle<edm::TriggerResults> triggerBits;
   edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
   edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
+  edm::Handle<LHEEventProduct> lheEventProduct;
 
   const edm::Handle<edm::View<reco::Vertex> > GetVertexCollection() const {return vertices;}
+  const edm::Handle<edm::ValueMap<bool> >     GetTElectronIDValueMap() const {return tight_id_decisions;}
+  const edm::Handle<edm::ValueMap<bool> >     GetMElectronIDValueMap() const {return medium_id_decisions;}
   const edm::Handle<edm::View<pat::MET> >     GetPFMet()			const {return pfMETs;}
   const edm::Handle<edm::TriggerResults>      GetTriggerBits()      const {return triggerBits;}
   const edm::Handle<ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >> GetMETCovMatrix() {return metCovMatrix;}
@@ -227,6 +240,7 @@ public:
         anaDataFinalSelection(outputFile, "final_selection"),
         electronsMiniAODToken_(mayConsume<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronSrc"))),
   		eleTightIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleTightIdMap"))),
+        eleMediumIdMapToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleMediumIdMap"))),
         tausMiniAODToken_(mayConsume<std::vector<pat::Tau> >(iConfig.getParameter<edm::InputTag>("tauSrc"))),
         muonsMiniAODToken_(mayConsume<std::vector<pat::Muon> >(iConfig.getParameter<edm::InputTag>("muonSrc"))),
         vtxMiniAODToken_(mayConsume<edm::View<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
@@ -237,6 +251,9 @@ public:
         triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
         triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
         triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
+        lheEventProduct_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
+        genWeights_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
+        computeHT_(iConfig.getParameter<bool>("HTBinning")),
         sampleType(iConfig.getParameter<std::string>("sampleType")){
      }
 
@@ -249,6 +266,7 @@ public:
     void Initialize(const edm::Event& iEvent){
       iEvent.getByToken(electronsMiniAODToken_, electrons);	
       iEvent.getByToken(eleTightIdMapToken_,tight_id_decisions);
+      iEvent.getByToken(eleMediumIdMapToken_,medium_id_decisions);
       iEvent.getByToken(tausMiniAODToken_, taus);
       iEvent.getByToken(muonsMiniAODToken_, muons);
       iEvent.getByToken(vtxMiniAODToken_, vertices);
@@ -259,6 +277,7 @@ public:
       iEvent.getByToken(PUInfo_, PUInfo);
       iEvent.getByToken(triggerPrescales_, triggerPrescales);
       iEvent.getByToken(triggerObjects_, triggerObjects);
+      if(computeHT_) iEvent.getByToken(lheEventProduct_, lheEventProduct);
     }
     
 
@@ -266,6 +285,7 @@ protected:
 
     virtual analysis::BaseEDAnalyzerData& GetAnaData() = 0;
     virtual analysis::CandidateV2Ptr SelectHiggs(analysis::CandidateV2PtrVector& higgses) = 0;
+    virtual analysis::Channel ChannelId() const = 0;
 
     bool HaveTriggerFired(const edm::Event& iEvent,const std::set<std::string>& hltPaths){
     	  
@@ -360,6 +380,7 @@ protected:
                         !BaseEDAnalyzer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit,isCrossTrigger))
                     return false;
                 if(!isCrossTrigger &&
+                        daughter->GetType() == analysis::detail::channelToTypeMap.at(ChannelId()) &&
                         BaseEDAnalyzer::HaveTriggerMatched(triggerObjects, names, interestingPath, *daughter, deltaR_Limit,isCrossTrigger))
                     return true;
             }
@@ -395,6 +416,107 @@ protected:
         return false;
     }
 
+    double computeHtValue (){
+        if(computeHT_){
+            const lhef::HEPEUP& lheEvent = lheEventProduct->hepeup();
+            std::vector<lhef::HEPEUP::FiveVector> lheParticles = lheEvent.PUP;
+            double lheHt = 0.;
+            size_t numParticles = lheParticles.size();
+            for ( size_t idxParticle = 0; idxParticle < numParticles; ++idxParticle ) {
+                int absPdgId = TMath::Abs(lheEvent.IDUP[idxParticle]);
+                int status = lheEvent.ISTUP[idxParticle];
+                if ( status == 1 && ((absPdgId >= 1 && absPdgId <= 6) || absPdgId == 21) ) { // quarks and gluons
+                    lheHt += TMath::Sqrt(TMath::Power(lheParticles[idxParticle][0], 2.) + TMath::Power(lheParticles[idxParticle][1], 2.)); // first entry is px, second py
+                }
+            }
+            return lheHt;
+        }
+        else return -999.99;
+    }
+
+
+    template<typename FirstLegPATType>
+    analysis::sv_fit::FitResults SVFit(const analysis::CandidateV2Ptr& higgs, const analysis::MissingETPtr& met){
+
+        static const std::map<analysis::CandidateV2::Type, svFitStandalone::kDecayType> decayTypeMap = {
+            { analysis::CandidateV2::Type::Electron, svFitStandalone::kTauToElecDecay },
+            { analysis::CandidateV2::Type::Muon, svFitStandalone::kTauToMuDecay },
+            { analysis::CandidateV2::Type::Tau, svFitStandalone::kTauToHadDecay }
+        };
+
+        const FirstLegPATType& leg1 = higgs->GetDaughters().at(0)->GetNtupleObject<FirstLegPATType>();
+        const pat::Tau&  tau  = higgs->GetDaughters().at(1)->GetNtupleObject<pat::Tau>();
+        // define MET
+          double measuredMETx = met->Px();
+          double measuredMETy = met->Py();
+          // define MET covariance
+          TMatrixD covMET(2, 2);
+          covMET[0][0] = met->GetCovVector().at(0);
+          covMET[1][0] = met->GetCovVector().at(1);
+          covMET[0][1] = met->GetCovVector().at(2);
+          covMET[1][1] = met->GetCovVector().at(3);
+          // define lepton four vectors
+          std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
+          measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayTypeMap.at(higgs->GetDaughters().at(0)->GetType()), leg1.pt(),
+                                                                          leg1.eta(), leg1.phi(), leg1.mass())); // tau -> electron decay (Pt, eta, phi, mass)
+          measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(decayTypeMap.at(higgs->GetDaughters().at(1)->GetType()), tau.pt(),
+                                                                          tau.eta(), tau.phi(), tau.mass(),tau.decayMode())); // tau -> 1prong0pi0 hadronic decay (Pt, eta, phi, mass, pat::Tau.decayMode())
+          SVfitStandaloneAlgorithm algo(measuredTauLeptons, measuredMETx, measuredMETy, covMET, 0);
+          algo.addLogM(false);
+          edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
+          TH1::AddDirectory(false);
+          TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
+          algo.shiftVisPt(true, inputFile_visPtResolution);
+          algo.integrateMarkovChain();
+
+          analysis::sv_fit::FitResults svfitResult;
+          //double mass = algo.getMass(); // return value is in units of GeV
+          if ( algo.isValidSolution() ) {
+              svfitResult.mass = algo.mass();
+              svfitResult.has_valid_mass = true;
+              //if(fitAlgorithm == FitAlgorithm::MarkovChain) {
+                  svfitResult.momentum.SetPtEtaPhiM(algo.pt(), algo.eta(), algo.phi(), algo.mass());
+                  svfitResult.has_valid_momentum = true;
+             // }
+             std::cout << "... m svfit : " << algo.mass() << " +/- " << algo.massUncert() << std::endl;
+          } else {
+            std::cout << "sorry -- status of NLL is not valid [" << algo.isValidSolution() << "]" << std::endl;
+          }
+
+          delete inputFile_visPtResolution;
+
+          return svfitResult;
+    }
+
+//    void FillSyncTree(const edm::Event& iEvent, const analysis::SelectionResultsV2& selection, Run2::SyncTree syncTree)
+//        {
+//            using namespace analysis;
+//            static const float default_value = Run2::DefaultFloatFillValueForSyncTree();
+
+//            // Event
+//            std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
+//            std::cout<<"Run = "<<iEvent.id().run()<<"  Lumi = "<<iEvent.id().luminosityBlock()
+//                    <<" Event = "<<iEvent.id().event()<<std::endl;
+//            syncTree.run()  = iEvent.id().run();
+//            syncTree.lumi() = iEvent.id().luminosityBlock();
+//            syncTree.evt()  = iEvent.id().event();
+
+//            if(computeHT_){
+//                syncTree.HT()   = selection.HT;
+//                if(selection.HT<100) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::lt100);
+//                if(100<=selection.HT && selection.HT<200) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f100to200);
+//                if(200<=selection.HT && selection.HT<400) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f200to400);
+//                if(400<=selection.HT && selection.HT<600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::f400to600);
+//                if(selection.HT>=600) syncTree.HTBin() = static_cast<int>(Run2::HTbinning::gt600);
+//    //        syncTree->eventType() = static_cast<int>(selection.eventType);
+//    //        syncTree->eventEnergyScale() = static_cast<int>(eventEnergyScale);
+//            }
+//            else {
+//                syncTree.HT() = default_value;
+//                syncTree.HTBin() = -1;
+//            }
+//    }
+
 
     template<typename ObjectType, typename BaseSelectorType, typename NtupleObjectType,
              typename ObjectPtrType = std::shared_ptr<const ObjectType>,
@@ -407,7 +529,8 @@ protected:
         analysis::SelectionManager selectionManager(anaDataBeforeCut, selection_label, 1);
 
         const auto selector = [&](size_t id) -> ObjectPtrType {
-            ObjectPtrType candidate(new ObjectType(ntuple_objects.at(id)));
+           // ObjectPtrType candidate(new ObjectType(ntuple_objects.at(id)));
+            ObjectPtrType candidate(new ObjectType(ntuple_objects.at(id),id));
             cuts::Cutter cut(&objectSelector);
             base_selector(candidate, selectionManager, cut);
             return candidate;
@@ -438,10 +561,6 @@ protected:
         return CollectObjects<analysis::CandidateV2>(selection_label, base_selector, ntuple_objects);
     }
 
-    analysis::CandidateV2PtrVector CollectMuons()
-    {
-        return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectMuon, *muons);
-    }
     
     analysis::CandidateV2PtrVector CollectSignalMuons()
     {
@@ -453,6 +572,16 @@ protected:
         throw std::runtime_error("Signal muon selection for signal not implemented");
     }
     
+    analysis::CandidateV2PtrVector CollectSignalElectrons()
+    {
+        return CollectCandidateObjects("electrons_sgn", &BaseEDAnalyzer::SelectSignalElectron, *electrons);
+    }
+
+    virtual void SelectSignalElectron(const analysis::CandidateV2Ptr& electron, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+        throw std::runtime_error("Signal electron selection for signal not implemented");
+    }
+
     analysis::CandidateV2PtrVector CollectZmuons()
     {
         return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectZMuon, *muons);
@@ -495,37 +624,64 @@ protected:
     }
     
     
-    analysis::CandidateV2PtrVector CollectElectrons()
+    analysis::CandidateV2PtrVector CollectVetoElectrons()
     {
-        return CollectCandidateObjects("electrons", &BaseEDAnalyzer::SelectElectron, *electrons);
+        return CollectCandidateObjects("electrons", &BaseEDAnalyzer::SelectVetoElectron, *electrons);
     }
 
-    virtual void SelectMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+
+    analysis::CandidateV2PtrVector CollectVetoMuons()
     {
-        using namespace cuts::Htautau_2015::MuTau;
-        using namespace cuts::Htautau_2015::MuTau::muonID;
+        return CollectCandidateObjects("muons", &BaseEDAnalyzer::SelectVetoMuon, *muons);
+    }
+
+    virtual void SelectVetoMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    {
+        using namespace cuts::Htautau_2015;
         const pat::Muon& object = muon->GetNtupleObject<pat::Muon>();
+        const auto PV = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+        const double pfIso = (object.pfIsolationR03().sumChargedHadronPt + std::max(
+                                  object.pfIsolationR03().sumNeutralHadronEt +
+                                  object.pfIsolationR03().sumPhotonEt -
+                                  0.5 * object.pfIsolationR03().sumPUPt, 0.0)) / object.pt();
 
         cut(true, ">0 mu cand");
-        cut(X(pt()) > pt, "pt");
-        cut(std::abs( X(eta()) ) < eta, "eta");
-//        const double DeltaZ = std::abs(object.vz() - primaryVertex->GetPosition().Z());
-//        cut(Y(DeltaZ)  < dz, "dz");
-//        const TVector3 mu_vertex(object.vx(), object.vy(), object.vz());
-//        const double d0_PV = Calculate_dxy(mu_vertex, primaryVertex->GetPosition(), muon->GetMomentum());
-//        cut(std::abs( Y(d0_PV) ) < d0, "d0");
-//        cut(X(isMediumMuon) == isGlobalMuonPromptTight, "tight");
+        cut(X(pt()) > muonVeto::pt, "pt");
+        cut(std::abs( X(eta()) ) < muonVeto::eta, "eta");
+        const double muonDB = fabs(object.muonBestTrack()->dxy(PV->position()));
+        cut(Y(muonDB) < muonVeto::dB, "dxy");
+        const double muonDZ = fabs(object.muonBestTrack()->dz(PV->position()));
+        cut(Y(muonDZ) < muonVeto::dz, "dz");
+        cut(Y(pfIso) < muonVeto::pfRelIso, "iso");
+        cut(X(isMediumMuon()), "muonID");
     }
     
-    virtual void SelectElectron(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
+    virtual void SelectVetoElectron(const analysis::CandidateV2Ptr& electron, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
     {
-    	using namespace cuts::Htautau_2015::ETau;
-        using namespace cuts::Htautau_2015::ETau::electronID;
-        const pat::Electron& object = muon->GetNtupleObject<pat::Electron>();
+        using namespace cuts::Htautau_2015;
+        const pat::Electron& object = electron->GetNtupleObject<pat::Electron>();
 
-        cut(true, ">0 ele cand");
-        cut(X(pt()) > pt, "pt");
-        cut(std::abs( X(eta()) ) < eta_high, "eta");
+        const auto PV = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+        const Ptr<pat::Electron> elPtr(electrons, electron->GetIndex() );
+
+        double iso = (object.pfIsolationVariables().sumChargedHadronPt
+                       + std::max(object.pfIsolationVariables().sumNeutralHadronEt
+                       + object.pfIsolationVariables().sumPhotonEt -
+                       0.5 * object.pfIsolationVariables().sumPUPt, 0.0)) / object.pt();
+
+        cut(true, ">0 mu cand");
+        cut(X(pt()) > electronVeto::pt, "pt");
+        cut(std::abs( X(eta()) ) < electronVeto::eta_high, "eta");
+        const double electronD0 = fabs(object.gsfTrack()->dxy(PV->position()));
+        cut(Y(electronD0) < electronVeto::d0, "dxy");
+        const double electronDZ = fabs(object.gsfTrack()->dz(PV->position()));
+        cut(Y(electronDZ) < electronVeto::dz, "dz");
+        const bool isTight  = (*(BaseEDAnalyzer::GetMElectronIDValueMap()))[elPtr];
+        cut(isTight, "electronMVATightID");
+        const int eleMissingHits = object.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+        cut(eleMissingHits <= electronVeto::missingHits,"missingHits");
+        cut(X(passConversionVeto()),"conversionVeto");
+        cut(Y(iso) < electronVeto::pFRelIso, "iso");
     }
     
     analysis::CandidateV2PtrVector CollectJets()

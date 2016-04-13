@@ -59,6 +59,7 @@ class SyncTreeProducer_mutau: public BaseEDAnalyzer {
 
 //      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 	protected:
+      virtual analysis::Channel ChannelId() const override;
    	  virtual void SelectSignalMuon(const analysis::CandidateV2Ptr& muon, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
    	  virtual void SelectSignalTau(const analysis::CandidateV2Ptr& tau, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;
 	  virtual void SelectJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut) override;

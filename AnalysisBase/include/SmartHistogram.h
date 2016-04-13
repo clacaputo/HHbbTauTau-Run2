@@ -342,7 +342,7 @@ private:
 
     static const HistogramParameters& GetParameters(const std::string& name)
     {
-        static const std::string configName = "Analysis/config/histograms.cfg";
+        static const std::string configName = "/cmshome/caputo/HH_bbTauTau/Run2/CMSSW_7_6_3_patch2/src/HHbbTauTau/Analysis/config/histograms.cfg";
         static bool parametersLoaded = false;
         static HistogramParametersMap parameters;
         if(!parametersLoaded) {

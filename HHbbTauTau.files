@@ -233,11 +233,14 @@ microAODProduction/interface/Htautau_2015.h
 microAODProduction/interface/Candidate.h
 microAODProduction/interface/BaseEDAnalyzer.h
 microAODProduction/interface/genMatch.h
+microAODProduction/interface/SyncTreeProducer_etau.h
+microAODProduction/interface/SyncTreeProducer_mutau.h
 microAODProduction/plugins/BuildFile.xml
 microAODProduction/plugins/ElectronsIDAnalyzer.cc
 microAODProduction/plugins/SkimFilterMiniAOD.cc
 microAODProduction/plugins/SyncTreeProducer.cc
 microAODProduction/plugins/SyncTreeProducer_etau.cc
+microAODProduction/plugins/SyncTreeProducer_mutau.cc
 microAODProduction/python/electronID_cfg.py
 microAODProduction/python/electronsAnalyzer_cfi.py
 microAODProduction/python/miniAOD_skim.py
@@ -248,7 +251,6 @@ microAODProduction/python/syncNtupler_cfi.py
 microAODProduction/python/syncTreeProducer_cfg.py
 microAODProduction/python/skimmedBranches_cff.py
 microAODProduction/src/genMatch.cc
-microAODProduction/src/SyncTreeProducer_mutau.cc
 env.sh
 generate_file_list.sh
 runx.sh

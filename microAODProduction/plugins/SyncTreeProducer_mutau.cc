@@ -26,7 +26,7 @@
 SyncTreeProducer_mutau::SyncTreeProducer_mutau(const edm::ParameterSet& iConfig):
   BaseEDAnalyzer(iConfig),
   syncTree(&edm::Service<TFileService>()->file(),false),
-  anaData("mutau_cuts.root") {}
+  anaData("mutau_cuts.root"){}
 
 
 SyncTreeProducer_mutau::~SyncTreeProducer_mutau()
@@ -37,8 +37,9 @@ SyncTreeProducer_mutau::~SyncTreeProducer_mutau()
 
 }
 
-
+analysis::Channel SyncTreeProducer_mutau::ChannelId() const {return analysis::Channel::MuTau;}
 //
+
 // member functions
 //
 
@@ -63,6 +64,8 @@ SyncTreeProducer_mutau::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
       cut(HaveTriggerFired(iEvent, hltPaths),"trigger");
 
+      selection.HT = computeHtValue();
+
       const auto PV = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0); //Deferenzio per passare da edm::Handle a edm::View. Quest'ultimo permette
                                             //di gestire una qualsiasi collezione del tipo passatogli tramite Tamplate.
                                             //Es. edm::View<int> gestisce int semplici, vector<int>, set<int> etc.
@@ -76,12 +79,13 @@ SyncTreeProducer_mutau::analyze(const edm::Event& iEvent, const edm::EventSetup&
                   if(BX == 0) selection.numtruepileupinteractions = PVI->getTrueNumInteractions();
             }
           }
-      
+
+      //Di-Lepton Veto
 	  const auto z_muons = CollectZmuons();
 	  const auto z_muons_candidates = BaseEDAnalyzer::FindCompatibleObjects(z_muons,z_muons,DeltaR_betweenSignalObjects,analysis::CandidateV2::Type::Z,"Z_mu_mu",0);
       selection.Zveto = z_muons_candidates.size() ? true : false;
 
-      
+      //Signal-like leptons selection
       const auto selectedMuons = CollectSignalMuons();
 
       cut(selectedMuons.size(),"muons");
@@ -103,6 +107,17 @@ SyncTreeProducer_mutau::analyze(const edm::Event& iEvent, const edm::EventSetup&
       
       selection.higgs = SelectHiggs(triggeredHiggses);
    	  auto higgs = selection.higgs;
+
+      //Third-Lepton Veto
+      const auto muonVetoCollection     = CollectVetoMuons();
+      const auto electronVetoCollection = CollectVetoElectrons();
+
+      selection.electronVeto = electronVetoCollection.size() ? true : false;
+
+      selection.muonVeto = false;
+      for (auto &muon: muonVetoCollection){
+           if (!(selection.GetLeg(1)->GetMomentum().DeltaR(muon->GetMomentum()) < 0.05)) selection.muonVeto = true;
+      }
 		
 	  analysis::MissingETPtr pfMET(new analysis::MissingET((*pfMETs)[0],*(BaseEDAnalyzer::GetMETCovMatrix())));
       selection.pfMET = pfMET;	
@@ -110,8 +125,10 @@ SyncTreeProducer_mutau::analyze(const edm::Event& iEvent, const edm::EventSetup&
       selection.jets   = CollectJets();
       selection.bjets  = CollectBJets();
       
-      double svfit_mass = SVFit(higgs,pfMET);
-          std::cout<< "\n\t CHOOSEN SVFit -->  " << svfit_mass <<std::endl;
+//      double svfit_mass = SVFit(higgs,pfMET);
+//          std::cout<< "\n\t CHOOSEN SVFit -->  " << svfit_mass <<std::endl;
+      selection.svfitResult = BaseEDAnalyzer::SVFit<pat::Muon>(higgs,pfMET);
+          std::cout<< "\n\t CHOOSEN SVFit -->  " << selection.svfitResult.mass <<std::endl;
 
 
 	  FillSyncTree(iEvent);
@@ -154,14 +171,15 @@ void SyncTreeProducer_mutau::SelectSignalTau(const analysis::CandidateV2Ptr& tau
               
     cut(true, ">0 tau cand");
     cut(X(pt()) > pt, "pt");
-    cut(std::abs( X(eta()) ) < eta, "eta");
+    cut(std::fabs( X(eta()) ) < eta, "eta");
     cut(Y(decayModeFinding) > tauID::decayModeFinding, "oldDecayMode");
-    cut( std::abs( Y(taudz) ) < dz ,"dz");           
+    cut(std::fabs( Y(taudz) ) < dz ,"dz");
+    cut(std::abs(X(charge()))==1,"charge");           
 }
 
 void SyncTreeProducer_mutau::SelectJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
     {
-    	using namespace cuts::Htautau_2015;
+        using namespace cuts::Htautau_2015;
         using namespace cuts::Htautau_2015::jetID;
         const pat::Jet& object = jet->GetNtupleObject<pat::Jet>();
 
@@ -169,24 +187,24 @@ void SyncTreeProducer_mutau::SelectJets(const analysis::CandidateV2Ptr& jet, ana
         cut(X(pt()) > pt_loose, "pt_loose");
         cut(std::abs( X(eta()) ) < eta, "eta");
         const bool jetMVAID = passPFLooseId(object);
-        cut(Y(jetMVAID),"jet_id"); 
+        cut(Y(jetMVAID),"jet_id");
         const double deltaR_leg1 = jet->GetMomentum().DeltaR(selection.GetLeg(1)->GetMomentum());
         cut(Y(deltaR_leg1) > deltaR_signalObjects,"deltaR_lep1");
         const double deltaR_leg2 = jet->GetMomentum().DeltaR(selection.GetLeg(2)->GetMomentum());
         cut(Y(deltaR_leg2) > deltaR_signalObjects,"deltaR_lep2");
     }
-    
+
 void SyncTreeProducer_mutau::SelectBJets(const analysis::CandidateV2Ptr& jet, analysis::SelectionManager& selectionManager, cuts::Cutter& cut)
 {
-	using namespace cuts::Htautau_2015;
+    using namespace cuts::Htautau_2015;
     using namespace cuts::Htautau_2015::jetID;
     const pat::Jet& object = jet->GetNtupleObject<pat::Jet>();
-   
+
     SelectJets(jet,selectionManager, cut);
     cut(std::abs( X(eta()) ) < btag::eta, "eta");
     const double csvValue = object.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
     cut(Y(csvValue) > btag::CSV, "btaggin");
-         
+
 }
 // ------------ method called once each job just before starting event loop  ------------
 void
@@ -359,7 +377,9 @@ void SyncTreeProducer_mutau::FillSyncTree(const edm::Event& iEvent)
 		
 		const VertexV2Ptr primaryVertex(new VertexV2((*(BaseEDAnalyzer::GetVertexCollection())).front()));
 		
-		//const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
+        //BaseEDAnalyzer::FillSyncTree(iEvent, selection, syncTree);
+
+        //const auto primaryVertex = (*(BaseEDAnalyzer::GetVertexCollection())).ptrAt(0);
 	
         // Event
         std::cout<<"~~~~~~~~~~~~~EVENT Info~~~~~~~~~"<<std::endl;
@@ -368,6 +388,8 @@ void SyncTreeProducer_mutau::FillSyncTree(const edm::Event& iEvent)
         syncTree.run()  = iEvent.id().run();
         syncTree.lumi() = iEvent.id().luminosityBlock();
         syncTree.evt()  = iEvent.id().event();
+        syncTree.channelID() = static_cast<int>(SyncTreeProducer_mutau::ChannelId());
+
 
 //         if(computeHT_){
 //             syncTree.HT()   = selection.HT;
